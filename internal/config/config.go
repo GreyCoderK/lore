@@ -24,7 +24,16 @@ func Load() (*Config, error) {
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	cfg := defaultConfig()
+	// Register defaults with Viper so AutomaticEnv can resolve nested keys
+	v.SetDefault("ai.provider", "anthropic")
+	v.SetDefault("ai.model", "claude-sonnet-4-20250514")
+	v.SetDefault("ai.api_key", "")
+	v.SetDefault("angela.enabled", true)
+	v.SetDefault("angela.mode", "draft")
+	v.SetDefault("templates.dir", ".lore/templates")
+	v.SetDefault("hooks.post_commit", true)
+	v.SetDefault("output.dir", ".lore/docs")
+	v.SetDefault("output.format", "markdown")
 
 	// Load .lorerc (optional)
 	if err := v.ReadInConfig(); err != nil {
@@ -41,6 +50,7 @@ func Load() (*Config, error) {
 		}
 	}
 
+	cfg := &Config{}
 	if err := v.Unmarshal(cfg); err != nil {
 		return nil, fmt.Errorf("config: unmarshal: %w", err)
 	}

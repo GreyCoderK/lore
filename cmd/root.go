@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/museigen/lore/internal/config"
 	"github.com/museigen/lore/internal/domain"
+	"github.com/museigen/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -34,15 +36,18 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 }
 
 func Execute() {
-	cfg, err := config.Load()
-	if err != nil {
-		os.Exit(1)
-	}
-
 	streams := domain.IOStreams{
 		Out: os.Stdout,
 		Err: os.Stderr,
 		In:  os.Stdin,
+	}
+
+	ui.SetColorEnabled(ui.ColorEnabled(streams))
+
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(streams.Err, "Error: %v\n  Run: lore doctor\n", err)
+		os.Exit(1)
 	}
 
 	cmd := newRootCmd(cfg, streams)

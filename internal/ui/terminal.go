@@ -8,7 +8,7 @@ import (
 )
 
 func IsTerminal(streams domain.IOStreams) bool {
-	outFile, ok := streams.Out.(*os.File)
+	inFile, ok := streams.In.(*os.File)
 	if !ok {
 		return false
 	}
@@ -22,7 +22,7 @@ func IsTerminal(streams domain.IOStreams) bool {
 	if os.Getenv("LORE_LINE_MODE") == "1" {
 		return false
 	}
-	return term.IsTerminal(int(outFile.Fd())) && term.IsTerminal(int(errFile.Fd()))
+	return term.IsTerminal(int(inFile.Fd())) && term.IsTerminal(int(errFile.Fd()))
 }
 
 func ColorEnabled(streams domain.IOStreams) bool {

@@ -1,9 +1,9 @@
 package config
 
 type AIConfig struct {
-	Provider string `yaml:"provider"`
-	Model    string `yaml:"model"`
-	APIKey   string `yaml:"api_key"`
+	Provider string `yaml:"provider" mapstructure:"provider"`
+	Model    string `yaml:"model" mapstructure:"model"`
+	APIKey   string `yaml:"api_key" mapstructure:"api_key"`
 }
 
 type AngelaConfig struct {
@@ -16,7 +16,7 @@ type TemplatesConfig struct {
 }
 
 type HooksConfig struct {
-	PostCommit bool `yaml:"post_commit"`
+	PostCommit bool `yaml:"post_commit" mapstructure:"post_commit"`
 }
 
 type OutputConfig struct {
