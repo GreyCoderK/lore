@@ -19,15 +19,13 @@ func testStreams() domain.IOStreams {
 
 func TestIsTerminalWithBuffers(t *testing.T) {
 	streams := testStreams()
-	// Buffers are not *os.File, so IsTerminal must return false
 	if IsTerminal(streams) {
 		t.Error("expected IsTerminal=false for non-file streams")
 	}
 }
 
 func TestIsTerminalWithDumbTerm(t *testing.T) {
-	os.Setenv("TERM", "dumb")
-	defer os.Unsetenv("TERM")
+	t.Setenv("TERM", "dumb")
 
 	streams := domain.IOStreams{
 		Out: os.Stdout,
@@ -40,8 +38,7 @@ func TestIsTerminalWithDumbTerm(t *testing.T) {
 }
 
 func TestIsTerminalWithLineMode(t *testing.T) {
-	os.Setenv("LORE_LINE_MODE", "1")
-	defer os.Unsetenv("LORE_LINE_MODE")
+	t.Setenv("LORE_LINE_MODE", "1")
 
 	streams := domain.IOStreams{
 		Out: os.Stdout,
@@ -55,22 +52,19 @@ func TestIsTerminalWithLineMode(t *testing.T) {
 
 func TestColorEnabledWithBuffers(t *testing.T) {
 	streams := testStreams()
-	// Non-terminal streams → color disabled
 	if ColorEnabled(streams) {
 		t.Error("expected ColorEnabled=false for non-terminal streams")
 	}
 }
 
 func TestColorEnabledWithNoColor(t *testing.T) {
-	os.Setenv("NO_COLOR", "1")
-	defer os.Unsetenv("NO_COLOR")
+	t.Setenv("NO_COLOR", "1")
 
 	streams := domain.IOStreams{
 		Out: os.Stdout,
 		Err: os.Stderr,
 		In:  os.Stdin,
 	}
-	// NO_COLOR set → color disabled regardless of terminal
 	if ColorEnabled(streams) {
 		t.Error("expected ColorEnabled=false when NO_COLOR is set")
 	}

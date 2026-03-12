@@ -1,5 +1,7 @@
 package config
 
+import "github.com/spf13/viper"
+
 type AIConfig struct {
 	Provider string `yaml:"provider" mapstructure:"provider"`
 	Model    string `yaml:"model" mapstructure:"model"`
@@ -7,12 +9,12 @@ type AIConfig struct {
 }
 
 type AngelaConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Mode    string `yaml:"mode"`
+	Mode      string `yaml:"mode" mapstructure:"mode"`
+	MaxTokens int    `yaml:"max_tokens" mapstructure:"max_tokens"`
 }
 
 type TemplatesConfig struct {
-	Dir string `yaml:"dir"`
+	Dir string `yaml:"dir" mapstructure:"dir"`
 }
 
 type HooksConfig struct {
@@ -20,29 +22,22 @@ type HooksConfig struct {
 }
 
 type OutputConfig struct {
-	Dir    string `yaml:"dir"`
-	Format string `yaml:"format"`
+	Dir    string `yaml:"dir" mapstructure:"dir"`
+	Format string `yaml:"format" mapstructure:"format"`
 }
 
-func defaultConfig() *Config {
-	return &Config{
-		AI: AIConfig{
-			Provider: "anthropic",
-			Model:    "claude-sonnet-4-20250514",
-		},
-		Angela: AngelaConfig{
-			Enabled: true,
-			Mode:    "draft",
-		},
-		Templates: TemplatesConfig{
-			Dir: ".lore/templates",
-		},
-		Hooks: HooksConfig{
-			PostCommit: true,
-		},
-		Output: OutputConfig{
-			Dir:    ".lore/docs",
-			Format: "markdown",
-		},
-	}
+func setDefaults(v *viper.Viper) {
+	v.SetDefault("ai.provider", "")
+	v.SetDefault("ai.model", "")
+	v.SetDefault("ai.api_key", "")
+
+	v.SetDefault("angela.mode", "draft")
+	v.SetDefault("angela.max_tokens", 2000)
+
+	v.SetDefault("templates.dir", ".lore/templates")
+
+	v.SetDefault("hooks.post_commit", true)
+
+	v.SetDefault("output.format", "markdown")
+	v.SetDefault("output.dir", ".lore/docs")
 }
