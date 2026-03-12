@@ -21,8 +21,8 @@ func Load() (*Config, error) {
 	return LoadFromDir(".")
 }
 
-// LoadFromDir loads configuration from a specific directory.
-func LoadFromDir(dir string) (*Config, error) {
+// loadViper builds a Viper instance with defaults, config files, and env vars.
+func loadViper(dir string) (*viper.Viper, error) {
 	v := viper.New()
 
 	setDefaults(v)
@@ -50,16 +50,29 @@ func LoadFromDir(dir string) (*Config, error) {
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
+	return v, nil
+}
+
+// unmarshalConfig converts a Viper instance to a *Config struct.
+func unmarshalConfig(v *viper.Viper) (*Config, error) {
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("config: unmarshal: %w", err)
 	}
-
 	return &cfg, nil
 }
 
+// LoadFromDir loads configuration from a specific directory.
+func LoadFromDir(dir string) (*Config, error) {
+	v, err := loadViper(dir)
+	if err != nil {
+		return nil, err
+	}
+	return unmarshalConfig(v)
+}
+
 // RegisterFlags declares persistent CLI flags on the given command.
-// Called by cmd/root.go in init() — no Viper dependency is exposed.
+// Called by cmd/root.go — no Viper dependency is exposed.
 func RegisterFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().String("ai-provider", "", "AI provider (anthropic, openai, ollama)")
 	cmd.PersistentFlags().Bool("quiet", false, "Suppress non-essential output")
@@ -68,49 +81,24 @@ func RegisterFlags(cmd *cobra.Command) {
 }
 
 // bindFlags binds Cobra flags to Viper keys internally.
-func bindFlags(v *viper.Viper, cmd *cobra.Command) {
-	v.BindPFlag("ai.provider", cmd.PersistentFlags().Lookup("ai-provider"))
-	v.BindPFlag("output.quiet", cmd.PersistentFlags().Lookup("quiet"))
-	v.BindPFlag("output.verbose", cmd.PersistentFlags().Lookup("verbose"))
+// Only flags that map to Config struct fields are bound here.
+// --quiet, --verbose, --no-color are handled by IOStreams in root.go, not via Viper.
+func bindFlags(v *viper.Viper, cmd *cobra.Command) error {
+	if err := v.BindPFlag("ai.provider", cmd.PersistentFlags().Lookup("ai-provider")); err != nil {
+		return fmt.Errorf("config: bind flag ai-provider: %w", err)
+	}
+	return nil
 }
 
 // LoadFromDirWithFlags loads config with the full cascade including CLI flag overrides.
 // Called by cmd/root.go in PersistentPreRunE after RegisterFlags.
 func LoadFromDirWithFlags(dir string, cmd *cobra.Command) (*Config, error) {
-	v := viper.New()
-
-	setDefaults(v)
-
-	// Read .lorerc (shared, version-controlled)
-	v.SetConfigName(".lorerc")
-	v.SetConfigType("yaml")
-	v.AddConfigPath(dir)
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("config: read .lorerc: %w", err)
-		}
+	v, err := loadViper(dir)
+	if err != nil {
+		return nil, err
 	}
-
-	// Merge .lorerc.local (personal, gitignored)
-	v.SetConfigName(".lorerc.local")
-	if err := v.MergeInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("config: read .lorerc.local: %w", err)
-		}
+	if err := bindFlags(v, cmd); err != nil {
+		return nil, err
 	}
-
-	// Environment variables
-	v.SetEnvPrefix("LORE")
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.AutomaticEnv()
-
-	// CLI flags (highest priority)
-	bindFlags(v, cmd)
-
-	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("config: unmarshal: %w", err)
-	}
-
-	return &cfg, nil
+	return unmarshalConfig(v)
 }

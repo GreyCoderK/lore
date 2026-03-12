@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -143,7 +144,11 @@ func TestLoadFromDir_MalformedYAML(t *testing.T) {
 
 	_, err := LoadFromDir(dir)
 	if err == nil {
-		t.Error("expected error for malformed YAML")
+		t.Fatal("expected error for malformed YAML")
+	}
+	errMsg := err.Error()
+	if !strings.Contains(errMsg, "config: read .lorerc") {
+		t.Errorf("expected error to contain 'config: read .lorerc', got %q", errMsg)
 	}
 }
 

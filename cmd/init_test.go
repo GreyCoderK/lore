@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -103,12 +104,16 @@ func (m *mockGitAdapter) HookExists(hookType string) (bool, error) {
 	return false, nil
 }
 
-func testStreams() (domain.IOStreams, *bytes.Buffer, *bytes.Buffer) {
+func testStreams(input ...string) (domain.IOStreams, *bytes.Buffer, *bytes.Buffer) {
 	var out, errBuf bytes.Buffer
+	var in io.Reader = &bytes.Buffer{}
+	if len(input) > 0 {
+		in = strings.NewReader(input[0])
+	}
 	streams := domain.IOStreams{
 		Out: &out,
 		Err: &errBuf,
-		In:  &bytes.Buffer{},
+		In:  in,
 	}
 	return streams, &out, &errBuf
 }

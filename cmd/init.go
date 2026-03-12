@@ -11,6 +11,7 @@ import (
 	"github.com/museigen/lore/internal/config"
 	"github.com/museigen/lore/internal/domain"
 	"github.com/museigen/lore/internal/git"
+	"github.com/museigen/lore/internal/storage"
 	"github.com/museigen/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
@@ -101,14 +102,14 @@ func runInit(_ context.Context, deps initDeps, streams domain.IOStreams, noDemo 
 
 	// 2. Generate .lorerc
 	lorercPath := filepath.Join(deps.workDir, ".lorerc")
-	if err := atomicWrite(lorercPath, []byte(lorercContent)); err != nil {
+	if err := storage.AtomicWrite(lorercPath, []byte(lorercContent)); err != nil {
 		return fmt.Errorf("cmd: init write .lorerc: %w", err)
 	}
 	ui.Verb(streams, "Created", ".lorerc")
 
 	// 3. Generate .lorerc.local
 	lorercLocalPath := filepath.Join(deps.workDir, ".lorerc.local")
-	if err := atomicWrite(lorercLocalPath, []byte(lorercLocalContent)); err != nil {
+	if err := storage.AtomicWrite(lorercLocalPath, []byte(lorercLocalContent)); err != nil {
 		return fmt.Errorf("cmd: init write .lorerc.local: %w", err)
 	}
 	ui.Verb(streams, "Created", ".lorerc.local")
@@ -138,14 +139,6 @@ func runInit(_ context.Context, deps initDeps, streams domain.IOStreams, noDemo 
 	}
 
 	return nil
-}
-
-func atomicWrite(path string, data []byte) error {
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
-		return fmt.Errorf("init: write tmp %s: %w", tmp, err)
-	}
-	return os.Rename(tmp, path)
 }
 
 func ensureGitignore(path string, entry string) (bool, error) {
@@ -179,7 +172,7 @@ func promptDemo(streams domain.IOStreams) {
 		return
 	}
 
-	fmt.Fprintf(streams.Err, "\nRun demo? (~45s) [o/N] ")
+	fmt.Fprintf(streams.Err, "\nRun demo? (~45s) [y/N] ")
 
 	reader := bufio.NewReader(streams.In)
 	answer, err := reader.ReadString('\n')
@@ -188,7 +181,7 @@ func promptDemo(streams domain.IOStreams) {
 	}
 
 	answer = strings.TrimSpace(strings.ToLower(answer))
-	if answer == "o" {
-		fmt.Fprintf(streams.Err, "%s\n", ui.Dim("Demo not yet implemented."))
+	if answer == "y" {
+		fmt.Fprintf(streams.Err, "%s\n", ui.Dim("Run: lore demo"))
 	}
 }

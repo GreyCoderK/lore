@@ -53,23 +53,23 @@ func (a *Adapter) CommitExists(ref string) (bool, error) {
 
 // Stubs for methods implemented in Story 2.1
 func (a *Adapter) Diff(_ string) (string, error) {
-	panic("git: Diff not implemented")
+	return "", fmt.Errorf("git: Diff: not implemented")
 }
 
 func (a *Adapter) Log(_ string) (*domain.CommitInfo, error) {
-	panic("git: Log not implemented")
+	return nil, fmt.Errorf("git: Log: not implemented")
 }
 
 func (a *Adapter) IsMergeCommit(_ string) (bool, error) {
-	panic("git: IsMergeCommit not implemented")
+	return false, fmt.Errorf("git: IsMergeCommit: not implemented")
 }
 
 func (a *Adapter) IsRebaseInProgress() (bool, error) {
-	panic("git: IsRebaseInProgress not implemented")
+	return false, fmt.Errorf("git: IsRebaseInProgress: not implemented")
 }
 
 func (a *Adapter) CommitMessageContains(_, _ string) (bool, error) {
-	panic("git: CommitMessageContains not implemented")
+	return false, fmt.Errorf("git: CommitMessageContains: not implemented")
 }
 
 func (a *Adapter) InstallHook(hookType string) error {

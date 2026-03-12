@@ -15,7 +15,24 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		Use:   "lore",
 		Short: "Your code knows what. Lore knows why.",
 		Long:  "Your code knows what. Lore knows why.",
+		PersistentPreRunE: func(c *cobra.Command, args []string) error {
+			loaded, err := config.LoadFromDirWithFlags(".", c)
+			if err != nil {
+				return fmt.Errorf("%v\n  Run: lore doctor", err)
+			}
+			*cfg = *loaded
+
+			// --no-color flag overrides terminal detection
+			noColor, _ := c.Flags().GetBool("no-color")
+			if noColor {
+				ui.SetColorEnabled(false)
+			}
+
+			return nil
+		},
 	}
+
+	config.RegisterFlags(cmd)
 
 	cmd.AddCommand(
 		newInitCmd(cfg, streams),
@@ -44,13 +61,9 @@ func Execute() {
 
 	ui.SetColorEnabled(ui.ColorEnabled(streams))
 
-	cfg, err := config.Load()
-	if err != nil {
-		fmt.Fprintf(streams.Err, "Error: %v\n  Run: lore doctor\n", err)
-		os.Exit(1)
-	}
-
+	cfg := &config.Config{}
 	cmd := newRootCmd(cfg, streams)
+
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
