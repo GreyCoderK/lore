@@ -1,3 +1,3 @@
 # LORE-START
-exec lore _hook-post-commit 2>/dev/null || true
+exec lore _hook-post-commit
 # LORE-END

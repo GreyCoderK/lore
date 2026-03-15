@@ -11,8 +11,12 @@ func TestInstallHook_Fresh(t *testing.T) {
 	dir := initGitRepo(t)
 	a := NewAdapter(dir)
 
-	if err := a.InstallHook("post-commit"); err != nil {
+	result, err := a.InstallHook("post-commit")
+	if err != nil {
 		t.Fatalf("InstallHook: %v", err)
+	}
+	if !result.Installed {
+		t.Error("expected Installed = true")
 	}
 
 	hookPath := filepath.Join(dir, ".git", "hooks", "post-commit")
@@ -46,13 +50,17 @@ func TestInstallHook_ExistingHookPreserved(t *testing.T) {
 	dir := initGitRepo(t)
 
 	hookDir := filepath.Join(dir, ".git", "hooks")
-	os.MkdirAll(hookDir, 0755)
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
 	hookPath := filepath.Join(hookDir, "post-commit")
 	existingContent := "#!/bin/sh\necho 'existing hook'\n"
-	os.WriteFile(hookPath, []byte(existingContent), 0755)
+	if err := os.WriteFile(hookPath, []byte(existingContent), 0755); err != nil {
+		t.Fatalf("write existing hook: %v", err)
+	}
 
 	a := NewAdapter(dir)
-	if err := a.InstallHook("post-commit"); err != nil {
+	if _, err := a.InstallHook("post-commit"); err != nil {
 		t.Fatalf("InstallHook: %v", err)
 	}
 
@@ -71,10 +79,10 @@ func TestInstallHook_Idempotent(t *testing.T) {
 	dir := initGitRepo(t)
 	a := NewAdapter(dir)
 
-	if err := a.InstallHook("post-commit"); err != nil {
+	if _, err := a.InstallHook("post-commit"); err != nil {
 		t.Fatalf("first InstallHook: %v", err)
 	}
-	if err := a.InstallHook("post-commit"); err != nil {
+	if _, err := a.InstallHook("post-commit"); err != nil {
 		t.Fatalf("second InstallHook: %v", err)
 	}
 
@@ -108,10 +116,14 @@ func TestUninstallHook_PreservesExistingContent(t *testing.T) {
 	dir := initGitRepo(t)
 
 	hookDir := filepath.Join(dir, ".git", "hooks")
-	os.MkdirAll(hookDir, 0755)
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
 	hookPath := filepath.Join(hookDir, "post-commit")
 	existingContent := "#!/bin/sh\necho 'existing hook'\n"
-	os.WriteFile(hookPath, []byte(existingContent), 0755)
+	if err := os.WriteFile(hookPath, []byte(existingContent), 0755); err != nil {
+		t.Fatalf("write existing hook: %v", err)
+	}
 
 	a := NewAdapter(dir)
 	a.InstallHook("post-commit")
@@ -138,6 +150,48 @@ func TestUninstallHook_NoFile(t *testing.T) {
 	// Should not error when no hook file exists
 	if err := a.UninstallHook("post-commit"); err != nil {
 		t.Fatalf("UninstallHook on missing file: %v", err)
+	}
+}
+
+func TestUninstallHook_NoMarkers(t *testing.T) {
+	dir := initGitRepo(t)
+
+	hookDir := filepath.Join(dir, ".git", "hooks")
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
+	hookPath := filepath.Join(hookDir, "post-commit")
+	if err := os.WriteFile(hookPath, []byte("#!/bin/sh\necho hello\n"), 0755); err != nil {
+		t.Fatalf("write hook: %v", err)
+	}
+
+	a := NewAdapter(dir)
+	if err := a.UninstallHook("post-commit"); err != nil {
+		t.Fatalf("UninstallHook no markers: %v", err)
+	}
+
+	// File should still exist unchanged
+	data, _ := os.ReadFile(hookPath)
+	if !strings.Contains(string(data), "echo hello") {
+		t.Error("file should be unchanged")
+	}
+}
+
+func TestUninstallHook_EmptyAfterRemoval(t *testing.T) {
+	dir := initGitRepo(t)
+	a := NewAdapter(dir)
+
+	// Install then uninstall — file created by install has only shebang + lore block
+	a.InstallHook("post-commit")
+
+	hookPath := filepath.Join(dir, ".git", "hooks", "post-commit")
+	if err := a.UninstallHook("post-commit"); err != nil {
+		t.Fatalf("UninstallHook: %v", err)
+	}
+
+	// File should be removed since only shebang remains
+	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
+		t.Error("hook file should be deleted when only shebang remains")
 	}
 }
 
@@ -169,6 +223,130 @@ func TestHookExists_False(t *testing.T) {
 	}
 }
 
+// --- Integration tests guarded by testing.Short() ---
+
+func TestIntegration_FullHookLifecycle(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t)
+	a := NewAdapter(dir)
+
+	// Create .lore/ to simulate initialized repo
+	if err := os.MkdirAll(filepath.Join(dir, ".lore"), 0755); err != nil {
+		t.Fatalf("create .lore: %v", err)
+	}
+
+	// Step 1: Install hook
+	result, err := a.InstallHook("post-commit")
+	if err != nil {
+		t.Fatalf("InstallHook: %v", err)
+	}
+	if !result.Installed {
+		t.Error("expected Installed = true")
+	}
+
+	// Step 2: Verify hook file contains exact marker block
+	hookPath := filepath.Join(dir, ".git", "hooks", "post-commit")
+	data, err := os.ReadFile(hookPath)
+	if err != nil {
+		t.Fatalf("read hook: %v", err)
+	}
+	content := string(data)
+
+	if !strings.Contains(content, "#!/bin/sh") {
+		t.Error("missing shebang")
+	}
+	if !strings.Contains(content, "# LORE-START\nexec lore _hook-post-commit\n# LORE-END") {
+		t.Errorf("hook content does not contain exact marker block, got:\n%s", content)
+	}
+
+	// Step 3: Verify executable
+	info, _ := os.Stat(hookPath)
+	if info.Mode()&0111 == 0 {
+		t.Error("hook should be executable")
+	}
+
+	// Step 4: Uninstall hook
+	if err := a.UninstallHook("post-commit"); err != nil {
+		t.Fatalf("UninstallHook: %v", err)
+	}
+
+	// Step 5: Verify markers removed and file deleted (only shebang was left)
+	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
+		t.Error("hook file should be deleted after uninstall (only shebang remained)")
+	}
+
+	// Step 6: Verify HookExists returns false
+	exists, err := a.HookExists("post-commit")
+	if err != nil {
+		t.Fatalf("HookExists: %v", err)
+	}
+	if exists {
+		t.Error("expected HookExists = false after uninstall")
+	}
+}
+
+func TestIntegration_HuskyHookPreserved(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t)
+
+	// Write a pre-existing Husky-style hook
+	hookDir := filepath.Join(dir, ".git", "hooks")
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
+	hookPath := filepath.Join(hookDir, "post-commit")
+	huskyContent := "#!/bin/sh\n. \"$(dirname \"$0\")/_/husky.sh\"\nnpx lint-staged\n"
+	if err := os.WriteFile(hookPath, []byte(huskyContent), 0755); err != nil {
+		t.Fatalf("write husky hook: %v", err)
+	}
+
+	a := NewAdapter(dir)
+
+	// Install Lore hook alongside Husky
+	if _, err := a.InstallHook("post-commit"); err != nil {
+		t.Fatalf("InstallHook: %v", err)
+	}
+
+	data, _ := os.ReadFile(hookPath)
+	content := string(data)
+
+	// Verify Husky content is intact
+	if !strings.Contains(content, "husky.sh") {
+		t.Error("Husky content should be preserved")
+	}
+	if !strings.Contains(content, "npx lint-staged") {
+		t.Error("Husky lint-staged should be preserved")
+	}
+	// Verify Lore block appended
+	if !strings.Contains(content, loreStartMarker) {
+		t.Error("LORE block should be appended")
+	}
+
+	// Uninstall Lore — Husky should remain
+	if err := a.UninstallHook("post-commit"); err != nil {
+		t.Fatalf("UninstallHook: %v", err)
+	}
+
+	data, err := os.ReadFile(hookPath)
+	if err != nil {
+		t.Fatalf("hook file should still exist: %v", err)
+	}
+	content = string(data)
+
+	if strings.Contains(content, loreStartMarker) {
+		t.Error("LORE block should be removed")
+	}
+	if !strings.Contains(content, "husky.sh") {
+		t.Error("Husky content should still be preserved after uninstall")
+	}
+}
+
 func TestInstallHook_CoreHooksPath(t *testing.T) {
 	dir := initGitRepo(t)
 
@@ -176,11 +354,20 @@ func TestInstallHook_CoreHooksPath(t *testing.T) {
 	run(t, dir, "git", "config", "core.hooksPath", "/custom/hooks")
 
 	a := NewAdapter(dir)
-	err := a.InstallHook("post-commit")
-	if err == nil {
-		t.Error("expected error when core.hooksPath is set")
+	result, err := a.InstallHook("post-commit")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(err.Error(), "core.hooksPath") {
-		t.Errorf("error should mention core.hooksPath, got: %v", err)
+	if result.Installed {
+		t.Error("expected Installed = false when core.hooksPath is set")
+	}
+	if result.HooksPathWarn != "/custom/hooks" {
+		t.Errorf("expected HooksPathWarn = /custom/hooks, got %q", result.HooksPathWarn)
+	}
+
+	// Verify no hook file was created
+	hookPath := filepath.Join(dir, ".git", "hooks", "post-commit")
+	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
+		t.Error("no hook file should be created when core.hooksPath is set")
 	}
 }

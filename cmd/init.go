@@ -125,8 +125,11 @@ func runInit(_ context.Context, deps initDeps, streams domain.IOStreams, noDemo 
 	}
 
 	// 5. Install post-commit hook
-	if err := deps.git.InstallHook("post-commit"); err != nil {
+	result, err := deps.git.InstallHook("post-commit")
+	if err != nil {
 		fmt.Fprintf(streams.Err, "%s %s\n", ui.Warning("  Warning:"), err.Error())
+	} else if result.HooksPathWarn != "" {
+		fmt.Fprintf(streams.Err, "%s core.hooksPath is set to %q — manual integration required\n", ui.Warning("  Warning:"), result.HooksPathWarn)
 	} else {
 		ui.Verb(streams, "Installed", "post-commit hook")
 	}

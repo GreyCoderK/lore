@@ -1,15 +1,11 @@
 package git
 
-import "embed"
+import _ "embed"
 
 //go:embed scripts/post-commit.sh
-var hookScriptFS embed.FS
+var postCommitScript string
 
-// readHookScript reads the embedded hook script content.
+// readHookScript returns the embedded hook script content.
 func readHookScript() string {
-	data, err := hookScriptFS.ReadFile("scripts/post-commit.sh")
-	if err != nil {
-		panic("git: embedded hook script missing: " + err.Error())
-	}
-	return string(data)
+	return postCommitScript
 }

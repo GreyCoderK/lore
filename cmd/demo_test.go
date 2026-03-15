@@ -93,14 +93,18 @@ func TestRunDemo_HappyPath(t *testing.T) {
 		t.Error("expected demo document in .lore/docs/")
 	}
 
-	// Verify front matter has status: demo
-	if len(entries) > 0 {
-		data, err := os.ReadFile(filepath.Join(docsDir, entries[0].Name()))
+	// Verify front matter has status: demo (skip README.md)
+	for _, entry := range entries {
+		if entry.Name() == "README.md" {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(docsDir, entry.Name()))
 		if err != nil {
 			t.Fatalf("read demo doc: %v", err)
 		}
 		if !strings.Contains(string(data), "status: demo") {
 			t.Error("expected 'status: demo' in front matter")
 		}
+		break
 	}
 }

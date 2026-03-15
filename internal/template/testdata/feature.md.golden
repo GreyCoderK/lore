@@ -1,0 +1,10 @@
+# Add JWT auth middleware
+
+## What
+Add JWT auth middleware
+
+## Why
+Stateless authentication for microservices
+
+## Impact
+- API routes now require Bearer token

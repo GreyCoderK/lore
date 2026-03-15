@@ -1,0 +1,11 @@
+# Add JWT auth middleware
+
+## Problem
+Stateless authentication for microservices
+
+## Fix
+- API routes now require Bearer token
+
+## Root Cause
+- Session-based auth with Redis
+- OAuth2 with external provider

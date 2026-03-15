@@ -9,43 +9,13 @@ import (
 
 var nonAlphaNum = regexp.MustCompile(`[^a-z0-9]+`)
 
-// Slugify converts a string to a URL-friendly slug.
+// Slugify converts a string to a URL-friendly slug (display purposes).
+// For filename generation, use storage.slugify which also handles accents and length limits.
 func Slugify(s string) string {
 	s = strings.ToLower(s)
 	s = nonAlphaNum.ReplaceAllString(s, "-")
 	s = strings.Trim(s, "-")
 	return s
-}
-
-// DateString is a time.Time that serializes to YYYY-MM-DD in YAML.
-type DateString struct {
-	time.Time
-}
-
-// NewDateString creates a DateString from a time.Time.
-func NewDateString(t time.Time) DateString {
-	return DateString{Time: t}
-}
-
-func (d DateString) MarshalYAML() (interface{}, error) {
-	return d.Format("2006-01-02"), nil
-}
-
-func (d *DateString) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var s string
-	if err := unmarshal(&s); err != nil {
-		return err
-	}
-	t, err := time.Parse("2006-01-02", s)
-	if err != nil {
-		// Fall back to RFC3339
-		t, err = time.Parse(time.RFC3339, s)
-		if err != nil {
-			return err
-		}
-	}
-	d.Time = t
-	return nil
 }
 
 type IOStreams struct {
@@ -64,22 +34,42 @@ type CommitInfo struct {
 	Subject string
 }
 
+// InstallResult describes the outcome of a hook install operation.
+type InstallResult struct {
+	Installed     bool   // true if the hook was installed
+	HooksPathWarn string // non-empty if core.hooksPath is configured
+}
+
+// Document type constants.
+const (
+	DocTypeDecision = "decision"
+	DocTypeFeature  = "feature"
+	DocTypeBugfix   = "bugfix"
+	DocTypeRefactor = "refactor"
+	DocTypeRelease  = "release"
+	DocTypeNote     = "note"
+)
+
 type DocMeta struct {
-	Type        string     `yaml:"type"`
-	Date        DateString `yaml:"date"`
-	Commit      string     `yaml:"commit,omitempty"`
-	Status      string     `yaml:"status"`
-	Tags        []string   `yaml:"tags,omitempty"`
-	Related     []string   `yaml:"related,omitempty"`
-	GeneratedBy string     `yaml:"generated_by,omitempty"`
-	AngelaMode  string     `yaml:"angela_mode,omitempty"`
+	Type        string   `yaml:"type"`
+	Date        string   `yaml:"date"`
+	Commit      string   `yaml:"commit,omitempty"`
+	Status      string   `yaml:"status"`
+	Tags        []string `yaml:"tags,omitempty"`
+	Related     []string `yaml:"related,omitempty"`
+	GeneratedBy string   `yaml:"generated_by,omitempty"`
+	AngelaMode  string   `yaml:"angela_mode,omitempty"`
+
+	Filename string `yaml:"-"` // populated at runtime by ListDocs, not serialized
 }
 
 type DocFilter struct {
-	Type    string
-	Keyword string
-	After   time.Time
-	Before  time.Time
+	Type   string
+	After  string // YYYY-MM-DD, inclusive
+	Before string // YYYY-MM-DD, inclusive
+	Tags   []string
+	Status string
+	Text   string // search in body
 }
 
 type Option func(*CallOptions)

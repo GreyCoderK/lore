@@ -73,53 +73,54 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	demoPause(ctx)
 
 	// Step 5: Generate document through real pipeline
-	engine, err := loretemplate.New()
+	engine, err := loretemplate.New(
+		filepath.Join(loreDir, "templates"),
+		loretemplate.GlobalDir(),
+	)
 	if err != nil {
 		return fmt.Errorf("cmd: demo template: %w", err)
 	}
 
 	now := time.Now()
-	input := generator.DemoInput{
-		Type:         demoAnswers["type"],
+	input := generator.GenerateInput{
+		DocType:      demoAnswers["type"],
 		What:         demoAnswers["what"],
 		Why:          demoAnswers["why"],
-		Commit:       demoCommitHash,
-		Date:         now,
-		Status:       "demo",
-		Tags:         []string{"authentication", "jwt", "middleware"},
-		GeneratedBy:  "lore-demo",
 		Alternatives: demoAnswers["alternatives"],
 		Impact:       demoAnswers["impact"],
+		CommitInfo: &domain.CommitInfo{
+			Hash: demoCommitHash,
+			Date: now,
+		},
+		GeneratedBy: "lore-demo",
 	}
 
-	body, err := generator.Generate(ctx, engine, input)
+	genResult, err := generator.Generate(ctx, engine, input)
 	if err != nil {
 		return fmt.Errorf("cmd: demo generate: %w", err)
 	}
 
-	meta := domain.DocMeta{
-		Type:        "decision",
-		Date:        domain.NewDateString(now),
-		Commit:      demoCommitHash,
-		Status:      "demo",
-		Tags:        []string{"authentication", "jwt", "middleware"},
-		GeneratedBy: "lore-demo",
-	}
+	// L11 fix: use the meta produced by Generate() as the base — eliminates the
+	// redundant date construction (was: now.Format("2006-01-02") alongside
+	// input.CommitInfo.Date = now). Override Status and Tags for demo-specific fields.
+	demoMeta := genResult.Meta
+	demoMeta.Status = "demo"
+	demoMeta.Tags = []string{"authentication", "jwt", "middleware"}
 
 	docsDir := filepath.Join(loreDir, "docs")
-	filename, err := storage.WriteDoc(docsDir, meta, demoAnswers["what"], body)
+	result, err := storage.WriteDoc(docsDir, demoMeta, demoAnswers["what"], genResult.Body)
 	if err != nil {
 		return fmt.Errorf("cmd: demo write: %w", err)
 	}
 
-	ui.Verb(streams, "Created", filename)
+	ui.Verb(streams, "Created", result.Filename)
 	fmt.Fprintln(streams.Err)
 	demoPause(ctx)
 
 	// Step 6: Simulated lore show
 	fmt.Fprintf(streams.Err, "%s\n\n", ui.Dim("Simulating: lore show auth"))
 
-	fmt.Fprintf(streams.Err, "  %s\n\n", ui.Bold(filename))
+	fmt.Fprintf(streams.Err, "  %s\n\n", ui.Bold(result.Filename))
 	fmt.Fprintf(streams.Err, "  Type:    %s\n", demoAnswers["type"])
 	fmt.Fprintf(streams.Err, "  What:    %s\n", demoAnswers["what"])
 	fmt.Fprintf(streams.Err, "  Why:     %s\n", demoAnswers["why"])

@@ -2,17 +2,28 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"sync/atomic"
 )
 
 var colorFlag atomic.Bool
 
 func init() {
-	colorFlag.Store(true)
+	// Respect NO_COLOR (https://no-color.org/) — disable ANSI if the variable is set.
+	_, noColor := os.LookupEnv("NO_COLOR")
+	colorFlag.Store(!noColor)
 }
 
 func SetColorEnabled(enabled bool) {
 	colorFlag.Store(enabled)
+}
+
+// ResetColorFromEnv re-reads the NO_COLOR environment variable and updates the
+// color flag accordingly. Call this in tests after t.Setenv("NO_COLOR", ...) to
+// simulate the env-based initialization that init() performs once at startup.
+func ResetColorFromEnv() {
+	_, noColor := os.LookupEnv("NO_COLOR")
+	colorFlag.Store(!noColor)
 }
 
 func isColorEnabled() bool {

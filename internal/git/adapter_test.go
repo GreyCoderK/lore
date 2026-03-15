@@ -1,8 +1,10 @@
 package git
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -35,6 +37,10 @@ func run(t *testing.T, dir string, name string, args ...string) {
 }
 
 func TestIsInsideWorkTree_True(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir := initGitRepo(t)
 	a := NewAdapter(dir)
 
@@ -44,6 +50,10 @@ func TestIsInsideWorkTree_True(t *testing.T) {
 }
 
 func TestIsInsideWorkTree_False(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir := t.TempDir() // not a git repo
 	a := NewAdapter(dir)
 
@@ -53,6 +63,10 @@ func TestIsInsideWorkTree_False(t *testing.T) {
 }
 
 func TestHeadRef_WithCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir := initGitRepoWithCommit(t)
 	a := NewAdapter(dir)
 
@@ -66,6 +80,10 @@ func TestHeadRef_WithCommit(t *testing.T) {
 }
 
 func TestHeadRef_NoCommits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir := initGitRepo(t)
 	a := NewAdapter(dir)
 
@@ -76,6 +94,10 @@ func TestHeadRef_NoCommits(t *testing.T) {
 }
 
 func TestCommitExists_True(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir := initGitRepoWithCommit(t)
 	a := NewAdapter(dir)
 
@@ -90,6 +112,10 @@ func TestCommitExists_True(t *testing.T) {
 }
 
 func TestCommitExists_False(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir := initGitRepoWithCommit(t)
 	a := NewAdapter(dir)
 
@@ -103,19 +129,281 @@ func TestCommitExists_False(t *testing.T) {
 }
 
 func TestAdapter_WorkDir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir := initGitRepo(t)
 	a := NewAdapter(dir)
 
-	// Verify the adapter works from the specified directory
 	if !a.IsInsideWorkTree() {
 		t.Error("adapter should work from workDir")
 	}
 
-	// Verify with a subdirectory
 	sub := filepath.Join(dir, "subdir")
 	run(t, dir, "mkdir", sub)
 	aSub := NewAdapter(sub)
 	if !aSub.IsInsideWorkTree() {
 		t.Error("adapter should work from subdirectory of git repo")
+	}
+}
+
+// --- Integration tests (real git repos) ---
+
+func TestLog_ConventionalCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "feat(auth): add login endpoint")
+	a := NewAdapter(dir)
+
+	info, err := a.Log("HEAD")
+	if err != nil {
+		t.Fatalf("Log: %v", err)
+	}
+	if info.Hash == "" {
+		t.Error("expected non-empty hash")
+	}
+	if info.Author != "Test" {
+		t.Errorf("expected author 'Test', got %q", info.Author)
+	}
+	if info.Type != "feat" {
+		t.Errorf("expected type 'feat', got %q", info.Type)
+	}
+	if info.Scope != "auth" {
+		t.Errorf("expected scope 'auth', got %q", info.Scope)
+	}
+	if info.Subject != "add login endpoint" {
+		t.Errorf("expected subject 'add login endpoint', got %q", info.Subject)
+	}
+}
+
+func TestLog_NonConventionalCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "just a normal commit")
+	a := NewAdapter(dir)
+
+	info, err := a.Log("HEAD")
+	if err != nil {
+		t.Fatalf("Log: %v", err)
+	}
+	if info.Type != "" {
+		t.Errorf("expected empty type for non-CC, got %q", info.Type)
+	}
+	if info.Subject != "just a normal commit" {
+		t.Errorf("expected subject = full message, got %q", info.Subject)
+	}
+}
+
+func TestDiff_WithChanges(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	// Create a file and commit it
+	if err := os.WriteFile(filepath.Join(dir, "test.txt"), []byte("hello\n"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+	run(t, dir, "git", "add", "test.txt")
+	run(t, dir, "git", "commit", "-m", "add test.txt")
+
+	a := NewAdapter(dir)
+	diff, err := a.Diff("HEAD")
+	if err != nil {
+		t.Fatalf("Diff: %v", err)
+	}
+	if !strings.Contains(diff, "test.txt") {
+		t.Error("diff should contain the changed file")
+	}
+	if !strings.Contains(diff, "+hello") {
+		t.Error("diff should contain the added content")
+	}
+}
+
+func TestIsMergeCommit_False(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	a := NewAdapter(dir)
+
+	isMerge, err := a.IsMergeCommit("HEAD")
+	if err != nil {
+		t.Fatalf("IsMergeCommit: %v", err)
+	}
+	if isMerge {
+		t.Error("expected IsMergeCommit = false for non-merge commit")
+	}
+}
+
+func TestIsMergeCommit_True(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	// Create a branch with a commit, then merge back
+	run(t, dir, "git", "checkout", "-b", "feature")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "feature commit")
+	// Go back to the initial branch (could be main or master)
+	run(t, dir, "git", "checkout", "-")
+	run(t, dir, "git", "merge", "--no-ff", "feature", "-m", "merge feature")
+
+	a := NewAdapter(dir)
+	isMerge, err := a.IsMergeCommit("HEAD")
+	if err != nil {
+		t.Fatalf("IsMergeCommit: %v", err)
+	}
+	if !isMerge {
+		t.Error("expected IsMergeCommit = true for merge commit")
+	}
+}
+
+func TestIsRebaseInProgress_False(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	a := NewAdapter(dir)
+
+	inRebase, err := a.IsRebaseInProgress()
+	if err != nil {
+		t.Fatalf("IsRebaseInProgress: %v", err)
+	}
+	if inRebase {
+		t.Error("expected IsRebaseInProgress = false")
+	}
+}
+
+func TestIsRebaseInProgress_True(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	// Simulate rebase in progress by creating the rebase-merge directory
+	rebaseMerge := filepath.Join(dir, ".git", "rebase-merge")
+	if err := os.MkdirAll(rebaseMerge, 0755); err != nil {
+		t.Fatalf("create rebase-merge: %v", err)
+	}
+
+	a := NewAdapter(dir)
+	inRebase, err := a.IsRebaseInProgress()
+	if err != nil {
+		t.Fatalf("IsRebaseInProgress: %v", err)
+	}
+	if !inRebase {
+		t.Error("expected IsRebaseInProgress = true")
+	}
+}
+
+func TestCommitMessageContains_True(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "feat: add [skip-lore] marker")
+	a := NewAdapter(dir)
+
+	contains, err := a.CommitMessageContains("HEAD", "[skip-lore]")
+	if err != nil {
+		t.Fatalf("CommitMessageContains: %v", err)
+	}
+	if !contains {
+		t.Error("expected CommitMessageContains = true")
+	}
+}
+
+func TestCommitMessageContains_False(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "feat: add login")
+	a := NewAdapter(dir)
+
+	contains, err := a.CommitMessageContains("HEAD", "[skip-lore]")
+	if err != nil {
+		t.Fatalf("CommitMessageContains: %v", err)
+	}
+	if contains {
+		t.Error("expected CommitMessageContains = false")
+	}
+}
+
+// --- ParseConventionalCommit unit tests ---
+
+func TestParseConventionalCommit_Full(t *testing.T) {
+	ccType, scope, subject := ParseConventionalCommit("feat(auth): add login endpoint")
+	if ccType != "feat" {
+		t.Errorf("type = %q, want feat", ccType)
+	}
+	if scope != "auth" {
+		t.Errorf("scope = %q, want auth", scope)
+	}
+	if subject != "add login endpoint" {
+		t.Errorf("subject = %q, want 'add login endpoint'", subject)
+	}
+}
+
+func TestParseConventionalCommit_NoScope(t *testing.T) {
+	ccType, scope, subject := ParseConventionalCommit("fix: correct typo")
+	if ccType != "fix" {
+		t.Errorf("type = %q, want fix", ccType)
+	}
+	if scope != "" {
+		t.Errorf("scope = %q, want empty", scope)
+	}
+	if subject != "correct typo" {
+		t.Errorf("subject = %q, want 'correct typo'", subject)
+	}
+}
+
+func TestParseConventionalCommit_NonConventional(t *testing.T) {
+	ccType, scope, subject := ParseConventionalCommit("just a commit message")
+	if ccType != "" {
+		t.Errorf("type = %q, want empty", ccType)
+	}
+	if scope != "" {
+		t.Errorf("scope = %q, want empty", scope)
+	}
+	if subject != "just a commit message" {
+		t.Errorf("subject = %q, want 'just a commit message'", subject)
+	}
+}
+
+func TestParseConventionalCommit_Multiline(t *testing.T) {
+	msg := "feat(api): add endpoint\n\nThis is the body of the commit."
+	ccType, scope, subject := ParseConventionalCommit(msg)
+	if ccType != "feat" {
+		t.Errorf("type = %q, want feat", ccType)
+	}
+	if scope != "api" {
+		t.Errorf("scope = %q, want api", scope)
+	}
+	if subject != "add endpoint" {
+		t.Errorf("subject = %q, want 'add endpoint'", subject)
+	}
+}
+
+// --- Embedded hook script test ---
+
+func TestPostCommitScript_NonEmpty(t *testing.T) {
+	if postCommitScript == "" {
+		t.Error("postCommitScript should not be empty")
+	}
+	if !strings.Contains(postCommitScript, "lore _hook-post-commit") {
+		t.Error("postCommitScript should contain 'lore _hook-post-commit'")
 	}
 }

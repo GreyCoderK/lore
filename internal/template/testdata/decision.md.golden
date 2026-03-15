@@ -1,0 +1,14 @@
+# Add JWT auth middleware
+
+## What
+Add JWT auth middleware
+
+## Why
+Stateless authentication for microservices
+
+## Alternatives Considered
+- Session-based auth with Redis
+- OAuth2 with external provider
+
+## Impact
+- API routes now require Bearer token

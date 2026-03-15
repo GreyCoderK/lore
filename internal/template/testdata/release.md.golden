@@ -1,0 +1,7 @@
+# Add JWT auth middleware
+
+## Summary
+Stateless authentication for microservices
+
+## Changes
+- API routes now require Bearer token

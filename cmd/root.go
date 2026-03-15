@@ -37,6 +37,7 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd.AddCommand(
 		newInitCmd(cfg, streams),
 		newHookCmd(cfg, streams),
+		newHookPostCommitCmd(cfg, streams),
 		newNewCmd(cfg, streams),
 		newShowCmd(cfg, streams),
 		newListCmd(cfg, streams),

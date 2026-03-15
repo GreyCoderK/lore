@@ -22,7 +22,8 @@ type mockGitAdapter struct {
 	IsMergeCommitFunc         func(string) (bool, error)
 	IsRebaseInProgressFunc    func() (bool, error)
 	CommitMessageContainsFunc func(string, string) (bool, error)
-	InstallHookFunc           func(string) error
+	GitDirFunc                func() (string, error)
+	InstallHookFunc           func(string) (domain.InstallResult, error)
 	UninstallHookFunc         func(string) error
 	HookExistsFunc            func(string) (bool, error)
 }
@@ -83,11 +84,18 @@ func (m *mockGitAdapter) CommitMessageContains(ref, marker string) (bool, error)
 	return false, fmt.Errorf("mock: CommitMessageContains not configured")
 }
 
-func (m *mockGitAdapter) InstallHook(hookType string) error {
+func (m *mockGitAdapter) GitDir() (string, error) {
+	if m.GitDirFunc != nil {
+		return m.GitDirFunc()
+	}
+	return "", nil
+}
+
+func (m *mockGitAdapter) InstallHook(hookType string) (domain.InstallResult, error) {
 	if m.InstallHookFunc != nil {
 		return m.InstallHookFunc(hookType)
 	}
-	return nil
+	return domain.InstallResult{Installed: true}, nil
 }
 
 func (m *mockGitAdapter) UninstallHook(hookType string) error {
@@ -124,7 +132,7 @@ func TestRunInit_HappyPath(t *testing.T) {
 
 	mock := &mockGitAdapter{
 		IsInsideWorkTreeFunc: func() bool { return true },
-		InstallHookFunc:      func(string) error { return nil },
+		InstallHookFunc:      func(string) (domain.InstallResult, error) { return domain.InstallResult{Installed: true}, nil },
 	}
 
 	deps := initDeps{git: mock, workDir: dir}

@@ -76,3 +76,18 @@ func TestAllColorsDisabled(t *testing.T) {
 		}
 	}
 }
+
+// TestNoColorEnvVar verifies that ResetColorFromEnv() respects the NO_COLOR env var.
+// L9 fix: init() runs once per process so t.Setenv alone cannot retrigger it;
+// ResetColorFromEnv() must be called explicitly after the env is changed.
+func TestNoColorEnvVar(t *testing.T) {
+	defer ResetColorFromEnv() // restore from actual env after test
+
+	t.Setenv("NO_COLOR", "")
+	ResetColorFromEnv()
+
+	got := Success("ok")
+	if got != "ok" {
+		t.Errorf("NO_COLOR set: expected plain 'ok', got %q", got)
+	}
+}

@@ -16,7 +16,9 @@ type GitAdapter interface {
 
 	CommitMessageContains(ref, marker string) (bool, error)
 
-	InstallHook(hookType string) error
+	GitDir() (string, error)
+
+	InstallHook(hookType string) (InstallResult, error)
 	UninstallHook(hookType string) error
 	HookExists(hookType string) (bool, error)
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func TestFormatDate(t *testing.T) {
+func TestFormatDate_TimeInput(t *testing.T) {
 	tests := []struct {
 		input time.Time
 		want  string
@@ -22,6 +22,25 @@ func TestFormatDate(t *testing.T) {
 	}
 }
 
+func TestFormatDate_Zero(t *testing.T) {
+	got := formatDate(time.Time{})
+	if got != "" {
+		t.Errorf("formatDate(zero) = %q, want empty string", got)
+	}
+}
+
+func TestFormatDate_StringInput(t *testing.T) {
+	got := formatDate("2026-03-12")
+	if got != "2026-03-12" {
+		t.Errorf("formatDate(string) = %q, want %q", got, "2026-03-12")
+	}
+
+	got = formatDate("")
+	if got != "" {
+		t.Errorf("formatDate(empty string) = %q, want empty", got)
+	}
+}
+
 func TestSlugify(t *testing.T) {
 	tests := []struct {
 		input, want string
@@ -30,11 +49,28 @@ func TestSlugify(t *testing.T) {
 		{"JWT Auth Middleware", "jwt-auth-middleware"},
 		{"  spaces  ", "spaces"},
 		{"already-slugged", "already-slugged"},
+		{"", ""},
 	}
 	for _, tt := range tests {
 		got := slugify(tt.input)
 		if got != tt.want {
 			t.Errorf("slugify(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestCommitLink(t *testing.T) {
+	tests := []struct {
+		input, want string
+	}{
+		{"abc1234def5678", "[`abc1234`](../../commit/abc1234def5678)"},
+		{"deadbeef", "[`deadbee`](../../commit/deadbeef)"},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		got := commitLink(tt.input)
+		if got != tt.want {
+			t.Errorf("commitLink(%q) = %q, want %q", tt.input, got, tt.want)
 		}
 	}
 }

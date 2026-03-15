@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,12 +18,33 @@ type CorpusStore struct {
 	Dir string // path to .lore/docs/
 }
 
+// validateFilename rejects path traversal attempts in user-supplied filenames.
+func validateFilename(filename string) error {
+	if filename == "" {
+		return fmt.Errorf("storage: filename is empty")
+	}
+	if filepath.IsAbs(filename) {
+		return fmt.Errorf("storage: filename must be relative: %s", filename)
+	}
+	if strings.Contains(filename, "..") {
+		return fmt.Errorf("storage: filename must not contain '..': %s", filename)
+	}
+	if strings.ContainsAny(filename, `/\`) {
+		return fmt.Errorf("storage: filename must not contain path separators: %s", filename)
+	}
+	return nil
+}
+
 // ReadDoc reads a single document by ID (filename without extension).
 func (s *CorpusStore) ReadDoc(id string) (string, error) {
 	// Try with .md extension if not provided
 	filename := id
 	if !strings.HasSuffix(filename, ".md") {
 		filename += ".md"
+	}
+
+	if err := validateFilename(filename); err != nil {
+		return "", fmt.Errorf("storage: read doc %s: %w", id, err)
 	}
 
 	path := filepath.Join(s.Dir, filename)
@@ -38,6 +60,8 @@ func (s *CorpusStore) ReadDoc(id string) (string, error) {
 }
 
 // ListDocs scans the directory for .md files and returns their metadata.
+// Skips README.md (auto-generated index). Returns partial results alongside
+// a combined error if any files could not be read or parsed.
 func (s *CorpusStore) ListDocs(filter domain.DocFilter) ([]domain.DocMeta, error) {
 	entries, err := os.ReadDir(s.Dir)
 	if err != nil {
@@ -48,44 +72,69 @@ func (s *CorpusStore) ListDocs(filter domain.DocFilter) ([]domain.DocMeta, error
 	}
 
 	var results []domain.DocMeta
+	var parseErrs []error
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".md") || name == "README.md" {
 			continue
 		}
 
-		data, err := os.ReadFile(filepath.Join(s.Dir, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(s.Dir, name))
 		if err != nil {
+			parseErrs = append(parseErrs, fmt.Errorf("storage: read %s: %w", name, err))
 			continue
 		}
 
-		meta, _, err := Unmarshal(data)
+		meta, body, err := Unmarshal(data)
 		if err != nil {
+			parseErrs = append(parseErrs, fmt.Errorf("storage: parse %s: %w", name, err))
 			continue
 		}
 
-		if matchesFilter(meta, filter) {
+		meta.Filename = name
+		if matchesFilter(meta, name, body, filter) {
 			results = append(results, meta)
 		}
 	}
 
-	return results, nil
+	return results, errors.Join(parseErrs...)
 }
 
-func matchesFilter(meta domain.DocMeta, filter domain.DocFilter) bool {
+func matchesFilter(meta domain.DocMeta, filename string, body string, filter domain.DocFilter) bool {
 	if filter.Type != "" && meta.Type != filter.Type {
 		return false
 	}
-	if filter.Keyword != "" {
-		// Simple keyword match against type
-		if !strings.Contains(strings.ToLower(meta.Type), strings.ToLower(filter.Keyword)) {
+	if filter.Status != "" && meta.Status != filter.Status {
+		return false
+	}
+	if filter.After != "" && meta.Date < filter.After {
+		return false
+	}
+	if filter.Before != "" && meta.Date > filter.Before {
+		return false
+	}
+	if len(filter.Tags) > 0 {
+		for _, tag := range filter.Tags {
+			if !containsString(meta.Tags, tag) {
+				return false
+			}
+		}
+	}
+	if filter.Text != "" {
+		search := strings.ToLower(filter.Text)
+		if !strings.Contains(strings.ToLower(body), search) &&
+			!strings.Contains(strings.ToLower(filename), search) {
 			return false
 		}
 	}
-	if !filter.After.IsZero() && meta.Date.Time.Before(filter.After) {
-		return false
-	}
-	if !filter.Before.IsZero() && meta.Date.Time.After(filter.Before) {
-		return false
-	}
 	return true
+}
+
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }
