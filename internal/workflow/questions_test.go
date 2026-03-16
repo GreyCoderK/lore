@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // testStreams builds mock IOStreams from a pre-defined input string.

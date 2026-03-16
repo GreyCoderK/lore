@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/museigen/lore/internal/storage"
+	"github.com/greycoderk/lore/internal/storage"
 	"gopkg.in/yaml.v3"
 )
 

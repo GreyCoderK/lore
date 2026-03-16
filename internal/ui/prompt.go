@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // Confirm waits for Enter key press.

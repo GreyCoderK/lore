@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 	"gopkg.in/yaml.v3"
 )
 
@@ -62,23 +62,13 @@ func Unmarshal(data []byte) (domain.DocMeta, string, error) {
 	return meta, body, nil
 }
 
-// validDocTypes is the whitelist of accepted document type values.
-var validDocTypes = map[string]bool{
-	domain.DocTypeDecision: true,
-	domain.DocTypeFeature:  true,
-	domain.DocTypeBugfix:   true,
-	domain.DocTypeRefactor: true,
-	domain.DocTypeRelease:  true,
-	domain.DocTypeNote:     true,
-}
-
 // ValidateMeta checks that required fields (type, date, status) are present,
 // that type is a recognized DocType constant, and that date is in YYYY-MM-DD format.
 func ValidateMeta(meta domain.DocMeta) error {
 	if meta.Type == "" {
 		return fmt.Errorf("storage: validate meta: type required")
 	}
-	if !validDocTypes[meta.Type] {
+	if !domain.ValidDocType(meta.Type) {
 		return fmt.Errorf("storage: validate meta: unknown type %q (must be one of: decision, feature, bugfix, refactor, release, note)", meta.Type)
 	}
 	if meta.Date == "" {

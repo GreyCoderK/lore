@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/git"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/git"
 )
 
 func initRealGitRepo(t *testing.T) string {

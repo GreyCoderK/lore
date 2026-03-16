@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/generator"
-	"github.com/museigen/lore/internal/storage"
-	loretemplate "github.com/museigen/lore/internal/template"
-	"github.com/museigen/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/generator"
+	"github.com/greycoderk/lore/internal/storage"
+	loretemplate "github.com/greycoderk/lore/internal/template"
+	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 

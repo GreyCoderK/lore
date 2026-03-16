@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 var logoUnicode = `╦  ╔═╗ ╦═╗ ╔═╗

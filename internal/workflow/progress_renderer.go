@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // ProgressRenderer is the TTY renderer that condenses confirmed answers via ANSI.

@@ -1,8 +1,8 @@
 package workflow
 
 import (
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/ui"
 )
 
 // IsInteractiveTTY reports whether the session is running in an interactive TTY.

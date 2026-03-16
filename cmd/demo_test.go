@@ -7,15 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/testutil"
 )
 
 func TestRunDemo_NotInitialized(t *testing.T) {
 	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(origDir)
+	// chdir required: cmd uses os.Getwd() to find .lore/
+	testutil.Chdir(t, dir)
 
 	var errBuf bytes.Buffer
 	streams := domain.IOStreams{
@@ -38,14 +38,11 @@ func TestRunDemo_NotInitialized(t *testing.T) {
 }
 
 func TestRunDemo_HappyPath(t *testing.T) {
-	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(origDir)
+	dir := testutil.SetupLoreDir(t)
+	// chdir required: cmd uses os.Getwd() to find .lore/
+	testutil.Chdir(t, dir)
 
-	// Create .lore/docs/ to simulate initialized state
 	docsDir := filepath.Join(dir, ".lore", "docs")
-	os.MkdirAll(docsDir, 0755)
 
 	var errBuf bytes.Buffer
 	streams := domain.IOStreams{

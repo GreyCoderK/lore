@@ -8,16 +8,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/git"
-	"github.com/museigen/lore/internal/storage"
-	"github.com/museigen/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/git"
+	"github.com/greycoderk/lore/internal/storage"
+	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 const lorercContent = `# Lore configuration — shared with team (commit this file)
-# See: https://github.com/museigen/lore/docs/configuration
+# See: https://github.com/greycoderk/lore/docs/configuration
 
 ai:
   provider: ""       # anthropic, openai, ollama

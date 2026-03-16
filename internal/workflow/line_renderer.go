@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // LineRenderer is the non-TTY renderer for CI/pipe environments.

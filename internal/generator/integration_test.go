@@ -6,17 +6,18 @@ package generator_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/generator"
-	"github.com/museigen/lore/internal/storage"
-	loretemplate "github.com/museigen/lore/internal/template"
-	"github.com/museigen/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/generator"
+	"github.com/greycoderk/lore/internal/storage"
+	loretemplate "github.com/greycoderk/lore/internal/template"
+	"github.com/greycoderk/lore/internal/ui"
 )
 
 // TestIntegration_FullPipeline tests the complete workflow → generator → storage pipeline.
@@ -144,6 +145,8 @@ func TestIntegration_PipelineOutput(t *testing.T) {
 		Err: &stderrBuf,
 	}
 	ui.Verb(streams, "Captured", writeResult.Filename)
+	// AC-2: dim path on second line (color disabled → plain text, same format as reactive.go)
+	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(writeResult.Path))
 
 	output := stderrBuf.String()
 	// Verb pads to 10 chars: "  Captured" (2 leading spaces)
@@ -152,6 +155,10 @@ func TestIntegration_PipelineOutput(t *testing.T) {
 	}
 	if !strings.Contains(output, writeResult.Filename) {
 		t.Errorf("expected filename %q in Verb output, got: %q", writeResult.Filename, output)
+	}
+	// N1 fix: verify dim path appears on second line (AC-2 second display requirement)
+	if !strings.Contains(output, writeResult.Path) {
+		t.Errorf("expected dim path %q on second line, got: %q", writeResult.Path, output)
 	}
 }
 

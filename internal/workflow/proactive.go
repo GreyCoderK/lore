@@ -5,34 +5,22 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/generator"
-	"github.com/museigen/lore/internal/storage"
-	loretemplate "github.com/museigen/lore/internal/template"
-	"github.com/museigen/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/ui"
 )
 
 // ProactiveOpts holds pre-filled arguments from the CLI for lore new.
 type ProactiveOpts struct {
-	Type string // pre-filled type (may be empty)
-	What string // pre-filled what (may be empty)
-	Why  string // pre-filled why (may be empty)
+	Type  string                        // pre-filled type (may be empty)
+	What  string                        // pre-filled what (may be empty)
+	Why   string                        // pre-filled why (may be empty)
+	IsTTY func(domain.IOStreams) bool    // N4 fix: optional TTY override for testing (nil → IsInteractiveTTY)
 }
 
-// validDocTypes lists the accepted document types for argument validation.
-var validDocTypes = map[string]bool{
-	domain.DocTypeDecision: true,
-	domain.DocTypeFeature:  true,
-	domain.DocTypeBugfix:   true,
-	domain.DocTypeRefactor: true,
-	domain.DocTypeRelease:  true,
-	domain.DocTypeNote:     true,
-}
 
 // HandleProactive runs the manual documentation flow for `lore new`.
 // Unlike HandleReactive, there is no commit context, no express mode,
 // and generated_by is "manual".
-// CONSOLIDATE: extraire helper si duplication significative avec reactive.go
 func HandleProactive(ctx context.Context, workDir string, streams domain.IOStreams, opts ProactiveOpts) error {
 	renderer := NewRenderer(streams)
 	// Express mode is structurally disabled: runProactiveQuestions calls Ask* methods
@@ -41,7 +29,7 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 
 	answers, err := runProactiveQuestions(ctx, flow, opts)
 	if err != nil {
-		// H2: save partial answers on Ctrl+C so they are not silently lost.
+		// Save partial answers on Ctrl+C so they are not silently lost.
 		// No commit hash in manual mode — SavePending uses "unknown-{timestamp}" fallback.
 		if ctx.Err() != nil {
 			record := BuildPendingRecord(answers, "", "", "interrupted", "partial")
@@ -50,26 +38,9 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 		return fmt.Errorf("workflow: proactive: %w", err)
 	}
 
-	loreDir := filepath.Join(workDir, ".lore")
-	engine, err := loretemplate.New(
-		filepath.Join(loreDir, "templates"),
-		loretemplate.GlobalDir(),
-	)
+	result, err := generateAndWrite(ctx, workDir, answers, nil, "manual", "")
 	if err != nil {
-		return fmt.Errorf("workflow: proactive: template engine: %w", err)
-	}
-
-	// M7: pass "manual" so generated_by front-matter is correct (AC-3).
-	input := answers.ToGenerateInput(nil, "manual")
-	genResult, err := generator.Generate(ctx, engine, input)
-	if err != nil {
-		return fmt.Errorf("workflow: proactive: generate: %w", err)
-	}
-
-	docsDir := filepath.Join(loreDir, "docs")
-	result, err := storage.WriteDoc(docsDir, genResult.Meta, input.What, genResult.Body)
-	if err != nil {
-		return fmt.Errorf("workflow: proactive: write doc: %w", err)
+		return fmt.Errorf("workflow: proactive: %w", err)
 	}
 
 	ui.Verb(streams, "Captured", result.Filename)
@@ -78,6 +49,14 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 		displayPath = result.Path
 	}
 	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
+
+	// N4 fix: use opts.IsTTY when available, fallback to IsInteractiveTTY.
+	docsDir := filepath.Join(workDir, ".lore", "docs")
+	tty := IsInteractiveTTY(streams)
+	if opts.IsTTY != nil {
+		tty = opts.IsTTY(streams)
+	}
+	showMilestone(streams, docsDir, tty)
 
 	return nil
 }
@@ -89,7 +68,7 @@ func runProactiveQuestions(ctx context.Context, flow *QuestionFlow, opts Proacti
 	var answers Answers
 
 	// --- Question 1: Type ---
-	if opts.Type != "" && validDocTypes[opts.Type] {
+	if opts.Type != "" && domain.ValidDocType(opts.Type) {
 		// Valid type provided → skip prompt
 		answers.Type = opts.Type
 		flow.renderer.QuestionConfirm("Type", opts.Type)

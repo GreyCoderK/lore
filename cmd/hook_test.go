@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/config"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/testutil"
 )
 
 func testConfig() *config.Config {
@@ -40,16 +41,8 @@ func TestIntegration_HookInstallCmd(t *testing.T) {
 	}
 
 	dir := initRealGitRepo(t)
-
-	origDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	defer os.Chdir(origDir)
-
-	if err := os.Chdir(dir); err != nil {
-		t.Fatalf("chdir: %v", err)
-	}
+	// chdir required: hook cmd uses os.Getwd() to find .git/
+	testutil.Chdir(t, dir)
 
 	streams, _, errBuf := testStreams()
 	cfg := testConfig()
@@ -89,16 +82,8 @@ func TestIntegration_HookInstallCmd_CoreHooksPath(t *testing.T) {
 
 	dir := initRealGitRepo(t)
 	runGit(t, dir, "config", "core.hooksPath", "/custom/hooks")
-
-	origDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	defer os.Chdir(origDir)
-
-	if err := os.Chdir(dir); err != nil {
-		t.Fatalf("chdir: %v", err)
-	}
+	// chdir required: hook cmd uses os.Getwd() to find .git/
+	testutil.Chdir(t, dir)
 
 	streams, _, errBuf := testStreams()
 	cfg := testConfig()
@@ -129,16 +114,8 @@ func TestIntegration_HookUninstallCmd(t *testing.T) {
 	}
 
 	dir := initRealGitRepo(t)
-
-	origDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	defer os.Chdir(origDir)
-
-	if err := os.Chdir(dir); err != nil {
-		t.Fatalf("chdir: %v", err)
-	}
+	// chdir required: hook cmd uses os.Getwd() to find .git/
+	testutil.Chdir(t, dir)
 
 	streams, _, errBuf := testStreams()
 	cfg := testConfig()

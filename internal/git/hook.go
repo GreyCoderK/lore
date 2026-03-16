@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/fileutil"
 )
 
 const (
@@ -154,18 +155,6 @@ func hookExists(hooksDir, hookType string) (bool, error) {
 	return strings.Contains(string(data), loreStartMarker), nil
 }
 
-// CONSOLIDATE: Story 2-2 — unifier avec storage.atomicWrite si possible
 func atomicWriteHook(path string, data []byte) error {
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0755); err != nil {
-		return fmt.Errorf("git: write hook tmp: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		os.Remove(tmp) // cleanup on failure
-		return fmt.Errorf("git: rename hook: %w", err)
-	}
-	if err := os.Chmod(path, 0755); err != nil {
-		return fmt.Errorf("git: chmod hook %s: %w", filepath.Base(path), err)
-	}
-	return nil
+	return fileutil.AtomicWrite(path, data, 0755)
 }

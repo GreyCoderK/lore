@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // Adapter implements domain.GitAdapter via exec.Command("git", ...).

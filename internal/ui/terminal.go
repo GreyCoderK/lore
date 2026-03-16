@@ -3,7 +3,7 @@ package ui
 import (
 	"os"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 	"golang.org/x/term"
 )
 

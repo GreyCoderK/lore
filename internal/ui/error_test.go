@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestActionableError(t *testing.T) {

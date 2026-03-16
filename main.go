@@ -1,6 +1,6 @@
 package main
 
-import "github.com/museigen/lore/cmd"
+import "github.com/greycoderk/lore/cmd"
 
 func main() {
 	cmd.Execute()

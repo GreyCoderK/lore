@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/git"
-	"github.com/museigen/lore/internal/workflow"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/git"
+	"github.com/greycoderk/lore/internal/workflow"
 	"github.com/spf13/cobra"
 )
 

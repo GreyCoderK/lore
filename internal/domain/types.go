@@ -50,6 +50,23 @@ const (
 	DocTypeNote     = "note"
 )
 
+// validDocTypes is the single source of truth for accepted document types.
+// Access via ValidDocType() — do not mutate directly.
+var validDocTypes = map[string]bool{
+	DocTypeDecision: true,
+	DocTypeFeature:  true,
+	DocTypeBugfix:   true,
+	DocTypeRefactor: true,
+	DocTypeRelease:  true,
+	DocTypeNote:     true,
+}
+
+// ValidDocType reports whether t is a recognized document type.
+// This is the single source of truth for accepted types.
+func ValidDocType(t string) bool {
+	return validDocTypes[t]
+}
+
 type DocMeta struct {
 	Type        string   `yaml:"type"`
 	Date        string   `yaml:"date"`
@@ -69,7 +86,7 @@ type DocFilter struct {
 	Before string // YYYY-MM-DD, inclusive
 	Tags   []string
 	Status string
-	Text   string // search in body
+	Text   string // case-insensitive search in body and filename
 }
 
 type Option func(*CallOptions)

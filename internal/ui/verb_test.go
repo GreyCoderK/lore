@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestVerbAlignment(t *testing.T) {

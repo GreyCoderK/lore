@@ -3,7 +3,7 @@ package workflow
 import (
 	"context"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // Dispatch is the central router for the post-commit hook workflow.

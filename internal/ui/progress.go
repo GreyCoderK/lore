@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // Progress displays "[##·] 3/5 label" on stderr.

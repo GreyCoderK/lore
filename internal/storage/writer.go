@@ -7,7 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/fileutil"
 )
 
 // WriteResult contains the outcome of a WriteDoc operation.
@@ -18,35 +19,17 @@ type WriteResult struct {
 }
 
 // AtomicWrite writes data to path via a temp file + rename for crash safety.
-// Sets explicit 0644 permissions on the resulting file.
-// Note: uses os.CreateTemp (randomized name) rather than path+".tmp" for
-// collision safety. Orphaned temp files use the pattern ".lore-*.tmp".
+// Sets explicit 0644 permissions on the resulting file. Overwrites if exists.
 func AtomicWrite(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, ".lore-*.tmp")
-	if err != nil {
-		return fmt.Errorf("storage: create temp: %w", err)
-	}
-	tmpName := tmp.Name()
+	return fileutil.AtomicWrite(path, data, 0644)
+}
 
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
-		return fmt.Errorf("storage: write temp: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("storage: close temp: %w", err)
-	}
-	if err := os.Chmod(tmpName, 0644); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("storage: chmod temp: %w", err)
-	}
-	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
-		return fmt.Errorf("storage: rename temp: %w", err)
-	}
-	return nil
+// AtomicWriteExclusive writes data to path via a temp file + hard link.
+// Unlike AtomicWrite, it fails if path already exists (returns an error
+// where os.IsExist reports true). This avoids the TOCTOU race inherent
+// in Stat-then-Rename patterns.
+func AtomicWriteExclusive(path string, data []byte) error {
+	return fileutil.AtomicWriteExclusive(path, data, 0644)
 }
 
 // WriteDoc creates a document in the given directory via AtomicWrite.
@@ -71,16 +54,17 @@ func WriteDoc(dir string, meta domain.DocMeta, subject string, body string) (Wri
 	filename := fmt.Sprintf("%s-%s-%s.md", meta.Type, slug, meta.Date)
 	path := filepath.Join(dir, filename)
 
-	if _, err := os.Stat(path); err == nil {
-		return WriteResult{}, fmt.Errorf("storage: write %s: file already exists", filename)
-	}
-
 	data, err := Marshal(meta, body)
 	if err != nil {
 		return WriteResult{}, fmt.Errorf("storage: marshal %s: %w", filename, err)
 	}
 
-	if err := AtomicWrite(path, data); err != nil {
+	// M3 fix: AtomicWriteExclusive uses os.Link which fails atomically if
+	// path exists — eliminates the TOCTOU race of the old os.Stat + AtomicWrite.
+	if err := AtomicWriteExclusive(path, data); err != nil {
+		if os.IsExist(err) {
+			return WriteResult{}, fmt.Errorf("storage: write %s: file already exists", filename)
+		}
 		return WriteResult{}, fmt.Errorf("storage: write %s: %w", filename, err)
 	}
 

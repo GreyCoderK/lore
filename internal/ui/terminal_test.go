@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func testStreams() domain.IOStreams {

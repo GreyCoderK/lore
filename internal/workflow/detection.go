@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // DetectionResult describes how the hook should handle the current commit.
@@ -27,6 +28,12 @@ type DetectOpts struct {
 	// func(_ domain.IOStreams) bool { return true } to bypass TTY detection
 	// without polluting production code with a test-only flag.
 	IsTTY func(domain.IOStreams) bool
+
+	// Corpus provides doc existence checks for cherry-pick (AC-5) and amend
+	// (AC-4) detection. When nil, these checks are skipped and the old
+	// unconditional skip/amend behavior applies (backward compat for tests
+	// that don't need doc existence verification).
+	Corpus domain.CorpusReader
 }
 
 // Detect determines the appropriate action for the current commit context.
@@ -92,30 +99,63 @@ func Detect(ctx context.Context, ref string, git domain.GitAdapter, streams doma
 		}, nil
 	}
 
-	// 5. Cherry-pick — skip silently when CHERRY_PICK_HEAD is present.
-	if isCherryPickInProgress(git) {
-		return DetectionResult{Action: "skip", Reason: "cherry-pick"}, nil
+	// 5. Cherry-pick — AC-5: skip only when a doc exists for the source commit.
+	// H1 fix: read the hash from CHERRY_PICK_HEAD and verify a matching doc
+	// exists in the corpus before skipping. Without Corpus (nil), falls back
+	// to unconditional skip (backward compat).
+	sourceHash := cherryPickSourceHash(git)
+	if sourceHash != "" {
+		if opts.Corpus == nil || hasDocForCommit(opts.Corpus, sourceHash) {
+			return DetectionResult{Action: "skip", Reason: "cherry-pick"}, nil
+		}
+		// Cherry-pick in progress but no doc for source → proceed normally.
 	}
 
-	// 6. Amend — propose modification of existing document.
+	// 6. Amend — AC-4: propose modification only when a doc exists for the
+	// pre-amend commit. H2 fix: read ORIG_HEAD and verify a matching doc
+	// exists before returning "amend". Without Corpus (nil), falls back to
+	// unconditional amend (backward compat).
 	if isAmendCommit(opts.GetEnv) {
-		return DetectionResult{Action: "amend", Reason: "amend"}, nil
+		if opts.Corpus == nil {
+			return DetectionResult{Action: "amend", Reason: "amend"}, nil
+		}
+		origHash := readORIGHEAD(git)
+		if origHash != "" && hasDocForCommit(opts.Corpus, origHash) {
+			return DetectionResult{Action: "amend", Reason: "amend"}, nil
+		}
+		// Amend but no existing doc → proceed (create new doc).
+		return DetectionResult{Action: "proceed"}, nil
 	}
 
 	// 7. Normal commit — proceed with interactive question flow.
 	return DetectionResult{Action: "proceed"}, nil
 }
 
-// isCherryPickInProgress reports whether a cherry-pick is in progress by
-// checking for CHERRY_PICK_HEAD in the git directory. Uses GitAdapter.GitDir()
-// so detection.go never hardcodes the .git/ path (per task 1.5).
-func isCherryPickInProgress(git domain.GitAdapter) bool {
+// cherryPickSourceHash returns the source commit hash if a cherry-pick is in
+// progress, or empty string otherwise. Reads CHERRY_PICK_HEAD from the git dir.
+// H1 fix: replaces isCherryPickInProgress (bool) — callers now get the hash
+// so they can verify whether a doc exists for the source commit (AC-5).
+func cherryPickSourceHash(git domain.GitAdapter) string {
 	gitDir, err := git.GitDir()
 	if err != nil {
-		return false
+		return ""
 	}
-	_, statErr := os.Stat(filepath.Join(gitDir, "CHERRY_PICK_HEAD"))
-	return statErr == nil
+	data, err := os.ReadFile(filepath.Join(gitDir, "CHERRY_PICK_HEAD"))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
+
+// hasDocForCommit scans the corpus for a document matching the given commit hash.
+func hasDocForCommit(corpus domain.CorpusReader, hash string) bool {
+	docs, _ := corpus.ListDocs(domain.DocFilter{})
+	for _, doc := range docs {
+		if doc.Commit == hash {
+			return true
+		}
+	}
+	return false
 }
 
 // isAmendCommit reports whether the current commit is an amend.

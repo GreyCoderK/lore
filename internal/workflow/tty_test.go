@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // mockStreams returns non-os.File streams (buffers/strings), which IsInteractiveTTY must treat as non-TTY.

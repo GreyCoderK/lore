@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestDeleteDoc_Success(t *testing.T) {
@@ -86,7 +86,7 @@ func TestDeleteDoc_RegeneratesIndex(t *testing.T) {
 	// README should now show 1 doc
 	data, _ = os.ReadFile(filepath.Join(dir, "README.md"))
 	content := string(data)
-	if !strings.Contains(content, "1 documents total") {
+	if !strings.Contains(content, "1 document total") {
 		t.Errorf("expected 1 document after delete, got:\n%s", content)
 	}
 	if strings.Contains(content, r1.Filename) {

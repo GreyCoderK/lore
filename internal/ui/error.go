@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func ActionableError(streams domain.IOStreams, message string, command string) {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestRegenerateIndex_EmptyDir(t *testing.T) {
@@ -107,6 +107,39 @@ func TestRegenerateIndex_NonExistentDir(t *testing.T) {
 	err := RegenerateIndex("/nonexistent/path/that/doesnt/exist")
 	if err != nil {
 		t.Errorf("non-existent dir should return nil, got: %v", err)
+	}
+}
+
+// TestRegenerateIndex_PartialOnCorruptedFile verifies N1 fix: when a .md file
+// cannot be parsed, RegenerateIndex still writes the index with the valid files
+// and returns the parse error — a partial index is better than no update.
+func TestRegenerateIndex_PartialOnCorruptedFile(t *testing.T) {
+	dir := t.TempDir()
+
+	// Write one valid doc
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "valid", "body\n")
+
+	// Inject a corrupted .md file (no front matter delimiter)
+	if err := os.WriteFile(filepath.Join(dir, "corrupted.md"), []byte("no front matter here"), 0o644); err != nil {
+		t.Fatalf("write corrupted: %v", err)
+	}
+
+	err := RegenerateIndex(dir)
+	if err == nil {
+		t.Error("expected error for corrupted file, got nil")
+	}
+
+	// Index must still be written with the parseable doc
+	data, readErr := os.ReadFile(filepath.Join(dir, "README.md"))
+	if readErr != nil {
+		t.Fatalf("README.md should be written even with corrupted files: %v", readErr)
+	}
+	content := string(data)
+	if !strings.Contains(content, "1 document total") {
+		t.Errorf("expected partial index with '1 document total', got:\n%s", content)
+	}
+	if !strings.Contains(content, "decision") {
+		t.Errorf("expected valid doc in partial index, got:\n%s", content)
 	}
 }
 

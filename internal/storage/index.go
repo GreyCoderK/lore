@@ -57,10 +57,6 @@ func RegenerateIndex(docsDir string) error {
 			Tags:     strings.Join(meta.Tags, ", "),
 		})
 	}
-	if len(parseErrs) > 0 {
-		return errors.Join(parseErrs...)
-	}
-
 	// Sort by date descending
 	sort.Slice(docs, func(i, j int) bool {
 		return docs[i].Date > docs[j].Date
@@ -79,10 +75,21 @@ func RegenerateIndex(docsDir string) error {
 			escapeTableCell(d.Tags))
 	}
 
-	fmt.Fprintf(&buf, "\n*%d documents total*\n", len(docs))
+	// N2 fix: correct singular/plural for document count.
+	unit := "documents"
+	if len(docs) == 1 {
+		unit = "document"
+	}
+	fmt.Fprintf(&buf, "\n*%d %s total*\n", len(docs), unit)
 
 	readmePath := filepath.Join(docsDir, "README.md")
-	return AtomicWrite(readmePath, []byte(buf.String()))
+	// N1 fix: write partial index even when some files fail to parse.
+	// A partial-but-readable index is better than no update at all.
+	// Parse errors are returned after the write so callers can surface them.
+	if writeErr := AtomicWrite(readmePath, []byte(buf.String())); writeErr != nil {
+		return writeErr
+	}
+	return errors.Join(parseErrs...)
 }
 
 // escapeTableCell escapes pipe characters in markdown table cell values.

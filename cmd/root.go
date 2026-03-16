@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/cli"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -66,6 +67,6 @@ func Execute() {
 	cmd := newRootCmd(cfg, streams)
 
 	if err := cmd.Execute(); err != nil {
-		os.Exit(1)
+		os.Exit(cli.ExitError)
 	}
 }

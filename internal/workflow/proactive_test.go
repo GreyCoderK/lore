@@ -3,12 +3,14 @@ package workflow
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/storage"
 )
 
 // newProactiveWorkDir creates a minimal .lore directory structure under a temp dir.
@@ -298,6 +300,135 @@ func TestToGenerateInput_ManualMode(t *testing.T) {
 	}
 	if input.CommitInfo != nil {
 		t.Errorf("CommitInfo = %v, want nil for manual mode", input.CommitInfo)
+	}
+}
+
+// N1: generate failure (broken local template) must save partial answers as pending.
+func TestHandleProactive_GenerateFails_SavesPending(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newProactiveWorkDir(t)
+
+	// Write a syntactically invalid Go template to the local templates dir.
+	// Local templates are resolved lazily at Render time (not at New time),
+	// so this causes generator.Generate() to fail — not loretemplate.New().
+	brokenTmpl := filepath.Join(workDir, ".lore", "templates", "note.md.tmpl")
+	if err := os.WriteFile(brokenTmpl, []byte("{{.Bad template syntax"), 0o644); err != nil {
+		t.Fatalf("write broken template: %v", err)
+	}
+
+	// All args pre-filled → only alt+impact remain (2 Enters).
+	streams := domain.IOStreams{
+		In:  strings.NewReader("\n\n"),
+		Out: &bytes.Buffer{},
+		Err: &bytes.Buffer{},
+	}
+
+	opts := ProactiveOpts{Type: "note", What: "test doc", Why: "for testing"}
+	err := HandleProactive(context.Background(), workDir, streams, opts)
+	if err == nil {
+		t.Fatal("expected error from broken template")
+	}
+
+	// N1: pending file must be saved even on generate failure.
+	pendingDir := filepath.Join(workDir, ".lore", "pending")
+	entries, readErr := os.ReadDir(pendingDir)
+	if readErr != nil {
+		t.Fatalf("ReadDir pending: %v", readErr)
+	}
+	if len(entries) == 0 {
+		t.Error("expected pending file saved on generate failure, got none")
+	}
+}
+
+// N2: WriteDoc failure must save partial answers as pending.
+// Trigger: .lore/docs exists as a file — os.MkdirAll inside WriteDoc fails.
+func TestHandleProactive_WriteDocFails_SavesPending(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := t.TempDir()
+	// .lore/templates must exist for the template engine to initialise.
+	os.MkdirAll(filepath.Join(workDir, ".lore", "templates"), 0o755)
+	// .lore/docs as a regular FILE — WriteDoc's os.MkdirAll will fail.
+	if err := os.WriteFile(filepath.Join(workDir, ".lore", "docs"), []byte("not-a-dir"), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	streams := domain.IOStreams{
+		In:  strings.NewReader("\n\n"),
+		Out: &bytes.Buffer{},
+		Err: &bytes.Buffer{},
+	}
+
+	opts := ProactiveOpts{Type: "note", What: "test doc", Why: "for testing"}
+	err := HandleProactive(context.Background(), workDir, streams, opts)
+	if err == nil {
+		t.Fatal("expected error when docs dir is a file")
+	}
+
+	// N2: pending file must be saved even on WriteDoc failure.
+	pendingDir := filepath.Join(workDir, ".lore", "pending")
+	entries, readErr := os.ReadDir(pendingDir)
+	if readErr != nil {
+		t.Fatalf("ReadDir pending: %v", readErr)
+	}
+	if len(entries) == 0 {
+		t.Error("expected pending file saved on WriteDoc failure, got none")
+	}
+}
+
+// N4 fix: end-to-end test for proactive milestone — pre-create 2 docs, run
+// HandleProactive (creates 3rd), verify milestone-3 message via IsTTY injection.
+func TestHandleProactive_MilestoneAtThreshold3(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newProactiveWorkDir(t)
+	docsDir := filepath.Join(workDir, ".lore", "docs")
+
+	// Pre-create 2 documents so the proactive flow's 3rd triggers the milestone.
+	for i := 0; i < 2; i++ {
+		_, err := storage.WriteDoc(docsDir, domain.DocMeta{
+			Type:   "decision",
+			Date:   "2026-03-15",
+			Status: "published",
+			Commit: fmt.Sprintf("proactive-pre%d", i),
+		}, fmt.Sprintf("proactive pre %d", i), fmt.Sprintf("# Pre %d\n\nBody.\n", i))
+		if err != nil {
+			t.Fatalf("setup WriteDoc[%d]: %v", i, err)
+		}
+	}
+
+	input := "note\nthird doc\nbecause milestone\n\n\n"
+	stderr := &bytes.Buffer{}
+	streams := domain.IOStreams{
+		In:  strings.NewReader(input),
+		Out: &bytes.Buffer{},
+		Err: stderr,
+	}
+
+	err := HandleProactive(context.Background(), workDir, streams, ProactiveOpts{
+		IsTTY: func(_ domain.IOStreams) bool { return true },
+	})
+	if err != nil {
+		t.Fatalf("HandleProactive milestone: %v", err)
+	}
+
+	output := stderr.String()
+	if !strings.Contains(output, "3 decisions captured") {
+		t.Errorf("expected milestone-3 message in proactive stderr, got: %q", output)
+	}
+
+	// Verify milestone appears AFTER "Captured".
+	capturedIdx := strings.Index(output, "Captured")
+	milestoneIdx := strings.Index(output, "3 decisions captured")
+	if capturedIdx >= 0 && milestoneIdx >= 0 && milestoneIdx <= capturedIdx {
+		t.Errorf("milestone should appear after Captured line")
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/greycoderk/lore/internal/testutil"
 	"gopkg.in/yaml.v3"
 )
 
@@ -135,16 +136,9 @@ func TestSavePending_NoOverwrite(t *testing.T) {
 
 func TestSavePending_RelativePath(t *testing.T) {
 	// L19 validation: SavePending works with relative workDir "."
-	// We change CWD to a temp dir to simulate the git work tree scenario.
+	// chdir required: test verifies SavePending with relative path "."
 	workDir := t.TempDir()
-	orig, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(orig) })
-	if err := os.Chdir(workDir); err != nil {
-		t.Fatal(err)
-	}
+	testutil.Chdir(t, workDir)
 
 	record := PendingRecord{Commit: "reltest", Status: "partial", Reason: "interrupted"}
 	if err := SavePending(".", record); err != nil {

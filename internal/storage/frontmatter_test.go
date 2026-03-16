@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestMarshalUnmarshal_RoundTrip(t *testing.T) {

@@ -7,31 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/testutil"
 )
-
-// setupLoreDir creates a minimal .lore structure under dir and changes CWD to it.
-// Returns a cleanup function. Note: os.Chdir is not goroutine-safe; these tests
-// must not run in parallel (L7: documented constraint, inherent to cmd layer which
-// checks ".lore" relative to CWD).
-func setupLoreDir(t *testing.T) string {
-	t.Helper()
-	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	t.Cleanup(func() { os.Chdir(origDir) })
-	for _, sub := range []string{".lore/docs", ".lore/templates"} {
-		os.MkdirAll(filepath.Join(dir, sub), 0o755)
-	}
-	return dir
-}
 
 func TestNewCmd_NotInitialized(t *testing.T) {
 	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(origDir)
+	// chdir required: cmd uses os.Getwd() to find .lore/
+	testutil.Chdir(t, dir)
 
 	var errBuf bytes.Buffer
 	streams := domain.IOStreams{
@@ -62,7 +46,9 @@ func TestNewCmd_NoArgs_FullInteractiveFlow(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 
-	dir := setupLoreDir(t)
+	// chdir required: cmd uses os.Getwd() to find .lore/
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
 
 	// No args: type, what, why all prompted; alt+impact skipped with Enter.
 	// H1 fix: no default for Type, user must type a value.
@@ -110,7 +96,9 @@ func TestNewCmd_WithArgs_SkipsPrompts(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 
-	setupLoreDir(t)
+	// chdir required: cmd uses os.Getwd() to find .lore/
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
 
 	// With all 3 args, only alternatives + impact remain → 2 Enter keys
 	input := "\n\n"
@@ -149,7 +137,9 @@ func TestNewCmd_OneArg_AsksRemainingInteractively(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 
-	setupLoreDir(t)
+	// chdir required: cmd uses os.Getwd() to find .lore/
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
 
 	// 1 arg (type=note): what + why prompted interactively; alt + impact skipped.
 	input := "my doc\nbecause reasons\n\n\n"
@@ -186,7 +176,9 @@ func TestNewCmd_TwoArgs_AsksRemainingInteractively(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 
-	setupLoreDir(t)
+	// chdir required: cmd uses os.Getwd() to find .lore/
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
 
 	// 2 args (type=bugfix, what="fix login"): only why prompted; alt + impact skipped.
 	input := "login was broken\n\n\n"

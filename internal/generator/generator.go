@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/museigen/lore/internal/domain"
-	loretemplate "github.com/museigen/lore/internal/template"
+	"github.com/greycoderk/lore/internal/domain"
+	loretemplate "github.com/greycoderk/lore/internal/template"
 )
 
 // GenerateInput holds all inputs for document generation.

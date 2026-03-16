@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 const defaultExpressThreshold = 3 * time.Second

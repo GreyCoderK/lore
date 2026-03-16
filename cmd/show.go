@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
 	"github.com/spf13/cobra"
 )
 

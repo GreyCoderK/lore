@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/museigen/lore/internal/config"
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/ui"
-	"github.com/museigen/lore/internal/workflow"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/workflow"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,8 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		Short: "Document a decision right now",
 		Example: `  lore new
   lore new feature "add auth middleware" "JWT for stateless auth"`,
-		Args: cobra.MaximumNArgs(3),
+		Args:         cobra.MaximumNArgs(3),
+		SilenceUsage: true, // N4 fix: prevent cobra from printing usage on RunE errors
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// AC-4: Check if Lore is initialized
 			loreDir := filepath.Join(".", ".lore")

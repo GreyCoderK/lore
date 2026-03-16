@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/config"
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/testutil"
 )
 
 func testEmptyConfig() *config.Config {
@@ -21,9 +22,8 @@ func TestIntegration_InitThenDemo(t *testing.T) {
 	dir := initRealGitRepo(t)
 	runGit(t, dir, "commit", "--allow-empty", "-m", "initial")
 
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(origDir)
+	// chdir required: init and demo commands use os.Getwd() to find .lore/
+	testutil.Chdir(t, dir)
 
 	// Run lore init
 	streams, _, errBuf := testStreams("\n")

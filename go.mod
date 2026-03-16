@@ -1,4 +1,4 @@
-module github.com/museigen/lore
+module github.com/greycoderk/lore
 
 go 1.25.6
 

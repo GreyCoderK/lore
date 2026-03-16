@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestWriteDoc_CreatesFileWithFrontMatter(t *testing.T) {
@@ -173,7 +173,7 @@ func TestAtomicWrite_NoTmpLeftover(t *testing.T) {
 
 	entries, _ := os.ReadDir(dir)
 	for _, e := range entries {
-		if strings.Contains(e.Name(), ".tmp") {
+		if strings.HasPrefix(e.Name(), ".lore-") && strings.HasSuffix(e.Name(), ".tmp") {
 			t.Errorf("temp file left over: %s", e.Name())
 		}
 	}

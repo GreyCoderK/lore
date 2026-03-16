@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // formatDate accepts both time.Time and string (already formatted YYYY-MM-DD).
@@ -23,7 +23,6 @@ func formatDate(v any) string {
 	}
 }
 
-// CONSOLIDATE: envisager extraction vers domain/ si les import boundaries le permettent
 func slugify(s string) string {
 	return domain.Slugify(s)
 }

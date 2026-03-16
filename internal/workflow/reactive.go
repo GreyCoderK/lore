@@ -7,11 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/museigen/lore/internal/domain"
-	"github.com/museigen/lore/internal/generator"
-	"github.com/museigen/lore/internal/storage"
-	loretemplate "github.com/museigen/lore/internal/template"
-	"github.com/museigen/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/storage"
+	"github.com/greycoderk/lore/internal/ui"
 )
 
 // HandleReactive runs the full interactive post-commit flow:
@@ -39,6 +37,19 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 
 	commit, _ := gitAdapter.Log(ref) // non-fatal; nil → flow uses defaults
 
+	// H1/H2 fix: provide corpus reader for doc existence checks (AC-4, AC-5).
+	if detectOpts.Corpus == nil {
+		detectOpts.Corpus = &storage.CorpusStore{Dir: filepath.Join(workDir, ".lore", "docs")}
+	}
+
+	// N2 fix: normalize IsTTY BEFORE Detect so both Detect and showMilestone
+	// share a single evaluation — avoids double-call divergence risk.
+	if detectOpts.IsTTY == nil {
+		isTTY := IsInteractiveTTY(streams)
+		detectOpts.IsTTY = func(_ domain.IOStreams) bool { return isTTY }
+	}
+	tty := detectOpts.IsTTY(streams)
+
 	// --- 1b. Contextual detection (AC-1 through AC-6) ---
 	detection, err := Detect(ctx, ref, gitAdapter, streams, detectOpts)
 	if err != nil {
@@ -51,6 +62,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 		}
 		return fmt.Errorf("workflow: reactive: detect: %w", err)
 	}
+
 	switch detection.Action {
 	case "skip":
 		if detection.Message != "" {
@@ -65,7 +77,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 		}
 		return nil
 	case "amend":
-		return handleAmend(ctx, workDir, streams, gitAdapter, commit)
+		return handleAmend(ctx, workDir, streams, gitAdapter, commit, tty)
 	// "proceed" falls through to the normal interactive flow below.
 	}
 
@@ -83,6 +95,9 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 	}
 	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
 
+	// AC-1..AC-5: milestone reinforcement (TTY only, counted after write).
+	showMilestone(streams, filepath.Join(workDir, ".lore", "docs"), tty)
+
 	return nil
 }
 
@@ -97,9 +112,6 @@ func commitFields(commit *domain.CommitInfo) (hash, msg string) {
 // runDocumentationFlow orchestrates the question flow, document generation, and
 // persistence. If overwritePath is non-empty the document is written to that
 // exact path (atomic overwrite) rather than creating a new file via WriteDoc.
-//
-// H2 fix: extracted from handleReactiveWithOpts and handleAmend to eliminate ~60
-// lines of duplication between the two code paths.
 func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IOStreams, commit *domain.CommitInfo, overwritePath string) (storage.WriteResult, error) {
 	renderer := NewRenderer(streams)
 	flow := NewQuestionFlow(streams, renderer)
@@ -115,48 +127,7 @@ func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IO
 		return storage.WriteResult{}, fmt.Errorf("workflow: question flow: %w", flowErr)
 	}
 
-	loreDir := filepath.Join(workDir, ".lore")
-	engine, err := loretemplate.New(
-		filepath.Join(loreDir, "templates"),
-		loretemplate.GlobalDir(),
-	)
-	if err != nil {
-		return storage.WriteResult{}, fmt.Errorf("workflow: template engine: %w", err)
-	}
-
-	// M7 fix: pass "hook" explicitly so the generated_by front-matter field is correct.
-	// Story 2.7 proactive flow will pass "manual" via its own call path.
-	input := answers.ToGenerateInput(commit, "hook")
-	genResult, err := generator.Generate(ctx, engine, input)
-	if err != nil {
-		// H4 fix: save collected answers as pending so they are not silently lost
-		// on template errors, engine failures, or context cancellation during render.
-		hash, msg := commitFields(commit)
-		record := BuildPendingRecord(answers, hash, msg, "interrupted", "partial")
-		_ = SavePending(workDir, record) // best-effort
-		return storage.WriteResult{}, fmt.Errorf("workflow: generate: %w", err)
-	}
-
-	// H1 fix: use genResult.Meta built inside Generate() — callers no longer
-	// reconstruct domain.DocMeta independently (eliminates divergence risk).
-	docsDir := filepath.Join(loreDir, "docs")
-	if overwritePath != "" {
-		// Atomic overwrite of an existing document (amend path).
-		data, marshalErr := storage.Marshal(genResult.Meta, genResult.Body)
-		if marshalErr != nil {
-			return storage.WriteResult{}, fmt.Errorf("workflow: marshal: %w", marshalErr)
-		}
-		if writeErr := storage.AtomicWrite(overwritePath, data); writeErr != nil {
-			return storage.WriteResult{}, fmt.Errorf("workflow: write: %w", writeErr)
-		}
-		return storage.WriteResult{Filename: filepath.Base(overwritePath), Path: overwritePath}, nil
-	}
-
-	result, err := storage.WriteDoc(docsDir, genResult.Meta, input.What, genResult.Body)
-	if err != nil {
-		return storage.WriteResult{}, fmt.Errorf("workflow: write doc: %w", err)
-	}
-	return result, nil
+	return generateAndWrite(ctx, workDir, answers, commit, "hook", overwritePath)
 }
 
 // handleAmend handles AC-4: when amending, find the pre-amend document and
@@ -167,7 +138,7 @@ func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IO
 //  2. Scan .lore/docs/ for a document whose front-matter commit field matches.
 //  3. If found: run the question flow and overwrite that document.
 //  4. If not found: run the normal flow (create a new document).
-func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, commit *domain.CommitInfo) error {
+func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, commit *domain.CommitInfo, tty bool) error {
 	loreDir := filepath.Join(workDir, ".lore")
 	docsDir := filepath.Join(loreDir, "docs")
 
@@ -178,7 +149,9 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	var existingFilename string
 	if origHash != "" {
 		store := &storage.CorpusStore{Dir: docsDir}
-		docs, _ := store.ListDocs(domain.DocFilter{}) // non-fatal scan
+		// Best-effort scan: parse errors on individual files are acceptable —
+		// a corrupted doc should not prevent amend detection on well-formed ones.
+		docs, _ := store.ListDocs(domain.DocFilter{})
 		for _, doc := range docs {
 			if doc.Commit == origHash {
 				existingFilename = doc.Filename
@@ -220,6 +193,9 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 		displayPath = result.Path
 	}
 	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
+
+	// Milestone reinforcement (same as main reactive flow).
+	showMilestone(streams, docsDir, tty)
 
 	return nil
 }

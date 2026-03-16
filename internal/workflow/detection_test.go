@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/museigen/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // detectAdapter is a configurable mock for detection tests.
@@ -209,6 +209,117 @@ func TestDetect_NormalCommit(t *testing.T) {
 	}
 }
 
+// mockCorpus implements domain.CorpusReader for detection tests.
+type mockCorpus struct {
+	docs []domain.DocMeta
+}
+
+func (m *mockCorpus) ReadDoc(_ string) (string, error)                          { return "", nil }
+func (m *mockCorpus) ListDocs(_ domain.DocFilter) ([]domain.DocMeta, error)     { return m.docs, nil }
+
+// TestDetect_CherryPick_WithDoc verifies AC-5: cherry-pick + doc exists → skip.
+func TestDetect_CherryPick_WithDoc(t *testing.T) {
+	gitDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(gitDir, "CHERRY_PICK_HEAD"), []byte("deadbeef\n"), 0o644); err != nil {
+		t.Fatalf("create CHERRY_PICK_HEAD: %v", err)
+	}
+
+	adapter := &detectAdapter{gitDirPath: gitDir}
+	corpus := &mockCorpus{docs: []domain.DocMeta{{Commit: "deadbeef"}}}
+
+	result, err := Detect(context.Background(), "abc", adapter, nonTTYStreams(), DetectOpts{
+		IsTTY:  func(_ domain.IOStreams) bool { return true },
+		Corpus: corpus,
+	})
+	if err != nil {
+		t.Fatalf("Detect: %v", err)
+	}
+	if result.Action != "skip" {
+		t.Errorf("Action = %q, want skip (doc exists for cherry-picked commit)", result.Action)
+	}
+	if result.Reason != "cherry-pick" {
+		t.Errorf("Reason = %q, want cherry-pick", result.Reason)
+	}
+}
+
+// TestDetect_CherryPick_WithoutDoc verifies AC-5: cherry-pick but no doc → proceed.
+func TestDetect_CherryPick_WithoutDoc(t *testing.T) {
+	gitDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(gitDir, "CHERRY_PICK_HEAD"), []byte("deadbeef\n"), 0o644); err != nil {
+		t.Fatalf("create CHERRY_PICK_HEAD: %v", err)
+	}
+
+	adapter := &detectAdapter{gitDirPath: gitDir}
+	corpus := &mockCorpus{docs: []domain.DocMeta{}} // no matching doc
+
+	result, err := Detect(context.Background(), "abc", adapter, nonTTYStreams(), DetectOpts{
+		IsTTY:  func(_ domain.IOStreams) bool { return true },
+		Corpus: corpus,
+	})
+	if err != nil {
+		t.Fatalf("Detect: %v", err)
+	}
+	if result.Action != "proceed" {
+		t.Errorf("Action = %q, want proceed (no doc for cherry-picked commit)", result.Action)
+	}
+}
+
+// TestDetect_Amend_WithDoc verifies AC-4: amend + doc exists for pre-amend → amend action.
+func TestDetect_Amend_WithDoc(t *testing.T) {
+	gitDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(gitDir, "ORIG_HEAD"), []byte("origabc\n"), 0o644); err != nil {
+		t.Fatalf("create ORIG_HEAD: %v", err)
+	}
+
+	adapter := &detectAdapter{gitDirPath: gitDir}
+	corpus := &mockCorpus{docs: []domain.DocMeta{{Commit: "origabc"}}}
+
+	result, err := Detect(context.Background(), "abc", adapter, nonTTYStreams(), DetectOpts{
+		IsTTY: func(_ domain.IOStreams) bool { return true },
+		GetEnv: func(key string) string {
+			if key == "GIT_REFLOG_ACTION" {
+				return "amend"
+			}
+			return ""
+		},
+		Corpus: corpus,
+	})
+	if err != nil {
+		t.Fatalf("Detect: %v", err)
+	}
+	if result.Action != "amend" {
+		t.Errorf("Action = %q, want amend (doc exists for pre-amend commit)", result.Action)
+	}
+}
+
+// TestDetect_Amend_WithoutDoc verifies AC-4: amend but no doc → proceed (create new).
+func TestDetect_Amend_WithoutDoc(t *testing.T) {
+	gitDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(gitDir, "ORIG_HEAD"), []byte("origabc\n"), 0o644); err != nil {
+		t.Fatalf("create ORIG_HEAD: %v", err)
+	}
+
+	adapter := &detectAdapter{gitDirPath: gitDir}
+	corpus := &mockCorpus{docs: []domain.DocMeta{}} // no matching doc
+
+	result, err := Detect(context.Background(), "abc", adapter, nonTTYStreams(), DetectOpts{
+		IsTTY: func(_ domain.IOStreams) bool { return true },
+		GetEnv: func(key string) string {
+			if key == "GIT_REFLOG_ACTION" {
+				return "amend"
+			}
+			return ""
+		},
+		Corpus: corpus,
+	})
+	if err != nil {
+		t.Fatalf("Detect: %v", err)
+	}
+	if result.Action != "proceed" {
+		t.Errorf("Action = %q, want proceed (no doc for pre-amend commit)", result.Action)
+	}
+}
+
 // TestDetect_DocSkipPriority verifies [doc-skip] wins over all other conditions.
 func TestDetect_DocSkipPriority(t *testing.T) {
 	// Even with merge=true and rebase=true, doc-skip takes priority.
@@ -228,12 +339,3 @@ func TestDetect_DocSkipPriority(t *testing.T) {
 	}
 }
 
-// TestDetect_Integration_MergeRepo verifies merge detection via real git repo (AC-2).
-func TestDetect_Integration_MergeRepo(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-	// Integration test with real git repo is handled in TestHandleReactive_* suite.
-	// This lightweight unit test already covers the logic via mock adapter.
-	t.Skip("merge detection covered by unit tests via mock adapter")
-}
