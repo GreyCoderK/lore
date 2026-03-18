@@ -84,7 +84,7 @@ func TestRegenerateIndex_WithDocuments(t *testing.T) {
 func TestRegenerateIndex_Idempotent(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "doc", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "doc", "body\n")
 
 	// First call
 	if err := RegenerateIndex(dir); err != nil {
@@ -117,7 +117,7 @@ func TestRegenerateIndex_PartialOnCorruptedFile(t *testing.T) {
 	dir := t.TempDir()
 
 	// Write one valid doc
-	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "valid", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "valid", "body\n")
 
 	// Inject a corrupted .md file (no front matter delimiter)
 	if err := os.WriteFile(filepath.Join(dir, "corrupted.md"), []byte("no front matter here"), 0o644); err != nil {
@@ -146,7 +146,7 @@ func TestRegenerateIndex_PartialOnCorruptedFile(t *testing.T) {
 func TestRegenerateIndex_TagsDisplayed(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteDoc(dir, domain.DocMeta{
+	_, _ = WriteDoc(dir, domain.DocMeta{
 		Type:   "decision",
 		Date:   "2026-03-07",
 		Status: "published",

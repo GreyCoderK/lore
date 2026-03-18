@@ -6,13 +6,11 @@ linters:
     - govet
     - staticcheck
     - unused
-
-linters-settings:
-  errcheck:
-    exclude-functions:
-      - "fmt.Fprint"
-      - "fmt.Fprintf"
-      - "fmt.Fprintln"
-      - "(io.Writer).Write"
-      - "os.WriteFile"
-    check-blank: false
+  settings:
+    errcheck:
+      exclude-functions:
+        - "fmt.Fprint"
+        - "fmt.Fprintf"
+        - "fmt.Fprintln"
+        - "(io.Writer).Write"
+        - "os.WriteFile"
