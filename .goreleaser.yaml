@@ -1,19 +1,9 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
-
-# The lines below are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
-
 version: 2
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
 
 builds:
   - env:
@@ -22,10 +12,12 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
 
 archives:
   - formats: [tar.gz]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -33,10 +25,34 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
     format_overrides:
       - goos: windows
         formats: [zip]
+
+brews:
+  - repository:
+      owner: GreyCoderK
+      name: homebrew-lore
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/GreyCoderK/lore"
+    description: "A CLI tool that captures the why behind your code, one commit at a time"
+    license: "MIT"
+    install: |
+      bin.install "lore"
+    test: |
+      system "#{bin}/lore", "--help"
+
+snaps:
+  - name: lore
+    summary: A CLI tool that captures the why behind your code
+    description: |
+      Lore hooks into your Git workflow to document decisions, trade-offs,
+      and context that code alone can't convey. Every commit becomes an
+      opportunity to build a searchable knowledge base.
+    grade: stable
+    confinement: classic
+    license: MIT
+    publish: true
 
 changelog:
   sort: asc
@@ -49,5 +65,17 @@ release:
   footer: >-
 
     ---
+
+    **Install:**
+    ```
+    # Homebrew
+    brew install GreyCoderK/lore/lore
+
+    # Snap
+    sudo snap install lore --classic
+
+    # Go
+    go install github.com/greycoderk/lore@{{ .Tag }}
+    ```
 
     Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
