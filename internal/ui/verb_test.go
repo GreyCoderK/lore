@@ -8,8 +8,8 @@ import (
 )
 
 func TestVerbAlignment(t *testing.T) {
-	SetColorEnabled(false)
-	defer SetColorEnabled(true)
+	restore := SaveAndDisableColor()
+	defer restore()
 
 	var buf bytes.Buffer
 	streams := domain.IOStreams{

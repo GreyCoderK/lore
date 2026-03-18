@@ -3,6 +3,7 @@ package storage
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/greycoderk/lore/internal/domain"
@@ -287,5 +288,364 @@ func TestCorpusStore_ListDocs_FilterByTextInFilename(t *testing.T) {
 	}
 	if len(docs) != 1 {
 		t.Errorf("expected 1 doc matching filename text, got %d", len(docs))
+	}
+}
+
+// --- SearchDocs tests (Story 3.1) ---
+
+func TestSearchDocs_Keyword(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "auth strategy", "# Auth Strategy\n\nWe chose JWT.\n")
+	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-08", Status: "published"}, "db choice", "# Database Choice\n\nPostgres.\n")
+
+	results, err := SearchDocs(dir, "auth", domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Meta.Type != "decision" {
+		t.Errorf("expected type 'decision', got %q", results[0].Meta.Type)
+	}
+	if results[0].Title != "Auth Strategy" {
+		t.Errorf("expected title 'Auth Strategy', got %q", results[0].Title)
+	}
+}
+
+func TestSearchDocs_FilterType(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "auth", "# Auth\n")
+	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-08", Status: "published"}, "auth api", "# Auth API\n")
+
+	results, err := SearchDocs(dir, "auth", domain.DocFilter{Type: "feature"})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Meta.Type != "feature" {
+		t.Errorf("expected type 'feature', got %q", results[0].Meta.Type)
+	}
+}
+
+func TestSearchDocs_FilterDate(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-02-15", Status: "published"}, "old auth", "# Old\n")
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-10", Status: "published"}, "new auth", "# New\n")
+
+	results, err := SearchDocs(dir, "auth", domain.DocFilter{After: "2026-03-01"})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Meta.Date != "2026-03-10" {
+		t.Errorf("expected date '2026-03-10', got %q", results[0].Meta.Date)
+	}
+}
+
+func TestSearchDocs_FilterDateYYYYMM(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-02-15", Status: "published"}, "feb auth", "# Feb\n")
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-10", Status: "published"}, "mar auth", "# Mar\n")
+
+	// YYYY-MM format should be normalized to YYYY-MM-01
+	results, err := SearchDocs(dir, "auth", domain.DocFilter{After: "2026-03"})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Meta.Date != "2026-03-10" {
+		t.Errorf("expected date '2026-03-10', got %q", results[0].Meta.Date)
+	}
+}
+
+func TestSearchDocs_CombinedKeywordTypeDate(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "auth jwt", "# JWT Auth\n")
+	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-08", Status: "published"}, "auth api", "# Auth API\n")
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-02-01", Status: "published"}, "auth old", "# Old Auth\n")
+
+	results, err := SearchDocs(dir, "auth", domain.DocFilter{Type: "decision", After: "2026-03-01"})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Title != "JWT Auth" {
+		t.Errorf("expected 'JWT Auth', got %q", results[0].Title)
+	}
+}
+
+func TestSearchDocs_NoMatch(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "auth", "# Auth\n")
+
+	results, err := SearchDocs(dir, "nonexistent", domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 0 {
+		t.Errorf("expected 0 results, got %d", len(results))
+	}
+}
+
+func TestSearchDocs_CaseInsensitive(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "jwt auth", "# JWT Auth Strategy\n")
+
+	results, err := SearchDocs(dir, "JWT", domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("expected 1 result for case-insensitive search, got %d", len(results))
+	}
+}
+
+func TestSearchDocs_MatchesTags(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published", Tags: []string{"authentication", "security"}}, "login flow", "# Login Flow\n\nBasic login.\n")
+
+	results, err := SearchDocs(dir, "security", domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("expected 1 result matching tag, got %d", len(results))
+	}
+}
+
+func TestSearchDocs_SortedByDateDesc(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-01", Status: "published"}, "auth one", "# Auth One\n")
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-10", Status: "published"}, "auth two", "# Auth Two\n")
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-05", Status: "published"}, "auth three", "# Auth Three\n")
+
+	results, err := SearchDocs(dir, "auth", domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 3 {
+		t.Fatalf("expected 3 results, got %d", len(results))
+	}
+	if results[0].Meta.Date != "2026-03-10" {
+		t.Errorf("first result should be newest, got %q", results[0].Meta.Date)
+	}
+	if results[1].Meta.Date != "2026-03-05" {
+		t.Errorf("second result date: got %q", results[1].Meta.Date)
+	}
+	if results[2].Meta.Date != "2026-03-01" {
+		t.Errorf("third result should be oldest, got %q", results[2].Meta.Date)
+	}
+}
+
+func TestSearchDocs_AllDocs(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "auth", "# Auth\n")
+	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-08", Status: "published"}, "api", "# API\n")
+
+	// Empty keyword → all docs
+	results, err := SearchDocs(dir, "", domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 2 {
+		t.Errorf("expected 2 results for empty keyword, got %d", len(results))
+	}
+}
+
+func TestReadDocContent(t *testing.T) {
+	dir := t.TempDir()
+	res, err := WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "test", "# Test\n\nContent.\n")
+	if err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	content, err := ReadDocContent(res.Path)
+	if err != nil {
+		t.Fatalf("read content: %v", err)
+	}
+	if content == "" {
+		t.Error("expected non-empty content")
+	}
+	if !strings.Contains(content, "# Test") {
+		t.Error("expected body in content")
+	}
+	if !strings.Contains(content, "type: decision") {
+		t.Error("expected front matter in content")
+	}
+}
+
+func TestCorpusStore_ReadDoc_SymlinkTraversal(t *testing.T) {
+	docsDir := t.TempDir()
+	store := &CorpusStore{Dir: docsDir}
+
+	// Create a file outside the docs directory.
+	outsideDir := t.TempDir()
+	secretPath := filepath.Join(outsideDir, "secret.md")
+	os.WriteFile(secretPath, []byte("---\ntype: decision\ndate: 2026-03-07\nstatus: published\n---\n# Secret\n"), 0644)
+
+	// Create a symlink inside docsDir that points to the outside file.
+	symlinkPath := filepath.Join(docsDir, "evil.md")
+	if err := os.Symlink(secretPath, symlinkPath); err != nil {
+		t.Skipf("cannot create symlink: %v", err)
+	}
+
+	_, err := store.ReadDoc("evil")
+	if err == nil {
+		t.Fatal("expected error for symlink-based path traversal, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes") {
+		t.Errorf("expected 'escapes' in error, got: %v", err)
+	}
+}
+
+func TestDeleteDoc_SymlinkTraversal(t *testing.T) {
+	docsDir := t.TempDir()
+
+	// Create a file outside the docs directory.
+	outsideDir := t.TempDir()
+	secretPath := filepath.Join(outsideDir, "victim.md")
+	os.WriteFile(secretPath, []byte("important data"), 0644)
+
+	// Create a symlink inside docsDir pointing outside.
+	symlinkPath := filepath.Join(docsDir, "evil.md")
+	if err := os.Symlink(secretPath, symlinkPath); err != nil {
+		t.Skipf("cannot create symlink: %v", err)
+	}
+
+	err := DeleteDoc(docsDir, "evil.md")
+	if err == nil {
+		t.Fatal("expected error for symlink-based path traversal, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes") {
+		t.Errorf("expected 'escapes' in error, got: %v", err)
+	}
+
+	// Verify the outside file was NOT deleted.
+	if _, statErr := os.Stat(secretPath); os.IsNotExist(statErr) {
+		t.Error("outside file was deleted despite symlink check")
+	}
+}
+
+func TestExtractSlug(t *testing.T) {
+	tests := []struct {
+		filename string
+		want     string
+	}{
+		{"decision-auth-strategy-2026-03-07.md", "auth-strategy"},
+		{"feature-add-jwt-middleware-2026-03-05.md", "add-jwt-middleware"},
+		{"bugfix-token-expiry-fix-2026-03-01.md", "token-expiry-fix"},
+		{"note-simple-2026-01-01.md", "simple"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			got := ExtractSlug(tt.filename)
+			if got != tt.want {
+				t.Errorf("ExtractSlug(%q) = %q, want %q", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractSlug_NoSlug(t *testing.T) {
+	got := ExtractSlug("feature-2026-03-07.md")
+	if got != "untitled" {
+		t.Errorf("ExtractSlug(%q) = %q, want %q", "feature-2026-03-07.md", got, "untitled")
+	}
+}
+
+func TestNormalizeAfter(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"2026-03", "2026-03-01"},
+		{"2026-03-15", "2026-03-15"},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		got := NormalizeAfter(tt.input)
+		if got != tt.want {
+			t.Errorf("NormalizeAfter(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+// --- FindDocByCommit tests (Story 4.1) ---
+
+func TestFindDocByCommit_Found(t *testing.T) {
+	dir := t.TempDir()
+	commitHash := "abc1234567890abcdef1234567890abcdef123456"
+	WriteDoc(dir, domain.DocMeta{
+		Type:        "decision",
+		Date:        "2026-03-16",
+		Status:      "published",
+		Commit:      commitHash,
+		GeneratedBy: "retroactive",
+	}, "auth strategy", "# Auth Strategy\n")
+
+	result, err := FindDocByCommit(dir, commitHash)
+	if err != nil {
+		t.Fatalf("FindDocByCommit: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected result, got nil")
+	}
+	if result.Meta.Commit != commitHash {
+		t.Errorf("commit = %q, want %q", result.Meta.Commit, commitHash)
+	}
+	if result.Title != "Auth Strategy" {
+		t.Errorf("title = %q, want %q", result.Title, "Auth Strategy")
+	}
+}
+
+func TestFindDocByCommit_NotFound(t *testing.T) {
+	dir := t.TempDir()
+	WriteDoc(dir, domain.DocMeta{
+		Type:   "decision",
+		Date:   "2026-03-16",
+		Status: "published",
+		Commit: "aaa1111111111111111111111111111111111111111",
+	}, "other", "# Other\n")
+
+	result, err := FindDocByCommit(dir, "bbb2222222222222222222222222222222222222222")
+	if err != nil {
+		t.Fatalf("FindDocByCommit: %v", err)
+	}
+	if result != nil {
+		t.Errorf("expected nil for non-matching hash, got %+v", result)
+	}
+}
+
+func TestFindDocByCommit_EmptyDir(t *testing.T) {
+	dir := t.TempDir()
+	result, err := FindDocByCommit(dir, "abc123")
+	if err != nil {
+		t.Fatalf("FindDocByCommit empty: %v", err)
+	}
+	if result != nil {
+		t.Errorf("expected nil for empty dir, got %+v", result)
+	}
+}
+
+func TestExtractTitle_HeadingFallback(t *testing.T) {
+	// With heading
+	title := extractTitle("# My Title\n\nSome content.\n", "decision-auth-2026-03-07.md")
+	if title != "My Title" {
+		t.Errorf("expected 'My Title', got %q", title)
+	}
+
+	// Without heading — fallback to slug
+	title = extractTitle("No heading here.\n", "decision-auth-strategy-2026-03-07.md")
+	if title != "auth-strategy" {
+		t.Errorf("expected 'auth-strategy', got %q", title)
 	}
 }

@@ -2,11 +2,18 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+// WarnWriter is the destination for config warnings (e.g. unknown fields).
+// It defaults to os.Stderr but can be overridden in tests.
+var WarnWriter io.Writer = os.Stderr
 
 type Config struct {
 	AI        AIConfig        `yaml:"ai"`
@@ -54,7 +61,18 @@ func loadViper(dir string) (*viper.Viper, error) {
 }
 
 // unmarshalConfig converts a Viper instance to a *Config struct.
+// It warns on stderr if the config contains unknown fields (e.g. typos).
 func unmarshalConfig(v *viper.Viper) (*Config, error) {
+	// First pass: detect unknown fields via ErrorUnused.
+	var probe Config
+	strictErr := v.Unmarshal(&probe, func(dc *mapstructure.DecoderConfig) {
+		dc.ErrorUnused = true
+	})
+	if strictErr != nil {
+		fmt.Fprintf(WarnWriter, "Warning: %s\n", strictErr)
+	}
+
+	// Second pass: always succeed so unknown fields don't block the user.
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("config: unmarshal: %w", err)
@@ -84,7 +102,7 @@ func RegisterFlags(cmd *cobra.Command) {
 // Only flags that map to Config struct fields are bound here.
 // --quiet, --verbose, --no-color are handled by IOStreams in root.go, not via Viper.
 func bindFlags(v *viper.Viper, cmd *cobra.Command) error {
-	if err := v.BindPFlag("ai.provider", cmd.PersistentFlags().Lookup("ai-provider")); err != nil {
+	if err := v.BindPFlag("ai.provider", cmd.Flags().Lookup("ai-provider")); err != nil {
 		return fmt.Errorf("config: bind flag ai-provider: %w", err)
 	}
 	return nil

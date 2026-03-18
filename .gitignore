@@ -3,3 +3,4 @@ dist/
 *.exe
 .DS_Store
 /lore
+.lorerc.local

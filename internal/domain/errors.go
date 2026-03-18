@@ -8,4 +8,5 @@ var (
 	ErrAlreadyExists  = errors.New("already exists")
 	ErrNotInitialized = errors.New("lore not initialized")
 	ErrNotGitRepo     = errors.New("not a git repository")
+	ErrNotInteractive = errors.New("not interactive")
 )

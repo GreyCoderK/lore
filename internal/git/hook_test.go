@@ -371,3 +371,155 @@ func TestInstallHook_CoreHooksPath(t *testing.T) {
 		t.Error("no hook file should be created when core.hooksPath is set")
 	}
 }
+
+// --- replaceMarkerBlock unit tests ---
+
+func TestReplaceMarkerBlock_BothMarkersPresent(t *testing.T) {
+	content := "before\n# LORE-START\nold stuff\n# LORE-END\nafter\n"
+	got, err := replaceMarkerBlock(content, "# LORE-START\nnew stuff\n# LORE-END")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(got, "new stuff") {
+		t.Error("expected new block content")
+	}
+	if strings.Contains(got, "old stuff") {
+		t.Error("old block content should be replaced")
+	}
+}
+
+func TestReplaceMarkerBlock_BothMissing(t *testing.T) {
+	content := "#!/bin/sh\necho hello\n"
+	got, err := replaceMarkerBlock(content, "# LORE-START\nstuff\n# LORE-END")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != content {
+		t.Error("expected original content returned unchanged when both markers missing")
+	}
+}
+
+func TestReplaceMarkerBlock_StartOnly(t *testing.T) {
+	content := "#!/bin/sh\n# LORE-START\nexec lore _hook-post-commit\n"
+	_, err := replaceMarkerBlock(content, "new block")
+	if err == nil {
+		t.Fatal("expected error when LORE-START present but LORE-END missing")
+	}
+	if !strings.Contains(err.Error(), "found LORE-START but missing LORE-END") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestReplaceMarkerBlock_EndOnly(t *testing.T) {
+	content := "#!/bin/sh\nexec lore _hook-post-commit\n# LORE-END\n"
+	_, err := replaceMarkerBlock(content, "new block")
+	if err == nil {
+		t.Fatal("expected error when LORE-END present but LORE-START missing")
+	}
+	if !strings.Contains(err.Error(), "found LORE-END but missing LORE-START") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestReplaceMarkerBlock_EndBeforeStart(t *testing.T) {
+	content := "#!/bin/sh\n# LORE-END\nstuff\n# LORE-START\n"
+	_, err := replaceMarkerBlock(content, "new block")
+	if err == nil {
+		t.Fatal("expected error when LORE-END appears before LORE-START")
+	}
+	if !strings.Contains(err.Error(), "LORE-END appears before LORE-START") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestInstallHook_CorruptedStartOnly(t *testing.T) {
+	dir := initGitRepo(t)
+
+	hookDir := filepath.Join(dir, ".git", "hooks")
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
+	hookPath := filepath.Join(hookDir, "post-commit")
+	corruptedContent := "#!/bin/sh\n# LORE-START\nexec lore _hook-post-commit\n"
+	if err := os.WriteFile(hookPath, []byte(corruptedContent), 0755); err != nil {
+		t.Fatalf("write hook: %v", err)
+	}
+
+	a := NewAdapter(dir)
+	_, err := a.InstallHook("post-commit")
+	if err == nil {
+		t.Fatal("expected error for corrupted hook with only LORE-START")
+	}
+	if !strings.Contains(err.Error(), "corrupted") {
+		t.Errorf("error should mention corruption: %v", err)
+	}
+}
+
+func TestInstallHook_CorruptedEndOnly(t *testing.T) {
+	dir := initGitRepo(t)
+
+	hookDir := filepath.Join(dir, ".git", "hooks")
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
+	hookPath := filepath.Join(hookDir, "post-commit")
+	corruptedContent := "#!/bin/sh\nexec lore _hook-post-commit\n# LORE-END\n"
+	if err := os.WriteFile(hookPath, []byte(corruptedContent), 0755); err != nil {
+		t.Fatalf("write hook: %v", err)
+	}
+
+	a := NewAdapter(dir)
+	_, err := a.InstallHook("post-commit")
+	if err == nil {
+		t.Fatal("expected error for corrupted hook with only LORE-END")
+	}
+	if !strings.Contains(err.Error(), "corrupted") {
+		t.Errorf("error should mention corruption: %v", err)
+	}
+}
+
+func TestUninstallHook_CorruptedStartOnly(t *testing.T) {
+	dir := initGitRepo(t)
+
+	hookDir := filepath.Join(dir, ".git", "hooks")
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
+	hookPath := filepath.Join(hookDir, "post-commit")
+	corruptedContent := "#!/bin/sh\n# LORE-START\nexec lore _hook-post-commit\n"
+	if err := os.WriteFile(hookPath, []byte(corruptedContent), 0755); err != nil {
+		t.Fatalf("write hook: %v", err)
+	}
+
+	a := NewAdapter(dir)
+	err := a.UninstallHook("post-commit")
+	if err == nil {
+		t.Fatal("expected error for corrupted hook with only LORE-START")
+	}
+	if !strings.Contains(err.Error(), "corrupted") {
+		t.Errorf("error should mention corruption: %v", err)
+	}
+}
+
+func TestUninstallHook_CorruptedEndOnly(t *testing.T) {
+	dir := initGitRepo(t)
+
+	hookDir := filepath.Join(dir, ".git", "hooks")
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		t.Fatalf("create hooks dir: %v", err)
+	}
+	hookPath := filepath.Join(hookDir, "post-commit")
+	corruptedContent := "#!/bin/sh\nexec lore _hook-post-commit\n# LORE-END\n"
+	if err := os.WriteFile(hookPath, []byte(corruptedContent), 0755); err != nil {
+		t.Fatalf("write hook: %v", err)
+	}
+
+	a := NewAdapter(dir)
+	err := a.UninstallHook("post-commit")
+	if err == nil {
+		t.Fatal("expected error for corrupted hook with only LORE-END")
+	}
+	if !strings.Contains(err.Error(), "corrupted") {
+		t.Errorf("error should mention corruption: %v", err)
+	}
+}

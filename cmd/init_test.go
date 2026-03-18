@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 )
 
@@ -136,7 +137,7 @@ func TestRunInit_HappyPath(t *testing.T) {
 	}
 
 	deps := initDeps{git: mock, workDir: dir}
-	err := runInit(context.Background(), deps, streams, true)
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
 	if err != nil {
 		t.Fatalf("runInit: %v", err)
 	}
@@ -195,7 +196,7 @@ func TestRunInit_NotGitRepo(t *testing.T) {
 	}
 
 	deps := initDeps{git: mock, workDir: dir}
-	err := runInit(context.Background(), deps, streams, true)
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
 
 	if err != domain.ErrNotGitRepo {
 		t.Errorf("expected ErrNotGitRepo, got %v", err)
@@ -221,7 +222,7 @@ func TestRunInit_AlreadyInitialized(t *testing.T) {
 	}
 
 	deps := initDeps{git: mock, workDir: dir}
-	err := runInit(context.Background(), deps, streams, true)
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
 
 	if err != nil {
 		t.Errorf("expected nil error for already initialized, got %v", err)
@@ -241,7 +242,7 @@ func TestRunInit_AlreadyInitialized(t *testing.T) {
 func TestPromptDemo_NonTerminal(t *testing.T) {
 	// Non-terminal streams: promptDemo should return without prompting
 	streams, _, errBuf := testStreams()
-	promptDemo(streams)
+	promptDemo(context.Background(), &config.Config{}, streams)
 	if errBuf.Len() != 0 {
 		t.Errorf("expected no output for non-terminal, got %q", errBuf.String())
 	}
@@ -258,7 +259,7 @@ func TestPromptDemo_AcceptDemo(t *testing.T) {
 	// promptDemo checks IsTerminal first, which returns false for buffers
 	// So we test the reading logic directly via runInit with noDemo=false
 	// Since IsTerminal returns false, promptDemo is a no-op for buffers
-	promptDemo(streams)
+	promptDemo(context.Background(), &config.Config{}, streams)
 	// With non-terminal, no prompt is shown
 	if errBuf.Len() != 0 {
 		t.Errorf("expected no output for non-terminal, got %q", errBuf.String())

@@ -13,9 +13,11 @@ import (
 
 func newHookPostCommitCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
-		Use:    "_hook-post-commit",
-		Short:  "Internal: invoked by the post-commit hook",
-		Hidden: true,
+		Use:           "_hook-post-commit",
+		Short:         "Internal: invoked by the post-commit hook",
+		Hidden:        true,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			workDir, err := os.Getwd()
 			if err != nil {

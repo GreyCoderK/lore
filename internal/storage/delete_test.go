@@ -65,6 +65,78 @@ func TestDeleteDoc_PathTraversal(t *testing.T) {
 	}
 }
 
+func TestDeleteDoc_ProtectedREADME(t *testing.T) {
+	dir := t.TempDir()
+	err := DeleteDoc(dir, "README.md")
+	if err == nil {
+		t.Error("expected error when deleting README.md")
+	}
+	if !strings.Contains(err.Error(), "protected") {
+		t.Errorf("expected 'protected' in error, got: %v", err)
+	}
+}
+
+func TestFindReferencingDocs_WithRefs(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create target doc
+	WriteDoc(dir, domain.DocMeta{
+		Type: "decision", Date: "2026-03-07", Status: "published",
+	}, "auth strategy", "# Auth Strategy\n")
+
+	// Create doc that references the target
+	WriteDoc(dir, domain.DocMeta{
+		Type: "feature", Date: "2026-03-08", Status: "published",
+		Related: []string{"decision-auth-strategy-2026-03-07"},
+	}, "login flow", "# Login Flow\n")
+
+	// Create doc that doesn't reference the target
+	WriteDoc(dir, domain.DocMeta{
+		Type: "note", Date: "2026-03-09", Status: "published",
+	}, "unrelated", "# Unrelated\n")
+
+	refs, err := FindReferencingDocs(dir, "decision-auth-strategy-2026-03-07.md")
+	if err != nil {
+		t.Fatalf("FindReferencingDocs: %v", err)
+	}
+	if len(refs) != 1 {
+		t.Fatalf("expected 1 referencing doc, got %d", len(refs))
+	}
+	if !strings.HasPrefix(refs[0], "feature-") {
+		t.Errorf("expected feature doc in refs, got %q", refs[0])
+	}
+}
+
+func TestFindReferencingDocs_NoRefs(t *testing.T) {
+	dir := t.TempDir()
+
+	WriteDoc(dir, domain.DocMeta{
+		Type: "decision", Date: "2026-03-07", Status: "published",
+	}, "auth", "# Auth\n")
+	WriteDoc(dir, domain.DocMeta{
+		Type: "note", Date: "2026-03-08", Status: "published",
+	}, "other", "# Other\n")
+
+	refs, err := FindReferencingDocs(dir, "decision-auth-2026-03-07.md")
+	if err != nil {
+		t.Fatalf("FindReferencingDocs: %v", err)
+	}
+	if len(refs) != 0 {
+		t.Errorf("expected 0 refs, got %d", len(refs))
+	}
+}
+
+func TestFindReferencingDocs_EmptyDir(t *testing.T) {
+	dir := t.TempDir()
+	refs, err := FindReferencingDocs(dir, "anything.md")
+	if err != nil {
+		t.Fatalf("FindReferencingDocs: %v", err)
+	}
+	if len(refs) != 0 {
+		t.Errorf("expected 0 refs, got %d", len(refs))
+	}
+}
+
 func TestDeleteDoc_RegeneratesIndex(t *testing.T) {
 	dir := t.TempDir()
 

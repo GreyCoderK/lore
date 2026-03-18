@@ -31,7 +31,7 @@ func TestShowMilestone_ThresholdReached(t *testing.T) {
 			Type:   "decision",
 			Date:   "2026-03-15",
 			Status: "published",
-			Commit: fmt.Sprintf("hash%d", i),
+			Commit: fmt.Sprintf("aaa%037d", i),
 		}, fmt.Sprintf("decision %d", i), fmt.Sprintf("# Decision %d\n\nBody.\n", i))
 		if err != nil {
 			t.Fatalf("setup WriteDoc[%d]: %v", i, err)
@@ -68,7 +68,7 @@ func TestShowMilestone_NonTTY(t *testing.T) {
 			Type:   "decision",
 			Date:   "2026-03-15",
 			Status: "published",
-			Commit: fmt.Sprintf("nontty%d", i),
+			Commit: fmt.Sprintf("bbb%037d", i),
 		}, fmt.Sprintf("nontty decision %d", i), fmt.Sprintf("# Decision %d\n\nBody.\n", i))
 		if err != nil {
 			t.Fatalf("setup WriteDoc[%d]: %v", i, err)
@@ -105,7 +105,7 @@ func TestShowMilestone_NoThreshold(t *testing.T) {
 			Type:   "decision",
 			Date:   "2026-03-15",
 			Status: "published",
-			Commit: fmt.Sprintf("nothresh%d", i),
+			Commit: fmt.Sprintf("ccc%037d", i),
 		}, fmt.Sprintf("no threshold %d", i), fmt.Sprintf("# Decision %d\n\nBody.\n", i))
 		if err != nil {
 			t.Fatalf("setup WriteDoc[%d]: %v", i, err)
@@ -143,7 +143,7 @@ func TestShowMilestone_PassedThreshold(t *testing.T) {
 			Type:   "decision",
 			Date:   "2026-03-15",
 			Status: "published",
-			Commit: fmt.Sprintf("passed%d", i),
+			Commit: fmt.Sprintf("ddd%037d", i),
 		}, fmt.Sprintf("passed threshold %d", i), fmt.Sprintf("# Decision %d\n\nBody.\n", i))
 		if err != nil {
 			t.Fatalf("setup WriteDoc[%d]: %v", i, err)

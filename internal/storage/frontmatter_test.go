@@ -296,6 +296,78 @@ func TestUnmarshal_MalformedYAML(t *testing.T) {
 	}
 }
 
+// TestUnmarshal_HorizontalRuleInBody documents the known behavior of the
+// front matter parser with respect to "---" horizontal rules in the Markdown
+// body. The parser treats the FIRST "\n---\n" after the opening delimiter as
+// the closing delimiter. This matches Jekyll, Hugo, and other static site
+// generators. In normal usage (valid front matter followed by body), a "---"
+// horizontal rule in the body is the SECOND "\n---\n" and is therefore
+// preserved. However, if someone omits the closing delimiter and relies on a
+// body "---" to accidentally close the front matter, the body will be
+// truncated at that point.
+func TestUnmarshal_HorizontalRuleInBody(t *testing.T) {
+	t.Run("horizontal rule after valid front matter is preserved", func(t *testing.T) {
+		// Standard document: front matter is properly closed, then body
+		// contains a --- horizontal rule. The body is NOT truncated because
+		// the real closing delimiter is found first.
+		input := "---\ntype: decision\ndate: \"2026-03-07\"\nstatus: published\n---\n# Heading\n\nFirst section.\n\n---\n\nSecond section.\n"
+
+		meta, body, err := Unmarshal([]byte(input))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if meta.Type != "decision" {
+			t.Errorf("Type: got %q, want 'decision'", meta.Type)
+		}
+
+		// Both sections and the horizontal rule are present in the body.
+		expectedBody := "# Heading\n\nFirst section.\n\n---\n\nSecond section.\n"
+		if body != expectedBody {
+			t.Errorf("Body: got %q, want %q", body, expectedBody)
+		}
+	})
+
+	t.Run("missing closing delimiter with body horizontal rule causes truncation", func(t *testing.T) {
+		// Malformed document: there is no real closing delimiter. The ---
+		// horizontal rule in the body is mistaken for the closing delimiter.
+		// Everything between the opening --- and the body --- is parsed as
+		// YAML (which will likely fail or produce wrong results), and
+		// everything after the body --- becomes the body.
+		input := "---\ntype: decision\ndate: \"2026-03-07\"\nstatus: published\n# Heading\n\nFirst section.\n\n---\n\nSecond section.\n"
+
+		_, body, err := Unmarshal([]byte(input))
+		if err != nil {
+			// YAML parsing may fail because the body text is not valid YAML.
+			// That is expected — the point is the parser matched the wrong ---.
+			t.Logf("YAML parse error (expected for malformed doc): %v", err)
+			return
+		}
+
+		// If YAML parsing somehow succeeds, the body starts after the
+		// horizontal rule, so "First section" is lost.
+		if strings.Contains(body, "First section") {
+			t.Error("expected First section to be consumed as YAML, not appear in body")
+		}
+		if !strings.Contains(body, "Second section") {
+			t.Error("expected Second section to be in the body")
+		}
+	})
+}
+
+func TestUnmarshal_InvalidType(t *testing.T) {
+	input := "---\ntype: banana\ndate: \"2026-03-07\"\nstatus: published\n---\n# Body\n"
+	_, _, err := Unmarshal([]byte(input))
+	if err == nil {
+		t.Fatal("expected error for invalid type 'banana'")
+	}
+	if !strings.Contains(err.Error(), "unknown type") {
+		t.Errorf("error should mention unknown type, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "banana") {
+		t.Errorf("error should mention the invalid type value, got: %v", err)
+	}
+}
+
 func TestValidateMeta_InvalidDateFormat(t *testing.T) {
 	tests := []struct {
 		name string

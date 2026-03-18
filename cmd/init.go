@@ -54,8 +54,10 @@ func newInitCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	var noDemo bool
 
 	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Set up Lore in this repository",
+		Use:           "init",
+		Short:         "Set up Lore in this repository",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			workDir, err := os.Getwd()
@@ -68,7 +70,7 @@ func newInitCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 				workDir: workDir,
 			}
 
-			return runInit(ctx, deps, streams, noDemo)
+			return runInit(ctx, cfg, deps, streams, noDemo)
 		},
 	}
 
@@ -77,7 +79,7 @@ func newInitCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	return cmd
 }
 
-func runInit(_ context.Context, deps initDeps, streams domain.IOStreams, noDemo bool) error {
+func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams domain.IOStreams, noDemo bool) error {
 	// AC-2: Not a git repo
 	if !deps.git.IsInsideWorkTree() {
 		ui.ActionableError(streams, "Not a git repository.", "git init")
@@ -138,7 +140,7 @@ func runInit(_ context.Context, deps initDeps, streams domain.IOStreams, noDemo 
 
 	// AC-4: Demo opt-in
 	if !noDemo {
-		promptDemo(streams)
+		promptDemo(ctx, cfg, streams)
 	}
 
 	return nil
@@ -170,7 +172,7 @@ func ensureGitignore(path string, entry string) (bool, error) {
 	return true, nil
 }
 
-func promptDemo(streams domain.IOStreams) {
+func promptDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) {
 	if !ui.IsTerminal(streams) {
 		return
 	}
@@ -185,6 +187,9 @@ func promptDemo(streams domain.IOStreams) {
 
 	answer = strings.TrimSpace(strings.ToLower(answer))
 	if answer == "y" {
-		fmt.Fprintf(streams.Err, "%s\n", ui.Dim("Run: lore demo"))
+		fmt.Fprintln(streams.Err)
+		if err := runDemo(ctx, cfg, streams); err != nil {
+			fmt.Fprintf(streams.Err, "%s %v\n", ui.Warning("Demo:"), err)
+		}
 	}
 }

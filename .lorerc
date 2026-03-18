@@ -1,0 +1,20 @@
+# Lore configuration — shared with team (commit this file)
+# See: https://github.com/greycoderk/lore/docs/configuration
+
+ai:
+  provider: ""       # anthropic, openai, ollama
+  model: ""          # model name (e.g., claude-sonnet-4-20250514)
+
+angela:
+  mode: draft        # draft, review, full
+  max_tokens: 2000
+
+templates:
+  dir: .lore/templates
+
+hooks:
+  post_commit: true
+
+output:
+  format: markdown
+  dir: .lore/docs

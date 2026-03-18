@@ -12,8 +12,8 @@ func TestSuccessWithColor(t *testing.T) {
 }
 
 func TestSuccessWithoutColor(t *testing.T) {
-	SetColorEnabled(false)
-	defer SetColorEnabled(true)
+	restore := SaveAndDisableColor()
+	defer restore()
 	got := Success("ok")
 	if got != "ok" {
 		t.Errorf("expected plain 'ok', got %q", got)
@@ -57,8 +57,8 @@ func TestBoldWithColor(t *testing.T) {
 }
 
 func TestAllColorsDisabled(t *testing.T) {
-	SetColorEnabled(false)
-	defer SetColorEnabled(true)
+	restore := SaveAndDisableColor()
+	defer restore()
 
 	tests := []struct {
 		name string
@@ -81,7 +81,8 @@ func TestAllColorsDisabled(t *testing.T) {
 // L9 fix: init() runs once per process so t.Setenv alone cannot retrigger it;
 // ResetColorFromEnv() must be called explicitly after the env is changed.
 func TestNoColorEnvVar(t *testing.T) {
-	defer ResetColorFromEnv() // restore from actual env after test
+	prev := isColorEnabled()
+	defer SetColorEnabled(prev) // restore previous state after test
 
 	t.Setenv("NO_COLOR", "")
 	ResetColorFromEnv()

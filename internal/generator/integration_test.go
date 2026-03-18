@@ -137,8 +137,8 @@ func TestIntegration_PipelineOutput(t *testing.T) {
 
 	// AC-2: verify ui.Verb() produces the expected cargo-style output.
 	// Use color-disabled mode so the assertion is against plain text.
-	ui.SetColorEnabled(false)
-	defer ui.SetColorEnabled(true)
+	restore := ui.SaveAndDisableColor()
+	defer restore()
 
 	var stderrBuf strings.Builder
 	streams := domain.IOStreams{

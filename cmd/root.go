@@ -17,6 +17,12 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		Short: "Your code knows what. Lore knows why.",
 		Long:  "Your code knows what. Lore knows why.",
 		PersistentPreRunE: func(c *cobra.Command, args []string) error {
+			// Skip config loading for commands that must work without a valid config
+			name := c.Name()
+			if name == "init" || name == "doctor" {
+				return nil
+			}
+
 			loaded, err := config.LoadFromDirWithFlags(".", c)
 			if err != nil {
 				return fmt.Errorf("%v\n  Run: lore doctor", err)
@@ -47,6 +53,7 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		newAngelaCmd(cfg, streams),
 		newDoctorCmd(cfg, streams),
 		newReleaseCmd(cfg, streams),
+		newDeleteCmd(cfg, streams),
 		newDemoCmd(cfg, streams),
 		newNoteCmd(cfg, streams),
 	)
@@ -67,6 +74,9 @@ func Execute() {
 	cmd := newRootCmd(cfg, streams)
 
 	if err := cmd.Execute(); err != nil {
+		if code := cli.ExitCodeFrom(err); code >= 0 {
+			os.Exit(code)
+		}
 		os.Exit(cli.ExitError)
 	}
 }

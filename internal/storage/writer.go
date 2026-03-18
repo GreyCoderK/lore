@@ -52,6 +52,9 @@ func WriteDoc(dir string, meta domain.DocMeta, subject string, body string) (Wri
 	}
 
 	filename := fmt.Sprintf("%s-%s-%s.md", meta.Type, slug, meta.Date)
+	if err := validateFilename(filename); err != nil {
+		return WriteResult{}, fmt.Errorf("storage: write doc: %w", err)
+	}
 	path := filepath.Join(dir, filename)
 
 	data, err := Marshal(meta, body)

@@ -26,6 +26,15 @@ func ResetColorFromEnv() {
 	colorFlag.Store(!noColor)
 }
 
+// SaveAndDisableColor saves the current color state, disables color output,
+// and returns a restore function that sets colorFlag back to the saved state.
+// Usage in tests: restore := ui.SaveAndDisableColor(); defer restore()
+func SaveAndDisableColor() func() {
+	prev := colorFlag.Load()
+	colorFlag.Store(false)
+	return func() { colorFlag.Store(prev) }
+}
+
 func isColorEnabled() bool {
 	return colorFlag.Load()
 }

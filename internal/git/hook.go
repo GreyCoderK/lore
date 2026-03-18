@@ -51,9 +51,12 @@ func installHook(workDir, hooksDir, hookType string) (domain.InstallResult, erro
 	// Check if already installed (idempotent: replace content between markers)
 	if data, err := os.ReadFile(hookPath); err == nil {
 		content := string(data)
-		if strings.Contains(content, loreStartMarker) {
+		if strings.Contains(content, loreStartMarker) || strings.Contains(content, loreEndMarker) {
 			// Replace existing block between markers
-			newContent := replaceMarkerBlock(content, hookBlock())
+			newContent, err := replaceMarkerBlock(content, hookBlock())
+			if err != nil {
+				return domain.InstallResult{}, fmt.Errorf("git: install hook %s: %w", hookType, err)
+			}
 			if err := atomicWriteHook(hookPath, []byte(newContent)); err != nil {
 				return domain.InstallResult{}, fmt.Errorf("git: install hook %s: %w", hookType, err)
 			}
@@ -80,18 +83,34 @@ func installHook(workDir, hooksDir, hookType string) (domain.InstallResult, erro
 
 // replaceMarkerBlock replaces the content between LORE-START and LORE-END markers
 // with the new block content.
-func replaceMarkerBlock(content, newBlock string) string {
+// Returns the original content and nil error when both markers are absent (nothing to replace).
+// Returns an error when markers are malformed (one present but not the other, or end before start).
+func replaceMarkerBlock(content, newBlock string) (string, error) {
+	hasStart := strings.Contains(content, loreStartMarker)
+	hasEnd := strings.Contains(content, loreEndMarker)
+
+	if !hasStart && !hasEnd {
+		return content, nil
+	}
+	if hasStart && !hasEnd {
+		return "", fmt.Errorf("git: hook corrupted: found LORE-START but missing LORE-END")
+	}
+	if !hasStart && hasEnd {
+		return "", fmt.Errorf("git: hook corrupted: found LORE-END but missing LORE-START")
+	}
+
 	startIdx := strings.Index(content, loreStartMarker)
 	endIdx := strings.Index(content, loreEndMarker)
-	if startIdx == -1 || endIdx == -1 {
-		return content
+	if endIdx < startIdx {
+		return "", fmt.Errorf("git: hook corrupted: LORE-END appears before LORE-START")
 	}
+
 	endIdx += len(loreEndMarker)
 	// Include trailing newline if present
 	if endIdx < len(content) && content[endIdx] == '\n' {
 		endIdx++
 	}
-	return content[:startIdx] + newBlock + "\n" + content[endIdx:]
+	return content[:startIdx] + newBlock + "\n" + content[endIdx:], nil
 }
 
 // uninstallHook removes the lore marker block from hooksDir/hookType.
@@ -108,15 +127,23 @@ func uninstallHook(hooksDir, hookType string) error {
 	}
 
 	content := string(data)
-	if !strings.Contains(content, loreStartMarker) {
+	hasStart := strings.Contains(content, loreStartMarker)
+	hasEnd := strings.Contains(content, loreEndMarker)
+	if !hasStart && !hasEnd {
 		return nil // nothing to remove
+	}
+	if hasStart && !hasEnd {
+		return fmt.Errorf("git: hook corrupted: found LORE-START but missing LORE-END")
+	}
+	if !hasStart && hasEnd {
+		return fmt.Errorf("git: hook corrupted: found LORE-END but missing LORE-START")
 	}
 
 	// Remove the LORE block
 	startIdx := strings.Index(content, loreStartMarker)
 	endIdx := strings.Index(content, loreEndMarker)
-	if startIdx == -1 || endIdx == -1 {
-		return nil
+	if endIdx < startIdx {
+		return fmt.Errorf("git: hook corrupted: LORE-END appears before LORE-START")
 	}
 	endIdx += len(loreEndMarker)
 	// Remove trailing newline after end marker

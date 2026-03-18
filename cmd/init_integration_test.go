@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/git"
 )
@@ -44,7 +45,7 @@ func TestIntegration_FullInit(t *testing.T) {
 		workDir: dir,
 	}
 
-	err := runInit(context.Background(), deps, streams, true)
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
 	if err != nil {
 		t.Fatalf("runInit: %v", err)
 	}
@@ -128,7 +129,7 @@ func TestIntegration_NotGitDir(t *testing.T) {
 		workDir: dir,
 	}
 
-	err := runInit(context.Background(), deps, streams, true)
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
 	if err != domain.ErrNotGitRepo {
 		t.Errorf("expected ErrNotGitRepo, got %v", err)
 	}
@@ -158,7 +159,7 @@ func TestIntegration_DoubleInit(t *testing.T) {
 	}
 
 	// First init
-	if err := runInit(context.Background(), deps, streams1, true); err != nil {
+	if err := runInit(context.Background(), &config.Config{}, deps, streams1, true); err != nil {
 		t.Fatalf("first init: %v", err)
 	}
 
@@ -167,7 +168,7 @@ func TestIntegration_DoubleInit(t *testing.T) {
 
 	// Second init
 	streams2, _, errBuf2 := testStreams()
-	if err := runInit(context.Background(), deps, streams2, true); err != nil {
+	if err := runInit(context.Background(), &config.Config{}, deps, streams2, true); err != nil {
 		t.Fatalf("second init: %v", err)
 	}
 

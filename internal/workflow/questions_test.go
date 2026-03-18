@@ -268,6 +268,151 @@ func TestAnswers_ToGenerateInput_WithCommit(t *testing.T) {
 	}
 }
 
+// --- AskQuestions unified flow ---
+
+func TestAskQuestions_AllEmpty_FullInteractive(t *testing.T) {
+	// No pre-filled answers, no express → all 5 questions asked
+	input := "feature\nadd auth\nbecause security\nNone\nNo impact\n"
+	streams, _ := testStreams(input)
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+
+	answers, err := flow.AskQuestions(context.Background(), QuestionOpts{})
+	if err != nil {
+		t.Fatalf("AskQuestions: %v", err)
+	}
+	if answers.Type != "feature" {
+		t.Errorf("Type = %q, want %q", answers.Type, "feature")
+	}
+	if answers.What != "add auth" {
+		t.Errorf("What = %q, want %q", answers.What, "add auth")
+	}
+	if answers.Why != "because security" {
+		t.Errorf("Why = %q, want %q", answers.Why, "because security")
+	}
+	if answers.Alternatives != "None" {
+		t.Errorf("Alternatives = %q, want %q", answers.Alternatives, "None")
+	}
+	if answers.Impact != "No impact" {
+		t.Errorf("Impact = %q, want %q", answers.Impact, "No impact")
+	}
+}
+
+func TestAskQuestions_AllPreFilled_SkipsAll(t *testing.T) {
+	// All answers pre-filled → no stdin consumed
+	streams, stderr := testStreams("")
+	flow := NewQuestionFlow(streams, lineRenderer(streams))
+
+	answers, err := flow.AskQuestions(context.Background(), QuestionOpts{
+		PreFilled: Answers{
+			Type:         "decision",
+			What:         "choose DB",
+			Why:          "ACID compliance",
+			Alternatives: "MongoDB considered",
+			Impact:       "Performance gain",
+		},
+	})
+	if err != nil {
+		t.Fatalf("AskQuestions: %v", err)
+	}
+	if answers.Type != "decision" {
+		t.Errorf("Type = %q, want %q", answers.Type, "decision")
+	}
+	if answers.Alternatives != "MongoDB considered" {
+		t.Errorf("Alternatives = %q, want %q", answers.Alternatives, "MongoDB considered")
+	}
+	// Confirmations should appear in stderr for all 5 fields
+	out := stderr.String()
+	for _, field := range []string{"decision", "choose DB", "ACID compliance", "MongoDB considered", "Performance gain"} {
+		if !strings.Contains(out, field) {
+			t.Errorf("expected confirmation for %q in stderr, got: %q", field, out)
+		}
+	}
+}
+
+func TestAskQuestions_PartialPreFill(t *testing.T) {
+	// Type and What pre-filled, Why/Alt/Impact interactive
+	input := "because testing\nOption A\nMinor\n"
+	streams, _ := testStreams(input)
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+
+	answers, err := flow.AskQuestions(context.Background(), QuestionOpts{
+		PreFilled: Answers{Type: "bugfix", What: "fix NPE"},
+	})
+	if err != nil {
+		t.Fatalf("AskQuestions: %v", err)
+	}
+	if answers.Type != "bugfix" {
+		t.Errorf("Type = %q, want %q", answers.Type, "bugfix")
+	}
+	if answers.What != "fix NPE" {
+		t.Errorf("What = %q, want %q", answers.What, "fix NPE")
+	}
+	if answers.Why != "because testing" {
+		t.Errorf("Why = %q, want %q", answers.Why, "because testing")
+	}
+	if answers.Alternatives != "Option A" {
+		t.Errorf("Alternatives = %q, want %q", answers.Alternatives, "Option A")
+	}
+}
+
+func TestAskQuestions_ExpressMode_SkipsOptionals(t *testing.T) {
+	// Express mode with high threshold → skips Alternatives+Impact
+	input := "\n\nBecause speed\n"
+	streams, _ := testStreams(input)
+	commit := &domain.CommitInfo{Type: "fix", Subject: "patch XSS"}
+
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(time.Hour))
+	answers, err := flow.AskQuestions(context.Background(), QuestionOpts{
+		Express:    true,
+		CommitInfo: commit,
+	})
+	if err != nil {
+		t.Fatalf("AskQuestions express: %v", err)
+	}
+	if answers.Type != "bugfix" {
+		t.Errorf("Type = %q, want %q", answers.Type, "bugfix")
+	}
+	if answers.Alternatives != "" {
+		t.Errorf("Alternatives should be empty in express mode, got %q", answers.Alternatives)
+	}
+	if answers.Impact != "" {
+		t.Errorf("Impact should be empty in express mode, got %q", answers.Impact)
+	}
+}
+
+func TestAskQuestions_ContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	streams, _ := testStreams("any\n")
+	flow := NewQuestionFlow(streams, lineRenderer(streams))
+	_, err := flow.AskQuestions(ctx, QuestionOpts{})
+	if err == nil {
+		t.Error("expected error with cancelled context, got nil")
+	}
+}
+
+func TestAskQuestions_CommitInfoPreFillDefaults(t *testing.T) {
+	// CommitInfo provides defaults for Type and What via Enter
+	input := "\n\nBecause reasons\n\n\n"
+	streams, _ := testStreams(input)
+	commit := &domain.CommitInfo{Type: "feat", Subject: "add middleware"}
+
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+	answers, err := flow.AskQuestions(context.Background(), QuestionOpts{
+		CommitInfo: commit,
+	})
+	if err != nil {
+		t.Fatalf("AskQuestions: %v", err)
+	}
+	if answers.Type != "feature" {
+		t.Errorf("Type = %q, want %q (mapped from feat)", answers.Type, "feature")
+	}
+	if answers.What != "add middleware" {
+		t.Errorf("What = %q, want %q", answers.What, "add middleware")
+	}
+}
+
 func TestAnswers_ToGenerateInput_NilCommit(t *testing.T) {
 	a := Answers{Type: "note", What: "quick note", Why: "To remember"}
 	input := a.ToGenerateInput(nil, "hook")

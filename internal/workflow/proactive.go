@@ -4,138 +4,137 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
-	"github.com/greycoderk/lore/internal/ui"
+	"github.com/greycoderk/lore/internal/storage"
 )
 
 // ProactiveOpts holds pre-filled arguments from the CLI for lore new.
 type ProactiveOpts struct {
-	Type  string                        // pre-filled type (may be empty)
-	What  string                        // pre-filled what (may be empty)
-	Why   string                        // pre-filled why (may be empty)
-	IsTTY func(domain.IOStreams) bool    // N4 fix: optional TTY override for testing (nil → IsInteractiveTTY)
+	Type   string                       // pre-filled type (may be empty)
+	What   string                       // pre-filled what (may be empty)
+	Why    string                       // pre-filled why (may be empty)
+	Commit *domain.CommitInfo           // retroactive mode: resolved commit info (nil → manual mode)
+	IsTTY  func(domain.IOStreams) bool  // N4 fix: optional TTY override for testing (nil → IsInteractiveTTY)
 }
 
-
-// HandleProactive runs the manual documentation flow for `lore new`.
-// Unlike HandleReactive, there is no commit context, no express mode,
-// and generated_by is "manual".
+// HandleProactive runs the manual or retroactive documentation flow for `lore new`.
+// When opts.Commit is non-nil, retroactive mode pre-fills Type/What from the commit
+// and sets generated_by to "retroactive" with the commit hash in front matter.
 func HandleProactive(ctx context.Context, workDir string, streams domain.IOStreams, opts ProactiveOpts) error {
+	// Pre-fill from commit info in retroactive mode (AC-1)
+	if opts.Commit != nil {
+		if opts.Type == "" && opts.Commit.Type != "" {
+			mapped := MapCommitType(opts.Commit.Type)
+			if domain.ValidDocType(mapped) {
+				opts.Type = mapped
+			}
+		}
+		if opts.What == "" && opts.Commit.Subject != "" {
+			opts.What = opts.Commit.Subject
+		}
+
+		// AC-4: check if commit is already documented
+		docsDir := filepath.Join(workDir, ".lore", "docs")
+		existing, findErr := storage.FindDocByCommit(docsDir, opts.Commit.Hash)
+		if findErr != nil {
+			fmt.Fprintf(streams.Err, "Warning: %v\n", findErr)
+		}
+		if existing != nil {
+			fmt.Fprintf(streams.Err, "A document already exists for this commit.\n")
+			relPath, relErr := filepath.Rel(workDir, existing.Path)
+			if relErr != nil {
+				relPath = existing.Path
+			}
+			fmt.Fprintf(streams.Err, "  %s\n", relPath)
+
+			tty := IsInteractiveTTY(streams)
+			if opts.IsTTY != nil {
+				tty = opts.IsTTY(streams)
+			}
+			if !tty {
+				// AC-4: non-TTY safe default — do not create, show existing path
+				return nil
+			}
+
+			fmt.Fprintf(streams.Err, "Create another document? [y/N] ")
+			// Read stdin byte-by-byte instead of bufio.NewReader to avoid
+			// buffering ahead: bufio would consume bytes meant for the
+			// subsequent question flow (AskType, AskWhat, etc.), causing
+			// missing/garbled prompts.
+			var answerBuf []byte
+			b := make([]byte, 1)
+			for {
+				n, readErr := streams.In.Read(b)
+				if n > 0 {
+					if b[0] == '\n' {
+						break
+					}
+					answerBuf = append(answerBuf, b[0])
+				}
+				if readErr != nil {
+					break
+				}
+			}
+			answer := strings.TrimSpace(strings.ToLower(string(answerBuf)))
+			if answer != "y" && answer != "yes" {
+				return nil
+			}
+		}
+	}
+
 	renderer := NewRenderer(streams)
-	// Express mode is structurally disabled: runProactiveQuestions calls Ask* methods
-	// directly and never invokes RunFlow(), so no timer-based express skip can trigger.
 	flow := NewQuestionFlow(streams, renderer)
 
-	answers, err := runProactiveQuestions(ctx, flow, opts)
+	// PreFilled skips questions entirely; CommitInfo provides interactive defaults
+	// for any remaining empty fields. Both are set intentionally: retroactive mode
+	// pre-fills Type/What above (skip), while CommitInfo covers edge cases like
+	// non-conventional commits where pre-fill didn't set a value.
+	qOpts := QuestionOpts{
+		PreFilled: Answers{
+			Type: opts.Type,
+			What: opts.What,
+			Why:  opts.Why,
+		},
+		CommitInfo: opts.Commit,
+		// Express mode disabled in proactive — no timer-based skip.
+	}
+
+	answers, err := flow.AskQuestions(ctx, qOpts)
 	if err != nil {
 		// Save partial answers on Ctrl+C so they are not silently lost.
-		// No commit hash in manual mode — SavePending uses "unknown-{timestamp}" fallback.
 		if ctx.Err() != nil {
-			record := BuildPendingRecord(answers, "", "", "interrupted", "partial")
+			commitHash := ""
+			if opts.Commit != nil {
+				commitHash = opts.Commit.Hash
+			}
+			record := BuildPendingRecord(answers, commitHash, "", "interrupted", "partial")
 			_ = SavePending(workDir, record) // best-effort
 		}
 		return fmt.Errorf("workflow: proactive: %w", err)
 	}
 
-	result, err := generateAndWrite(ctx, workDir, answers, nil, "manual", "")
+	// Determine generatedBy and commit for generateAndWrite
+	generatedBy := "manual"
+	var commit *domain.CommitInfo
+	if opts.Commit != nil {
+		generatedBy = "retroactive"
+		commit = opts.Commit
+	}
+
+	result, err := generateAndWrite(ctx, workDir, answers, commit, generatedBy, "")
 	if err != nil {
 		return fmt.Errorf("workflow: proactive: %w", err)
 	}
 
-	ui.Verb(streams, "Captured", result.Filename)
-	displayPath, relErr := filepath.Rel(workDir, result.Path)
-	if relErr != nil {
-		displayPath = result.Path
-	}
-	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
-
 	// N4 fix: use opts.IsTTY when available, fallback to IsInteractiveTTY.
-	docsDir := filepath.Join(workDir, ".lore", "docs")
 	tty := IsInteractiveTTY(streams)
 	if opts.IsTTY != nil {
 		tty = opts.IsTTY(streams)
 	}
-	showMilestone(streams, docsDir, tty)
+	displayCompletion(streams, result, "Captured", workDir, tty)
 
 	return nil
 }
 
-// runProactiveQuestions orchestrates the question flow for proactive mode.
-// Pre-filled args skip the corresponding prompt; invalid types fall back
-// to interactive. Express mode is disabled (no timer in manual mode).
-func runProactiveQuestions(ctx context.Context, flow *QuestionFlow, opts ProactiveOpts) (Answers, error) {
-	var answers Answers
-
-	// --- Question 1: Type ---
-	if opts.Type != "" && domain.ValidDocType(opts.Type) {
-		// Valid type provided → skip prompt
-		answers.Type = opts.Type
-		flow.renderer.QuestionConfirm("Type", opts.Type)
-	} else {
-		flow.renderer.Progress(1, 3, "Type")
-		defaultType := "" // AC-1: no pre-fill in manual mode — "Type n'est PAS pre-rempli"
-		if opts.Type != "" {
-			// Invalid type provided → fallback to "note" default (Task 3.3)
-			defaultType = "note"
-		}
-		t, err := flow.AskType(ctx, defaultType)
-		if err != nil {
-			return Answers{}, fmt.Errorf("question flow: type: %w", err)
-		}
-		answers.Type = t
-		flow.renderer.QuestionConfirm("Type", t)
-	}
-
-	// --- Question 2: What ---
-	if opts.What != "" {
-		// What provided → skip prompt
-		answers.What = opts.What
-		flow.renderer.QuestionConfirm("What", opts.What)
-	} else {
-		flow.renderer.Progress(2, 3, "What")
-		w, err := flow.AskWhat(ctx, "")
-		if err != nil {
-			return Answers{}, fmt.Errorf("question flow: what: %w", err)
-		}
-		answers.What = w
-		flow.renderer.QuestionConfirm("What", w)
-	}
-
-	// --- Question 3: Why ---
-	if opts.Why != "" {
-		// Why provided → skip prompt
-		answers.Why = opts.Why
-		flow.renderer.QuestionConfirm("Why", opts.Why)
-	} else {
-		flow.renderer.Progress(3, 3, "Why")
-		why, err := flow.AskWhy(ctx)
-		if err != nil {
-			return Answers{}, fmt.Errorf("question flow: why: %w", err)
-		}
-		answers.Why = why
-		flow.renderer.QuestionConfirm("Why", why)
-	}
-
-	// --- Question 4: Alternatives (always interactive — no express skip) ---
-	alt, err := flow.AskAlternatives(ctx)
-	if err != nil {
-		return Answers{}, fmt.Errorf("question flow: alternatives: %w", err)
-	}
-	answers.Alternatives = alt
-	if alt != "" {
-		flow.renderer.QuestionConfirm("Alternatives", alt)
-	}
-
-	// --- Question 5: Impact (always interactive — no express skip) ---
-	imp, err := flow.AskImpact(ctx)
-	if err != nil {
-		return Answers{}, fmt.Errorf("question flow: impact: %w", err)
-	}
-	answers.Impact = imp
-	if imp != "" {
-		flow.renderer.QuestionConfirm("Impact", imp)
-	}
-
-	return answers, nil
-}

@@ -3,12 +3,15 @@ package storage
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/greycoderk/lore/internal/domain"
 	"gopkg.in/yaml.v3"
 )
+
+var hexHash = regexp.MustCompile(`^[0-9a-f]+$`)
 
 var separator = []byte("---\n")
 
@@ -46,6 +49,13 @@ func Unmarshal(data []byte) (domain.DocMeta, string, error) {
 		// Empty YAML section
 		body = rest[4:]
 	} else {
+		// NOTE: We match the FIRST "\n---\n" after the opening delimiter.
+		// This means a Markdown horizontal rule (---) on its own line inside
+		// the body will be mistakenly treated as the closing front matter
+		// delimiter, truncating everything after it. This is standard behavior
+		// consistent with Jekyll, Hugo, and other static site generators.
+		// Authors should use *** or ___ for horizontal rules in documents
+		// that have YAML front matter.
 		idx := strings.Index(rest, "\n---\n")
 		if idx < 0 {
 			return domain.DocMeta{}, "", fmt.Errorf("storage: unmarshal: missing closing front matter delimiter")
@@ -57,6 +67,10 @@ func Unmarshal(data []byte) (domain.DocMeta, string, error) {
 	var meta domain.DocMeta
 	if err := yaml.Unmarshal([]byte(yamlPart), &meta); err != nil {
 		return domain.DocMeta{}, "", fmt.Errorf("storage: unmarshal front matter: %w", err)
+	}
+
+	if err := ValidateMeta(meta); err != nil {
+		return domain.DocMeta{}, "", fmt.Errorf("storage: unmarshal: %w", err)
 	}
 
 	return meta, body, nil
@@ -79,6 +93,11 @@ func ValidateMeta(meta domain.DocMeta) error {
 	}
 	if meta.Status == "" {
 		return fmt.Errorf("storage: validate meta: status required")
+	}
+	if meta.Commit != "" {
+		if !hexHash.MatchString(meta.Commit) {
+			return fmt.Errorf("storage: validate meta: commit must be a hex hash, got %q", meta.Commit)
+		}
 	}
 	return nil
 }

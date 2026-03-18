@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -69,78 +70,160 @@ func NewQuestionFlow(streams domain.IOStreams, renderer Renderer, opts ...Option
 	}
 }
 
-// RunFlow orchestrates all 5 questions and returns Answers.
-// commitInfo is used to pre-fill Type and What.
-func (q *QuestionFlow) RunFlow(ctx context.Context, commit *domain.CommitInfo) (Answers, error) {
-	var answers Answers
+// QuestionOpts controls the behavior of AskQuestions for all 4 documentation paths.
+type QuestionOpts struct {
+	PreFilled  Answers            // partial or full pre-filled answers (resolve/proactive)
+	Express    bool               // enable express mode — timer-based skip for Alternatives+Impact (reactive only)
+	CommitInfo *domain.CommitInfo // for pre-fill defaults (type from MapCommitType, what from Subject)
+}
+
+// AskQuestions is the unified question flow for all documentation paths.
+// It handles pre-filled answers, express mode, and commit-based defaults.
+//
+// On error (including context cancellation), AskQuestions returns the partial
+// answers collected so far. Callers are responsible for saving these as pending
+// via BuildPendingRecord + SavePending — AskQuestions does not persist state
+// because it lacks the commit hash and context needed for the pending record.
+//
+// Behavior per field:
+//   - Pre-filled + valid → confirm and skip (no prompt)
+//   - Pre-filled but invalid type → interactive with "note" default
+//   - Empty → interactive prompt with commit-derived defaults when available
+//   - Express mode → if first 3 Qs answered within expressThreshold, skip Alternatives+Impact
+func (q *QuestionFlow) AskQuestions(ctx context.Context, opts QuestionOpts) (Answers, error) {
+	answers := opts.PreFilled
 	var expressElapsed time.Duration
+	questionNum := 0
+	totalRequired := countInteractive(opts)
 
 	// --- Question 1: Type ---
-	q.renderer.Progress(1, 3, "Type")
-	defaultType := "note"
-	if commit != nil && commit.Type != "" {
-		defaultType = MapCommitType(commit.Type)
+	if answers.Type != "" && domain.ValidDocType(answers.Type) {
+		// Valid type pre-filled → skip prompt
+		q.renderer.QuestionConfirm("Type", answers.Type)
+	} else {
+		questionNum++
+		q.renderer.Progress(questionNum, totalRequired, "Type")
+		defaultType := ""
+		if answers.Type != "" {
+			// Invalid type provided → fallback to "note" default
+			defaultType = "note"
+		} else if opts.CommitInfo != nil && opts.CommitInfo.Type != "" {
+			defaultType = MapCommitType(opts.CommitInfo.Type)
+		} else {
+			defaultType = "note"
+		}
+		start := time.Now()
+		t, err := q.AskType(ctx, defaultType)
+		if err != nil {
+			return answers, fmt.Errorf("workflow: question flow: type: %w", err)
+		}
+		if opts.Express {
+			expressElapsed += time.Since(start)
+		}
+		answers.Type = t
+		q.renderer.QuestionConfirm("Type", t)
 	}
-	start := time.Now()
-	t, err := q.AskType(ctx, defaultType)
-	if err != nil {
-		return Answers{}, fmt.Errorf("workflow: question flow: type: %w", err)
-	}
-	expressElapsed += time.Since(start)
-	answers.Type = t
-	q.renderer.QuestionConfirm("Type", t)
 
 	// --- Question 2: What ---
-	q.renderer.Progress(2, 3, "What")
-	defaultWhat := ""
-	if commit != nil {
-		defaultWhat = commit.Subject
+	if answers.What != "" {
+		q.renderer.QuestionConfirm("What", answers.What)
+	} else {
+		questionNum++
+		q.renderer.Progress(questionNum, totalRequired, "What")
+		defaultWhat := ""
+		if opts.CommitInfo != nil {
+			defaultWhat = opts.CommitInfo.Subject
+		}
+		start := time.Now()
+		w, err := q.AskWhat(ctx, defaultWhat)
+		if err != nil {
+			return answers, fmt.Errorf("workflow: question flow: what: %w", err)
+		}
+		if opts.Express {
+			expressElapsed += time.Since(start)
+		}
+		answers.What = w
+		q.renderer.QuestionConfirm("What", w)
 	}
-	start = time.Now()
-	w, err := q.AskWhat(ctx, defaultWhat)
-	if err != nil {
-		return Answers{}, fmt.Errorf("workflow: question flow: what: %w", err)
-	}
-	expressElapsed += time.Since(start)
-	answers.What = w
-	q.renderer.QuestionConfirm("What", w)
 
-	// --- Question 3: Why (required) ---
-	q.renderer.Progress(3, 3, "Why")
-	why, err := q.AskWhy(ctx)
-	if err != nil {
-		return Answers{}, fmt.Errorf("workflow: question flow: why: %w", err)
+	// --- Question 3: Why ---
+	if answers.Why != "" {
+		q.renderer.QuestionConfirm("Why", answers.Why)
+	} else {
+		questionNum++
+		q.renderer.Progress(questionNum, totalRequired, "Why")
+		why, err := q.AskWhy(ctx)
+		if err != nil {
+			return answers, fmt.Errorf("workflow: question flow: why: %w", err)
+		}
+		answers.Why = why
+		q.renderer.QuestionConfirm("Why", why)
 	}
-	answers.Why = why
-	q.renderer.QuestionConfirm("Why", why)
 
 	// --- Express mode check ---
-	if expressElapsed < q.opts.expressThreshold {
+	// Only apply express skip if at least one of the timed questions (Type, What)
+	// was actually asked interactively. If all were pre-filled, expressElapsed is 0
+	// which would falsely trigger the skip.
+	if opts.Express && expressElapsed > 0 && expressElapsed < q.opts.expressThreshold {
 		q.renderer.ExpressSkip(2)
 		return answers, nil
 	}
 
-	// --- Question 4: Alternatives (optional) ---
-	alt, err := q.AskAlternatives(ctx)
-	if err != nil {
-		return Answers{}, fmt.Errorf("workflow: question flow: alternatives: %w", err)
-	}
-	answers.Alternatives = alt
-	if alt != "" {
-		q.renderer.QuestionConfirm("Alternatives", alt)
+	// --- Question 4: Alternatives ---
+	if answers.Alternatives != "" {
+		q.renderer.QuestionConfirm("Alternatives", answers.Alternatives)
+	} else {
+		alt, err := q.AskAlternatives(ctx)
+		if err != nil {
+			return answers, fmt.Errorf("workflow: question flow: alternatives: %w", err)
+		}
+		answers.Alternatives = alt
+		if alt != "" {
+			q.renderer.QuestionConfirm("Alternatives", alt)
+		}
 	}
 
-	// --- Question 5: Impact (optional) ---
-	imp, err := q.AskImpact(ctx)
-	if err != nil {
-		return Answers{}, fmt.Errorf("workflow: question flow: impact: %w", err)
-	}
-	answers.Impact = imp
-	if imp != "" {
-		q.renderer.QuestionConfirm("Impact", imp)
+	// --- Question 5: Impact ---
+	if answers.Impact != "" {
+		q.renderer.QuestionConfirm("Impact", answers.Impact)
+	} else {
+		imp, err := q.AskImpact(ctx)
+		if err != nil {
+			return answers, fmt.Errorf("workflow: question flow: impact: %w", err)
+		}
+		answers.Impact = imp
+		if imp != "" {
+			q.renderer.QuestionConfirm("Impact", imp)
+		}
 	}
 
 	return answers, nil
+}
+
+// countInteractive counts how many of the 3 required questions (Type, What, Why)
+// will be asked interactively (not pre-filled). Used for progress display.
+func countInteractive(opts QuestionOpts) int {
+	count := 0
+	if opts.PreFilled.Type == "" || !domain.ValidDocType(opts.PreFilled.Type) {
+		count++
+	}
+	if opts.PreFilled.What == "" {
+		count++
+	}
+	if opts.PreFilled.Why == "" {
+		count++
+	}
+	return count
+}
+
+// RunFlow orchestrates all 5 questions with express mode and returns Answers.
+// commitInfo is used to pre-fill Type and What defaults.
+// Package-internal: called by runDocumentationFlow in reactive.go.
+func (q *QuestionFlow) RunFlow(ctx context.Context, commit *domain.CommitInfo) (Answers, error) {
+	return q.AskQuestions(ctx, QuestionOpts{
+		Express:    true,
+		CommitInfo: commit,
+	})
 }
 
 // AskType prompts for document type with a pre-filled default.
@@ -195,6 +278,13 @@ func (q *QuestionFlow) askOpen(ctx context.Context, question string) (string, er
 // readLine reads a single line from streams.In, respecting context cancellation.
 // q.reader is reused across calls to avoid losing bytes buffered by bufio.
 // The read runs in a goroutine so that ctx.Done() can interrupt a blocking read.
+//
+// Goroutine lifecycle: the channel is buffered (size 1), so the goroutine can
+// always send its result even if nobody is listening after ctx cancellation.
+// If streams.In is an *os.File (the normal CLI case), we set a past read
+// deadline to unblock ReadString and let the goroutine exit promptly.
+// Otherwise (e.g. tests using *strings.Reader), the goroutine stays blocked
+// until the reader returns — acceptable for a CLI tool that will exit soon.
 func (q *QuestionFlow) readLine(ctx context.Context) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", fmt.Errorf("workflow: read line: %w", err)
@@ -205,10 +295,6 @@ func (q *QuestionFlow) readLine(ctx context.Context) (string, error) {
 		err  error
 	}
 	ch := make(chan result, 1)
-	// M1 note: when ctx.Done() fires, the select exits but this goroutine
-	// remains blocked on ReadString until the next keypress (or process exit).
-	// Interrupting the underlying syscall would require streams.In to be an
-	// *os.File so we can call SetDeadline — not guaranteed for all callers.
 	go func() {
 		line, err := q.reader.ReadString('\n')
 		ch <- result{line, err}
@@ -216,6 +302,14 @@ func (q *QuestionFlow) readLine(ctx context.Context) (string, error) {
 
 	select {
 	case <-ctx.Done():
+		// Try to unblock the goroutine by setting a past deadline on the
+		// underlying file descriptor. This works when streams.In is *os.File
+		// (real stdin). For other reader types, the goroutine will remain
+		// blocked until the reader returns — the buffered channel ensures it
+		// won't leak a reference to ch.
+		if f, ok := q.streams.In.(*os.File); ok {
+			_ = f.SetReadDeadline(time.Now())
+		}
 		return "", fmt.Errorf("workflow: read line: %w", ctx.Err())
 	case r := <-ch:
 		if r.err != nil {

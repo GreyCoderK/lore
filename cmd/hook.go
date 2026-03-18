@@ -27,8 +27,10 @@ func newHookCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 
 func newHookInstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
-		Use:   "install",
-		Short: "Install the Lore post-commit hook",
+		Use:           "install",
+		Short:         "Install the Lore post-commit hook",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			workDir, err := os.Getwd()
 			if err != nil {
@@ -57,8 +59,10 @@ func newHookInstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 
 func newHookUninstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
-		Use:   "uninstall",
-		Short: "Remove the Lore post-commit hook",
+		Use:           "uninstall",
+		Short:         "Remove the Lore post-commit hook",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			workDir, err := os.Getwd()
 			if err != nil {

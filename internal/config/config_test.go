@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -256,5 +257,39 @@ output:
 	}
 	if cfg.Output.Dir != "custom/docs" {
 		t.Errorf("Output.Dir: got %q", cfg.Output.Dir)
+	}
+}
+
+func TestLoadFromDir_UnknownFieldWarnsToStderr(t *testing.T) {
+	dir := t.TempDir()
+	lorercContent := `ai:
+  provider: anthropic
+  providerr: typo-value
+`
+	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte(lorercContent), 0644)
+
+	// Capture warnings via WarnWriter instead of redirecting os.Stderr.
+	var buf bytes.Buffer
+	origWriter := WarnWriter
+	WarnWriter = &buf
+	t.Cleanup(func() { WarnWriter = origWriter })
+
+	cfg, err := LoadFromDir(dir)
+
+	// Config should still load successfully (non-fatal).
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if cfg.AI.Provider != "anthropic" {
+		t.Errorf("expected provider 'anthropic', got %q", cfg.AI.Provider)
+	}
+
+	// A warning about the unknown field should have been printed.
+	warning := buf.String()
+	if !strings.Contains(warning, "Warning") {
+		t.Errorf("expected warning on stderr, got %q", warning)
+	}
+	if !strings.Contains(warning, "providerr") {
+		t.Errorf("expected warning to mention 'providerr', got %q", warning)
 	}
 }

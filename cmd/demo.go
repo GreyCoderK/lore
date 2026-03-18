@@ -29,8 +29,10 @@ const demoCommitMessage = "feat(auth): add JWT middleware"
 
 func newDemoCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
-		Use:   "demo",
-		Short: "See Lore in action with a guided walkthrough",
+		Use:           "demo",
+		Short:         "See Lore in action with a guided walkthrough",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDemo(cmd.Context(), cfg, streams)
 		},
@@ -43,6 +45,8 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	if _, err := os.Stat(loreDir); os.IsNotExist(err) {
 		ui.ActionableError(streams, "Lore not initialized.", "lore init")
 		return fmt.Errorf("cmd: demo: %w", domain.ErrNotInitialized)
+	} else if err != nil {
+		return fmt.Errorf("cmd: demo: %w", err)
 	}
 
 	// AC-1: Temporal consent
@@ -111,6 +115,10 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	result, err := storage.WriteDoc(docsDir, demoMeta, demoAnswers["what"], genResult.Body)
 	if err != nil {
 		return fmt.Errorf("cmd: demo write: %w", err)
+	}
+
+	if result.IndexErr != nil {
+		fmt.Fprintf(streams.Err, "Warning: index update failed: %v\n", result.IndexErr)
 	}
 
 	ui.Verb(streams, "Created", result.Filename)

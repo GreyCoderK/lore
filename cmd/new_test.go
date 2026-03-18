@@ -3,12 +3,14 @@ package cmd
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/testutil"
 )
 
@@ -222,5 +224,188 @@ func TestNewCmd_TooManyArgs(t *testing.T) {
 	err := cmd.Execute()
 	if err == nil {
 		t.Fatal("expected error for too many args")
+	}
+}
+
+// --- Retroactive mode tests (Story 4.1) ---
+
+// setupGitRepoWithLore creates a git repo with .lore/ initialized and a commit.
+// Returns (dir, commitHash).
+func setupGitRepoWithLore(t *testing.T) (string, string) {
+	t.Helper()
+	dir := testutil.SetupGitRepo(t)
+
+	// Create .lore directory structure
+	for _, sub := range []string{".lore/docs", ".lore/templates", ".lore/pending"} {
+		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", sub, err)
+		}
+	}
+
+	// Create a file and commit it
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatalf("write main.go: %v", err)
+	}
+	gitCmd := func(args ...string) string {
+		t.Helper()
+		c := exec.Command("git", args...)
+		c.Dir = dir
+		out, err := c.CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	gitCmd("add", "main.go")
+	gitCmd("commit", "-m", "feat: initial setup")
+
+	hash := gitCmd("rev-parse", "HEAD")
+	return dir, hash
+}
+
+func TestNewCmd_CommitValid_RetroactiveFlow(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir, hash := setupGitRepoWithLore(t)
+	testutil.Chdir(t, dir)
+
+	// Short hash (7 chars) — AC-5: resolved to full hash
+	shortHash := hash[:7]
+
+	// Type pre-filled from conventional commit "feat" → mapped to "feature"
+	// What pre-filled from subject "initial setup"
+	// Only why, alt, impact remain
+	input := "because testing\n\n\n"
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(input),
+	}
+	cfg := &config.Config{}
+
+	cmd := newNewCmd(cfg, streams)
+	cmd.SetContext(t.Context())
+	cmd.SetArgs([]string{"--commit", shortHash})
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("lore new --commit: %v\nstderr: %s", err, errBuf.String())
+	}
+
+	// Verify document created
+	entries, _ := os.ReadDir(filepath.Join(dir, ".lore", "docs"))
+	var docPath string
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".md") && e.Name() != "README.md" {
+			docPath = filepath.Join(dir, ".lore", "docs", e.Name())
+			break
+		}
+	}
+	if docPath == "" {
+		t.Fatal("expected a .md document in .lore/docs/")
+	}
+
+	data, _ := os.ReadFile(docPath)
+	content := string(data)
+
+	// AC-2: generated_by: retroactive
+	if !strings.Contains(content, "generated_by: retroactive") {
+		t.Errorf("expected generated_by: retroactive in front matter, got:\n%s", content)
+	}
+
+	// AC-2 + AC-5: commit field should contain the FULL hash
+	if !strings.Contains(content, "commit: "+hash) {
+		t.Errorf("expected full commit hash in front matter, got:\n%s", content)
+	}
+
+	// "Captured" verb in stderr
+	if !strings.Contains(errBuf.String(), "Captured") {
+		t.Errorf("expected 'Captured' in stderr, got: %q", errBuf.String())
+	}
+}
+
+func TestNewCmd_CommitInvalid_ActionableError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := testutil.SetupGitRepo(t)
+	// Create .lore dir
+	for _, sub := range []string{".lore/docs", ".lore/templates"} {
+		os.MkdirAll(filepath.Join(dir, sub), 0o755)
+	}
+	testutil.Chdir(t, dir)
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+	cfg := &config.Config{}
+
+	cmd := newNewCmd(cfg, streams)
+	cmd.SetArgs([]string{"--commit", "xyz_nonexistent"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for invalid commit")
+	}
+
+	// AC-3: actionable error message
+	errOutput := errBuf.String()
+	if !strings.Contains(errOutput, "Error: Commit 'xyz_nonexistent' not found.") {
+		t.Errorf("expected actionable error message, got: %q", errOutput)
+	}
+}
+
+// AC-4: non-TTY safe default — shows warning and does not create duplicate.
+func TestNewCmd_CommitAlreadyDocumented_NonTTY(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir, hash := setupGitRepoWithLore(t)
+	testutil.Chdir(t, dir)
+
+	// Pre-create a document for this commit
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	storage.WriteDoc(docsDir, domain.DocMeta{
+		Type:        "feature",
+		Date:        "2026-03-16",
+		Status:      "published",
+		Commit:      hash,
+		GeneratedBy: "retroactive",
+	}, "initial setup", "# Initial Setup\n")
+
+	// Answer "n" to decline
+	input := "n\n"
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(input),
+	}
+	cfg := &config.Config{}
+
+	cmd := newNewCmd(cfg, streams)
+	cmd.SetContext(t.Context())
+	cmd.SetArgs([]string{"--commit", hash})
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("lore new --commit already documented (n): %v", err)
+	}
+
+	// Only the original document should exist
+	entries, _ := os.ReadDir(docsDir)
+	var docCount int
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".md") && e.Name() != "README.md" {
+			docCount++
+		}
+	}
+	if docCount != 1 {
+		t.Errorf("expected 1 document after declining, got %d", docCount)
 	}
 }

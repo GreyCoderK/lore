@@ -207,7 +207,7 @@ func TestHandleProactive_InvalidTypeAskInteractively(t *testing.T) {
 	}
 }
 
-func TestRunProactiveQuestions_SkipsPrefilledArgs(t *testing.T) {
+func TestAskQuestions_SkipsPrefilledArgs(t *testing.T) {
 	// Unit test: verify pre-filled args skip prompts (no stdin needed for skipped questions)
 	// Only alternatives + impact prompts remain → two Enter keys
 	input := "\n\n"
@@ -221,15 +221,17 @@ func TestRunProactiveQuestions_SkipsPrefilledArgs(t *testing.T) {
 	renderer := NewLineRenderer(streams)
 	flow := NewQuestionFlow(streams, renderer)
 
-	opts := ProactiveOpts{
-		Type: "decision",
-		What: "choose database",
-		Why:  "PostgreSQL for ACID compliance",
+	qOpts := QuestionOpts{
+		PreFilled: Answers{
+			Type: "decision",
+			What: "choose database",
+			Why:  "PostgreSQL for ACID compliance",
+		},
 	}
 
-	answers, err := runProactiveQuestions(context.Background(), flow, opts)
+	answers, err := flow.AskQuestions(context.Background(), qOpts)
 	if err != nil {
-		t.Fatalf("runProactiveQuestions: %v", err)
+		t.Fatalf("AskQuestions: %v", err)
 	}
 
 	if answers.Type != "decision" {
@@ -252,7 +254,7 @@ func TestRunProactiveQuestions_SkipsPrefilledArgs(t *testing.T) {
 	}
 }
 
-func TestRunProactiveQuestions_InvalidTypeDefaultsToNote(t *testing.T) {
+func TestAskQuestions_InvalidTypeDefaultsToNote(t *testing.T) {
 	// Invalid type → interactive prompt with "note" default → user presses Enter.
 	// What + Why are pre-filled (skipped). Interactive prompts remaining:
 	//   Enter 1: Type (accept "note" default)
@@ -269,15 +271,17 @@ func TestRunProactiveQuestions_InvalidTypeDefaultsToNote(t *testing.T) {
 	renderer := NewLineRenderer(streams)
 	flow := NewQuestionFlow(streams, renderer)
 
-	opts := ProactiveOpts{
-		Type: "invalid-type",
-		What: "some what",
-		Why:  "some why",
+	qOpts := QuestionOpts{
+		PreFilled: Answers{
+			Type: "invalid-type",
+			What: "some what",
+			Why:  "some why",
+		},
 	}
 
-	answers, err := runProactiveQuestions(context.Background(), flow, opts)
+	answers, err := flow.AskQuestions(context.Background(), qOpts)
 	if err != nil {
-		t.Fatalf("runProactiveQuestions: %v", err)
+		t.Fatalf("AskQuestions: %v", err)
 	}
 
 	// Invalid type → user pressed Enter → default "note"
@@ -397,7 +401,7 @@ func TestHandleProactive_MilestoneAtThreshold3(t *testing.T) {
 			Type:   "decision",
 			Date:   "2026-03-15",
 			Status: "published",
-			Commit: fmt.Sprintf("proactive-pre%d", i),
+			Commit: fmt.Sprintf("aaa%037d", i),
 		}, fmt.Sprintf("proactive pre %d", i), fmt.Sprintf("# Pre %d\n\nBody.\n", i))
 		if err != nil {
 			t.Fatalf("setup WriteDoc[%d]: %v", i, err)
@@ -429,6 +433,326 @@ func TestHandleProactive_MilestoneAtThreshold3(t *testing.T) {
 	milestoneIdx := strings.Index(output, "3 decisions captured")
 	if capturedIdx >= 0 && milestoneIdx >= 0 && milestoneIdx <= capturedIdx {
 		t.Errorf("milestone should appear after Captured line")
+	}
+}
+
+// --- Retroactive mode tests (Story 4.1) ---
+
+func TestHandleProactive_RetroactivePreFill(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newProactiveWorkDir(t)
+
+	// CommitInfo with conventional commit type "feat" → maps to doc type "feature"
+	commit := &domain.CommitInfo{
+		Hash:    "abc1234567890abcdef1234567890abcdef123456",
+		Author:  "Test Author",
+		Message: "feat: add auth middleware",
+		Type:    "feat",
+		Subject: "add auth middleware",
+	}
+
+	// Type + What pre-filled from commit → only why, alt, impact prompted
+	input := "because JWT\n\n\n"
+	stderr := &bytes.Buffer{}
+	streams := domain.IOStreams{
+		In:  strings.NewReader(input),
+		Out: &bytes.Buffer{},
+		Err: stderr,
+	}
+
+	opts := ProactiveOpts{
+		Commit: commit,
+	}
+
+	err := HandleProactive(context.Background(), workDir, streams, opts)
+	if err != nil {
+		t.Fatalf("HandleProactive retroactive: %v", err)
+	}
+
+	// Verify document was created with correct type
+	entries, _ := os.ReadDir(filepath.Join(workDir, ".lore", "docs"))
+	var docPath string
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "feature-") && strings.HasSuffix(e.Name(), ".md") {
+			docPath = filepath.Join(workDir, ".lore", "docs", e.Name())
+		}
+	}
+	if docPath == "" {
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		t.Fatalf("expected feature-*.md in docs, got: %v", names)
+	}
+
+	// Verify front matter
+	data, err := os.ReadFile(docPath)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	content := string(data)
+
+	// AC-2: generated_by must be "retroactive"
+	if !strings.Contains(content, "generated_by: retroactive") {
+		t.Errorf("expected generated_by: retroactive, got:\n%s", content)
+	}
+
+	// AC-2: commit hash must be present
+	if !strings.Contains(content, "commit: abc1234567890abcdef1234567890abcdef123456") {
+		t.Errorf("expected commit hash in front matter, got:\n%s", content)
+	}
+}
+
+func TestHandleProactive_RetroactiveNonConventionalCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newProactiveWorkDir(t)
+
+	// Non-conventional commit: Type is empty, Subject is the full message
+	commit := &domain.CommitInfo{
+		Hash:    "def456789012345678901234567890abcdef1234",
+		Author:  "Test Author",
+		Message: "just a plain commit message",
+		Type:    "",      // not conventional
+		Subject: "just a plain commit message",
+	}
+
+	// Type not pre-filled (invalid) → user must type one; What is pre-filled
+	input := "note\nbecause testing\n\n\n"
+	streams := domain.IOStreams{
+		In:  strings.NewReader(input),
+		Out: &bytes.Buffer{},
+		Err: &bytes.Buffer{},
+	}
+
+	err := HandleProactive(context.Background(), workDir, streams, ProactiveOpts{
+		Commit: commit,
+	})
+	if err != nil {
+		t.Fatalf("HandleProactive non-conventional: %v", err)
+	}
+
+	entries, _ := os.ReadDir(filepath.Join(workDir, ".lore", "docs"))
+	var found bool
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "note-") && strings.HasSuffix(e.Name(), ".md") {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected note-*.md for non-conventional commit retroactive flow")
+	}
+}
+
+func TestToGenerateInput_RetroactiveMode(t *testing.T) {
+	commit := &domain.CommitInfo{
+		Hash:    "abc1234567890abcdef1234567890abcdef123456",
+		Message: "feature: add auth",
+		Type:    "feature",
+		Subject: "add auth",
+	}
+
+	answers := Answers{
+		Type: "feature",
+		What: "add auth",
+		Why:  "needed",
+	}
+
+	input := answers.ToGenerateInput(commit, "retroactive")
+
+	if input.GeneratedBy != "retroactive" {
+		t.Errorf("GeneratedBy = %q, want %q", input.GeneratedBy, "retroactive")
+	}
+	if input.CommitInfo == nil {
+		t.Fatal("CommitInfo should not be nil for retroactive mode")
+	}
+	if input.CommitInfo.Hash != commit.Hash {
+		t.Errorf("CommitInfo.Hash = %q, want %q", input.CommitInfo.Hash, commit.Hash)
+	}
+}
+
+// AC-4: already documented commit — user confirms creation of another doc.
+func TestHandleProactive_AlreadyDocumented_Confirm(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newProactiveWorkDir(t)
+	docsDir := filepath.Join(workDir, ".lore", "docs")
+
+	commitHash := "abc1234567890abcdef1234567890abcdef123456"
+
+	// Pre-create a document for this commit (different date to avoid filename collision)
+	storage.WriteDoc(docsDir, domain.DocMeta{
+		Type:        "feature",
+		Date:        "2026-03-15",
+		Status:      "published",
+		Commit:      commitHash,
+		GeneratedBy: "retroactive",
+	}, "initial setup", "# Initial Setup\n")
+
+	commit := &domain.CommitInfo{
+		Hash:    commitHash,
+		Author:  "Test Author",
+		Message: "feat: initial setup",
+		Type:    "feat",
+		Subject: "initial setup",
+	}
+
+	// "y" confirms, then why + alt + impact
+	input := "y\nbecause update\n\n\n"
+	stderr := &bytes.Buffer{}
+	streams := domain.IOStreams{
+		In:  strings.NewReader(input),
+		Out: &bytes.Buffer{},
+		Err: stderr,
+	}
+
+	err := HandleProactive(context.Background(), workDir, streams, ProactiveOpts{
+		Commit: commit,
+		IsTTY:  func(_ domain.IOStreams) bool { return true },
+	})
+	if err != nil {
+		t.Fatalf("HandleProactive already documented (y): %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Warning message
+	if !strings.Contains(stderr.String(), "A document already exists for this commit") {
+		t.Errorf("expected warning, got: %q", stderr.String())
+	}
+
+	// Second document created
+	entries, _ := os.ReadDir(docsDir)
+	var docCount int
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".md") && e.Name() != "README.md" {
+			docCount++
+		}
+	}
+	if docCount < 2 {
+		t.Errorf("expected at least 2 documents, got %d", docCount)
+	}
+}
+
+// AC-4: already documented commit — user declines.
+func TestHandleProactive_AlreadyDocumented_Decline(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newProactiveWorkDir(t)
+	docsDir := filepath.Join(workDir, ".lore", "docs")
+
+	commitHash := "abc1234567890abcdef1234567890abcdef123456"
+
+	storage.WriteDoc(docsDir, domain.DocMeta{
+		Type:        "feature",
+		Date:        "2026-03-15",
+		Status:      "published",
+		Commit:      commitHash,
+		GeneratedBy: "retroactive",
+	}, "initial setup", "# Initial Setup\n")
+
+	commit := &domain.CommitInfo{
+		Hash:    commitHash,
+		Author:  "Test Author",
+		Message: "feat: initial setup",
+		Type:    "feat",
+		Subject: "initial setup",
+	}
+
+	input := "n\n"
+	stderr := &bytes.Buffer{}
+	streams := domain.IOStreams{
+		In:  strings.NewReader(input),
+		Out: &bytes.Buffer{},
+		Err: stderr,
+	}
+
+	err := HandleProactive(context.Background(), workDir, streams, ProactiveOpts{
+		Commit: commit,
+		IsTTY:  func(_ domain.IOStreams) bool { return true },
+	})
+	if err != nil {
+		t.Fatalf("HandleProactive already documented (n): %v", err)
+	}
+
+	// Only original doc should exist
+	entries, _ := os.ReadDir(docsDir)
+	var docCount int
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".md") && e.Name() != "README.md" {
+			docCount++
+		}
+	}
+	if docCount != 1 {
+		t.Errorf("expected 1 document after declining, got %d", docCount)
+	}
+}
+
+// AC-4: already documented commit — non-TTY safe default (do not create).
+func TestHandleProactive_AlreadyDocumented_NonTTY(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newProactiveWorkDir(t)
+	docsDir := filepath.Join(workDir, ".lore", "docs")
+
+	commitHash := "abc1234567890abcdef1234567890abcdef123456"
+
+	storage.WriteDoc(docsDir, domain.DocMeta{
+		Type:        "feature",
+		Date:        "2026-03-16",
+		Status:      "published",
+		Commit:      commitHash,
+		GeneratedBy: "retroactive",
+	}, "initial setup", "# Initial Setup\n")
+
+	commit := &domain.CommitInfo{
+		Hash:    commitHash,
+		Author:  "Test Author",
+		Message: "feat: initial setup",
+		Type:    "feat",
+		Subject: "initial setup",
+	}
+
+	stderr := &bytes.Buffer{}
+	streams := domain.IOStreams{
+		In:  strings.NewReader(""),
+		Out: &bytes.Buffer{},
+		Err: stderr,
+	}
+
+	// IsTTY returns false → non-TTY safe default
+	err := HandleProactive(context.Background(), workDir, streams, ProactiveOpts{
+		Commit: commit,
+		IsTTY:  func(_ domain.IOStreams) bool { return false },
+	})
+	if err != nil {
+		t.Fatalf("HandleProactive already documented (non-TTY): %v", err)
+	}
+
+	// Warning shown
+	if !strings.Contains(stderr.String(), "A document already exists for this commit") {
+		t.Errorf("expected warning, got: %q", stderr.String())
+	}
+
+	// No new document created
+	entries, _ := os.ReadDir(docsDir)
+	var docCount int
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".md") && e.Name() != "README.md" {
+			docCount++
+		}
+	}
+	if docCount != 1 {
+		t.Errorf("expected 1 document (non-TTY safe default), got %d", docCount)
 	}
 }
 

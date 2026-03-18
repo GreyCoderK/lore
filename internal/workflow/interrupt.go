@@ -10,6 +10,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// errIsExist reports whether err (or its wrapped cause) indicates that a
+// target path already exists.  It checks both os.IsExist and the
+// *os.LinkError variant returned by os.Link on POSIX systems.
+func errIsExist(err error) bool {
+	return os.IsExist(err)
+}
+
 // PendingRecord is the YAML structure written to .lore/pending/{hash}.yaml
 // on Ctrl+C or non-TTY deferral. The file is retained for manual inspection
 // until `lore pending` (Epic 10) processes it.
@@ -45,20 +52,26 @@ func SavePending(workDir string, record PendingRecord) error {
 		name = "unknown-" + time.Now().Format("20060102T150405")
 	}
 
-	// Append timestamp suffix if file already exists (e.g. rebase --exec replays).
-	path := filepath.Join(pendingDir, name+".yaml")
-	if _, err := os.Stat(path); err == nil {
-		suffix := time.Now().Format("150405")
-		path = filepath.Join(pendingDir, name+"-"+suffix+".yaml")
-	}
-
 	data, err := yaml.Marshal(record)
 	if err != nil {
 		return fmt.Errorf("workflow: save pending: marshal: %w", err)
 	}
 
-	if err := storage.AtomicWrite(path, data); err != nil {
-		return fmt.Errorf("workflow: save pending: write: %w", err)
+	// Use AtomicWriteExclusive (os.Link) to claim the path atomically.
+	// If a file with the same commit hash already exists (e.g. rebase
+	// --exec replays or a parallel invocation), fall back to a
+	// timestamp-suffixed name via regular AtomicWrite — the first write
+	// already succeeded atomically so the collision is safe.
+	path := filepath.Join(pendingDir, name+".yaml")
+	if err := storage.AtomicWriteExclusive(path, data); err != nil {
+		if !errIsExist(err) {
+			return fmt.Errorf("workflow: save pending: write: %w", err)
+		}
+		suffix := time.Now().Format("150405")
+		path = filepath.Join(pendingDir, name+"-"+suffix+".yaml")
+		if err := storage.AtomicWrite(path, data); err != nil {
+			return fmt.Errorf("workflow: save pending: write: %w", err)
+		}
 	}
 	return nil
 }

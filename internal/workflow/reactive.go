@@ -9,7 +9,6 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
-	"github.com/greycoderk/lore/internal/ui"
 )
 
 // HandleReactive runs the full interactive post-commit flow:
@@ -87,16 +86,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 		return err
 	}
 
-	ui.Verb(streams, "Captured", result.Filename)
-	// M6 fix: display path relative to workDir so it is correct regardless of CWD.
-	displayPath, relErr := filepath.Rel(workDir, result.Path)
-	if relErr != nil {
-		displayPath = result.Path
-	}
-	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
-
-	// AC-1..AC-5: milestone reinforcement (TTY only, counted after write).
-	showMilestone(streams, filepath.Join(workDir, ".lore", "docs"), tty)
+	displayCompletion(streams, result, "Captured", workDir, tty)
 
 	return nil
 }
@@ -186,16 +176,7 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	if existingFilename != "" {
 		verb = "Updated"
 	}
-	ui.Verb(streams, verb, result.Filename)
-	// M6 fix: display path relative to workDir.
-	displayPath, relErr := filepath.Rel(workDir, result.Path)
-	if relErr != nil {
-		displayPath = result.Path
-	}
-	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
-
-	// Milestone reinforcement (same as main reactive flow).
-	showMilestone(streams, docsDir, tty)
+	displayCompletion(streams, result, verb, workDir, tty)
 
 	return nil
 }

@@ -206,7 +206,7 @@ func TestHandleReactive_AmendWithExistingDoc(t *testing.T) {
 	docsDir := filepath.Join(workDir, ".lore", "docs")
 
 	// Pre-create a doc for the original commit.
-	origHash := "original1234567"
+	origHash := "0123456789abcdef0123456789abcdef01234567"
 	_, writeErr := storage.WriteDoc(docsDir, domain.DocMeta{
 		Type:   "feature",
 		Date:   "2026-03-10",
@@ -281,7 +281,7 @@ func TestHandleReactive_MilestoneAtThreshold3(t *testing.T) {
 			Type:   "decision",
 			Date:   "2026-03-15",
 			Status: "published",
-			Commit: fmt.Sprintf("precreate%d", i),
+			Commit: fmt.Sprintf("bbb%037d", i),
 		}, fmt.Sprintf("precreated decision %d", i), fmt.Sprintf("# Pre %d\n\nBody.\n", i))
 		if err != nil {
 			t.Fatalf("setup WriteDoc[%d]: %v", i, err)
@@ -289,14 +289,14 @@ func TestHandleReactive_MilestoneAtThreshold3(t *testing.T) {
 	}
 
 	commit := &domain.CommitInfo{
-		Hash:    "milestone3hash",
+		Hash:    "eee0000000000000000000000000000000000003",
 		Author:  "Dev",
 		Date:    time.Date(2026, 3, 15, 0, 0, 0, 0, time.UTC),
 		Message: "feat: milestone trigger",
 		Type:    "feat",
 		Subject: "milestone trigger",
 	}
-	adapter := &mockGitAdapter{headRef: "milestone3hash", commit: commit}
+	adapter := &mockGitAdapter{headRef: "eee0000000000000000000000000000000000003", commit: commit}
 
 	input := "\n\nBecause milestone\n\n\n"
 	stderr := &bytes.Buffer{}

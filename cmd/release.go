@@ -10,8 +10,11 @@ import (
 
 func newReleaseCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
-		Use:   "release",
-		Short: "Generate release notes",
+		Use:           "release",
+		Short:         "Generate release notes",
+		Hidden:        true,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("cmd: release not implemented")
 		},
