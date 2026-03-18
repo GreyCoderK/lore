@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package ui_test
 
 import "github.com/greycoderk/lore/internal/ui"

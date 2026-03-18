@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package generator_test
 
 // H3 fix: external test package — generator/ is not allowed to import storage/ (CORRECTION C1).

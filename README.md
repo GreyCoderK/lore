@@ -226,4 +226,4 @@ Angela operates in two modes:
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+AGPL-3.0 — see [LICENSE](LICENSE). A commercial license is available for proprietary use — see [LICENSING.md](../LICENSING.md).
