@@ -29,18 +29,18 @@ archives:
       - goos: windows
         formats: [zip]
 
-brews:
-  - repository:
-      owner: GreyCoderK
-      name: homebrew-lore
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://github.com/GreyCoderK/lore"
-    description: "A CLI tool that captures the why behind your code, one commit at a time"
-    license: "AGPL-3.0-or-later"
-    install: |
-      bin.install "lore"
-    test: |
-      system "#{bin}/lore", "--help"
+# brews:
+#   - repository:
+#       owner: GreyCoderK
+#       name: homebrew-lore
+#       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+#     homepage: "https://github.com/GreyCoderK/lore"
+#     description: "A CLI tool that captures the why behind your code, one commit at a time"
+#     license: "AGPL-3.0-or-later"
+#     install: |
+#       bin.install "lore"
+#     test: |
+#       system "#{bin}/lore", "--help"
 
 changelog:
   sort: asc
