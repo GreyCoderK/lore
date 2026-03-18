@@ -6,6 +6,11 @@ linters:
     - govet
     - staticcheck
     - unused
+  exclusions:
+    rules:
+      - path: "_test\\.go"
+        linters:
+          - errcheck
   settings:
     errcheck:
       exclude-functions:

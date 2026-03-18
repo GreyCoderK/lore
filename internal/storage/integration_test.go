@@ -209,9 +209,9 @@ func TestIntegration_WriteAndIndex_MultiFile(t *testing.T) {
 	dir := t.TempDir()
 
 	// Each WriteDoc should atomically write the doc AND regenerate the index
-	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-05", Status: "published"}, "one", "body\n")
-	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-07", Status: "published"}, "two", "body\n")
-	WriteDoc(dir, domain.DocMeta{Type: "note", Date: "2026-03-10", Status: "draft"}, "three", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-05", Status: "published"}, "one", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-07", Status: "published"}, "two", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "note", Date: "2026-03-10", Status: "draft"}, "three", "body\n")
 
 	// Verify all files exist (3 docs + README)
 	entries, _ := os.ReadDir(dir)

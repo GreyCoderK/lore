@@ -153,7 +153,7 @@ func TestRegenerateIndex_TagsDisplayed(t *testing.T) {
 		Tags:   []string{"authentication", "api"},
 	}, "auth strategy", "body\n")
 
-	RegenerateIndex(dir)
+	_ = RegenerateIndex(dir)
 
 	data, _ := os.ReadFile(filepath.Join(dir, "README.md"))
 	content := string(data)
