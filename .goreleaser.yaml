@@ -36,23 +36,11 @@ brews:
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://github.com/GreyCoderK/lore"
     description: "A CLI tool that captures the why behind your code, one commit at a time"
-    license: "MIT"
+    license: "AGPL-3.0-or-later"
     install: |
       bin.install "lore"
     test: |
       system "#{bin}/lore", "--help"
-
-snaps:
-  - name: lore
-    summary: A CLI tool that captures the why behind your code
-    description: |
-      Lore hooks into your Git workflow to document decisions, trade-offs,
-      and context that code alone can't convey. Every commit becomes an
-      opportunity to build a searchable knowledge base.
-    grade: stable
-    confinement: classic
-    license: MIT
-    publish: true
 
 changelog:
   sort: asc
@@ -70,9 +58,6 @@ release:
     ```
     # Homebrew (macOS / Linux)
     brew install GreyCoderK/lore/lore
-
-    # Snap (Linux)
-    sudo snap install lore --classic
 
     # Go
     go install github.com/greycoderk/lore@{{ .Tag }}
