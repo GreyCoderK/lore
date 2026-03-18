@@ -44,7 +44,9 @@ func TestLoadFromDir_DefaultsOnly(t *testing.T) {
 
 func TestLoadFromDir_LorercOverridesDefaults(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: anthropic\noutput:\n  format: html\n"), 0644)
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: anthropic\noutput:\n  format: html\n"), 0644); err != nil {
+		t.Fatalf("WriteFile .lorerc: %v", err)
+	}
 
 	cfg, err := LoadFromDir(dir)
 	if err != nil {
@@ -63,8 +65,12 @@ func TestLoadFromDir_LorercOverridesDefaults(t *testing.T) {
 
 func TestLoadFromDir_LocalOverridesLorerc(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: ollama\n  model: llama3\n"), 0644)
-	os.WriteFile(filepath.Join(dir, ".lorerc.local"), []byte("ai:\n  provider: openai\n"), 0644)
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: ollama\n  model: llama3\n"), 0644); err != nil {
+		t.Fatalf("WriteFile .lorerc: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc.local"), []byte("ai:\n  provider: openai\n"), 0644); err != nil {
+		t.Fatalf("WriteFile .lorerc.local: %v", err)
+	}
 
 	cfg, err := LoadFromDir(dir)
 	if err != nil {
@@ -77,8 +83,12 @@ func TestLoadFromDir_LocalOverridesLorerc(t *testing.T) {
 
 func TestLoadFromDir_EnvOverridesLocal(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: ollama\n"), 0644)
-	os.WriteFile(filepath.Join(dir, ".lorerc.local"), []byte("ai:\n  provider: openai\n"), 0644)
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: ollama\n"), 0644); err != nil {
+		t.Fatalf("WriteFile .lorerc: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc.local"), []byte("ai:\n  provider: openai\n"), 0644); err != nil {
+		t.Fatalf("WriteFile .lorerc.local: %v", err)
+	}
 
 	t.Setenv("LORE_AI_PROVIDER", "azure")
 
@@ -141,7 +151,9 @@ func TestLoadFromDir_MissingFilesGraceful(t *testing.T) {
 
 func TestLoadFromDir_MalformedYAML(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("invalid:\n  yaml: [broken"), 0644)
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("invalid:\n  yaml: [broken"), 0644); err != nil {
+		t.Fatalf("WriteFile .lorerc: %v", err)
+	}
 
 	_, err := LoadFromDir(dir)
 	if err == nil {

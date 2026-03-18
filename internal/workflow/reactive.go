@@ -65,7 +65,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 	switch detection.Action {
 	case "skip":
 		if detection.Message != "" {
-			fmt.Fprintln(streams.Err, detection.Message)
+			_, _ = fmt.Fprintln(streams.Err, detection.Message)
 		}
 		return nil
 	case "defer":
@@ -151,7 +151,7 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	}
 
 	if existingFilename != "" {
-		fmt.Fprintf(streams.Err, "Amend detected — updating existing document: %s\n", existingFilename)
+		_, _ = fmt.Fprintf(streams.Err, "Amend detected — updating existing document: %s\n", existingFilename)
 	} else if origHash != "" {
 		// L10 fix: inform the user when amend detection fired but no existing document
 		// was found — the silent fallback to creating a new doc was confusing.
@@ -159,7 +159,7 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 		if len(shortHash) > 7 {
 			shortHash = shortHash[:7]
 		}
-		fmt.Fprintf(streams.Err, "Amend detected — no existing document found for %s, creating new document.\n", shortHash)
+		_, _ = fmt.Fprintf(streams.Err, "Amend detected — no existing document found for %s, creating new document.\n", shortHash)
 	}
 
 	// H2 fix: delegate to the shared helper instead of duplicating the flow.

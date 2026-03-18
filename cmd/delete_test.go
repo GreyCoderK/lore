@@ -325,7 +325,7 @@ func TestDeleteCmd_ReferencedDocWarning(t *testing.T) {
 
 	// Create referencing doc
 	refName := strings.TrimSuffix(result.Filename, ".md")
-	storage.WriteDoc(docsDir, domain.DocMeta{
+	_, _ = storage.WriteDoc(docsDir, domain.DocMeta{
 		Type: "feature", Date: "2026-03-08", Status: "published",
 		Related: []string{refName},
 	}, "login flow", "# Login\n")

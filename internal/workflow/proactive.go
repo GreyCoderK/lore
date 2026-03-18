@@ -39,7 +39,7 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 		docsDir := filepath.Join(workDir, ".lore", "docs")
 		existing, findErr := storage.FindDocByCommit(docsDir, opts.Commit.Hash)
 		if findErr != nil {
-			fmt.Fprintf(streams.Err, "Warning: %v\n", findErr)
+			_, _ = fmt.Fprintf(streams.Err, "Warning: %v\n", findErr)
 		}
 		if existing != nil {
 			fmt.Fprintf(streams.Err, "A document already exists for this commit.\n")

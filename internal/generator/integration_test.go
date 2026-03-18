@@ -146,7 +146,7 @@ func TestIntegration_PipelineOutput(t *testing.T) {
 	}
 	ui.Verb(streams, "Captured", writeResult.Filename)
 	// AC-2: dim path on second line (color disabled → plain text, same format as reactive.go)
-	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(writeResult.Path))
+	_, _ = fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(writeResult.Path))
 
 	output := stderrBuf.String()
 	// Verb pads to 10 chars: "  Captured" (2 leading spaces)

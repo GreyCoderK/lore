@@ -80,20 +80,26 @@ func TestFindReferencingDocs_WithRefs(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create target doc
-	WriteDoc(dir, domain.DocMeta{
+	if _, err := WriteDoc(dir, domain.DocMeta{
 		Type: "decision", Date: "2026-03-07", Status: "published",
-	}, "auth strategy", "# Auth Strategy\n")
+	}, "auth strategy", "# Auth Strategy\n"); err != nil {
+		t.Fatalf("WriteDoc target: %v", err)
+	}
 
 	// Create doc that references the target
-	WriteDoc(dir, domain.DocMeta{
+	if _, err := WriteDoc(dir, domain.DocMeta{
 		Type: "feature", Date: "2026-03-08", Status: "published",
 		Related: []string{"decision-auth-strategy-2026-03-07"},
-	}, "login flow", "# Login Flow\n")
+	}, "login flow", "# Login Flow\n"); err != nil {
+		t.Fatalf("WriteDoc referencing: %v", err)
+	}
 
 	// Create doc that doesn't reference the target
-	WriteDoc(dir, domain.DocMeta{
+	if _, err := WriteDoc(dir, domain.DocMeta{
 		Type: "note", Date: "2026-03-09", Status: "published",
-	}, "unrelated", "# Unrelated\n")
+	}, "unrelated", "# Unrelated\n"); err != nil {
+		t.Fatalf("WriteDoc unrelated: %v", err)
+	}
 
 	refs, err := FindReferencingDocs(dir, "decision-auth-strategy-2026-03-07.md")
 	if err != nil {
@@ -110,10 +116,10 @@ func TestFindReferencingDocs_WithRefs(t *testing.T) {
 func TestFindReferencingDocs_NoRefs(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteDoc(dir, domain.DocMeta{
+	_, _ = WriteDoc(dir, domain.DocMeta{
 		Type: "decision", Date: "2026-03-07", Status: "published",
 	}, "auth", "# Auth\n")
-	WriteDoc(dir, domain.DocMeta{
+	_, _ = WriteDoc(dir, domain.DocMeta{
 		Type: "note", Date: "2026-03-08", Status: "published",
 	}, "other", "# Other\n")
 
@@ -142,7 +148,7 @@ func TestDeleteDoc_RegeneratesIndex(t *testing.T) {
 
 	// Write two docs
 	r1, _ := WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "one", "body\n")
-	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-08", Status: "published"}, "two", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-08", Status: "published"}, "two", "body\n")
 
 	// README should show 2 docs
 	data, _ := os.ReadFile(filepath.Join(dir, "README.md"))

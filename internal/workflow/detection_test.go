@@ -38,14 +38,6 @@ func nonTTYStreams() domain.IOStreams {
 	}
 }
 
-// ttyStreams returns streams backed by os.Stdin/os.Stderr for TTY detection.
-// In unit tests the actual TTY check will fail (CI), but we override LORE_LINE_MODE
-// to force the non-TTY path; for TTY path we rely on the streams being non-file
-// and instead focus on testing the detection logic via adapter flags.
-func ttyLikeStreams() domain.IOStreams {
-	return nonTTYStreams() // tests use non-tty streams; TTY path tested via integration
-}
-
 // TestDetect_DocSkip verifies AC-1: [doc-skip] → skip silencieux, exit 0, 0 output.
 func TestDetect_DocSkip(t *testing.T) {
 	adapter := &detectAdapter{commitMsgResult: true}

@@ -31,8 +31,8 @@ func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 			// AC-6: Check .lore/ exists
 			if _, err := os.Stat(".lore"); err != nil {
 				if os.IsNotExist(err) {
-					fmt.Fprintln(streams.Err, "Error: Lore not initialized.")
-					fmt.Fprintln(streams.Err, "  Run: lore init")
+					_, _ = fmt.Fprintln(streams.Err, "Error: Lore not initialized.")
+					_, _ = fmt.Fprintln(streams.Err, "  Run: lore init")
 				} else {
 					fmt.Fprintf(streams.Err, "Error: cannot access .lore/: %v\n", err)
 				}
@@ -58,7 +58,7 @@ func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 					if flagType != "" {
 						fmt.Fprintf(streams.Err, "No documents of type '%s'.\n", flagType)
 					} else {
-						fmt.Fprintln(streams.Err, "No documents yet. Run: lore new")
+						_, _ = fmt.Fprintln(streams.Err, "No documents yet. Run: lore new")
 					}
 				}
 				return nil

@@ -101,7 +101,9 @@ func TestUninstallHook_Clean(t *testing.T) {
 	dir := initGitRepo(t)
 	a := NewAdapter(dir)
 
-	a.InstallHook("post-commit")
+	if _, err := a.InstallHook("post-commit"); err != nil {
+		t.Fatalf("InstallHook: %v", err)
+	}
 	if err := a.UninstallHook("post-commit"); err != nil {
 		t.Fatalf("UninstallHook: %v", err)
 	}
@@ -126,8 +128,12 @@ func TestUninstallHook_PreservesExistingContent(t *testing.T) {
 	}
 
 	a := NewAdapter(dir)
-	a.InstallHook("post-commit")
-	a.UninstallHook("post-commit")
+	if _, err := a.InstallHook("post-commit"); err != nil {
+		t.Fatalf("InstallHook: %v", err)
+	}
+	if err := a.UninstallHook("post-commit"); err != nil {
+		t.Fatalf("UninstallHook: %v", err)
+	}
 
 	data, err := os.ReadFile(hookPath)
 	if err != nil {
@@ -182,7 +188,9 @@ func TestUninstallHook_EmptyAfterRemoval(t *testing.T) {
 	a := NewAdapter(dir)
 
 	// Install then uninstall — file created by install has only shebang + lore block
-	a.InstallHook("post-commit")
+	if _, err := a.InstallHook("post-commit"); err != nil {
+		t.Fatalf("InstallHook: %v", err)
+	}
 
 	hookPath := filepath.Join(dir, ".git", "hooks", "post-commit")
 	if err := a.UninstallHook("post-commit"); err != nil {
@@ -199,7 +207,9 @@ func TestHookExists_True(t *testing.T) {
 	dir := initGitRepo(t)
 	a := NewAdapter(dir)
 
-	a.InstallHook("post-commit")
+	if _, err := a.InstallHook("post-commit"); err != nil {
+		t.Fatalf("InstallHook: %v", err)
+	}
 
 	exists, err := a.HookExists("post-commit")
 	if err != nil {

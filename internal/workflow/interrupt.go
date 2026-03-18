@@ -84,13 +84,7 @@ func BuildPendingRecord(answers Answers, commitHash, commitMsg, reason, status s
 		Commit:  commitHash,
 		Date:    time.Now().UTC().Format(time.RFC3339),
 		Message: commitMsg,
-		Answers: PendingAnswers{
-			Type:         answers.Type,
-			What:         answers.What,
-			Why:          answers.Why,
-			Alternatives: answers.Alternatives,
-			Impact:       answers.Impact,
-		},
+		Answers: PendingAnswers(answers),
 		Status: status,
 		Reason: reason,
 	}

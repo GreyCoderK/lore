@@ -52,8 +52,10 @@ func TestDoctor_CleanCorpus(t *testing.T) {
 	docsDir := filepath.Join(dir, ".lore", "docs")
 
 	// Write a valid doc and generate index
-	storage.WriteDoc(docsDir, domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}, "clean doc", "# Clean\n\nBody.\n")
-	storage.RegenerateIndex(docsDir)
+	_, _ = storage.WriteDoc(docsDir, domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}, "clean doc", "# Clean\n\nBody.\n")
+	if err := storage.RegenerateIndex(docsDir); err != nil {
+		t.Fatalf("RegenerateIndex: %v", err)
+	}
 
 	_, stderr, err := runDoctor(t, dir)
 	if err != nil {
@@ -73,7 +75,9 @@ func TestDoctor_IssuesFound(t *testing.T) {
 	docsDir := filepath.Join(dir, ".lore", "docs")
 
 	// Create an orphan .tmp file
-	os.WriteFile(filepath.Join(docsDir, "broken.md.tmp"), []byte("partial"), 0o644)
+	if err := os.WriteFile(filepath.Join(docsDir, "broken.md.tmp"), []byte("partial"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 
 	_, stderr, err := runDoctor(t, dir)
 	if err == nil {
@@ -99,10 +103,12 @@ func TestDoctor_FixMode(t *testing.T) {
 	docsDir := filepath.Join(dir, ".lore", "docs")
 
 	// Create a doc and an orphan .tmp (old enough to fix)
-	storage.WriteDoc(docsDir, domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}, "test doc", "# Test\n\nBody.\n")
+	_, _ = storage.WriteDoc(docsDir, domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}, "test doc", "# Test\n\nBody.\n")
 	tmpPath := filepath.Join(docsDir, "old-write.md.tmp")
-	os.WriteFile(tmpPath, []byte("partial"), 0o644)
-	os.Chtimes(tmpPath, time.Now().Add(-10*time.Second), time.Now().Add(-10*time.Second))
+	if err := os.WriteFile(tmpPath, []byte("partial"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	_ = os.Chtimes(tmpPath, time.Now().Add(-10*time.Second), time.Now().Add(-10*time.Second))
 
 	_, stderr, err := runDoctor(t, dir, "--fix")
 	if err != nil {
@@ -127,8 +133,10 @@ func TestDoctor_ManualFixRequired(t *testing.T) {
 	docsDir := filepath.Join(dir, ".lore", "docs")
 
 	// Write an invalid front matter file
-	os.WriteFile(filepath.Join(docsDir, "bad-doc.md"), []byte("---\n{{invalid\n---\n# Bad\n"), 0o644)
-	storage.RegenerateIndex(docsDir)
+	if err := os.WriteFile(filepath.Join(docsDir, "bad-doc.md"), []byte("---\n{{invalid\n---\n# Bad\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	_ = storage.RegenerateIndex(docsDir) // non-fatal parse error expected for bad-doc.md
 
 	_, stderr, err := runDoctor(t, dir, "--fix")
 	if err == nil {
@@ -148,7 +156,9 @@ func TestDoctor_QuietMode(t *testing.T) {
 	docsDir := filepath.Join(dir, ".lore", "docs")
 
 	// Create orphan .tmp
-	os.WriteFile(filepath.Join(docsDir, "orphan.md.tmp"), []byte("x"), 0o644)
+	if err := os.WriteFile(filepath.Join(docsDir, "orphan.md.tmp"), []byte("x"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 
 	stdout, stderr, err := runDoctor(t, dir, "--quiet")
 	if err == nil {
@@ -173,9 +183,11 @@ func TestDoctor_FixQuietMode(t *testing.T) {
 	docsDir := filepath.Join(dir, ".lore", "docs")
 
 	// Create a doc + invalid frontmatter file (manual fix required)
-	storage.WriteDoc(docsDir, domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}, "test", "# T\n\nBody.\n")
-	os.WriteFile(filepath.Join(docsDir, "bad.md"), []byte("---\n{{invalid\n---\n"), 0o644)
-	storage.RegenerateIndex(docsDir)
+	_, _ = storage.WriteDoc(docsDir, domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}, "test", "# T\n\nBody.\n")
+	if err := os.WriteFile(filepath.Join(docsDir, "bad.md"), []byte("---\n{{invalid\n---\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	_ = storage.RegenerateIndex(docsDir) // non-fatal parse error expected for bad.md
 
 	stdout, stderr, err := runDoctor(t, dir, "--fix", "--quiet")
 	if err == nil {

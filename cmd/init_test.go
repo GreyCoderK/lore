@@ -213,7 +213,9 @@ func TestRunInit_NotGitRepo(t *testing.T) {
 
 func TestRunInit_AlreadyInitialized(t *testing.T) {
 	dir := t.TempDir()
-	os.MkdirAll(filepath.Join(dir, ".lore"), 0755)
+	if err := os.MkdirAll(filepath.Join(dir, ".lore"), 0755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
 
 	streams, _, errBuf := testStreams()
 

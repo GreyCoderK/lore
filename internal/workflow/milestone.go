@@ -28,5 +28,5 @@ func showMilestone(streams domain.IOStreams, docsDir string, tty bool) {
 	if !ok {
 		return
 	}
-	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(msg))
+	_, _ = fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(msg))
 }

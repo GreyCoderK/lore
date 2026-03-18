@@ -39,7 +39,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 
 			filename := args[0]
 			if err := storage.ValidateFilename(filename); err != nil {
-				fmt.Fprintf(streams.Err, "%s Invalid filename '%s'.\n", ui.Error("Error:"), filename)
+				_, _ = fmt.Fprintf(streams.Err, "%s Invalid filename '%s'.\n", ui.Error("Error:"), filename)
 				return fmt.Errorf("cmd: delete: %w", err)
 			}
 			docsDir := filepath.Join(loreDir, "docs")
@@ -48,7 +48,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			// AC-5: read document — produces friendly error if missing
 			data, err := os.ReadFile(docPath)
 			if os.IsNotExist(err) {
-				fmt.Fprintf(streams.Err, "%s Document '%s' not found.\n", ui.Error("Error:"), filename)
+				_, _ = fmt.Fprintf(streams.Err, "%s Document '%s' not found.\n", ui.Error("Error:"), filename)
 				return fmt.Errorf("cmd: delete: %s: %w", filename, domain.ErrNotFound)
 			} else if err != nil {
 				return fmt.Errorf("cmd: delete: read %s: %w", filename, err)
@@ -61,7 +61,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			// AC-4: warn about incoming references before confirmation
 			refs, refErr := storage.FindReferencingDocs(docsDir, filename)
 			if refErr != nil {
-				fmt.Fprintf(streams.Err, "Warning: %v\n", refErr)
+				_, _ = fmt.Fprintf(streams.Err, "Warning: %v\n", refErr)
 			}
 			if len(refs) > 0 {
 				fmt.Fprintf(streams.Err, "%s This document is referenced by:\n", ui.Warning("Warning:"))

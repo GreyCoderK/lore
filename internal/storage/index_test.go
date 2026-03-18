@@ -34,9 +34,9 @@ func TestRegenerateIndex_WithDocuments(t *testing.T) {
 	dir := t.TempDir()
 
 	// Write 3 docs with different dates
-	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-05", Status: "published", Tags: []string{"auth"}}, "older", "body\n")
-	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-07", Status: "published", Tags: []string{"api"}}, "mid", "body\n")
-	WriteDoc(dir, domain.DocMeta{Type: "note", Date: "2026-03-10", Status: "draft"}, "newest", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-05", Status: "published", Tags: []string{"auth"}}, "older", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-07", Status: "published", Tags: []string{"api"}}, "mid", "body\n")
+	_, _ = WriteDoc(dir, domain.DocMeta{Type: "note", Date: "2026-03-10", Status: "draft"}, "newest", "body\n")
 
 	// RegenerateIndex is called by WriteDoc, but call explicitly to verify
 	if err := RegenerateIndex(dir); err != nil {

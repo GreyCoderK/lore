@@ -43,12 +43,12 @@ func List(streams domain.IOStreams, items []ListItem, prompt string) (int, error
 	}
 	for i := 0; i < displayCount; i++ {
 		item := items[i]
-		fmt.Fprintf(out, "%3d  %-10s %-22s %s\n", i+1, item.Type, item.Title, item.Date)
+		_, _ = fmt.Fprintf(out, "%3d  %-10s %-22s %s\n", i+1, item.Type, item.Title, item.Date)
 	}
 
 	if truncated {
 		remaining := len(items) - maxListItems
-		fmt.Fprintf(out, "... and %d more. Refine your search.\n", remaining)
+		_, _ = fmt.Fprintf(out, "... and %d more. Refine your search.\n", remaining)
 	}
 
 	// Non-TTY: no interactive selection

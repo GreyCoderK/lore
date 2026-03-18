@@ -94,7 +94,7 @@ func runDoctorDiagnose(streams domain.IOStreams, report *storage.DiagnosticRepor
 		}
 	}
 
-	fmt.Fprintln(streams.Err)
+	_, _ = fmt.Fprintln(streams.Err)
 	if len(report.Issues) == 0 {
 		fmt.Fprintf(streams.Err, "Health: all good. 0 issues found.\n")
 		return nil
@@ -106,7 +106,7 @@ func runDoctorDiagnose(streams domain.IOStreams, report *storage.DiagnosticRepor
 
 // runDoctorFix displays the fix report on stderr.
 func runDoctorFix(streams domain.IOStreams, report *storage.DiagnosticReport, fixReport *storage.FixReport) error {
-	fmt.Fprintln(streams.Err)
+	_, _ = fmt.Fprintln(streams.Err)
 	for _, detail := range fixReport.Details {
 		ui.Verb(streams, "Fixed", detail)
 	}
@@ -115,12 +115,12 @@ func runDoctorFix(streams domain.IOStreams, report *storage.DiagnosticReport, fi
 	for _, issue := range report.Issues {
 		if !issue.AutoFix {
 			suggestion := fmt.Sprintf("%s — manual fix required: %s", issue.File, issue.Detail)
-			fmt.Fprintf(streams.Err, "  %s  %s\n", ui.Warning("⚠"), suggestion)
+			_, _ = fmt.Fprintf(streams.Err, "  %s  %s\n", ui.Warning("⚠"), suggestion)
 		}
 	}
 
-	fmt.Fprintln(streams.Err)
-	fmt.Fprintf(streams.Err, "Fixed: %d issues. %d remaining.\n", fixReport.Fixed, fixReport.Remaining)
+	_, _ = fmt.Fprintln(streams.Err)
+	_, _ = fmt.Fprintf(streams.Err, "Fixed: %d issues. %d remaining.\n", fixReport.Fixed, fixReport.Remaining)
 
 	if fixReport.Remaining > 0 || fixReport.Errors > 0 {
 		return &cli.ExitCodeError{Code: cli.ExitError}

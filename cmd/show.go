@@ -118,8 +118,8 @@ func newShowCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 func displayResults(streams domain.IOStreams, results []storage.SearchResult, keyword string, quiet bool) error {
 	count := len(results)
 
-	switch {
-	case count == 0:
+	switch count {
+	case 0:
 		// AC-5: Zero results
 		if !quiet {
 			if keyword != "" {
@@ -131,13 +131,13 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 		}
 		return &cli.ExitCodeError{Code: cli.ExitSkip}
 
-	case count == 1:
+	case 1:
 		// AC-2: Single result — display directly on stdout
 		content, err := storage.ReadDocContent(results[0].Path)
 		if err != nil {
 			return fmt.Errorf("cmd: show: %w", err)
 		}
-		fmt.Fprint(streams.Out, content)
+		_, _ = fmt.Fprint(streams.Out, content)
 
 	default:
 		// AC-3 / AC-4: Multiple results
@@ -165,7 +165,7 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 				if err != nil {
 					return fmt.Errorf("cmd: show: %w", err)
 				}
-				fmt.Fprint(streams.Out, content)
+				_, _ = fmt.Fprint(streams.Out, content)
 			}
 			// Non-TTY: ui.List already printed parseable list to stdout
 		} else {

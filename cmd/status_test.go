@@ -25,7 +25,7 @@ func setupStatusTest(t *testing.T, docs []testutil.DocFixture) (string, domain.I
 		filepath.Join(".lore", "templates"),
 		filepath.Join(".lore", "pending"),
 	} {
-		os.MkdirAll(filepath.Join(dir, sub), 0o755)
+		_ = os.MkdirAll(filepath.Join(dir, sub), 0o755)
 	}
 
 	// Create docs

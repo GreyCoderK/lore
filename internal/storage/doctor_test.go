@@ -60,11 +60,13 @@ func TestDiagnose_CleanCorpus(t *testing.T) {
 func TestDiagnose_OrphanTmpFiles(t *testing.T) {
 	docsDir := newDoctorDir(t)
 	writeDoc(t, docsDir, "note-test-2026-03-07.md", "note", "2026-03-07", nil)
-	RegenerateIndex(docsDir)
+	_ = RegenerateIndex(docsDir)
 
 	// Create orphan .tmp file
 	tmpPath := filepath.Join(docsDir, "decision-auth-2026-03-07.md.tmp")
-	os.WriteFile(tmpPath, []byte("partial write"), 0o644)
+	if err := os.WriteFile(tmpPath, []byte("partial write"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 
 	report, err := Diagnose(docsDir)
 	if err != nil {
@@ -89,7 +91,7 @@ func TestDiagnose_BrokenReferences(t *testing.T) {
 	docsDir := newDoctorDir(t)
 	// Doc A references "nonexistent-doc" which doesn't exist
 	writeDoc(t, docsDir, "decision-auth-2026-03-07.md", "decision", "2026-03-07", []string{"nonexistent-doc"})
-	RegenerateIndex(docsDir)
+	_ = RegenerateIndex(docsDir)
 
 	report, err := Diagnose(docsDir)
 	if err != nil {
@@ -118,7 +120,9 @@ func TestDiagnose_StaleIndex(t *testing.T) {
 	writeDoc(t, docsDir, "note-test-2026-03-07.md", "note", "2026-03-07", nil)
 
 	// Write a stale README that doesn't match
-	os.WriteFile(filepath.Join(docsDir, "README.md"), []byte("# Old Index\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(docsDir, "README.md"), []byte("# Old Index\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 
 	report, err := Diagnose(docsDir)
 	if err != nil {
@@ -141,11 +145,13 @@ func TestDiagnose_StaleIndex(t *testing.T) {
 
 func TestDiagnose_InvalidFrontMatter(t *testing.T) {
 	docsDir := newDoctorDir(t)
-	RegenerateIndex(docsDir)
+	_ = RegenerateIndex(docsDir)
 
 	// Write a file with invalid YAML front matter
 	bad := "---\n{{invalid yaml\n---\n# Bad\n"
-	os.WriteFile(filepath.Join(docsDir, "feature-bad-2026-03-07.md"), []byte(bad), 0o644)
+	if err := os.WriteFile(filepath.Join(docsDir, "feature-bad-2026-03-07.md"), []byte(bad), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 
 	report, err := Diagnose(docsDir)
 	if err != nil {
@@ -194,9 +200,11 @@ func TestFix_OrphanTmpRemoved(t *testing.T) {
 
 	// Create orphan .tmp file with old modtime
 	tmpPath := filepath.Join(docsDir, "old-write.md.tmp")
-	os.WriteFile(tmpPath, []byte("partial"), 0o644)
+	if err := os.WriteFile(tmpPath, []byte("partial"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 	// Set modtime to 10 seconds ago to pass the age check
-	os.Chtimes(tmpPath, time.Now().Add(-10*time.Second), time.Now().Add(-10*time.Second))
+	_ = os.Chtimes(tmpPath, time.Now().Add(-10*time.Second), time.Now().Add(-10*time.Second))
 
 	report := &DiagnosticReport{
 		Issues: []Issue{
@@ -301,7 +309,9 @@ func TestFix_TmpTooRecent_Skipped(t *testing.T) {
 
 	// Create a very recent .tmp file (simulates concurrent write)
 	tmpPath := filepath.Join(docsDir, "concurrent.md.tmp")
-	os.WriteFile(tmpPath, []byte("in progress"), 0o644)
+	if err := os.WriteFile(tmpPath, []byte("in progress"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 	// Don't change modtime — it's NOW, so <5s check applies
 
 	report := &DiagnosticReport{
@@ -330,7 +340,7 @@ func TestDiagnose_ValidRelatedReference(t *testing.T) {
 	// Doc A references Doc B — both exist
 	writeDoc(t, docsDir, "decision-auth-2026-03-07.md", "decision", "2026-03-07", []string{"feature-jwt-2026-03-08"})
 	writeDoc(t, docsDir, "feature-jwt-2026-03-08.md", "feature", "2026-03-08", nil)
-	RegenerateIndex(docsDir)
+	_ = RegenerateIndex(docsDir)
 
 	report, err := Diagnose(docsDir)
 	if err != nil {

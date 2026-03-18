@@ -334,7 +334,9 @@ func TestNewCmd_CommitInvalid_ActionableError(t *testing.T) {
 	dir := testutil.SetupGitRepo(t)
 	// Create .lore dir
 	for _, sub := range []string{".lore/docs", ".lore/templates"} {
-		os.MkdirAll(filepath.Join(dir, sub), 0o755)
+		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
+			t.Fatalf("MkdirAll %s: %v", sub, err)
+		}
 	}
 	testutil.Chdir(t, dir)
 
@@ -371,7 +373,7 @@ func TestNewCmd_CommitAlreadyDocumented_NonTTY(t *testing.T) {
 
 	// Pre-create a document for this commit
 	docsDir := filepath.Join(dir, ".lore", "docs")
-	storage.WriteDoc(docsDir, domain.DocMeta{
+	_, _ = storage.WriteDoc(docsDir, domain.DocMeta{
 		Type:        "feature",
 		Date:        "2026-03-16",
 		Status:      "published",

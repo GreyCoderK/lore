@@ -17,7 +17,7 @@ import (
 // paths after a successful document write.
 func displayCompletion(streams domain.IOStreams, result storage.WriteResult, verb string, workDir string, tty bool) {
 	if result.IndexErr != nil {
-		fmt.Fprintf(streams.Err, "Warning: index update failed: %v\n", result.IndexErr)
+		_, _ = fmt.Fprintf(streams.Err, "Warning: index update failed: %v\n", result.IndexErr)
 	}
 
 	ui.Verb(streams, verb, result.Filename)
@@ -25,7 +25,7 @@ func displayCompletion(streams domain.IOStreams, result storage.WriteResult, ver
 	if relErr != nil {
 		displayPath = result.Path
 	}
-	fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
+	_, _ = fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
 
 	docsDir := filepath.Join(workDir, ".lore", "docs")
 	showMilestone(streams, docsDir, tty)

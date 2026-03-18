@@ -356,7 +356,9 @@ func TestHandleProactive_WriteDocFails_SavesPending(t *testing.T) {
 
 	workDir := t.TempDir()
 	// .lore/templates must exist for the template engine to initialise.
-	os.MkdirAll(filepath.Join(workDir, ".lore", "templates"), 0o755)
+	if err := os.MkdirAll(filepath.Join(workDir, ".lore", "templates"), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
 	// .lore/docs as a regular FILE — WriteDoc's os.MkdirAll will fail.
 	if err := os.WriteFile(filepath.Join(workDir, ".lore", "docs"), []byte("not-a-dir"), 0o644); err != nil {
 		t.Fatalf("setup: %v", err)
@@ -588,13 +590,15 @@ func TestHandleProactive_AlreadyDocumented_Confirm(t *testing.T) {
 	commitHash := "abc1234567890abcdef1234567890abcdef123456"
 
 	// Pre-create a document for this commit (different date to avoid filename collision)
-	storage.WriteDoc(docsDir, domain.DocMeta{
+	if _, err := storage.WriteDoc(docsDir, domain.DocMeta{
 		Type:        "feature",
 		Date:        "2026-03-15",
 		Status:      "published",
 		Commit:      commitHash,
 		GeneratedBy: "retroactive",
-	}, "initial setup", "# Initial Setup\n")
+	}, "initial setup", "# Initial Setup\n"); err != nil {
+		t.Fatalf("WriteDoc: %v", err)
+	}
 
 	commit := &domain.CommitInfo{
 		Hash:    commitHash,
@@ -650,13 +654,15 @@ func TestHandleProactive_AlreadyDocumented_Decline(t *testing.T) {
 
 	commitHash := "abc1234567890abcdef1234567890abcdef123456"
 
-	storage.WriteDoc(docsDir, domain.DocMeta{
+	if _, err := storage.WriteDoc(docsDir, domain.DocMeta{
 		Type:        "feature",
 		Date:        "2026-03-15",
 		Status:      "published",
 		Commit:      commitHash,
 		GeneratedBy: "retroactive",
-	}, "initial setup", "# Initial Setup\n")
+	}, "initial setup", "# Initial Setup\n"); err != nil {
+		t.Fatalf("WriteDoc: %v", err)
+	}
 
 	commit := &domain.CommitInfo{
 		Hash:    commitHash,
@@ -706,13 +712,15 @@ func TestHandleProactive_AlreadyDocumented_NonTTY(t *testing.T) {
 
 	commitHash := "abc1234567890abcdef1234567890abcdef123456"
 
-	storage.WriteDoc(docsDir, domain.DocMeta{
+	if _, err := storage.WriteDoc(docsDir, domain.DocMeta{
 		Type:        "feature",
 		Date:        "2026-03-16",
 		Status:      "published",
 		Commit:      commitHash,
 		GeneratedBy: "retroactive",
-	}, "initial setup", "# Initial Setup\n")
+	}, "initial setup", "# Initial Setup\n"); err != nil {
+		t.Fatalf("WriteDoc: %v", err)
+	}
 
 	commit := &domain.CommitInfo{
 		Hash:    commitHash,

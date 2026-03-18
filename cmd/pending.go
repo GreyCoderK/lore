@@ -100,8 +100,8 @@ func newPendingSkipCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 func checkLoreDir(streams domain.IOStreams) error {
 	if _, err := os.Stat(".lore"); err != nil {
 		if os.IsNotExist(err) {
-			fmt.Fprintln(streams.Err, "Error: Lore not initialized.")
-			fmt.Fprintln(streams.Err, "  Run: lore init")
+			_, _ = fmt.Fprintln(streams.Err, "Error: Lore not initialized.")
+			_, _ = fmt.Fprintln(streams.Err, "  Run: lore init")
 		} else {
 			fmt.Fprintf(streams.Err, "Error: cannot access .lore/: %v\n", err)
 		}
@@ -117,7 +117,7 @@ func runPendingList(cmd *cobra.Command, streams domain.IOStreams) error {
 
 	pendingDir := filepath.Join(".lore", "pending")
 	warnWriter := func(msg string) {
-		fmt.Fprintln(streams.Err, msg)
+		_, _ = fmt.Fprintln(streams.Err, msg)
 	}
 	items, err := workflow.ListPending(cmd.Context(), pendingDir, warnWriter)
 	if err != nil {

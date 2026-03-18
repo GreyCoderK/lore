@@ -17,20 +17,20 @@ func AtomicWrite(path string, data []byte, perm os.FileMode) error {
 	tmpName := tmp.Name()
 
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("fileutil: write temp: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("fileutil: close temp: %w", err)
 	}
 	if err := os.Chmod(tmpName, perm); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("fileutil: chmod temp: %w", err)
 	}
 	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("fileutil: rename temp: %w", err)
 	}
 	return nil
@@ -49,25 +49,25 @@ func AtomicWriteExclusive(path string, data []byte, perm os.FileMode) error {
 	tmpName := tmp.Name()
 
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("fileutil: write temp: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("fileutil: close temp: %w", err)
 	}
 	if err := os.Chmod(tmpName, perm); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("fileutil: chmod temp: %w", err)
 	}
 	// os.Link fails atomically with EEXIST if path already exists (POSIX).
 	// NOTE: the os.Link error is returned unwrapped intentionally so that
 	// callers can use os.IsExist(err) to detect the "already exists" case.
 	if err := os.Link(tmpName, path); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return err
 	}
-	os.Remove(tmpName) // hard link created; remove temp name
+	_ = os.Remove(tmpName) // hard link created; remove temp name
 	return nil
 }

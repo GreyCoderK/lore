@@ -20,25 +20,25 @@ func NewLineRenderer(streams domain.IOStreams) *LineRenderer {
 
 func (r *LineRenderer) QuestionStart(question string, defaultVal string) {
 	if defaultVal != "" {
-		fmt.Fprintf(r.streams.Err, "? %s [%s]: ", question, defaultVal)
+		_, _ = fmt.Fprintf(r.streams.Err, "? %s [%s]: ", question, defaultVal)
 	} else {
-		fmt.Fprintf(r.streams.Err, "? %s\n> ", question)
+		_, _ = fmt.Fprintf(r.streams.Err, "? %s\n> ", question)
 	}
 }
 
 func (r *LineRenderer) QuestionConfirm(question string, answer string) {
 	r.answered++
-	fmt.Fprintf(r.streams.Err, "✓ %s: %s\n", question, answer)
+	_, _ = fmt.Fprintf(r.streams.Err, "✓ %s: %s\n", question, answer)
 }
 
 func (r *LineRenderer) Progress(current, total int, label string) {
 	bar := strings.Repeat("#", current) + strings.Repeat("·", total-current)
-	fmt.Fprintf(r.streams.Err, "[%s] %d+ %s\n", bar, current, label)
+	_, _ = fmt.Fprintf(r.streams.Err, "[%s] %d+ %s\n", bar, current, label)
 }
 
 func (r *LineRenderer) ExpressSkip(skipped int) {
 	total := r.answered + skipped
 	bar := strings.Repeat("#", total)
-	fmt.Fprintf(r.streams.Err, "[%s] %d/%d (%d optional skipped — express)\n",
+	_, _ = fmt.Fprintf(r.streams.Err, "[%s] %d/%d (%d optional skipped — express)\n",
 		bar, r.answered, total, skipped)
 }

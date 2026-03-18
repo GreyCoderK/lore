@@ -187,7 +187,7 @@ func promptDemo(ctx context.Context, cfg *config.Config, streams domain.IOStream
 
 	answer = strings.TrimSpace(strings.ToLower(answer))
 	if answer == "y" {
-		fmt.Fprintln(streams.Err)
+		_, _ = fmt.Fprintln(streams.Err)
 		if err := runDemo(ctx, cfg, streams); err != nil {
 			fmt.Fprintf(streams.Err, "%s %v\n", ui.Warning("Demo:"), err)
 		}

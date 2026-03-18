@@ -69,7 +69,7 @@ func unmarshalConfig(v *viper.Viper) (*Config, error) {
 		dc.ErrorUnused = true
 	})
 	if strictErr != nil {
-		fmt.Fprintf(WarnWriter, "Warning: %s\n", strictErr)
+		_, _ = fmt.Fprintf(WarnWriter, "Warning: %s\n", strictErr)
 	}
 
 	// Second pass: always succeed so unknown fields don't block the user.

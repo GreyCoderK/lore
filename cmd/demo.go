@@ -122,7 +122,7 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	}
 
 	ui.Verb(streams, "Created", result.Filename)
-	fmt.Fprintln(streams.Err)
+	_, _ = fmt.Fprintln(streams.Err)
 	demoPause(ctx)
 
 	// Step 6: Simulated lore show
