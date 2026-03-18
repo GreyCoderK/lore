@@ -30,17 +30,8 @@ Lore fixes this by making documentation a natural part of your commit workflow:
 ## Installation
 
 ```bash
-# Homebrew (macOS / Linux)
-brew install GreyCoderK/lore/lore
-
-# Snap (Linux)
-sudo snap install lore --classic
-
-# Go
 go install github.com/greycoderk/lore@latest
 ```
-
-Or download pre-built binaries from [GitHub Releases](https://github.com/GreyCoderK/lore/releases).
 
 ## Quick Start
 
