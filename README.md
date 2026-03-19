@@ -1,5 +1,16 @@
 # Lore
 
+[![CI](https://github.com/GreyCoderK/lore/actions/workflows/ci.yml/badge.svg)](https://github.com/GreyCoderK/lore/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/greycoderk/lore)](https://goreportcard.com/report/github.com/greycoderk/lore)
+[![Go Reference](https://pkg.go.dev/badge/github.com/greycoderk/lore.svg)](https://pkg.go.dev/github.com/greycoderk/lore)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/GreyCoderK/lore)](https://github.com/GreyCoderK/lore)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/issues)
+[![Sponsor](https://img.shields.io/badge/Sponsor-GreyCoderK-ea4aaa?logo=github-sponsors)](https://github.com/sponsors/GreyCoderK)
+
 **A CLI tool that captures the *why* behind your code, one commit at a time.**
 
 Lore hooks into your Git workflow to document decisions, trade-offs, and context that code alone can't convey. Every commit becomes an opportunity to build a searchable knowledge base — no wiki, no Confluence, just Markdown files living next to your code.
@@ -223,6 +234,23 @@ The next milestone introduces **Angela**, an AI-assisted documentation companion
 Angela operates in two modes:
 - **Draft mode** (zero-API) — Local analysis: missing sections, style guide compliance, related documents. No network calls.
 - **Polish mode** (1 API call) — AI rewrites with interactive diff. Accept/reject each change individually. Atomic writes preserve originals.
+
+## Third-Party Notices
+
+The following dependencies require attribution under their respective licenses:
+
+| Dependency | License |
+|------------|---------|
+| [cobra](https://github.com/spf13/cobra) | Apache-2.0 |
+| [afero](https://github.com/spf13/afero) | Apache-2.0 |
+| [mousetrap](https://github.com/inconshreveable/mousetrap) | Apache-2.0 |
+| [pflag](https://github.com/spf13/pflag) | BSD-3-Clause |
+| [fsnotify](https://github.com/fsnotify/fsnotify) | BSD-3-Clause |
+| [x/term](https://pkg.go.dev/golang.org/x/term) | BSD-3-Clause |
+| [x/sys](https://pkg.go.dev/golang.org/x/sys) | BSD-3-Clause |
+| [x/text](https://pkg.go.dev/golang.org/x/text) | BSD-3-Clause |
+
+Full license texts are available in each dependency's repository.
 
 ## License
 

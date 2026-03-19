@@ -12,3 +12,7 @@ jobs:
       - uses: golangci/golangci-lint-action@v7
         with:
           version: v2.11.3
+      - name: License check
+        run: |
+          go install github.com/google/go-licenses@latest
+          go-licenses check ./... --allowed_licenses=Apache-2.0,BSD-2-Clause,BSD-3-Clause,MIT,ISC,AGPL-3.0
