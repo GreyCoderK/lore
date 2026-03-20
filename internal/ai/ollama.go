@@ -83,7 +83,7 @@ func (p *ollamaProvider) Complete(ctx context.Context, prompt string, opts ...do
 	if err != nil {
 		return "", fmt.Errorf("ai: ollama: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
 	if err != nil {

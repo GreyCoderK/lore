@@ -35,7 +35,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			docsDir := filepath.Join(".", ".lore", "docs")
 			if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("Lore not initialized. Run: lore init")
+					return fmt.Errorf("lore not initialized, run: lore init")
 				}
 				return fmt.Errorf("angela: polish: %w", err)
 			}
@@ -47,7 +47,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			docPath := filepath.Join(docsDir, filename)
 			if _, err := os.Stat(docPath); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("Document '%s' not found in .lore/docs/", filename)
+					return fmt.Errorf("document '%s' not found in .lore/docs/", filename)
 				}
 				return fmt.Errorf("angela: polish: %w", err)
 			}
@@ -59,7 +59,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 				return err
 			}
 			if provider == nil {
-				return fmt.Errorf("No AI provider configured.\n  Set ai.provider in .lorerc.local\n  Try: lore angela draft (no API needed)")
+				return fmt.Errorf("no AI provider configured, set ai.provider in .lorerc.local (try: lore angela draft, no API needed)")
 			}
 
 			// Read document

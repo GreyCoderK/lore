@@ -467,10 +467,10 @@ func BuildPersonaPrompt(personas []PersonaProfile) string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("YOUR EXPERT TEAM FOR THIS REVIEW:\nAngela activates %d expert lens(es) for this document:\n\n", len(personas)))
+	fmt.Fprintf(&sb, "YOUR EXPERT TEAM FOR THIS REVIEW:\nAngela activates %d expert lens(es) for this document:\n\n", len(personas))
 
 	for _, p := range personas {
-		sb.WriteString(fmt.Sprintf("%s %s — %s\n", p.Icon, p.DisplayName, p.Expertise))
+		fmt.Fprintf(&sb, "%s %s — %s\n", p.Icon, p.DisplayName, p.Expertise)
 	}
 	sb.WriteString("\n")
 

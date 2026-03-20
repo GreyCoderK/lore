@@ -123,8 +123,8 @@ func TestAngelaDraft_NotInitialized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for uninitialized repo")
 	}
-	if !strings.Contains(err.Error(), "Lore not initialized") {
-		t.Errorf("error = %q, want 'Lore not initialized'", err)
+	if !strings.Contains(err.Error(), "lore not initialized") {
+		t.Errorf("error = %q, want 'lore not initialized'", err)
 	}
 }
 
@@ -196,8 +196,8 @@ func TestAngelaDraft_All_NotInitialized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for uninitialized repo")
 	}
-	if !strings.Contains(err.Error(), "Lore not initialized") {
-		t.Errorf("error = %q, want 'Lore not initialized'", err)
+	if !strings.Contains(err.Error(), "lore not initialized") {
+		t.Errorf("error = %q, want 'lore not initialized'", err)
 	}
 }
 
@@ -235,8 +235,8 @@ func TestAngelaPolish_NoProvider(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for no provider")
 	}
-	if !strings.Contains(err.Error(), "No AI provider configured") {
-		t.Errorf("error = %q, want 'No AI provider configured'", err)
+	if !strings.Contains(err.Error(), "no AI provider configured") {
+		t.Errorf("error = %q, want 'no AI provider configured'", err)
 	}
 }
 
@@ -269,7 +269,7 @@ func TestAngelaPolish_NotInitialized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for uninitialized repo")
 	}
-	if !strings.Contains(err.Error(), "Lore not initialized") {
-		t.Errorf("error = %q, want 'Lore not initialized'", err)
+	if !strings.Contains(err.Error(), "lore not initialized") {
+		t.Errorf("error = %q, want 'lore not initialized'", err)
 	}
 }

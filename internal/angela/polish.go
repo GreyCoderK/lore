@@ -68,14 +68,14 @@ func BuildCorpusSummary(corpus []domain.DocMeta) string {
 	var sb strings.Builder
 	for i := 0; i < limit; i++ {
 		meta := corpus[i]
-		sb.WriteString(fmt.Sprintf("- [%s] %s", meta.Type, meta.Filename))
+		fmt.Fprintf(&sb, "- [%s] %s", meta.Type, meta.Filename)
 		if len(meta.Tags) > 0 {
-			sb.WriteString(fmt.Sprintf(" (tags: %s)", strings.Join(meta.Tags, ", ")))
+			fmt.Fprintf(&sb, " (tags: %s)", strings.Join(meta.Tags, ", "))
 		}
 		sb.WriteString("\n")
 	}
 	if len(corpus) > 20 {
-		sb.WriteString(fmt.Sprintf("... and %d more documents\n", len(corpus)-20))
+		fmt.Fprintf(&sb, "... and %d more documents\n", len(corpus)-20)
 	}
 	return sb.String()
 }

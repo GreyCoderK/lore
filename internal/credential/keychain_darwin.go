@@ -31,7 +31,7 @@ func (d *darwinStore) serviceName(provider string) string {
 }
 
 func (d *darwinStore) Set(provider string, secret []byte) error {
-	if err := validateProvider(provider); err != nil {
+	if err := ValidateProvider(provider); err != nil {
 		return err
 	}
 	// Delete first, then add — avoids duplicate errors without -U.
@@ -54,7 +54,7 @@ func (d *darwinStore) Set(provider string, secret []byte) error {
 }
 
 func (d *darwinStore) Get(provider string) ([]byte, error) {
-	if err := validateProvider(provider); err != nil {
+	if err := ValidateProvider(provider); err != nil {
 		return nil, err
 	}
 	cmd := exec.Command("security", "find-generic-password",
@@ -78,7 +78,7 @@ func (d *darwinStore) Get(provider string) ([]byte, error) {
 }
 
 func (d *darwinStore) Delete(provider string) error {
-	if err := validateProvider(provider); err != nil {
+	if err := ValidateProvider(provider); err != nil {
 		return err
 	}
 	cmd := exec.Command("security", "delete-generic-password",

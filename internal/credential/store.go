@@ -15,12 +15,13 @@ const ServiceName = "lore"
 // KnownProviders is the single source of truth for supported AI providers.
 var KnownProviders = []string{"anthropic", "openai", "ollama"}
 
-var validProviderRe = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+// ValidateProviderRe matches valid provider name characters.
+var ValidateProviderRe = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
-// validateProvider rejects provider names with special characters.
+// ValidateProvider rejects provider names with special characters.
 // Prevents injection into exec.Command arguments and keychain service names.
-func validateProvider(name string) error {
-	if !validProviderRe.MatchString(name) {
+func ValidateProvider(name string) error {
+	if !ValidateProviderRe.MatchString(name) {
 		return fmt.Errorf("credential: invalid provider name %q", name)
 	}
 	return nil

@@ -45,7 +45,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 				return runDraftAll(cfg, streams)
 			}
 			if len(args) == 0 {
-				return fmt.Errorf("Provide a filename or use --all to analyze the entire corpus")
+				return fmt.Errorf("provide a filename or use --all to analyze the entire corpus")
 			}
 			filename := args[0]
 
@@ -53,7 +53,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			docsDir := filepath.Join(".", ".lore", "docs")
 			if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("Lore not initialized. Run: lore init")
+					return fmt.Errorf("lore not initialized, run: lore init")
 				}
 				return fmt.Errorf("angela: draft: %w", err)
 			}
@@ -65,7 +65,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			docPath := filepath.Join(docsDir, filename)
 			if _, err := os.Stat(docPath); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("Document '%s' not found in .lore/docs/", filename)
+					return fmt.Errorf("document '%s' not found in .lore/docs/", filename)
 				}
 				return fmt.Errorf("angela: draft: %w", err)
 			}
@@ -145,7 +145,7 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 	docsDir := filepath.Join(".", ".lore", "docs")
 	if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("Lore not initialized. Run: lore init")
+			return fmt.Errorf("lore not initialized, run: lore init")
 		}
 		return fmt.Errorf("angela: draft: %w", err)
 	}
