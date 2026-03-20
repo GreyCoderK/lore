@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package cmd
 
 import (
@@ -51,6 +54,7 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		newStatusCmd(cfg, streams),
 		newPendingCmd(cfg, streams),
 		newAngelaCmd(cfg, streams),
+		newConfigCmd(cfg, streams),
 		newDoctorCmd(cfg, streams),
 		newReleaseCmd(cfg, streams),
 		newDeleteCmd(cfg, streams),

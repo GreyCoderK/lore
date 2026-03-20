@@ -1,22 +1,211 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/storage"
 	"github.com/spf13/cobra"
 )
 
 func newAngelaCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:           "angela",
-		Short:         "Get AI writing assistance",
-		Hidden:        true,
+		Short:         "AI-assisted documentation enhancement",
+		SilenceUsage:  true,
+		SilenceErrors: true,
+	}
+
+	cmd.AddCommand(newAngelaDraftCmd(cfg, streams))
+	cmd.AddCommand(newAngelaPolishCmd(cfg, streams))
+
+	return cmd
+}
+
+func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+	var flagAll bool
+
+	cmd := &cobra.Command{
+		Use:           "draft [filename]",
+		Short:         "Review a document locally (no API needed)",
+		Args:          cobra.MaximumNArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("cmd: angela not implemented")
+			// --all mode: analyze entire corpus
+			if flagAll {
+				return runDraftAll(cfg, streams)
+			}
+			if len(args) == 0 {
+				return fmt.Errorf("provide a filename or use --all to analyze the entire corpus")
+			}
+			filename := args[0]
+
+			// AC-7: Check .lore/ exists
+			docsDir := filepath.Join(".", ".lore", "docs")
+			if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("lore not initialized, run: lore init")
+				}
+				return fmt.Errorf("angela: draft: %w", err)
+			}
+
+			// AC-6: Validate filename and check exists
+			if err := storage.ValidateFilename(filename); err != nil {
+				return fmt.Errorf("angela: draft: %w", err)
+			}
+			docPath := filepath.Join(docsDir, filename)
+			if _, err := os.Stat(docPath); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("document '%s' not found in .lore/docs/", filename)
+				}
+				return fmt.Errorf("angela: draft: %w", err)
+			}
+
+			// Read document once
+			raw, err := os.ReadFile(docPath)
+			if err != nil {
+				return fmt.Errorf("angela: draft: read: %w", err)
+			}
+			content := string(raw)
+
+			// Parse front matter
+			meta, _, err := storage.Unmarshal(raw)
+			if err != nil {
+				return fmt.Errorf("angela: draft: parse: %w", err)
+			}
+			meta.Filename = filename
+
+			// Load corpus (warn on error, don't fail)
+			store := &storage.CorpusStore{Dir: docsDir}
+			corpus, corpusErr := store.ListDocs(domain.DocFilter{})
+			if corpusErr != nil {
+				_, _ = fmt.Fprintf(streams.Err, "Warning: corpus load: %s\n", corpusErr)
+			}
+
+			// Parse style guide
+			var styleRules map[string]interface{}
+			if cfg.Angela.StyleGuide != nil {
+				styleRules = cfg.Angela.StyleGuide
+			}
+			guide := angela.ParseStyleGuide(styleRules)
+
+			// Resolve personas for this document
+			scored := angela.ResolvePersonas(meta.Type, content)
+			personas := angela.Profiles(scored)
+
+			// Run analysis (with persona draft checks — AC-3)
+			suggestions := angela.AnalyzeDraft(content, meta, guide, corpus, personas)
+			coherence := angela.CheckCoherence(content, meta, corpus)
+			suggestions = append(suggestions, coherence...)
+
+			// Include style guide parse warnings
+			suggestions = append(suggestions, guide.Warnings...)
+
+			// AC-5: No suggestions
+			if len(suggestions) == 0 {
+				_, _ = fmt.Fprintf(streams.Err, "Angela: Document looks good. No suggestions.\n")
+				return nil
+			}
+
+			// Angela score (average of top personas)
+			avg := angela.AverageScore(scored)
+			var activeNames []string
+			for _, sp := range scored {
+				activeNames = append(activeNames, sp.Profile.DisplayName)
+			}
+
+			// Format output
+			_, _ = fmt.Fprintf(streams.Err, "lore angela draft — %s\n", filename)
+			_, _ = fmt.Fprintf(streams.Err, "  Angela score: %.1f  (%s)\n\n", avg, strings.Join(activeNames, " + "))
+			for _, s := range suggestions {
+				_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s\n",
+					s.Severity, s.Category, s.Message)
+			}
+			_, _ = fmt.Fprintf(streams.Err, "\n%d suggestions. Apply manually to your document.\n", len(suggestions))
+
+			return nil
 		},
 	}
+
+	cmd.Flags().BoolVar(&flagAll, "all", false, "Analyze all documents in the corpus")
+	return cmd
+}
+
+// runDraftAll analyzes every document in the corpus and produces a summary.
+func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
+	docsDir := filepath.Join(".", ".lore", "docs")
+	if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("lore not initialized, run: lore init")
+		}
+		return fmt.Errorf("angela: draft: %w", err)
+	}
+
+	store := &storage.CorpusStore{Dir: docsDir}
+	corpus, err := store.ListDocs(domain.DocFilter{})
+	if err != nil {
+		return fmt.Errorf("angela: draft --all: %w", err)
+	}
+
+	if len(corpus) == 0 {
+		_, _ = fmt.Fprintf(streams.Err, "Angela: No documents found in .lore/docs/\n")
+		return nil
+	}
+
+	var styleRules map[string]interface{}
+	if cfg.Angela.StyleGuide != nil {
+		styleRules = cfg.Angela.StyleGuide
+	}
+	guide := angela.ParseStyleGuide(styleRules)
+
+	var totalSuggestions int
+	var docsWithIssues int
+
+	_, _ = fmt.Fprintf(streams.Err, "lore angela draft --all — %d documents\n\n", len(corpus))
+
+	for _, meta := range corpus {
+		raw, err := os.ReadFile(filepath.Join(docsDir, meta.Filename))
+		if err != nil {
+			_, _ = fmt.Fprintf(streams.Err, "  %-8s %-40s %s\n", "error", meta.Filename, err)
+			continue
+		}
+		content := string(raw)
+
+		scored := angela.ResolvePersonas(meta.Type, content)
+		suggestions := angela.AnalyzeDraft(content, meta, guide, corpus, angela.Profiles(scored))
+		suggestions = append(suggestions, angela.CheckCoherence(content, meta, corpus)...)
+
+		if len(suggestions) > 0 {
+			docsWithIssues++
+			totalSuggestions += len(suggestions)
+			warnings := 0
+			for _, s := range suggestions {
+				if s.Severity == "warning" {
+					warnings++
+				}
+			}
+			avg := angela.AverageScore(scored)
+			label := fmt.Sprintf("%d suggestions (score: %.0f)", len(suggestions), avg)
+			if warnings > 0 {
+				label = fmt.Sprintf("%d suggestions (%d warnings, score: %.0f)", len(suggestions), warnings, avg)
+			}
+			_, _ = fmt.Fprintf(streams.Err, "  %-8s %-40s %s\n", "review", meta.Filename, label)
+		} else {
+			_, _ = fmt.Fprintf(streams.Err, "  %-8s %s\n", "ok", meta.Filename)
+		}
+	}
+
+	_, _ = fmt.Fprintf(streams.Err, "\n%d/%d documents need attention. %d total suggestions.\n",
+		docsWithIssues, len(corpus), totalSuggestions)
+
+	return nil
 }

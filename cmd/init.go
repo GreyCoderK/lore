@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package cmd
 
 import (
@@ -5,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -134,6 +138,17 @@ func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams dom
 		fmt.Fprintf(streams.Err, "%s core.hooksPath is set to %q — manual integration required\n", ui.Warning("  Warning:"), result.HooksPathWarn)
 	} else {
 		ui.Verb(streams, "Installed", "post-commit hook")
+	}
+
+	// Check if lore is in PATH and suggest adding it if not
+	if _, lookErr := exec.LookPath("lore"); lookErr != nil {
+		fmt.Fprintf(streams.Err, "\n%s lore is not in your PATH — the post-commit hook won't work until it is.\n", ui.Warning("Warning:"))
+		fmt.Fprintf(streams.Err, "  Install: go install github.com/greycoderk/lore@latest\n")
+		fmt.Fprintf(streams.Err, "  Or add it to your PATH:\n")
+		fmt.Fprintf(streams.Err, "    bash:       echo 'export PATH=\"$PATH:/path/to/lore\"' >> ~/.bashrc\n")
+		fmt.Fprintf(streams.Err, "    zsh:        echo 'export PATH=\"$PATH:/path/to/lore\"' >> ~/.zshrc\n")
+		fmt.Fprintf(streams.Err, "    fish:       fish_add_path /path/to/lore\n")
+		fmt.Fprintf(streams.Err, "    PowerShell: [Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';C:\\path\\to\\lore', 'User')\n")
 	}
 
 	fmt.Fprintf(streams.Err, "\nYour code knows what. Lore knows why.\n")

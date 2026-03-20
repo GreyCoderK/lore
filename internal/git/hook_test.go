@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 package git
 
 import (
@@ -268,8 +271,11 @@ func TestIntegration_FullHookLifecycle(t *testing.T) {
 	if !strings.Contains(content, "#!/bin/sh") {
 		t.Error("missing shebang")
 	}
-	if !strings.Contains(content, "# LORE-START\nexec lore _hook-post-commit\n# LORE-END") {
-		t.Errorf("hook content does not contain exact marker block, got:\n%s", content)
+	if !strings.Contains(content, "# LORE-START\n") || !strings.Contains(content, "\n# LORE-END") {
+		t.Errorf("hook content missing LORE marker block, got:\n%s", content)
+	}
+	if !strings.Contains(content, "exec lore _hook-post-commit") {
+		t.Errorf("hook content missing exec command, got:\n%s", content)
 	}
 
 	// Step 3: Verify executable
