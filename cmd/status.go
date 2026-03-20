@@ -99,6 +99,11 @@ func renderDashboard(streams domain.IOStreams, info *status.StatusInfo) error {
 	} else if info.AIProvider != "" {
 		angelaVal += fmt.Sprintf(" (%s)", info.AIProvider)
 	}
+	if info.DocCount > 0 && info.AngelaDocsNeedReview > 0 {
+		angelaVal += fmt.Sprintf(" — %d docs need review", info.AngelaDocsNeedReview)
+	} else if info.DocCount > 0 {
+		angelaVal += " — " + ui.Success("all docs clean")
+	}
 	fmt.Fprintf(w, "%-10s%s\n", "Angela:", angelaVal)
 
 	// Health
@@ -136,6 +141,8 @@ func renderQuiet(streams domain.IOStreams, info *status.StatusInfo) error {
 		fmt.Fprintf(w, "read_errors=%d\n", info.ReadErrors)
 	}
 	fmt.Fprintf(w, "angela=%s\n", info.AngelaMode)
+	fmt.Fprintf(w, "angela_review=%d\n", info.AngelaDocsNeedReview)
+	fmt.Fprintf(w, "angela_suggestions=%d\n", info.AngelaSuggestions)
 
 	return nil
 }

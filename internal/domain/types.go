@@ -95,7 +95,12 @@ type DocFilter struct {
 type Option func(*CallOptions)
 
 type CallOptions struct {
+	Model       string
 	MaxTokens   int
 	Temperature float64
 	Timeout     time.Duration
 }
+
+func WithModel(m string) Option       { return func(o *CallOptions) { o.Model = m } }
+func WithMaxTokens(n int) Option      { return func(o *CallOptions) { o.MaxTokens = n } }
+func WithTemperature(t float64) Option { return func(o *CallOptions) { o.Temperature = t } }

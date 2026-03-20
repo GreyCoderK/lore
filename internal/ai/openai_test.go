@@ -1,0 +1,127 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+package ai
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
+)
+
+func TestOpenAIProvider_Complete_OK(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "Bearer sk-test" {
+			t.Errorf("Authorization = %q, want Bearer sk-test", auth)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"hello openai"}}]}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "gpt-4o",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	result, err := p.Complete(context.Background(), "test")
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	if result != "hello openai" {
+		t.Errorf("Complete = %q, want %q", result, "hello openai")
+	}
+}
+
+func TestOpenAIProvider_Complete_HTTPError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write([]byte(`{"error":{"message":"rate limited"}}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "gpt-4o",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err == nil {
+		t.Fatal("expected error for HTTP 429")
+	}
+	if !strings.Contains(err.Error(), "HTTP 429") {
+		t.Errorf("error = %q, want HTTP 429", err)
+	}
+}
+
+func TestOpenAIProvider_Complete_Timeout(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(200 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"late"}}]}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "gpt-4o",
+		endpoint: srv.URL,
+		timeout:  50 * time.Millisecond,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err == nil {
+		t.Fatal("Complete: expected timeout error")
+	}
+}
+
+func TestOpenAIProvider_Complete_WithModelOverride(t *testing.T) {
+	var receivedModel string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req openaiRequest
+		if err := decodeJSON(r.Body, &req); err == nil {
+			receivedModel = req.Model
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"ok"}}]}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "default-model",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test", domain.WithModel("override-model"))
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	if receivedModel != "override-model" {
+		t.Errorf("model = %q, want %q", receivedModel, "override-model")
+	}
+}
+
+func TestOpenAIProvider_DefaultModel(t *testing.T) {
+	cfg := &config.Config{AI: config.AIConfig{Provider: "openai", APIKey: "sk-test"}}
+	p := newOpenAIProvider(cfg)
+	if p.model != openaiDefaultModel {
+		t.Errorf("default model = %q, want %q", p.model, openaiDefaultModel)
+	}
+}

@@ -9,23 +9,27 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/credential"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
 )
 
 // StatusInfo holds all data needed to render the status dashboard.
 type StatusInfo struct {
-	ProjectName   string
-	HookInstalled bool
-	DocCount      int
-	PendingCount  int
-	ExpressCount  int
-	CompleteCount int
-	ReadErrors    int
-	AngelaMode    string // "draft", "polish"
-	AIProvider    string // "anthropic", "openai", ""
-	HealthIssues  int
+	ProjectName      string
+	HookInstalled    bool
+	DocCount         int
+	PendingCount     int
+	ExpressCount     int
+	CompleteCount    int
+	ReadErrors       int
+	AngelaMode       string // "draft", "polish"
+	AIProvider       string // "anthropic", "openai", ""
+	HealthIssues     int
+	AngelaSuggestions int // total suggestions across all docs
+	AngelaDocsNeedReview int // docs with at least 1 suggestion
 }
 
 // CollectStatus gathers all status information from the repository.
@@ -56,10 +60,8 @@ func CollectStatus(cfg *config.Config, git domain.GitAdapter, loreDir string) (*
 	}
 	info.DocCount = len(docs)
 
-	// Express ratio heuristic: docs without ## Alternatives or ## Impact are express.
-	// NOTE: This re-reads each doc body (ListDocs already parsed front matter).
-	// Acceptable for status dashboard — typical corpus is <100 docs, cost is negligible.
-	// Post-MVP: add express_mode field to DocMeta for O(1) check.
+	// Single-pass: express ratio + Angela score (reads each doc once)
+	guide := angela.ParseStyleGuide(nil)
 	var readErrors int
 	for _, meta := range docs {
 		content, err := storage.ReadDocContent(filepath.Join(docsDir, meta.Filename))
@@ -67,10 +69,18 @@ func CollectStatus(cfg *config.Config, git domain.GitAdapter, loreDir string) (*
 			readErrors++
 			continue
 		}
+		// Express ratio
 		if strings.Contains(content, "## Alternatives") || strings.Contains(content, "## Impact") {
 			info.CompleteCount++
 		} else {
 			info.ExpressCount++
+		}
+		// Angela score
+		suggestions := angela.AnalyzeDraft(content, meta, guide, docs, nil)
+		suggestions = append(suggestions, angela.CheckCoherence(content, meta, docs)...)
+		if len(suggestions) > 0 {
+			info.AngelaDocsNeedReview++
+			info.AngelaSuggestions += len(suggestions)
 		}
 	}
 	info.ReadErrors = readErrors
@@ -86,15 +96,23 @@ func CollectStatus(cfg *config.Config, git domain.GitAdapter, loreDir string) (*
 		}
 	}
 
-	// Angela mode
-	if cfg.AI.APIKey != "" {
+	// Angela mode — check env > keychain > plaintext config
+	info.AngelaMode = "draft"
+	if envKey := os.Getenv("LORE_AI_API_KEY"); envKey != "" {
 		info.AngelaMode = "polish"
 		info.AIProvider = cfg.AI.Provider
-		if info.AIProvider == "" {
-			info.AIProvider = "configured"
+	} else if cfg.AI.APIKey != "" && cfg.AI.APIKey != "@keychain" {
+		info.AngelaMode = "polish"
+		info.AIProvider = cfg.AI.Provider
+	} else if cfg.AI.Provider != "" {
+		store := credential.NewStore()
+		if key, err := store.Get(cfg.AI.Provider); err == nil && len(key) > 0 {
+			info.AngelaMode = "polish"
+			info.AIProvider = cfg.AI.Provider
 		}
-	} else {
-		info.AngelaMode = "draft"
+	}
+	if info.AIProvider == "" && info.AngelaMode == "polish" {
+		info.AIProvider = "configured"
 	}
 
 	// Health check

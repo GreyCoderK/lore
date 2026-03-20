@@ -66,10 +66,16 @@ func loadViper(dir string) (*viper.Viper, error) {
 // unmarshalConfig converts a Viper instance to a *Config struct.
 // It warns on stderr if the config contains unknown fields (e.g. typos).
 func unmarshalConfig(v *viper.Viper) (*Config, error) {
+	decodeHook := mapstructure.ComposeDecodeHookFunc(
+		mapstructure.StringToTimeDurationHookFunc(),
+		mapstructure.TextUnmarshallerHookFunc(),
+	)
+
 	// First pass: detect unknown fields via ErrorUnused.
 	var probe Config
 	strictErr := v.Unmarshal(&probe, func(dc *mapstructure.DecoderConfig) {
 		dc.ErrorUnused = true
+		dc.DecodeHook = decodeHook
 	})
 	if strictErr != nil {
 		_, _ = fmt.Fprintf(WarnWriter, "Warning: %s\n", strictErr)
@@ -77,7 +83,9 @@ func unmarshalConfig(v *viper.Viper) (*Config, error) {
 
 	// Second pass: always succeed so unknown fields don't block the user.
 	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
+	if err := v.Unmarshal(&cfg, func(dc *mapstructure.DecoderConfig) {
+		dc.DecodeHook = decodeHook
+	}); err != nil {
 		return nil, fmt.Errorf("config: unmarshal: %w", err)
 	}
 	return &cfg, nil

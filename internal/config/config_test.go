@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -42,6 +43,12 @@ func TestLoadFromDir_DefaultsOnly(t *testing.T) {
 	}
 	if cfg.Output.Dir != ".lore/docs" {
 		t.Errorf("expected output.dir '.lore/docs', got %q", cfg.Output.Dir)
+	}
+	if cfg.AI.Endpoint != "http://localhost:11434" {
+		t.Errorf("expected ai.endpoint 'http://localhost:11434', got %q", cfg.AI.Endpoint)
+	}
+	if cfg.AI.Timeout != 30*time.Second {
+		t.Errorf("expected ai.timeout 30s, got %v", cfg.AI.Timeout)
 	}
 }
 

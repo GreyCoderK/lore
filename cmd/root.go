@@ -54,6 +54,7 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		newStatusCmd(cfg, streams),
 		newPendingCmd(cfg, streams),
 		newAngelaCmd(cfg, streams),
+		newConfigCmd(cfg, streams),
 		newDoctorCmd(cfg, streams),
 		newReleaseCmd(cfg, streams),
 		newDeleteCmd(cfg, streams),
