@@ -181,7 +181,7 @@ func ensureGitignore(path string, entry string) (bool, error) {
 		newContent = content + entry + "\n"
 	}
 
-	if err := os.WriteFile(path, []byte(newContent), 0644); err != nil {
+	if err := storage.AtomicWrite(path, []byte(newContent)); err != nil {
 		return false, fmt.Errorf("init: write .gitignore: %w", err)
 	}
 	return true, nil

@@ -103,4 +103,5 @@ type CallOptions struct {
 
 func WithModel(m string) Option       { return func(o *CallOptions) { o.Model = m } }
 func WithMaxTokens(n int) Option      { return func(o *CallOptions) { o.MaxTokens = n } }
-func WithTemperature(t float64) Option { return func(o *CallOptions) { o.Temperature = t } }
+func WithTemperature(t float64) Option      { return func(o *CallOptions) { o.Temperature = t } }
+func WithTimeout(d time.Duration) Option     { return func(o *CallOptions) { o.Timeout = d } }

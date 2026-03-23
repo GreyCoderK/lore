@@ -185,7 +185,15 @@ func scanDocs(dir string) ([]parsedDoc, error, error) {
 			continue
 		}
 
-		data, err := os.ReadFile(filepath.Join(dir, name))
+		fullPath := filepath.Join(dir, name)
+
+		// Reject symlinks that escape the docs directory.
+		if err := validateResolvedPath(dir, fullPath); err != nil {
+			parseErrs = append(parseErrs, fmt.Errorf("storage: symlink check %s: %w", name, err))
+			continue
+		}
+
+		data, err := os.ReadFile(fullPath)
 		if err != nil {
 			parseErrs = append(parseErrs, fmt.Errorf("storage: read %s: %w", name, err))
 			continue

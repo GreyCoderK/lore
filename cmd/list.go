@@ -5,10 +5,8 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"sort"
 
-	"github.com/greycoderk/lore/internal/cli"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
@@ -32,14 +30,8 @@ func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// AC-6: Check .lore/ exists
-			if _, err := os.Stat(".lore"); err != nil {
-				if os.IsNotExist(err) {
-					_, _ = fmt.Fprintln(streams.Err, "Error: Lore not initialized.")
-					_, _ = fmt.Fprintln(streams.Err, "  Run: lore init")
-				} else {
-					fmt.Fprintf(streams.Err, "Error: cannot access .lore/: %v\n", err)
-				}
-				return &cli.ExitCodeError{Code: cli.ExitError}
+			if err := requireLoreDir(streams); err != nil {
+				return err
 			}
 
 			store := &storage.CorpusStore{Dir: ".lore/docs"}

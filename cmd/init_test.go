@@ -30,6 +30,8 @@ type mockGitAdapter struct {
 	InstallHookFunc           func(string) (domain.InstallResult, error)
 	UninstallHookFunc         func(string) error
 	HookExistsFunc            func(string) (bool, error)
+	CommitRangeFunc           func(string, string) ([]string, error)
+	LatestTagFunc             func() (string, error)
 }
 
 func (m *mockGitAdapter) IsInsideWorkTree() bool {
@@ -114,6 +116,20 @@ func (m *mockGitAdapter) HookExists(hookType string) (bool, error) {
 		return m.HookExistsFunc(hookType)
 	}
 	return false, nil
+}
+
+func (m *mockGitAdapter) CommitRange(from, to string) ([]string, error) {
+	if m.CommitRangeFunc != nil {
+		return m.CommitRangeFunc(from, to)
+	}
+	return nil, fmt.Errorf("mock: CommitRange not configured")
+}
+
+func (m *mockGitAdapter) LatestTag() (string, error) {
+	if m.LatestTagFunc != nil {
+		return m.LatestTagFunc()
+	}
+	return "", fmt.Errorf("mock: LatestTag not configured")
 }
 
 func testStreams(input ...string) (domain.IOStreams, *bytes.Buffer, *bytes.Buffer) {

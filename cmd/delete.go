@@ -32,12 +32,8 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceUsage:   true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			loreDir := filepath.Join(".", ".lore")
-			if _, err := os.Stat(loreDir); os.IsNotExist(err) {
-				ui.ActionableError(streams, "Lore not initialized.", "lore init")
-				return fmt.Errorf("cmd: delete: %w", domain.ErrNotInitialized)
-			} else if err != nil {
-				return fmt.Errorf("cmd: delete: %w", err)
+			if err := requireLoreDir(streams); err != nil {
+				return err
 			}
 
 			filename := args[0]
@@ -45,7 +41,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				_, _ = fmt.Fprintf(streams.Err, "%s Invalid filename '%s'.\n", ui.Error("Error:"), filename)
 				return fmt.Errorf("cmd: delete: %w", err)
 			}
-			docsDir := filepath.Join(loreDir, "docs")
+			docsDir := filepath.Join(".lore", "docs")
 			docPath := filepath.Join(docsDir, filename)
 
 			// AC-5: read document — produces friendly error if missing

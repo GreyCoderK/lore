@@ -50,13 +50,10 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			filename := args[0]
 
 			// AC-7: Check .lore/ exists
-			docsDir := filepath.Join(".", ".lore", "docs")
-			if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
-				if os.IsNotExist(err) {
-					return fmt.Errorf("lore not initialized, run: lore init")
-				}
-				return fmt.Errorf("angela: draft: %w", err)
+			if err := requireLoreDir(streams); err != nil {
+				return err
 			}
+			docsDir := filepath.Join(".lore", "docs")
 
 			// AC-6: Validate filename and check exists
 			if err := storage.ValidateFilename(filename); err != nil {
@@ -142,13 +139,10 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 
 // runDraftAll analyzes every document in the corpus and produces a summary.
 func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
-	docsDir := filepath.Join(".", ".lore", "docs")
-	if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("lore not initialized, run: lore init")
-		}
-		return fmt.Errorf("angela: draft: %w", err)
+	if err := requireLoreDir(streams); err != nil {
+		return err
 	}
+	docsDir := filepath.Join(".lore", "docs")
 
 	store := &storage.CorpusStore{Dir: docsDir}
 	corpus, err := store.ListDocs(domain.DocFilter{})

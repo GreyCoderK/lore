@@ -38,6 +38,8 @@ func (m *mockGitAdapter) GitDir() (string, error)                               
 func (m *mockGitAdapter) InstallHook(_ string) (domain.InstallResult, error)    { return domain.InstallResult{}, nil }
 func (m *mockGitAdapter) UninstallHook(_ string) error                          { return nil }
 func (m *mockGitAdapter) HookExists(_ string) (bool, error)                     { return false, nil }
+func (m *mockGitAdapter) CommitRange(_, _ string) ([]string, error)              { return nil, nil }
+func (m *mockGitAdapter) LatestTag() (string, error)                             { return "", nil }
 
 // newReactiveWorkDir creates a minimal .lore directory structure under a temp dir.
 func newReactiveWorkDir(t *testing.T) string {

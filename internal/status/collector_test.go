@@ -35,7 +35,9 @@ func (m *mockGit) GitDir() (string, error)                                { retu
 func (m *mockGit) InstallHook(hookType string) (domain.InstallResult, error) {
 	return domain.InstallResult{}, nil
 }
-func (m *mockGit) UninstallHook(hookType string) error { return nil }
+func (m *mockGit) UninstallHook(hookType string) error              { return nil }
+func (m *mockGit) CommitRange(from, to string) ([]string, error)    { return nil, nil }
+func (m *mockGit) LatestTag() (string, error)                       { return "", nil }
 
 func setupCollectorTest(t *testing.T, docs []testutil.DocFixture) string {
 	t.Helper()

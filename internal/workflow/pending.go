@@ -129,11 +129,12 @@ func deletePendingFile(pendingDir, filename string) error {
 	path := filepath.Join(pendingDir, filename)
 	resolved, resolveErr := filepath.EvalSymlinks(filepath.Dir(path))
 	if resolveErr != nil {
-		resolved = filepath.Dir(path)
+		// Do not fall back to unresolved path — reject if symlink resolution fails.
+		return fmt.Errorf("workflow: pending: cannot resolve path: %w", resolveErr)
 	}
-	expectedDir, _ := filepath.EvalSymlinks(pendingDir)
-	if expectedDir == "" {
-		expectedDir = pendingDir
+	expectedDir, expectedErr := filepath.EvalSymlinks(pendingDir)
+	if expectedErr != nil {
+		return fmt.Errorf("workflow: pending: cannot resolve pending dir: %w", expectedErr)
 	}
 	if resolved != expectedDir {
 		return fmt.Errorf("workflow: pending: path traversal detected")

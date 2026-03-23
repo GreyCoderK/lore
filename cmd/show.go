@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/greycoderk/lore/internal/cli"
@@ -40,14 +39,8 @@ func newShowCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// AC-10: Check .lore/ exists
-			if _, err := os.Stat(".lore"); err != nil {
-				if os.IsNotExist(err) {
-					fmt.Fprintln(streams.Err, "Error: Lore not initialized.")
-					fmt.Fprintln(streams.Err, "  Run: lore init")
-				} else {
-					fmt.Fprintf(streams.Err, "Error: cannot access .lore/: %v\n", err)
-				}
-				return &cli.ExitCodeError{Code: cli.ExitError}
+			if err := requireLoreDir(streams); err != nil {
+				return err
 			}
 
 			// Resolve type from shorthand flags

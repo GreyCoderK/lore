@@ -18,6 +18,16 @@ var KnownProviders = []string{"anthropic", "openai", "ollama"}
 // ValidateProviderRe matches valid provider name characters.
 var ValidateProviderRe = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
+// IsKnownProvider reports whether p is in the KnownProviders list.
+func IsKnownProvider(p string) bool {
+	for _, k := range KnownProviders {
+		if k == p {
+			return true
+		}
+	}
+	return false
+}
+
 // ValidateProvider rejects provider names with special characters.
 // Prevents injection into exec.Command arguments and keychain service names.
 func ValidateProvider(name string) error {

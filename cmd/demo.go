@@ -6,7 +6,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -44,12 +43,8 @@ func newDemoCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 
 func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) error {
 	// AC-4: Check if Lore is initialized
-	loreDir := filepath.Join(".", ".lore")
-	if _, err := os.Stat(loreDir); os.IsNotExist(err) {
-		ui.ActionableError(streams, "Lore not initialized.", "lore init")
-		return fmt.Errorf("cmd: demo: %w", domain.ErrNotInitialized)
-	} else if err != nil {
-		return fmt.Errorf("cmd: demo: %w", err)
+	if err := requireLoreDir(streams); err != nil {
+		return err
 	}
 
 	// AC-1: Temporal consent
@@ -81,7 +76,7 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 
 	// Step 5: Generate document through real pipeline
 	engine, err := loretemplate.New(
-		filepath.Join(loreDir, "templates"),
+		filepath.Join(".lore", "templates"),
 		loretemplate.GlobalDir(),
 	)
 	if err != nil {
@@ -114,7 +109,7 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	demoMeta.Status = "demo"
 	demoMeta.Tags = []string{"authentication", "jwt", "middleware"}
 
-	docsDir := filepath.Join(loreDir, "docs")
+	docsDir := filepath.Join(".lore", "docs")
 	result, err := storage.WriteDoc(docsDir, demoMeta, demoAnswers["what"], genResult.Body)
 	if err != nil {
 		return fmt.Errorf("cmd: demo write: %w", err)

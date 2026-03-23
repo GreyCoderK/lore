@@ -6,12 +6,10 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/git"
-	"github.com/greycoderk/lore/internal/ui"
 	"github.com/greycoderk/lore/internal/workflow"
 	"github.com/spf13/cobra"
 )
@@ -30,12 +28,8 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// AC-4: Check if Lore is initialized
-			loreDir := filepath.Join(".", ".lore")
-			if _, err := os.Stat(loreDir); os.IsNotExist(err) {
-				ui.ActionableError(streams, "Lore not initialized.", "lore init")
-				return fmt.Errorf("cmd: new: %w", domain.ErrNotInitialized)
-			} else if err != nil {
-				return fmt.Errorf("cmd: new: %w", err)
+			if err := requireLoreDir(streams); err != nil {
+				return err
 			}
 
 			workDir, err := os.Getwd()

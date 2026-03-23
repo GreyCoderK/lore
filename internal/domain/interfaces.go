@@ -24,6 +24,9 @@ type GitAdapter interface {
 	InstallHook(hookType string) (InstallResult, error)
 	UninstallHook(hookType string) error
 	HookExists(hookType string) (bool, error)
+
+	CommitRange(from, to string) ([]string, error)
+	LatestTag() (string, error)
 }
 
 type AIProvider interface {

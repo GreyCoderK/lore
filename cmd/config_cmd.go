@@ -44,8 +44,8 @@ func newSetKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *c
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
-			if !isKnownProvider(provider) {
-				return fmt.Errorf("Unknown provider %q. Supported: %s", provider, strings.Join(credential.KnownProviders, ", "))
+			if !credential.IsKnownProvider(provider) {
+				return fmt.Errorf("unknown provider %q, supported: %s", provider, strings.Join(credential.KnownProviders, ", "))
 			}
 
 			// Read key from stdin
@@ -78,8 +78,8 @@ func newDeleteKeyCmd(store credential.CredentialStore, streams domain.IOStreams)
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
-			if !isKnownProvider(provider) {
-				return fmt.Errorf("Unknown provider %q. Supported: %s", provider, strings.Join(credential.KnownProviders, ", "))
+			if !credential.IsKnownProvider(provider) {
+				return fmt.Errorf("unknown provider %q, supported: %s", provider, strings.Join(credential.KnownProviders, ", "))
 			}
 
 			if err := store.Delete(provider); err != nil {
@@ -122,9 +122,3 @@ func newListKeysCmd(store credential.CredentialStore, streams domain.IOStreams) 
 	}
 }
 
-func isKnownProvider(p string) bool {
-	for _, k := range credential.KnownProviders {
-		if k == p { return true }
-	}
-	return false
-}

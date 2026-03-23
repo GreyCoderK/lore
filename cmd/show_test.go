@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 
@@ -52,8 +53,8 @@ func TestShowCmd_NotInitialized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for not initialized")
 	}
-	if cli.ExitCodeFrom(err) != cli.ExitError {
-		t.Errorf("expected exit code %d, got %d", cli.ExitError, cli.ExitCodeFrom(err))
+	if !errors.Is(err, domain.ErrNotInitialized) {
+		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 	errOutput := errBuf.String()
 	if !strings.Contains(errOutput, "Lore not initialized") {

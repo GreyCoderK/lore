@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -24,6 +25,29 @@ type Config struct {
 	Templates TemplatesConfig `yaml:"templates"`
 	Hooks     HooksConfig     `yaml:"hooks"`
 	Output    OutputConfig    `yaml:"output"`
+}
+
+// warnIfInsecurePerms warns to WarnWriter if .lorerc.local has permissions
+// broader than owner-only (0600). This file may contain API keys.
+func warnIfInsecurePerms(dir string) {
+	path := filepath.Join(dir, ".lorerc.local.yaml")
+	info, err := os.Stat(path)
+	if err != nil {
+		// Try without .yaml extension
+		path = filepath.Join(dir, ".lorerc.local.yml")
+		info, err = os.Stat(path)
+		if err != nil {
+			path = filepath.Join(dir, ".lorerc.local")
+			info, err = os.Stat(path)
+			if err != nil {
+				return
+			}
+		}
+	}
+	mode := info.Mode().Perm()
+	if mode&0o077 != 0 {
+		_, _ = fmt.Fprintf(WarnWriter, "Warning: %s is readable by others (mode %04o). Consider: chmod 600 %s\n", filepath.Base(path), mode, filepath.Base(path))
+	}
 }
 
 // Load is a convenience wrapper that loads config from the current working directory.
@@ -53,6 +77,9 @@ func loadViper(dir string) (*viper.Viper, error) {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("config: read .lorerc.local: %w", err)
 		}
+	} else {
+		// Warn if .lorerc.local is world-readable (may contain API keys).
+		warnIfInsecurePerms(dir)
 	}
 
 	// Environment variables

@@ -25,7 +25,7 @@ func newDoctorCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := checkLoreDir(streams); err != nil {
+			if err := requireLoreDir(streams); err != nil {
 				return err
 			}
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -177,4 +178,59 @@ func (a *Adapter) HookExists(hookType string) (bool, error) {
 		return false, fmt.Errorf("git: hook exists %s: git dir: %w", hookType, err)
 	}
 	return hookExists(filepath.Join(gitDir, "hooks"), hookType)
+}
+
+// validRef matches safe git ref characters: alphanumeric, dots, dashes, slashes, underscores.
+var validRef = regexp.MustCompile(`^[a-zA-Z0-9._\-/^~]+$`)
+
+// validateRef rejects refs that look like flags or contain unsafe characters.
+func validateRef(ref string) error {
+	if ref == "" {
+		return nil
+	}
+	if strings.HasPrefix(ref, "-") {
+		return fmt.Errorf("git: invalid ref %q: must not start with '-'", ref)
+	}
+	if strings.Contains(ref, "..") {
+		return fmt.Errorf("git: invalid ref %q: must not contain '..'", ref)
+	}
+	if !validRef.MatchString(ref) {
+		return fmt.Errorf("git: invalid ref %q: contains unsafe characters", ref)
+	}
+	return nil
+}
+
+func (a *Adapter) CommitRange(from, to string) ([]string, error) {
+	if to == "" {
+		to = "HEAD"
+	}
+	if from == "" {
+		tag, err := a.LatestTag()
+		if err != nil {
+			return nil, err
+		}
+		from = tag
+	}
+	if err := validateRef(from); err != nil {
+		return nil, err
+	}
+	if err := validateRef(to); err != nil {
+		return nil, err
+	}
+	out, err := a.run("log", "--format=%H", from+".."+to)
+	if err != nil {
+		return nil, fmt.Errorf("git: commit range %s..%s: %w", from, to, err)
+	}
+	if out == "" {
+		return nil, nil
+	}
+	return strings.Split(out, "\n"), nil
+}
+
+func (a *Adapter) LatestTag() (string, error) {
+	tag, err := a.run("describe", "--tags", "--abbrev=0")
+	if err != nil {
+		return "", fmt.Errorf("git: no tags found: create a tag first: git tag v0.1.0")
+	}
+	return tag, nil
 }

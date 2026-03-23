@@ -1,15 +1,9 @@
 # Lore
 
 [![CI](https://github.com/GreyCoderK/lore/actions/workflows/ci.yml/badge.svg)](https://github.com/GreyCoderK/lore/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/greycoderk/lore)](https://goreportcard.com/report/github.com/greycoderk/lore)
-[![Go Reference](https://pkg.go.dev/badge/github.com/greycoderk/lore.svg)](https://pkg.go.dev/github.com/greycoderk/lore)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/GreyCoderK/lore)](https://github.com/GreyCoderK/lore)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![GitHub Release](https://img.shields.io/github/v/release/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/releases)
-[![GitHub Stars](https://img.shields.io/github/stars/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/network/members)
-[![GitHub Issues](https://img.shields.io/github/issues/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/issues)
-[![Sponsor](https://img.shields.io/badge/Sponsor-GreyCoderK-ea4aaa?logo=github-sponsors)](https://github.com/sponsors/GreyCoderK)
 
 **A CLI tool that captures the *why* behind your code, one commit at a time.**
 
@@ -25,6 +19,13 @@ $ git commit -m "feat: add JWT auth middleware"
 
 *Your code knows what. Lore knows why.*
 
+## Built For
+
+- **Solo developers** who revisit their own code months later and wonder *"why did I do this?"*
+- **Teams** that lose institutional knowledge when people leave or rotate
+- **Open-source maintainers** who want contributors to understand the reasoning behind design choices
+- **Anyone tired of decisions buried in Slack threads, PR comments, or someone's memory**
+
 ## Why Lore?
 
 Code captures **what** you built. Git captures **when** you changed it. But neither captures **why** you made the decisions you made.
@@ -37,6 +38,19 @@ Lore fixes this by making documentation a natural part of your commit workflow:
 - **Zero friction** — Post-commit hook asks automatically. No context switch, no separate tool.
 - **Markdown files in your repo** — Searchable, versionable, portable. No external service required.
 - **Works offline** — Everything is local. No network calls, no API keys (unless you opt in to Angela).
+
+## How Lore Compares
+
+| | Lore | ADRs | Conventional Commits | Commit linters |
+|---|---|---|---|---|
+| Captures *why* | Yes | Yes | No (format only) | No |
+| Automated prompt | Post-commit hook | Manual | Manual | Pre-commit |
+| Lives in repo | Markdown files | Markdown files | Commit messages | N/A |
+| Searchable corpus | Yes (`lore show`) | Grep | `git log` | N/A |
+| Works offline | Yes | Yes | Yes | Yes |
+| AI-assisted | Optional (Angela) | No | No | No |
+
+Lore is not a replacement for ADRs — it's the everyday capture layer that feeds into them. ADRs document big architectural decisions; Lore documents the daily *why* behind every commit.
 
 ## Installation
 
@@ -234,6 +248,24 @@ The next milestone introduces **Angela**, an AI-assisted documentation companion
 Angela operates in two modes:
 - **Draft mode** (zero-API) — Local analysis: missing sections, style guide compliance, related documents. No network calls.
 - **Polish mode** (1 API call) — AI rewrites with interactive diff. Accept/reject each change individually. Atomic writes preserve originals.
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs, suggesting features, and submitting pull requests.
+
+For security vulnerabilities, please follow the responsible disclosure process in [SECURITY.md](SECURITY.md).
+
+## Community & Support
+
+- **Bug reports & feature requests** — [GitHub Issues](https://github.com/GreyCoderK/lore/issues)
+- **Security issues** — See [SECURITY.md](SECURITY.md)
+- **Commercial licensing** — leshodaimekossonou@gmail.com
+
+## Support the Project
+
+If Lore helps you capture better documentation, consider [sponsoring the project](https://github.com/sponsors/GreyCoderK). Your support helps fund continued development, new features like Angela AI, and long-term maintenance.
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-GreyCoderK-ea4aaa?logo=github-sponsors)](https://github.com/sponsors/GreyCoderK)
 
 ## Third-Party Notices
 

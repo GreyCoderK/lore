@@ -91,8 +91,8 @@ func TestConfigSetKey_UnknownProvider(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for unknown provider")
 	}
-	if !strings.Contains(err.Error(), "Unknown provider") {
-		t.Errorf("error = %q, want 'Unknown provider'", err)
+	if !strings.Contains(err.Error(), "unknown provider") {
+		t.Errorf("error = %q, want 'unknown provider'", err)
 	}
 }
 

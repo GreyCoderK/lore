@@ -32,13 +32,10 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			filename := args[0]
 
 			// AC-9: Check .lore/ exists
-			docsDir := filepath.Join(".", ".lore", "docs")
-			if _, err := os.Stat(filepath.Join(".", ".lore")); err != nil {
-				if os.IsNotExist(err) {
-					return fmt.Errorf("lore not initialized, run: lore init")
-				}
-				return fmt.Errorf("angela: polish: %w", err)
+			if err := requireLoreDir(streams); err != nil {
+				return err
 			}
+			docsDir := filepath.Join(".lore", "docs")
 
 			// AC-8: Validate filename and check exists
 			if err := storage.ValidateFilename(filename); err != nil {

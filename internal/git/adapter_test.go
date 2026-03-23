@@ -400,6 +400,121 @@ func TestParseConventionalCommit_Multiline(t *testing.T) {
 	}
 }
 
+// --- CommitRange / LatestTag integration tests ---
+
+func TestLatestTag(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "tag", "v0.1.0")
+	a := NewAdapter(dir)
+
+	tag, err := a.LatestTag()
+	if err != nil {
+		t.Fatalf("LatestTag: %v", err)
+	}
+	if tag != "v0.1.0" {
+		t.Errorf("expected v0.1.0, got %s", tag)
+	}
+}
+
+func TestLatestTag_NoTags(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	a := NewAdapter(dir)
+
+	_, err := a.LatestTag()
+	if err == nil {
+		t.Fatal("expected error when no tags exist")
+	}
+}
+
+func TestCommitRange(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "tag", "v0.1.0")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "second commit")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "third commit")
+	a := NewAdapter(dir)
+
+	commits, err := a.CommitRange("v0.1.0", "HEAD")
+	if err != nil {
+		t.Fatalf("CommitRange: %v", err)
+	}
+	if len(commits) != 2 {
+		t.Fatalf("expected 2 commits, got %d", len(commits))
+	}
+	for _, c := range commits {
+		if len(c) != 40 {
+			t.Errorf("expected 40-char SHA, got %q (len %d)", c, len(c))
+		}
+	}
+}
+
+func TestCommitRange_EmptyRange(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "tag", "v0.1.0")
+	a := NewAdapter(dir)
+
+	commits, err := a.CommitRange("v0.1.0", "HEAD")
+	if err != nil {
+		t.Fatalf("CommitRange: %v", err)
+	}
+	if len(commits) != 0 {
+		t.Fatalf("expected 0 commits for empty range, got %d", len(commits))
+	}
+}
+
+// --- validateRef unit tests ---
+
+func TestValidateRef_Valid(t *testing.T) {
+	valid := []string{"HEAD", "v1.0.0", "main", "feature/foo", "abc123", "v1.0.0-rc.1"}
+	for _, ref := range valid {
+		if err := validateRef(ref); err != nil {
+			t.Errorf("validateRef(%q) unexpected error: %v", ref, err)
+		}
+	}
+}
+
+func TestValidateRef_FlagInjection(t *testing.T) {
+	if err := validateRef("--all"); err == nil {
+		t.Error("expected error for flag-like ref '--all'")
+	}
+	if err := validateRef("-n"); err == nil {
+		t.Error("expected error for flag-like ref '-n'")
+	}
+}
+
+func TestValidateRef_UnsafeChars(t *testing.T) {
+	if err := validateRef("v1.0; rm -rf /"); err == nil {
+		t.Error("expected error for ref with semicolons/spaces")
+	}
+}
+
+func TestValidateRef_DoubleDot(t *testing.T) {
+	if err := validateRef("v1..v2"); err == nil {
+		t.Error("expected error for ref containing '..'")
+	}
+}
+
+func TestValidateRef_Empty(t *testing.T) {
+	if err := validateRef(""); err != nil {
+		t.Errorf("empty ref should be valid, got: %v", err)
+	}
+}
+
 // --- Embedded hook script test ---
 
 func TestPostCommitScript_NonEmpty(t *testing.T) {

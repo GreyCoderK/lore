@@ -23,6 +23,9 @@ func newPlatformStore() CredentialStore {
 }
 
 func (l *linuxStore) Set(provider string, secret []byte) error {
+	if err := ValidateProvider(provider); err != nil {
+		return err
+	}
 	cmd := exec.Command("secret-tool", "store",
 		"--label="+ServiceName+"/"+provider,
 		"service", ServiceName,
@@ -38,6 +41,9 @@ func (l *linuxStore) Set(provider string, secret []byte) error {
 }
 
 func (l *linuxStore) Get(provider string) ([]byte, error) {
+	if err := ValidateProvider(provider); err != nil {
+		return nil, err
+	}
 	cmd := exec.Command("secret-tool", "lookup",
 		"service", ServiceName,
 		"account", provider,
@@ -56,6 +62,9 @@ func (l *linuxStore) Get(provider string) ([]byte, error) {
 }
 
 func (l *linuxStore) Delete(provider string) error {
+	if err := ValidateProvider(provider); err != nil {
+		return err
+	}
 	cmd := exec.Command("secret-tool", "clear",
 		"service", ServiceName,
 		"account", provider,

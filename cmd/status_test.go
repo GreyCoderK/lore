@@ -5,12 +5,12 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/greycoderk/lore/internal/cli"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
@@ -248,8 +248,8 @@ func TestStatusCmd_NotInitialized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for not initialized")
 	}
-	if cli.ExitCodeFrom(err) != cli.ExitError {
-		t.Errorf("expected exit code %d, got %d", cli.ExitError, cli.ExitCodeFrom(err))
+	if !errors.Is(err, domain.ErrNotInitialized) {
+		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 	if !strings.Contains(errBuf.String(), "Lore not initialized") {
 		t.Errorf("expected 'Lore not initialized', got %q", errBuf.String())

@@ -100,21 +100,9 @@ func newPendingSkipCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 	}
 }
 
-func checkLoreDir(streams domain.IOStreams) error {
-	if _, err := os.Stat(".lore"); err != nil {
-		if os.IsNotExist(err) {
-			_, _ = fmt.Fprintln(streams.Err, "Error: Lore not initialized.")
-			_, _ = fmt.Fprintln(streams.Err, "  Run: lore init")
-		} else {
-			fmt.Fprintf(streams.Err, "Error: cannot access .lore/: %v\n", err)
-		}
-		return &cli.ExitCodeError{Code: cli.ExitError}
-	}
-	return nil
-}
 
 func runPendingList(cmd *cobra.Command, streams domain.IOStreams) error {
-	if err := checkLoreDir(streams); err != nil {
+	if err := requireLoreDir(streams); err != nil {
 		return err
 	}
 
@@ -142,7 +130,7 @@ func runPendingList(cmd *cobra.Command, streams domain.IOStreams) error {
 }
 
 func runPendingListQuiet(cmd *cobra.Command, streams domain.IOStreams) error {
-	if err := checkLoreDir(streams); err != nil {
+	if err := requireLoreDir(streams); err != nil {
 		return err
 	}
 
@@ -160,7 +148,7 @@ func runPendingListQuiet(cmd *cobra.Command, streams domain.IOStreams) error {
 }
 
 func runPendingResolve(cmd *cobra.Command, streams domain.IOStreams, args []string) error {
-	if err := checkLoreDir(streams); err != nil {
+	if err := requireLoreDir(streams); err != nil {
 		return err
 	}
 
@@ -223,7 +211,7 @@ func runPendingResolve(cmd *cobra.Command, streams domain.IOStreams, args []stri
 }
 
 func runPendingSkip(cmd *cobra.Command, streams domain.IOStreams, args []string) error {
-	if err := checkLoreDir(streams); err != nil {
+	if err := requireLoreDir(streams); err != nil {
 		return err
 	}
 
