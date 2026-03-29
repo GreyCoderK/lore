@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"os/user"
 	"strings"
@@ -36,7 +37,9 @@ func (d *darwinStore) Set(provider string, secret []byte) error {
 	}
 	// Delete first, then add — avoids duplicate errors without -U.
 	// We don't use -w <key> because that exposes the secret in process args (visible via ps).
-	_ = d.Delete(provider) // ignore error (may not exist)
+	if err := d.Delete(provider); err != nil && !errors.Is(err, ErrNotFound) {
+		fmt.Fprintf(os.Stderr, "credential: keychain: pre-delete %s: %v\n", provider, err)
+	}
 
 	cmd := exec.Command("security", "add-generic-password",
 		"-s", d.serviceName(provider),

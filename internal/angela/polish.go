@@ -12,49 +12,51 @@ import (
 )
 
 // BuildPolishPrompt constructs the AI prompt for polishing a document.
-// The AI is asked to return the COMPLETE document (not a diff).
-// When personas is non-nil, persona directives are injected into the prompt (AC-4).
-func BuildPolishPrompt(doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile) string {
-	var sb strings.Builder
+// Returns (systemPrompt, userContent) where system is stable/cacheable and user varies per call.
+// When personas is non-nil, persona directives are injected into the user content (AC-4).
+func BuildPolishPrompt(doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile) (string, string) {
+	// System prompt: stable across calls (cacheable)
+	var sys strings.Builder
+	sys.WriteString("You are Angela, an expert documentation reviewer for the Lore project.\n")
+	sys.WriteString("Your task: improve the clarity, structure, and completeness of the following document.\n\n")
+	sys.WriteString("RULES:\n")
+	sys.WriteString("- Return the COMPLETE modified document (front matter + body)\n")
+	sys.WriteString("- Do NOT modify front matter fields (type, date, commit, status, tags, related, generated_by)\n")
+	sys.WriteString("- Improve clarity, structure, grammar, and completeness of the body\n")
+	sys.WriteString("- Do NOT invent new content — only reformulate and restructure what exists\n")
+	sys.WriteString("- Preserve all Markdown formatting (headers, lists, code blocks)\n")
+	sys.WriteString("- If the document is already good, return it unchanged\n")
 
-	sb.WriteString("You are Angela, an expert documentation reviewer for the Lore project.\n")
-	sb.WriteString("Your task: improve the clarity, structure, and completeness of the following document.\n\n")
+	// User content: varies per call
+	var usr strings.Builder
 
 	// Inject persona directives (AC-4)
 	if len(personas) > 0 {
-		sb.WriteString(BuildPersonaPrompt(personas))
+		usr.WriteString(BuildPersonaPrompt(personas))
 	}
 
-	sb.WriteString("RULES:\n")
-	sb.WriteString("- Return the COMPLETE modified document (front matter + body)\n")
-	sb.WriteString("- Do NOT modify front matter fields (type, date, commit, status, tags, related, generated_by)\n")
-	sb.WriteString("- Improve clarity, structure, grammar, and completeness of the body\n")
-	sb.WriteString("- Do NOT invent new content — only reformulate and restructure what exists\n")
-	sb.WriteString("- Preserve all Markdown formatting (headers, lists, code blocks)\n")
-	sb.WriteString("- If the document is already good, return it unchanged\n\n")
-
 	if styleGuide != "" {
-		sb.WriteString("PROJECT STYLE GUIDE (between markers):\n")
-		sb.WriteString("<<<STYLE_GUIDE>>>\n")
-		sb.WriteString(styleGuide)
-		sb.WriteString("\n<<<END_STYLE_GUIDE>>>\n\n")
+		usr.WriteString("PROJECT STYLE GUIDE (between markers):\n")
+		usr.WriteString("<<<STYLE_GUIDE>>>\n")
+		usr.WriteString(sanitizePromptContent(styleGuide))
+		usr.WriteString("\n<<<END_STYLE_GUIDE>>>\n\n")
 	}
 
 	if corpusSummary != "" {
-		sb.WriteString("EXISTING CORPUS (for context only, between markers):\n")
-		sb.WriteString("<<<CORPUS>>>\n")
-		sb.WriteString(corpusSummary)
-		sb.WriteString("\n<<<END_CORPUS>>>\n\n")
+		usr.WriteString("EXISTING CORPUS (for context only, between markers):\n")
+		usr.WriteString("<<<CORPUS>>>\n")
+		usr.WriteString(sanitizePromptContent(corpusSummary))
+		usr.WriteString("\n<<<END_CORPUS>>>\n\n")
 	}
 
 	// Use unique delimiters to prevent prompt injection via triple backticks in document content
-	sb.WriteString("DOCUMENT TO IMPROVE (between <<<DOCUMENT>>> and <<<END_DOCUMENT>>> markers):\n")
-	sb.WriteString("<<<DOCUMENT>>>\n")
-	sb.WriteString(doc)
-	sb.WriteString("\n<<<END_DOCUMENT>>>\n\n")
-	sb.WriteString("Return ONLY the improved document content. No explanations, no wrapping, no <<<DOCUMENT>>> markers.")
+	usr.WriteString("DOCUMENT TO IMPROVE (between <<<DOCUMENT>>> and <<<END_DOCUMENT>>> markers):\n")
+	usr.WriteString("<<<DOCUMENT>>>\n")
+	usr.WriteString(sanitizePromptContent(doc))
+	usr.WriteString("\n<<<END_DOCUMENT>>>\n\n")
+	usr.WriteString("Return ONLY the improved document content. No explanations, no wrapping, no <<<DOCUMENT>>> markers.")
 
-	return sb.String()
+	return sys.String(), usr.String()
 }
 
 // BuildCorpusSummary creates a compact summary of corpus metadata for the prompt.
@@ -87,8 +89,10 @@ func Polish(ctx context.Context, provider domain.AIProvider, doc string, meta do
 		return "", fmt.Errorf("angela: polish: no AI provider configured")
 	}
 
-	prompt := BuildPolishPrompt(doc, meta, styleGuide, corpusSummary, personas)
-	result, err := provider.Complete(ctx, prompt)
+	systemPrompt, userContent := BuildPolishPrompt(doc, meta, styleGuide, corpusSummary, personas)
+	docWordCount := len(strings.Fields(doc))
+	maxTokens := ResolveMaxTokens("polish", docWordCount)
+	result, err := provider.Complete(ctx, userContent, domain.WithSystem(systemPrompt), domain.WithMaxTokens(maxTokens))
 	if err != nil {
 		return "", fmt.Errorf("angela: polish: %w", err)
 	}

@@ -1,0 +1,406 @@
+// Copyright (C) 2026 Museigen
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+package i18n
+
+// catalogFR is the French catalog.
+// Le ton FR n'est pas une traduction littérale de l'EN — il exploite la
+// résonance phonétique "Lore = l'or" dans les moments émotionnels
+// (tagline, milestones, demo). Les messages factuels restent neutres.
+var catalogFR = &Messages{
+	Cmd: CmdMessages{
+		// root.go
+		RootShort:         "Votre code sait quoi. Lore sait pourquoi.",
+		RootConfigErrHint: "%v\n  Lancez : lore doctor",
+		StoreUnavailWarn:  "Attention : store indisponible : %v",
+
+		// init.go
+		InitShort:              "Initialiser Lore dans ce dépôt",
+		InitNotGitRepo:         "Ce n'est pas un dépôt Git.",
+		InitNotGitRepoHint:     "git init",
+		InitAlreadyInitialized: "Lore est déjà initialisé.",
+		InitCreatedLore:        ".lore/",
+		InitCreatedLorerc:      ".lorerc",
+		InitCreatedLorercLocal: ".lorerc.local",
+		InitModifiedGitignore:  ".gitignore",
+		InitWarningPrefix:      "Attention :",
+		InitHooksPathWarn:      "core.hooksPath est défini à %q — intégration manuelle requise",
+		InitInstalledHook:      "hook post-commit",
+		InitNotInPathWarn:      "lore n'est pas dans votre PATH — le hook post-commit ne fonctionnera pas.",
+		InitInstallHint:        "Installer : go install github.com/greycoderk/lore@latest",
+		InitAddToPathHint:      "Ou ajoutez-le à votre PATH :",
+		InitBashPathHint:       `bash:       echo 'export PATH="$PATH:/chemin/vers/lore"' >> ~/.bashrc`,
+		InitZshPathHint:        `zsh:        echo 'export PATH="$PATH:/chemin/vers/lore"' >> ~/.zshrc`,
+		InitFishPathHint:       "fish:       fish_add_path /chemin/vers/lore",
+		InitPowerShellHint:     `PowerShell: [Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';C:\chemin\vers\lore', 'User')`,
+		InitTagline:            "Votre code sait quoi. Lore sait pourquoi.",
+		InitDemoPrompt:         "Lancer la démo ? (~45s) [o/N] ",
+		InitDemoWarning:        "Démo :",
+
+		// new.go
+		NewUse:            "new [type] [quoi] [pourquoi]",
+		NewShort:          "Documenter une décision maintenant",
+		NewCommitNotFound: "Erreur : Commit '%s' introuvable.",
+		NewCommitFlagDesc: "Documenter un commit passé rétroactivement",
+
+		// list.go
+		ListShort:        "Voir toutes les décisions documentées",
+		ListLong:         "Lister tous les documents du corpus Lore avec type, titre, date et nombre de tags.",
+		ListParseWarning: "Attention : certains documents n'ont pas pu être analysés : %v",
+		ListNoDocsOfType: "Aucun document de type '%s'.",
+		ListNoDocsYet:    "Aucun document. Lancez : lore new",
+		ListTagSingular:  "tag",
+		ListTagPlural:    "tags",
+
+		// show.go
+		ShowUse:            "show [mot-clé]",
+		ShowShort:          "Retrouver une décision passée",
+		ShowLong:           "Rechercher et afficher les décisions passées du corpus Lore.",
+		ShowTypeExclusive:  "Erreur : --type et les raccourcis de type (--feature, --decision, etc.) sont mutuellement exclusifs.",
+		ShowUsageHint:      "Usage : lore show [mot-clé] ou lore show --all",
+		ShowTryHint:        "Essayez : lore show auth",
+		ShowNoMatchKeyword: "Aucun document correspondant à '%s'.",
+		ShowTryAll:         "Essayez : lore show --all",
+		ShowNoDocsFound:    "Aucun document trouvé.",
+		ShowSelectPrompt:   "Sélectionnez un document :",
+
+		// delete.go
+		DeleteUse:           "delete <fichier>",
+		DeleteShort:         "Supprimer un document du corpus",
+		DeleteInvalidName:   "Nom de fichier invalide '%s'.",
+		DeleteNotFound:      "Document '%s' introuvable.",
+		DeleteRefWarning:    "Ce document est référencé par :",
+		DeleteRefNotUpdated: "Les références ne seront PAS mises à jour automatiquement.",
+		DeleteForceRequired: "Confirmation requise. Utilisez --force en mode non-interactif.",
+		DeleteConfirmPrompt: "Supprimer %s ? [o/N] ",
+		DeleteCancelled:     "Non supprimé.",
+
+		// note.go
+		NoteShort: "Gérer les notes réutilisables",
+
+		// pending.go
+		PendingShort:        "Reprendre la documentation en attente",
+		PendingLong:         "Lister, résoudre ou ignorer la documentation en attente de commits interrompus ou différés.",
+		PendingListShort:    "Lister les éléments en attente",
+		PendingResolveShort: "Résoudre un élément en répondant aux questions restantes",
+		PendingSkipShort:    "Ignorer un élément sans créer de document",
+		PendingNoPending:    "Aucune documentation en attente. Tous les commits sont documentés.",
+		PendingResolveHint:  "Résoudre : lore pending resolve [numéro]",
+		PendingSkipHint:     "Ignorer :  lore pending skip <hash>",
+		PendingNoPendingRes: "Aucune documentation en attente. Tous les commits sont documentés.",
+		PendingInvalidSel:   "Erreur : sélection invalide '%s'. Choisissez 1-%d.",
+		PendingSelectPrompt: "Sélectionnez l'élément à résoudre [1-%d] : ",
+		PendingInvalidSelIn: "Erreur : sélection invalide '%s'. Choisissez 1-%d.",
+		PendingSkipError:    "Erreur : %v",
+		PendingListHeader:   "Documentation en attente :",
+
+		// status.go
+		StatusShort:             "Vérifier la santé de votre documentation",
+		StatusLong:              "Afficher un tableau de bord avec les hooks, documents, éléments en attente et la santé.",
+		StatusHeader:            "lore status — %s",
+		StatusHookNotInstalled:  "non installé",
+		StatusHookNotInstHint:   ". Lancez : lore hook install",
+		StatusHookInstalled:     "installé (post-commit)",
+		StatusHookLabel:         "Hook :",
+		StatusDocsDocumented:    "%d documentés",
+		StatusDocsPending:       ", %d en attente",
+		StatusDocsLabel:         "Docs :",
+		StatusExpressLine:       "%d%% (%d/%d) — %d%% avec alternatives/impact",
+		StatusExpressUnreadable: "(%d illisibles)",
+		StatusExpressLabel:      "Express :",
+		StatusAngelaMode:        "mode %s",
+		StatusAngelaNoApiKey:    "(pas de clé API)",
+		StatusAngelaProvider:    "(%s)",
+		StatusAngelaDocsReview:  "— %d docs à revoir",
+		StatusAngelaAllClean:    "tous les docs sont propres",
+		StatusAngelaLabel:       "Angela :",
+		StatusReviewNoIssues:    "aucun problème",
+		StatusReviewFindings:    "%d résultats (%s). Lancez : lore angela review",
+		StatusReviewLabel:       "Revue :",
+		StatusHealthAllGood:     "tout va bien",
+		StatusHealthIssues:      "%d problèmes. Lancez : lore doctor",
+		StatusHealthLabel:       "Santé :",
+		StatusTagline:           "Votre code sait quoi. Lore sait pourquoi.",
+		StatusReviewAgeJustNow:  "à l'instant",
+		StatusReviewAgeHours:    "il y a %dh",
+		StatusReviewAgeDays:     "il y a %dj",
+
+		// hook.go
+		HookShort:             "Gérer le hook post-commit",
+		HookInstallShort:      "Installer le hook post-commit Lore",
+		HookInstallHooksPathW: "Attention : core.hooksPath est défini à %q.",
+		HookInstallCannotAuto: "Lore ne peut pas installer les hooks automatiquement.",
+		HookInstallManualHint: "Ajoutez ceci à votre hook manuellement :",
+		HookInstallVerb:       "hook post-commit",
+		HookUninstallShort:    "Supprimer le hook post-commit Lore",
+		HookUninstallVerb:     "hook post-commit",
+		HookPostCommitShort:   "Interne : invoqué par le hook post-commit",
+
+		// demo.go
+		DemoShort:         "Voir Lore en action avec une visite guidée",
+		DemoConsentPrompt: "Démo interactive ~45s. Appuyez sur Entrée pour commencer.\n",
+		DemoSimCommit:     "Simulation : git commit -m '%s'",
+		DemoTypePrompt:    "? Type [feature] : %s",
+		DemoTypeConfirm:   "Type : %s",
+		DemoWhatPrompt:    "? Quoi [ajouter le middleware JWT] : %s",
+		DemoWhatConfirm:   "Quoi : %s",
+		DemoWhyPrompt:     "? Pourquoi cette approche ?\n> %s",
+		DemoIndexWarning:  "Attention : mise à jour de l'index échouée : %v",
+		DemoSimShow:       "Simulation : lore show auth",
+		DemoShowType:      "Type :   %s",
+		DemoShowWhat:      "Quoi :   %s",
+		DemoShowWhy:       "Pourquoi : %s",
+		DemoShowDate:      "Date :   %s",
+		DemoShowCommit:    "Commit : %s",
+		DemoShowStatus:    "Statut : démo",
+		DemoTagline:       "L'or de vos décisions techniques.",
+
+		// release.go
+		ReleaseShort:            "Générer les notes de version depuis votre documentation",
+		ReleaseNotInitMsg:       "Lore n'est pas initialisé.",
+		ReleaseNotInitHint:      "lore init",
+		ReleaseNoTagsError:      "Aucun tag Git trouvé. Créez un tag d'abord : git tag v0.1.0",
+		ReleaseNoTagsHint:       "Ou utilisez : lore release --from <commit-sha>",
+		ReleaseParseWarning:     "Attention : certains documents n'ont pas pu être analysés : %s",
+		ReleaseNoChanges:        "Aucun changement documenté dans cet intervalle.",
+		ReleaseNoChangesHint:    "Essayez : lore release --from <tag-antérieur>",
+		ReleaseChangelogHdrWarn: "Attention : en-tête CHANGELOG.md introuvable, insertion en début de fichier.",
+		ReleaseIndexRegenWarn:   "Attention : régénération de l'index échouée : %s",
+
+		// doctor.go
+		DoctorShort:          "Corriger les incohérences de documentation",
+		DoctorConfigCheck:    "Vérification de la configuration ...",
+		DoctorConfigOK:       "Config OK",
+		DoctorActiveValues:   "Valeurs actives :",
+		DoctorValueNotSet:    "(non défini)",
+		DoctorDocsCheck:      "Vérification de .lore/docs/ ...",
+		DoctorNoneFound:      "(aucun trouvé)",
+		DoctorConfigOKInline: "Config OK",
+		DoctorHealthAllGood:  "Santé : tout va bien. 0 problème trouvé.",
+		DoctorIssuesFound:    "%d problèmes trouvés. Lancez : lore doctor --fix",
+		DoctorManualFix:      "%s — correction manuelle requise : %s",
+		DoctorFixSummary:     "Corrigé : %d problèmes. %d restants.",
+		DoctorStoreRebuilt:   "Store reconstruit : %d docs indexés",
+		DoctorStoreSkipped:   "(%d ignorés)",
+		DoctorStoreCommits:   ", %d commits indexés",
+
+		// config_cmd.go
+		ConfigShort:          "Gérer la configuration Lore",
+		SetKeyShort:          "Stocker une clé API dans le trousseau système",
+		SetKeyUnknownProv:    "fournisseur inconnu %q, supportés : %s",
+		SetKeyPrompt:         "Entrez la clé API pour %s : ",
+		SetKeyStored:         "Stockée  clé API pour %s dans le trousseau système",
+		DeleteKeyShort:       "Supprimer une clé API du trousseau système",
+		DeleteKeyUnknownProv: "fournisseur inconnu %q, supportés : %s",
+		DeleteKeyDeleted:     "Supprimée clé API pour %s du trousseau système",
+		ListKeysShort:        "Lister les clés API stockées (masquées)",
+		ListKeysStored:       "%s : ****",
+		ListKeysNotSet:       "%s : (non défini)",
+
+		// lore_check.go
+		LoreCheckNotInit:     "Lore n'est pas initialisé.",
+		LoreCheckNotInitHint: "lore init",
+
+		// angela.go
+		AngelaShort:              "Amélioration de documentation assistée par IA",
+		AngelaDraftShort:         "Analyser un document localement (sans API)",
+		AngelaDraftNoFile:        "spécifiez un fichier ou utilisez --all pour analyser tout le corpus",
+		AngelaDraftNotFound:      "document '%s' introuvable dans .lore/docs/",
+		AngelaDraftCorpusWarn:    "Attention : chargement du corpus : %s",
+		AngelaDraftNoSuggestions: "Angela : Document impeccable. Aucune suggestion.",
+		AngelaDraftHeader:        "lore angela draft — %s",
+		AngelaDraftScoreLine:     "Score Angela : %.1f  (%s)",
+		AngelaDraftSuggCount:     "%d suggestions. Appliquez-les manuellement à votre document.",
+		AngelaDraftAllNoDocs:     "Angela : Aucun document trouvé dans .lore/docs/",
+		AngelaDraftAllHeader:     "lore angela draft --all — %d documents",
+		AngelaDraftAllSugg:       "%d suggestions (score : %.0f)",
+		AngelaDraftAllSuggWarn:   "%d suggestions (%d avertissements, score : %.0f)",
+		AngelaDraftAllSummary:    "%d/%d documents nécessitent une attention. %d suggestions au total.",
+
+		// angela_polish.go
+		AngelaPolishShort:       "Améliorer un document avec l'aide de l'IA",
+		AngelaPolishNotFound:    "document '%s' introuvable dans .lore/docs/",
+		AngelaPolishNoProvider:  "aucun fournisseur IA configuré, définissez ai.provider dans .lorerc.local (essayez : lore angela draft, sans API)",
+		AngelaPolishNoChanges:   "Angela : Aucune modification suggérée.",
+		AngelaPolishNoneApplied: "Aucune modification appliquée.",
+		AngelaPolishIndexWarn:   "Attention : régénération de l'index : %s",
+		AngelaPolishVerb:        "Amélioré  %s",
+
+		// angela_review.go
+		AngelaReviewShort:      "Analyser la cohérence de tout votre corpus de documentation",
+		AngelaReviewNoProvider: "aucun fournisseur IA configuré, définissez ai.provider dans .lorerc.local",
+		AngelaReviewCorpusNote: "Note : Le corpus contient %d documents. Analyse des 25 plus récents et 25 plus anciens pour une couverture maximale.",
+		AngelaReviewCacheWarn:  "Attention : impossible de sauvegarder le cache de revue : %s",
+		AngelaReviewHdrPartial: "Revue Angela — %d documents analysés (corpus : %d au total)",
+		AngelaReviewHdrFull:    "Revue Angela — %d documents analysés",
+		AngelaReviewCoherent:   "Angela : Le corpus est cohérent. Aucun problème trouvé.",
+		AngelaReviewFindingSum: "%d résultats (%s)",
+		AngelaReviewMinDocs:    "au moins %d documents requis pour la revue, vous en avez %d — continuez à documenter",
+		AngelaReviewParseErr:   "impossible de parser la réponse IA en JSON. Réessayez",
+		AngelaPolishModified:   "document modifié pendant la revue. Annulation pour éviter la perte de données",
+
+		// decision.go
+		DecisionShort:           "Afficher le scoring du Decision Engine pour un commit",
+		DecisionDiffWarn:        "Attention : diff indisponible : %v",
+		DecisionCommitLabel:     "Commit :    %s",
+		DecisionSubjectLabel:    "Sujet :     %s",
+		DecisionScoreLabel:      "Score :     %d/100",
+		DecisionActionLabel:     "Action :    %s",
+		DecisionConfidenceLabel: "Confiance : %.0f%%",
+		DecisionSignalsHeader:   "Signaux :",
+		DecisionPrefillHeader:   "Pré-remplissage :",
+		DecisionPrefillWhat:     "Quoi :     %s",
+		DecisionPrefillWhy:      "Pourquoi : %s (confiance %.0f%%)",
+		DecisionStoreUnavail:    "store indisponible — lancez quelques commits pour remplir le store",
+
+		// completion.go
+		CompletionShort: "Générer un script de complétion shell",
+		CompletionLong: `Générer un script de complétion shell pour lore.
+
+Pour charger les complétions :
+
+  # Bash (ajouter à ~/.bashrc) :
+  source <(lore completion bash)
+
+  # Zsh (ajouter à ~/.zshrc) :
+  source <(lore completion zsh)
+
+  # Fish :
+  lore completion fish | source
+
+  # PowerShell :
+  lore completion powershell | Out-String | Invoke-Expression`,
+
+		// root.go
+		UnsupportedLangWarn: "Attention : langue '%s' non supportée, retour à l'anglais",
+
+		// show.go
+		ShowAllDeprecated: "Conseil : préférez `lore list` pour lister tous les documents. `show --all` sera supprimé dans une prochaine version.",
+	},
+
+	Engagement: EngagementMessages{
+		Milestone3:  "3 décisions capturées. Elles seront là quand vous en aurez besoin.",
+		Milestone8:  "8 décisions documentées. Votre futur vous a une bibliothèque.",
+		Milestone21: "21 décisions. Ce dépôt a une mémoire.",
+		Milestone55: "55 décisions. Vous forgez l'or de votre équipe.",
+	},
+
+	UI: UIMessages{
+		Tagline:           "votre code sait quoi. lore sait pourquoi.",
+		ErrorPrefix:       "Erreur :",
+		RunPrefix:         "Lancez :",
+		VerbDeleted:       "Supprimé",
+		ListTruncated:     "... et %d de plus. Affinez votre recherche.",
+		ListPromptRange:   "Entrez un nombre entre 1 et %d.",
+		ListNoInput:       "aucune saisie",
+		PromptWithDefault: "? %s [%s] : ",
+		PromptNoDefault:   "? %s\n> ",
+	},
+
+	Workflow: WorkflowMessages{
+		SuggestSkipPrompt:      "Documenter ce commit ? [o/N] ",
+		SuggestSkipSkipped:     "Ignoré.",
+		AmendUpdatingExisting:  "Amend détecté — mise à jour du document existant : %s",
+		AmendNoDocCreatingNew:  "Amend détecté — aucun document existant pour %s, création d'un nouveau document.",
+		MergeCommitSkipMsg:     "Commit de merge détecté — documentation ignorée.",
+		AutoSkipMsg:            "Auto-skip (score %d) : %s",
+		AlreadyDocumented:     "Un document existe déjà pour ce commit.",
+		CreateAnother:          "Créer un autre document ? [o/N] ",
+		IndexWarning:           "Attention : mise à jour de l'index échouée : %v",
+		QuestionWhyLabel:       "Pourquoi cette approche a-t-elle été choisie ?",
+		QuestionAlternativesLabel: "Alternatives envisagées (optionnel, Entrée pour passer)",
+		QuestionImpactLabel:    "Impact (optionnel, Entrée pour passer)",
+		ResolveHeader:          "Résolution de la documentation en attente :",
+		ResolveCommitLabel:     "Commit :  %s",
+		ResolveMessageLabel:    "Message : %s",
+		ResolveDateLabel:       "Date :    %s",
+		ResolveCheckCommitW:    "Attention : impossible de vérifier le commit %s : %v",
+		ResolveCommitGoneW:     "Attention : Le commit %s n'existe plus. Résolution depuis le contexte sauvegardé.",
+		ResolveDeletePendingW:  "Attention : impossible de supprimer le fichier en attente : %v",
+		PendingReadWarn:        "Attention : impossible de lire %s : %v",
+		PendingParseWarn:       "Attention : impossible d'analyser %s : %v",
+		RelativeAgeJustNow:    "à l'instant",
+		RelativeAgeMinutes:    "il y a %d minutes",
+		RelativeAge1Hour:      "il y a 1 heure",
+		RelativeAgeHours:      "il y a %d heures",
+		RelativeAge1Day:       "il y a 1 jour",
+		RelativeAgeDays:       "il y a %d jours",
+		RelativeAge1Week:      "il y a 1 semaine",
+		RelativeAgeWeeks:      "il y a %d semaines",
+		RelativeAge1Month:     "il y a 1 mois",
+		RelativeAgeMonths:     "il y a %d mois",
+		LineRendererConfirm:    "✓ %s : %s",
+		LineRendererExpressSkip: "(%d optionnels ignorés — express)",
+	},
+
+	Angela: AngelaMessages{
+		PersonaWhyTooListy:     "La section '## Why' ressemble à une liste — envisagez un récit narratif",
+		PersonaLongParagraphs:  "Paragraphe(s) > 5 lignes détecté(s) — envisagez de découper en puces",
+		PersonaMissingVerify:   "Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
+		PersonaNoTradeoffs:     "Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
+		PersonaUxNoImpact:      "Changement visible par l'utilisateur détecté sans discussion d'impact UX",
+		PersonaBusinessNoValue: "Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
+		DraftMissingWhat:       `La section "## What" est manquante`,
+		DraftMissingWhy:        `La section "## Why" est manquante`,
+		DraftMissingAltWarn:    `La section "## Alternatives" est manquante`,
+		DraftMissingAltInfo:    `La section "## Alternatives" est manquante`,
+		DraftMissingImpact:     `La section "## Impact" est manquante`,
+		DraftBodyTooShort:      "Le corps du document est trop court (< 50 caractères)",
+		DraftBodyExceedsMax:    "Le corps dépasse la longueur maximale recommandée",
+		DraftAddTags:           "Envisagez d'ajouter des tags pour la découvrabilité",
+		DraftAddRelated:        "Envisagez d'ajouter des références à des documents liés",
+		DraftWhyTooBrief:       `La section "## Why" est trop brève (< 20 caractères)`,
+		CoherencePossibleDup:   "Doublon possible : %s (même type, tags partagés : %s)",
+		CoherenceRelatedFound:  "Document lié trouvé : %s (tags partagés : %s)",
+		CoherenceMentionedBody: "Le document %q est mentionné dans le corps — envisagez de l'ajouter aux références",
+		DiffChangeHeader:       "--- Modification %d/%d ---",
+		DiffApplyPrompt:        "Appliquer ce changement ? [o/n/q] ",
+		DiffInputEnded:         "Saisie terminée. %d modifications restantes rejetées.",
+		ReviewParseError:       "angela : revue : impossible d'analyser la réponse IA en JSON. Réessayez",
+		ReviewMinDocs:          "au moins 5 documents requis pour la revue, vous en avez %d — continuez à documenter",
+		StyleUnknownRule:       "guide de style : règle inconnue %q (ignorée)",
+	},
+
+	Decision: DecisionMessages{
+		CalibrationTitle:        "Calibration du Decision Engine",
+		CalibrationTotalCommits: "Commits totaux :    %d",
+		CalibrationAutoSkipped:  "Auto-ignorés :      %d (%.0f%%)",
+		CalibrationSuggestSkip:  "Suggestion ignorée : %d",
+		CalibrationAskReduced:   "Questions réduites : %d",
+		CalibrationAskFull:      "Questions complètes : %d",
+		CalibrationQualityHdr:   "Métriques de qualité :",
+		CalibrationFalseNegRate: "  Taux faux négatifs :    %.1f%% (cible : < 5%%)",
+		CalibrationFalsePosRate: "  Taux faux positifs :    %.1f%% (cible : < 20%%)",
+		CalibrationAskFullDoc:   "  Taux doc complète :     %.1f%% (cible : > 80%%)",
+		CalibrationAutoSkipRate: "  Taux auto-skip :        %.1f%% (cible : 30-50%%)",
+	},
+
+	Shared: SharedMessages{
+		ConfigInsecurePerms:     "Attention : %s est lisible par d'autres (mode %04o). Envisagez : chmod 600 %s",
+		ConfigUnknownWarn:       "Attention : %s",
+		ConfigNotSet:            "(non défini)",
+		ValidateUnknownDidYou:   "champ inconnu %q dans %s, vouliez-vous dire %q ?",
+		ValidateUnknownField:    "champ inconnu %q dans %s",
+		AINoKeyAnthropic:        "Clé API introuvable pour anthropic. Lancez : lore config set-key anthropic",
+		AINoKeyOpenAI:           "Clé API introuvable pour openai. Lancez : lore config set-key openai",
+		AIUnknownProvider:       "fournisseur inconnu %q, supportés : anthropic, openai, ollama",
+		AIKeychainNotAvail:      "Attention : Trousseau système indisponible. Utilisation de la clé API en clair.",
+		AIPlaintextKeyWarn:      "Attention : Clé API stockée en clair. Lancez : lore config set-key %s pour utiliser le trousseau système",
+		IndexTitle:              "# Index de Documentation Lore",
+		IndexAutoGenNote:        "> Généré automatiquement par `lore`. Ne pas modifier manuellement.",
+		IndexTableHeaderDoc:     "Document",
+		IndexTableHeaderType:    "Type",
+		IndexTableHeaderDate:    "Date",
+		IndexTableHeaderStat:    "Statut",
+		IndexTableHeaderTags:    "Tags",
+		IndexDocSingular:        "document",
+		IndexDocPlural:          "documents",
+		IndexTotalCount:         "*%d %s au total*",
+		ReleaseSectionFeatures:  "Fonctionnalités",
+		ReleaseSectionBugFixes:  "Corrections de bugs",
+		ReleaseSectionRefactors: "Refactorisations",
+		ReleaseSectionDecisions: "Décisions",
+		ReleaseSectionNotes:     "Notes",
+		ReleaseTitle:            "# Version %s",
+	},
+}

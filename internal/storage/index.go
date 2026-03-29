@@ -16,6 +16,24 @@ import (
 // It scans all .md files (except README.md), parses their front matter,
 // and generates a sorted table. The result is written atomically.
 func RegenerateIndex(docsDir string) error {
+	lockPath := filepath.Join(docsDir, ".index.lock")
+	lock, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err != nil {
+		if os.IsExist(err) {
+			// Another process is regenerating — skip silently
+			return nil
+		}
+		if os.IsNotExist(err) {
+			// Parent directory doesn't exist — nothing to index
+			return nil
+		}
+		return fmt.Errorf("storage: index lock: %w", err)
+	}
+	defer func() {
+		lock.Close()
+		os.Remove(lockPath)
+	}()
+
 	entries, err := os.ReadDir(docsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -84,6 +102,11 @@ func RegenerateIndex(docsDir string) error {
 		unit = "document"
 	}
 	fmt.Fprintf(&buf, "\n*%d %s total*\n", len(docs), unit)
+
+	if len(parseErrs) > 0 && len(docs) == 0 {
+		// All documents failed to parse — don't write empty index
+		return errors.Join(parseErrs...)
+	}
 
 	readmePath := filepath.Join(docsDir, "README.md")
 	// N1 fix: write partial index even when some files fail to parse.

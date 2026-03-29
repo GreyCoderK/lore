@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 // LineRenderer is the non-TTY renderer for CI/pipe environments.
@@ -31,7 +32,7 @@ func (r *LineRenderer) QuestionStart(question string, defaultVal string) {
 
 func (r *LineRenderer) QuestionConfirm(question string, answer string) {
 	r.answered++
-	_, _ = fmt.Fprintf(r.streams.Err, "✓ %s: %s\n", question, answer)
+	_, _ = fmt.Fprintf(r.streams.Err, i18n.T().Workflow.LineRendererConfirm+"\n", question, answer)
 }
 
 func (r *LineRenderer) Progress(current, total int, label string) {
@@ -42,6 +43,6 @@ func (r *LineRenderer) Progress(current, total int, label string) {
 func (r *LineRenderer) ExpressSkip(skipped int) {
 	total := r.answered + skipped
 	bar := strings.Repeat("#", total)
-	_, _ = fmt.Fprintf(r.streams.Err, "[%s] %d/%d (%d optional skipped — express)\n",
-		bar, r.answered, total, skipped)
+	_, _ = fmt.Fprintf(r.streams.Err, "[%s] %d/%d "+fmt.Sprintf(i18n.T().Workflow.LineRendererExpressSkip, skipped)+"\n",
+		bar, r.answered, total)
 }

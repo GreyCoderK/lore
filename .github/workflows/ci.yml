@@ -4,13 +4,23 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: stable
       - run: go test ./...
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
       - uses: golangci/golangci-lint-action@v7
         with:
           version: v2.11.3
@@ -18,3 +28,7 @@ jobs:
         run: |
           go install github.com/google/go-licenses@latest
           go-licenses check ./... --allowed_licenses=Apache-2.0,BSD-2-Clause,BSD-3-Clause,MIT,ISC,AGPL-3.0
+      - name: GoReleaser check
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: check

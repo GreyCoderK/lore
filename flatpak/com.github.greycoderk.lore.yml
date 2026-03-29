@@ -1,0 +1,36 @@
+# NOTE: This manifest contains FIXME placeholders. Update URLs and sha256
+# after each release. Do NOT submit to Flathub until checksums are real.
+# CI lint should reject files containing "FIXME" before merge.
+app-id: com.github.greycoderk.lore
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+
+command: lore
+
+finish-args:
+  - --filesystem=home
+  - --filesystem=xdg-config/git:ro
+  - --share=network
+
+modules:
+  - name: lore
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 lore /app/bin/lore
+    sources:
+      # x86_64
+      - type: archive
+        url: https://github.com/GreyCoderK/lore/releases/download/FIXME_VERSION/lore_Linux_x86_64.tar.gz
+        sha256: FIXME_REPLACE_WITH_ACTUAL_CHECKSUM
+        only-arches:
+          - x86_64
+      # aarch64
+      - type: archive
+        url: https://github.com/GreyCoderK/lore/releases/download/FIXME_VERSION/lore_Linux_arm64.tar.gz
+        sha256: FIXME_REPLACE_WITH_ACTUAL_CHECKSUM
+        only-arches:
+          - aarch64
+    # Update URLs and sha256 after each release:
+    #   VERSION=v1.0.0
+    #   curl -sSL "https://github.com/GreyCoderK/lore/releases/download/${VERSION}/checksums.txt"

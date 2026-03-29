@@ -5,6 +5,8 @@ package cmd
 
 import (
 	"testing"
+
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestHookPostCommitCmd_CallsWorkflowDispatch(t *testing.T) {
@@ -14,7 +16,7 @@ func TestHookPostCommitCmd_CallsWorkflowDispatch(t *testing.T) {
 	streams, _, _ := testStreams()
 	cfg := testConfig()
 
-	cmd := newHookPostCommitCmd(cfg, streams)
+	cmd := newHookPostCommitCmd(cfg, streams, nil)
 	if cmd.Use != "_hook-post-commit" {
 		t.Errorf("Use = %q, want %q", cmd.Use, "_hook-post-commit")
 	}
@@ -27,7 +29,7 @@ func TestHookPostCommitCmd_IsHidden(t *testing.T) {
 	streams, _, _ := testStreams()
 	cfg := testConfig()
 
-	cmd := newHookPostCommitCmd(cfg, streams)
+	cmd := newHookPostCommitCmd(cfg, streams, nil)
 	if !cmd.Hidden {
 		t.Error("_hook-post-commit command should be hidden")
 	}
@@ -37,7 +39,8 @@ func TestHookPostCommitCmd_Registered(t *testing.T) {
 	streams, _, _ := testStreams()
 	cfg := testConfig()
 
-	rootCmd := newRootCmd(cfg, streams)
+	var s domain.LoreStore
+	rootCmd := newRootCmd(cfg, streams, &s)
 
 	// Verify _hook-post-commit is registered
 	found := false

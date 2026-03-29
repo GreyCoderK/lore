@@ -20,9 +20,15 @@ func ParseConventionalCommit(message string) (ccType, scope, subject string) {
 		firstLine = message[:idx]
 	}
 
+	const maxSubjectLen = 200
+
 	m := conventionalCommitRe.FindStringSubmatch(firstLine)
 	if m == nil {
 		return "", "", message
 	}
-	return m[1], m[2], m[3]
+	subject = m[3]
+	if len(subject) > maxSubjectLen {
+		subject = subject[:maxSubjectLen]
+	}
+	return m[1], m[2], subject
 }

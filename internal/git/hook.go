@@ -182,7 +182,12 @@ func hookExists(hooksDir, hookType string) (bool, error) {
 		return false, fmt.Errorf("git: read hook %s: %w", hookType, err)
 	}
 
-	return strings.Contains(string(data), loreStartMarker), nil
+	hasStart := strings.Contains(string(data), loreStartMarker)
+	hasEnd := strings.Contains(string(data), loreEndMarker)
+	if hasStart != hasEnd {
+		return false, fmt.Errorf("git: hook %s: corrupted (mismatched lore markers)", hookType)
+	}
+	return hasStart && hasEnd, nil
 }
 
 func atomicWriteHook(path string, data []byte) error {

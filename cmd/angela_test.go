@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -271,5 +272,127 @@ func TestAngelaPolish_NotInitialized(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "lore not initialized") {
 		t.Errorf("error = %q, want 'lore not initialized'", err)
+	}
+}
+
+// --- review tests ---
+
+func runAngelaReview(t *testing.T, cfg *config.Config, args ...string) (stdout, stderr string, exitErr error) {
+	t.Helper()
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{In: strings.NewReader(""), Out: &out, Err: &errBuf}
+	if cfg == nil {
+		cfg = &config.Config{}
+	}
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs(append([]string{"review"}, args...))
+	err := cmd.Execute()
+	return out.String(), errBuf.String(), err
+}
+
+// createNDocs creates n valid documents in the .lore/docs directory.
+func createNDocs(t *testing.T, dir string, n int) {
+	t.Helper()
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	for i := 0; i < n; i++ {
+		doc := fmt.Sprintf("---\ntype: decision\nstatus: published\ndate: \"2026-03-%02d\"\ntags: [test]\n---\n## What\nDocument %d about topic %d.\n\n## Why\nBecause reason %d.\n", i+1, i, i, i)
+		filename := fmt.Sprintf("decision-topic-%d-2026-03-%02d.md", i, i+1)
+		if err := os.WriteFile(filepath.Join(docsDir, filename), []byte(doc), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// AC-5: No provider configured
+func TestAngelaReview_NoProvider(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	createNDocs(t, dir, 5)
+
+	_, _, err := runAngelaReview(t, nil)
+	if err == nil {
+		t.Fatal("expected error for no provider")
+	}
+	if !strings.Contains(err.Error(), "no AI provider configured") {
+		t.Errorf("error = %q, want 'no AI provider configured'", err)
+	}
+}
+
+// AC-2: Less than 5 docs
+func TestAngelaReview_LessThan5Docs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	createNDocs(t, dir, 3)
+
+	_, _, err := runAngelaReview(t, nil)
+	if err == nil {
+		t.Fatal("expected error for < 5 docs")
+	}
+	if !strings.Contains(err.Error(), "at least 5 documents required") {
+		t.Errorf("error = %q, want 'at least 5 documents required'", err)
+	}
+}
+
+// AC-9: Not initialized
+func TestAngelaReview_NotInitialized(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaReview(t, nil)
+	if err == nil {
+		t.Fatal("expected error for uninitialized repo")
+	}
+	if !strings.Contains(err.Error(), "lore not initialized") {
+		t.Errorf("error = %q, want 'lore not initialized'", err)
+	}
+}
+
+// AC-8: --quiet suppresses stderr but stdout report remains
+func TestAngelaReview_QuietFlag(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	createNDocs(t, dir, 5)
+
+	// Without provider, this will fail before output — but --quiet should still be parsed
+	// Test that the flag is recognized by cobra (no "unknown flag" error)
+	_, _, err := runAngelaReview(t, nil, "--quiet")
+	if err == nil {
+		t.Fatal("expected error (no provider)")
+	}
+	// Should be a provider error, not a flag parse error
+	if strings.Contains(err.Error(), "unknown flag") {
+		t.Errorf("--quiet flag should be recognized, got: %q", err)
+	}
+}
+
+// AC-8: --quiet + extra args rejected (cobra.NoArgs)
+func TestAngelaReview_RejectsArgs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaReview(t, nil, "unexpected-arg")
+	if err == nil {
+		t.Fatal("expected error for unexpected arg")
+	}
+	if !strings.Contains(err.Error(), "unknown command") {
+		t.Errorf("error = %q, want 'unknown command'", err)
 	}
 }

@@ -5,17 +5,17 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/greycoderk/lore/internal/cli"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-func newShowCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+func newShowCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	var (
 		flagType     string
 		flagAfter    string
@@ -29,9 +29,9 @@ func newShowCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "show [keyword]",
-		Short: "Find a past decision",
-		Long:  "Search and display past decisions from the Lore corpus.",
+		Use:   i18n.T().Cmd.ShowUse,
+		Short: i18n.T().Cmd.ShowShort,
+		Long:  i18n.T().Cmd.ShowLong,
 		Example: `  lore show auth
   lore show --feature auth --after 2026-02
   lore show --all`,
@@ -44,30 +44,9 @@ func newShowCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 			}
 
 			// Resolve type from shorthand flags
-			docType := flagType
-			shorthands := 0
-			if flagFeature {
-				docType = domain.DocTypeFeature
-				shorthands++
-			}
-			if flagDecision {
-				docType = domain.DocTypeDecision
-				shorthands++
-			}
-			if flagBugfix {
-				docType = domain.DocTypeBugfix
-				shorthands++
-			}
-			if flagRefactor {
-				docType = domain.DocTypeRefactor
-				shorthands++
-			}
-			if flagNote {
-				docType = domain.DocTypeNote
-				shorthands++
-			}
-			if shorthands > 1 || (flagType != "" && shorthands > 0) {
-				fmt.Fprintln(streams.Err, "Error: --type and type shorthand flags (--feature, --decision, etc.) are mutually exclusive.")
+			docType, err := resolveDocTypeFlags(flagType, flagFeature, flagDecision, flagBugfix, flagRefactor, flagNote)
+			if err != nil {
+				_, _ = fmt.Fprintln(streams.Err, i18n.T().Cmd.ShowTypeExclusive)
 				return &cli.ExitCodeError{Code: cli.ExitError}
 			}
 
@@ -78,12 +57,17 @@ func newShowCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 
 			// Validation: no keyword and no --all → usage hint
 			if keyword == "" && !flagAll {
-				fmt.Fprintln(streams.Err, "Usage: lore show [keyword] or lore show --all")
-				fmt.Fprintln(streams.Err, "  Try: lore show auth")
-				return &cli.ExitCodeError{Code: cli.ExitError}
+				_, _ = fmt.Fprintln(streams.Err, i18n.T().Cmd.ShowUsageHint)
+				_, _ = fmt.Fprintln(streams.Err, "  "+i18n.T().Cmd.ShowTryHint)
+				return &cli.ExitCodeError{Code: cli.ExitUserError}
 			}
 
-			docsDir := filepath.Join(".lore", "docs")
+			// Deprecation: --all is redundant with `lore list`
+			if flagAll && !flagQuiet {
+				_, _ = fmt.Fprintln(streams.Err, i18n.T().Cmd.ShowAllDeprecated)
+			}
+
+			docsDir := domain.DocsPath(".")
 			filter := domain.DocFilter{
 				Type:  docType,
 				After: flagAfter,
@@ -119,10 +103,10 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 		// AC-5: Zero results
 		if !quiet {
 			if keyword != "" {
-				fmt.Fprintf(streams.Err, "No documents matching '%s'.\n", keyword)
-				fmt.Fprintln(streams.Err, "  Try: lore show --all")
+				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.ShowNoMatchKeyword+"\n", keyword)
+				_, _ = fmt.Fprintln(streams.Err, "  "+i18n.T().Cmd.ShowTryAll)
 			} else {
-				fmt.Fprintln(streams.Err, "No documents found.")
+				_, _ = fmt.Fprintln(streams.Err, i18n.T().Cmd.ShowNoDocsFound)
 			}
 		}
 		return &cli.ExitCodeError{Code: cli.ExitSkip}
@@ -150,7 +134,7 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 
 		if !quiet {
 			// AC-4: Truncation message handled by ui.List
-			idx, err := ui.List(streams, items, "Select a document:")
+			idx, err := ui.List(streams, items, i18n.T().Cmd.ShowSelectPrompt)
 			if err != nil {
 				return fmt.Errorf("cmd: show: %w", err)
 			}
@@ -167,7 +151,7 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 		} else {
 			// --quiet + multiple: stdout parseable list only
 			for _, r := range results {
-				fmt.Fprintf(streams.Out, "%s\t%s\t%s\n", r.Meta.Type, r.Title, r.Meta.Date)
+				_, _ = fmt.Fprintf(streams.Out, "%s\t%s\t%s\n", r.Meta.Type, r.Title, r.Meta.Date)
 			}
 		}
 	}

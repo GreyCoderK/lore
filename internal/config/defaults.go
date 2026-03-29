@@ -4,9 +4,21 @@
 package config
 
 import (
+	"path/filepath"
 	"time"
 
+	"github.com/greycoderk/lore/internal/domain"
 	"github.com/spf13/viper"
+)
+
+// Decision Engine defaults — duplicated here to break the config/ → decision/
+// dependency cycle. decision.DefaultConfig() remains the canonical source for
+// the Engine itself; these values are only used for Viper defaults.
+const (
+	defaultThresholdFull      = 60
+	defaultThresholdReduced   = 35
+	defaultThresholdSuggest   = 15
+	defaultLearningMinCommits = 20
 )
 
 type AIConfig struct {
@@ -37,6 +49,8 @@ type OutputConfig struct {
 }
 
 func setDefaults(v *viper.Viper) {
+	v.SetDefault("language", "en")
+
 	v.SetDefault("ai.provider", "")
 	v.SetDefault("ai.model", "")
 	v.SetDefault("ai.api_key", "")
@@ -46,10 +60,19 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("angela.mode", "draft")
 	v.SetDefault("angela.max_tokens", 2000)
 
-	v.SetDefault("templates.dir", ".lore/templates")
+	v.SetDefault("templates.dir", filepath.Join(domain.LoreDir, domain.TemplatesDir))
 
 	v.SetDefault("hooks.post_commit", true)
 
 	v.SetDefault("output.format", "markdown")
-	v.SetDefault("output.dir", ".lore/docs")
+	v.SetDefault("output.dir", filepath.Join(domain.LoreDir, domain.DocsDir))
+
+	v.SetDefault("decision.threshold_full", defaultThresholdFull)
+	v.SetDefault("decision.threshold_reduced", defaultThresholdReduced)
+	v.SetDefault("decision.threshold_suggest", defaultThresholdSuggest)
+	v.SetDefault("decision.always_ask", []string{"feat", "breaking"})
+	v.SetDefault("decision.always_skip", []string{"docs", "style", "ci", "build"})
+	v.SetDefault("decision.critical_scopes", []string{})
+	v.SetDefault("decision.learning", true)
+	v.SetDefault("decision.learning_min_commits", defaultLearningMinCommits)
 }

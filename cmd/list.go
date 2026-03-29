@@ -9,11 +9,12 @@ import (
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/spf13/cobra"
 )
 
-func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+func newListCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	var (
 		flagType  string
 		flagQuiet bool
@@ -21,8 +22,8 @@ func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "See all documented decisions",
-		Long:  "List all documents in the Lore corpus with type, title, date, and tag count.",
+		Short: i18n.T().Cmd.ListShort,
+		Long:  i18n.T().Cmd.ListLong,
 		Example: `  lore list
   lore list --type feature
   lore list --quiet | wc -l`,
@@ -34,7 +35,7 @@ func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 				return err
 			}
 
-			store := &storage.CorpusStore{Dir: ".lore/docs"}
+			store := &storage.CorpusStore{Dir: domain.DocsPath(".")}
 			filter := domain.DocFilter{
 				Type: flagType,
 			}
@@ -44,16 +45,16 @@ func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 				return fmt.Errorf("cmd: list: %w", parseErr)
 			}
 			if parseErr != nil && !flagQuiet {
-				fmt.Fprintf(streams.Err, "Warning: some documents could not be parsed: %v\n", parseErr)
+				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.ListParseWarning+"\n", parseErr)
 			}
 
 			// AC-2: Empty results
 			if len(results) == 0 {
 				if !flagQuiet {
 					if flagType != "" {
-						fmt.Fprintf(streams.Err, "No documents of type '%s'.\n", flagType)
+						_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.ListNoDocsOfType+"\n", flagType)
 					} else {
-						_, _ = fmt.Fprintln(streams.Err, "No documents yet. Run: lore new")
+						_, _ = fmt.Fprintln(streams.Err, i18n.T().Cmd.ListNoDocsYet)
 					}
 				}
 				return nil
@@ -68,11 +69,11 @@ func newListCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 			for _, meta := range results {
 				slug := storage.ExtractSlug(meta.Filename)
 				tagCount := len(meta.Tags)
-				tagWord := "tags"
+				tagWord := i18n.T().Cmd.ListTagPlural
 				if tagCount == 1 {
-					tagWord = "tag"
+					tagWord = i18n.T().Cmd.ListTagSingular
 				}
-				fmt.Fprintf(streams.Out, "%-10s %-25s %s  %d %s\n",
+				_, _ = fmt.Fprintf(streams.Out, "%-10s %-25s %s  %d %s\n",
 					meta.Type, slug, meta.Date, tagCount, tagWord)
 			}
 

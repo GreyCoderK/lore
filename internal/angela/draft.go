@@ -132,7 +132,7 @@ func checkStructure(body string, guide *StyleGuide) []Suggestion {
 }
 
 // checkCompletenessWithSections validates metadata and content depth using pre-parsed sections.
-func checkCompletenessWithSections(body string, meta domain.DocMeta, guide *StyleGuide, corpus []domain.DocMeta, sections map[string]string) []Suggestion {
+func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGuide, corpus []domain.DocMeta, sections map[string]string) []Suggestion {
 	var suggestions []Suggestion
 
 	minTags := 0

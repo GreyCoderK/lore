@@ -169,17 +169,55 @@ func TestCorpusStore_ListDocs_FilterByText(t *testing.T) {
 func TestCorpusStore_ListDocs_CombinedFilters(t *testing.T) {
 	dir := t.TempDir()
 
-	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published", Tags: []string{"auth"}}, "one", "body\n")
-	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "draft", Tags: []string{"auth"}}, "two", "body\n")
-	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-07", Status: "published", Tags: []string{"auth"}}, "three", "body\n")
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-01", Status: "published", Tags: []string{"auth", "security"}}, "jwt-auth", "# JWT Auth\nJWT implementation\n")
+	WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-05", Status: "draft", Tags: []string{"auth"}}, "oauth-flow", "# OAuth\nOAuth flow\n")
+	WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-03", Status: "published", Tags: []string{"api"}}, "new-api", "# API\nNew API\n")
 
 	store := &CorpusStore{Dir: dir}
-	docs, err := store.ListDocs(domain.DocFilter{Type: "decision", Status: "published", Tags: []string{"auth"}})
+
+	// Type + Status filter
+	docs, err := store.ListDocs(domain.DocFilter{Type: "decision", Status: "published"})
 	if err != nil {
-		t.Fatalf("list: %v", err)
+		t.Fatalf("Type+Status filter: %v", err)
 	}
 	if len(docs) != 1 {
-		t.Errorf("expected 1 doc matching all filters, got %d", len(docs))
+		t.Errorf("Type+Status filter: got %d, want 1", len(docs))
+	}
+
+	// Type + Tags filter
+	docs, err = store.ListDocs(domain.DocFilter{Type: "decision", Tags: []string{"auth"}})
+	if err != nil {
+		t.Fatalf("Type+Tags filter: %v", err)
+	}
+	if len(docs) != 2 {
+		t.Errorf("Type+Tags filter: got %d, want 2", len(docs))
+	}
+
+	// Type + Status + Tags filter (all three)
+	docs, err = store.ListDocs(domain.DocFilter{Type: "decision", Status: "published", Tags: []string{"auth"}})
+	if err != nil {
+		t.Fatalf("Type+Status+Tags filter: %v", err)
+	}
+	if len(docs) != 1 {
+		t.Errorf("Type+Status+Tags filter: got %d, want 1", len(docs))
+	}
+
+	// Type + Date range filter
+	docs, err = store.ListDocs(domain.DocFilter{Type: "decision", After: "2026-03-04"})
+	if err != nil {
+		t.Fatalf("Type+Date filter: %v", err)
+	}
+	if len(docs) != 1 {
+		t.Errorf("Type+Date filter: got %d, want 1", len(docs))
+	}
+
+	// Tags + Status filter (no Type)
+	docs, err = store.ListDocs(domain.DocFilter{Status: "published", Tags: []string{"api"}})
+	if err != nil {
+		t.Fatalf("Tags+Status filter: %v", err)
+	}
+	if len(docs) != 1 {
+		t.Errorf("Tags+Status filter: got %d, want 1", len(docs))
 	}
 }
 
@@ -639,15 +677,42 @@ func TestFindDocByCommit_EmptyDir(t *testing.T) {
 	}
 }
 
+func TestValidateFilename(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{"empty", "", true},
+		{"valid", "decision-auth-2026-03-07.md", false},
+		{"path_traversal", "../evil.md", true},
+		{"absolute", "/etc/passwd", true},
+		{"reserved_readme", "README.md", true},
+		{"reserved_index", "index.md", true},
+		{"reserved_lock", ".index.lock", true},
+		{"with_separator", "sub/file.md", true},
+		{"dot_dot", "..", true},
+		{"valid_simple", "notes.md", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateFilename(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateFilename(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestExtractTitle_HeadingFallback(t *testing.T) {
 	// With heading
-	title := extractTitle("# My Title\n\nSome content.\n", "decision-auth-2026-03-07.md")
+	title := ExtractTitle("# My Title\n\nSome content.\n", "decision-auth-2026-03-07.md")
 	if title != "My Title" {
 		t.Errorf("expected 'My Title', got %q", title)
 	}
 
 	// Without heading — fallback to slug
-	title = extractTitle("No heading here.\n", "decision-auth-strategy-2026-03-07.md")
+	title = ExtractTitle("No heading here.\n", "decision-auth-strategy-2026-03-07.md")
 	if title != "auth-strategy" {
 		t.Errorf("expected 'auth-strategy', got %q", title)
 	}

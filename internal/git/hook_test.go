@@ -236,6 +236,46 @@ func TestHookExists_False(t *testing.T) {
 	}
 }
 
+func TestInstallHook_MultipleTypes(t *testing.T) {
+	dir := initGitRepo(t)
+	a := NewAdapter(dir)
+
+	// Install post-commit
+	_, err := a.InstallHook("post-commit")
+	if err != nil {
+		t.Fatalf("InstallHook post-commit: %v", err)
+	}
+
+	// Install pre-push
+	_, err = a.InstallHook("pre-push")
+	if err != nil {
+		t.Fatalf("InstallHook pre-push: %v", err)
+	}
+
+	// Both should exist
+	exists1, _ := a.HookExists("post-commit")
+	exists2, _ := a.HookExists("pre-push")
+	if !exists1 {
+		t.Error("post-commit hook should exist")
+	}
+	if !exists2 {
+		t.Error("pre-push hook should exist")
+	}
+
+	// Uninstall one, other should remain
+	if err := a.UninstallHook("post-commit"); err != nil {
+		t.Fatalf("UninstallHook post-commit: %v", err)
+	}
+	exists1, _ = a.HookExists("post-commit")
+	exists2, _ = a.HookExists("pre-push")
+	if exists1 {
+		t.Error("post-commit should be uninstalled")
+	}
+	if !exists2 {
+		t.Error("pre-push should still exist")
+	}
+}
+
 // --- Integration tests guarded by testing.Short() ---
 
 func TestIntegration_FullHookLifecycle(t *testing.T) {
@@ -491,6 +531,21 @@ func TestInstallHook_CorruptedEndOnly(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "corrupted") {
 		t.Errorf("error should mention corruption: %v", err)
+	}
+}
+
+func TestHookExists_CorruptedSingleMarker(t *testing.T) {
+	dir := initGitRepo(t)
+	hookDir := filepath.Join(dir, ".git", "hooks")
+	os.MkdirAll(hookDir, 0o755)
+	hookPath := filepath.Join(hookDir, "post-commit")
+	// Write hook with only end marker (corrupted)
+	os.WriteFile(hookPath, []byte("#!/bin/sh\n# LORE-END\n"), 0o755)
+
+	a := NewAdapter(dir)
+	_, err := a.HookExists("post-commit")
+	if err == nil {
+		t.Error("expected error for corrupted hook with mismatched markers")
 	}
 }
 

@@ -49,12 +49,21 @@ func TestWithTemperature(t *testing.T) {
 	}
 }
 
+func TestWithSystem(t *testing.T) {
+	opts := DefaultCallOptions()
+	resolved := ResolveOptions(opts, domain.WithSystem("You are Angela"))
+	if resolved.System != "You are Angela" {
+		t.Errorf("WithSystem: System = %q, want %q", resolved.System, "You are Angela")
+	}
+}
+
 func TestResolveOptions_MultipleOverrides(t *testing.T) {
 	opts := DefaultCallOptions()
 	resolved := ResolveOptions(opts,
 		domain.WithModel("claude-sonnet-4-20250514"),
 		domain.WithMaxTokens(2048),
 		domain.WithTemperature(0.0),
+		domain.WithSystem("system prompt"),
 	)
 	if resolved.Model != "claude-sonnet-4-20250514" {
 		t.Errorf("Model = %q, want claude-sonnet-4-20250514", resolved.Model)
@@ -64,6 +73,9 @@ func TestResolveOptions_MultipleOverrides(t *testing.T) {
 	}
 	if resolved.Temperature != 0.0 {
 		t.Errorf("Temperature = %f, want 0.0", resolved.Temperature)
+	}
+	if resolved.System != "system prompt" {
+		t.Errorf("System = %q, want %q", resolved.System, "system prompt")
 	}
 }
 

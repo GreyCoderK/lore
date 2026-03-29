@@ -61,10 +61,12 @@ func TestDeleteDoc_PathTraversal(t *testing.T) {
 		"..",
 	}
 	for _, filename := range tests {
-		err := DeleteDoc(dir, filename)
-		if err == nil {
-			t.Errorf("expected error for path traversal %q", filename)
-		}
+		t.Run(filename, func(t *testing.T) {
+			err := DeleteDoc(dir, filename)
+			if err == nil {
+				t.Errorf("expected error for path traversal %q", filename)
+			}
+		})
 	}
 }
 
@@ -74,8 +76,8 @@ func TestDeleteDoc_ProtectedREADME(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when deleting README.md")
 	}
-	if !strings.Contains(err.Error(), "protected") {
-		t.Errorf("expected 'protected' in error, got: %v", err)
+	if !strings.Contains(err.Error(), "protected") && !strings.Contains(err.Error(), "reserved") {
+		t.Errorf("expected 'protected' or 'reserved' in error, got: %v", err)
 	}
 }
 
@@ -152,6 +154,11 @@ func TestDeleteDoc_RegeneratesIndex(t *testing.T) {
 	// Write two docs
 	r1, _ := WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}, "one", "body\n")
 	_, _ = WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-08", Status: "published"}, "two", "body\n")
+
+	// Regenerate index (WriteDoc no longer calls RegenerateIndex)
+	if err := RegenerateIndex(dir); err != nil {
+		t.Fatalf("RegenerateIndex: %v", err)
+	}
 
 	// README should show 2 docs
 	data, _ := os.ReadFile(filepath.Join(dir, "README.md"))

@@ -3,20 +3,46 @@
 
 package engagement
 
-// milestones maps exact document counts to reinforcement messages.
-// Thresholds: 3, 10, 25, 50 (per FR41 and AC-1 through AC-4).
-var milestones = map[int]string{
-	3:  "3 decisions captured. They'll be here when you need them.",
-	10: "10 decisions documented. Your future self has a library now.",
-	25: "25 decisions. This repo has memory.",
-	50: "50 decisions documented. You're building institutional knowledge.",
+// MilestoneThresholds are the Fibonacci thresholds that have assigned messages: 3, 8, 21, 55.
+var MilestoneThresholds = []int{3, 8, 21, 55}
+
+// IsFibonacciMilestone reports whether n is a Fibonacci number >= 3.
+// Uses the generate-and-check approach with seed (1, 2) producing: 3, 5, 8, 13, 21, 34, 55, 89...
+// Exported for use by the star prompt feature (Story 7f.3).
+func IsFibonacciMilestone(n int) bool {
+	if n < 3 {
+		return false
+	}
+	a, b := 1, 2
+	for b < n {
+		a, b = b, a+b
+	}
+	return b == n
 }
 
-// GetMilestoneMessage returns the reinforcement message if docCount matches
-// an exact threshold (3, 10, 25, 50). Returns ("", false) otherwise.
-// Formatting (dim/gray via ui.Dim) is the caller's responsibility —
-// this package is pure logic with no external imports.
-func GetMilestoneMessage(docCount int) (string, bool) {
-	msg, ok := milestones[docCount]
-	return msg, ok
+// IsMilestoneWithMessage returns true if docCount matches a threshold
+// that has an assigned message (3, 8, 21, 55).
+func IsMilestoneWithMessage(docCount int) bool {
+	for _, t := range MilestoneThresholds {
+		if docCount == t {
+			return true
+		}
+	}
+	return false
+}
+
+// GetMilestoneMessage returns the reinforcement message from the i18n catalog.
+// The caller provides the message lookup function to keep this package free
+// of i18n dependency. Returns ("", false) for non-milestone counts.
+//
+// Usage: engagement.GetMilestoneMessage(count, milestoneMessageFromI18N)
+func GetMilestoneMessage(docCount int, lookup func(int) string) (string, bool) {
+	if !IsMilestoneWithMessage(docCount) {
+		return "", false
+	}
+	msg := lookup(docCount)
+	if msg == "" {
+		return "", false
+	}
+	return msg, true
 }

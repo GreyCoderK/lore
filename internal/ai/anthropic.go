@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/greycoderk/lore/internal/config"
@@ -37,7 +38,7 @@ func newAnthropicProvider(cfg *config.Config) *anthropicProvider {
 		model = anthropicDefaultModel
 	}
 	endpoint := cfg.AI.Endpoint
-	if endpoint == "" || endpoint == "http://localhost:11434" {
+	if endpoint == "" || endpoint == defaultOllamaEndpoint {
 		endpoint = anthropicDefaultEndpoint
 	}
 	return &anthropicProvider{
@@ -50,9 +51,21 @@ func newAnthropicProvider(cfg *config.Config) *anthropicProvider {
 }
 
 type anthropicRequest struct {
-	Model     string             `json:"model"`
-	MaxTokens int                `json:"max_tokens"`
-	Messages  []anthropicMessage `json:"messages"`
+	Model       string                  `json:"model"`
+	MaxTokens   int                     `json:"max_tokens"`
+	Temperature float64                 `json:"temperature,omitempty"`
+	System      []anthropicSystemBlock  `json:"system,omitempty"`
+	Messages    []anthropicMessage      `json:"messages"`
+}
+
+type anthropicSystemBlock struct {
+	Type         string                `json:"type"`
+	Text         string                `json:"text"`
+	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
+}
+
+type anthropicCacheControl struct {
+	Type string `json:"type"`
 }
 
 type anthropicMessage struct {
@@ -79,9 +92,19 @@ func (p *anthropicProvider) Complete(ctx context.Context, prompt string, opts ..
 	defer cancel()
 
 	body := anthropicRequest{
-		Model:     resolved.Model,
-		MaxTokens: resolved.MaxTokens,
-		Messages:  []anthropicMessage{{Role: "user", Content: prompt}},
+		Model:       resolved.Model,
+		MaxTokens:   resolved.MaxTokens,
+		Temperature: resolved.Temperature,
+		Messages:    []anthropicMessage{{Role: "user", Content: prompt}},
+	}
+	if resolved.System != "" {
+		body.System = []anthropicSystemBlock{
+			{
+				Type:         "text",
+				Text:         resolved.System,
+				CacheControl: &anthropicCacheControl{Type: "ephemeral"},
+			},
+		}
 	}
 
 	data, err := json.Marshal(body)
@@ -101,7 +124,11 @@ func (p *anthropicProvider) Complete(ctx context.Context, prompt string, opts ..
 	if err != nil {
 		return "", fmt.Errorf("ai: anthropic: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Fprintf(os.Stderr, "ai: anthropic: body close: %v\n", cerr)
+		}
+	}()
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
 	if err != nil {
@@ -109,7 +136,7 @@ func (p *anthropicProvider) Complete(ctx context.Context, prompt string, opts ..
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ai: anthropic: HTTP %d: %s", resp.StatusCode, TruncateForError(string(respBody), 512))
+		return "", fmt.Errorf("ai: anthropic: HTTP %d: %s", resp.StatusCode, scrubSensitive(TruncateForError(string(respBody), 512)))
 	}
 
 	var result anthropicResponse
@@ -121,8 +148,12 @@ func (p *anthropicProvider) Complete(ctx context.Context, prompt string, opts ..
 		return "", fmt.Errorf("ai: anthropic: API error: %s", result.Error.Message)
 	}
 
-	if len(result.Content) == 0 {
+	if result.Content == nil || len(result.Content) == 0 {
 		return "", fmt.Errorf("ai: anthropic: empty response content")
+	}
+
+	if result.Content[0].Text == "" {
+		return "", fmt.Errorf("ai: anthropic: empty response text")
 	}
 
 	return result.Content[0].Text, nil

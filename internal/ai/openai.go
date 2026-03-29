@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/greycoderk/lore/internal/config"
@@ -35,7 +36,7 @@ func newOpenAIProvider(cfg *config.Config) *openaiProvider {
 		model = openaiDefaultModel
 	}
 	endpoint := cfg.AI.Endpoint
-	if endpoint == "" || endpoint == "http://localhost:11434" {
+	if endpoint == "" || endpoint == defaultOllamaEndpoint {
 		endpoint = openaiDefaultEndpoint
 	}
 	return &openaiProvider{
@@ -48,9 +49,10 @@ func newOpenAIProvider(cfg *config.Config) *openaiProvider {
 }
 
 type openaiRequest struct {
-	Model     string           `json:"model"`
-	MaxTokens int              `json:"max_tokens"`
-	Messages  []openaiMessage  `json:"messages"`
+	Model       string           `json:"model"`
+	MaxTokens   int              `json:"max_tokens"`
+	Temperature float64          `json:"temperature,omitempty"`
+	Messages    []openaiMessage  `json:"messages"`
 }
 
 type openaiMessage struct {
@@ -75,10 +77,17 @@ func (p *openaiProvider) Complete(ctx context.Context, prompt string, opts ...do
 	ctx, cancel := context.WithTimeout(ctx, resolved.Timeout)
 	defer cancel()
 
+	var messages []openaiMessage
+	if resolved.System != "" {
+		messages = append(messages, openaiMessage{Role: "system", Content: resolved.System})
+	}
+	messages = append(messages, openaiMessage{Role: "user", Content: prompt})
+
 	body := openaiRequest{
-		Model:     resolved.Model,
-		MaxTokens: resolved.MaxTokens,
-		Messages:  []openaiMessage{{Role: "user", Content: prompt}},
+		Model:       resolved.Model,
+		MaxTokens:   resolved.MaxTokens,
+		Temperature: resolved.Temperature,
+		Messages:    messages,
 	}
 
 	data, err := json.Marshal(body)
@@ -97,7 +106,11 @@ func (p *openaiProvider) Complete(ctx context.Context, prompt string, opts ...do
 	if err != nil {
 		return "", fmt.Errorf("ai: openai: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Fprintf(os.Stderr, "ai: openai: body close: %v\n", cerr)
+		}
+	}()
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
 	if err != nil {
@@ -105,7 +118,7 @@ func (p *openaiProvider) Complete(ctx context.Context, prompt string, opts ...do
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ai: openai: HTTP %d: %s", resp.StatusCode, TruncateForError(string(respBody), 512))
+		return "", fmt.Errorf("ai: openai: HTTP %d: %s", resp.StatusCode, scrubSensitive(TruncateForError(string(respBody), 512)))
 	}
 
 	var result openaiResponse
@@ -113,8 +126,12 @@ func (p *openaiProvider) Complete(ctx context.Context, prompt string, opts ...do
 		return "", fmt.Errorf("ai: openai: unmarshal response: %w", err)
 	}
 
-	if len(result.Choices) == 0 {
+	if result.Choices == nil || len(result.Choices) == 0 {
 		return "", fmt.Errorf("ai: openai: empty response choices")
+	}
+
+	if result.Choices[0].Message.Content == "" {
+		return "", fmt.Errorf("ai: openai: empty response text")
 	}
 
 	return result.Choices[0].Message.Content, nil

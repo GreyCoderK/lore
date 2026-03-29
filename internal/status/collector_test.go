@@ -29,6 +29,7 @@ func (m *mockGit) CommitExists(ref string) (bool, error)                  { retu
 func (m *mockGit) IsMergeCommit(ref string) (bool, error)                 { return false, nil }
 func (m *mockGit) IsInsideWorkTree() bool                                 { return true }
 func (m *mockGit) HeadRef() (string, error)                               { return "HEAD", nil }
+func (m *mockGit) HeadCommit() (*domain.CommitInfo, error)                { return nil, nil }
 func (m *mockGit) IsRebaseInProgress() (bool, error)                      { return false, nil }
 func (m *mockGit) CommitMessageContains(ref, marker string) (bool, error) { return false, nil }
 func (m *mockGit) GitDir() (string, error)                                { return ".git", nil }
@@ -38,6 +39,8 @@ func (m *mockGit) InstallHook(hookType string) (domain.InstallResult, error) {
 func (m *mockGit) UninstallHook(hookType string) error              { return nil }
 func (m *mockGit) CommitRange(from, to string) ([]string, error)    { return nil, nil }
 func (m *mockGit) LatestTag() (string, error)                       { return "", nil }
+func (m *mockGit) LogAll() ([]domain.CommitInfo, error)             { return nil, nil }
+func (m *mockGit) CurrentBranch() (string, error)                   { return "main", nil }
 
 func setupCollectorTest(t *testing.T, docs []testutil.DocFixture) string {
 	t.Helper()

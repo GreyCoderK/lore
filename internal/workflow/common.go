@@ -10,6 +10,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/generator"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	loretemplate "github.com/greycoderk/lore/internal/template"
 	"github.com/greycoderk/lore/internal/ui"
@@ -18,9 +19,13 @@ import (
 // displayCompletion shows the "Captured" (or custom verb) message, the dim
 // relative path, and the milestone reinforcement. Used by all 4 documentation
 // paths after a successful document write.
+//
+// Callers must check result.IndexErr or call storage.RegenerateIndex explicitly
+// if they need to guarantee the index is up-to-date; this function only prints
+// a warning when IndexErr is non-nil.
 func displayCompletion(streams domain.IOStreams, result storage.WriteResult, verb string, workDir string, tty bool) {
 	if result.IndexErr != nil {
-		_, _ = fmt.Fprintf(streams.Err, "Warning: index update failed: %v\n", result.IndexErr)
+		_, _ = fmt.Fprintf(streams.Err, i18n.T().Workflow.IndexWarning+"\n", result.IndexErr)
 	}
 
 	ui.Verb(streams, verb, result.Filename)
@@ -88,6 +93,11 @@ func generateAndWrite(ctx context.Context, workDir string, answers Answers, comm
 		record := BuildPendingRecord(answers, hash, msg, "write-error", "partial")
 		_ = SavePending(workDir, record) // best-effort
 		return storage.WriteResult{}, fmt.Errorf("workflow: write doc: %w", err)
+	}
+
+	// Regenerate index after successful write
+	if indexErr := storage.RegenerateIndex(docsDir); indexErr != nil {
+		result.IndexErr = indexErr
 	}
 	return result, nil
 }

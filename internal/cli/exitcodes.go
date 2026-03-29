@@ -11,9 +11,11 @@ import (
 // Exit codes for the lore CLI, following Unix conventions.
 // Used by cmd/root.go and commands that need non-zero exits.
 const (
-	ExitOK    = 0
-	ExitError = 1
-	ExitSkip  = 2 // no match found (e.g. lore show with zero results)
+	ExitOK          = 0
+	ExitError       = 1 // general error
+	ExitSkip        = 2 // no match found (e.g. lore show with zero results)
+	ExitUserError   = 3 // bad arguments, invalid input
+	ExitConfigError = 4 // configuration file error
 )
 
 // ExitCodeError is returned by commands that need a specific exit code

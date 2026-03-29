@@ -10,6 +10,7 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/git"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/workflow"
 	"github.com/spf13/cobra"
 )
@@ -18,8 +19,8 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	var commitRef string
 
 	cmd := &cobra.Command{
-		Use:   "new [type] [what] [why]",
-		Short: "Document a decision right now",
+		Use:   i18n.T().Cmd.NewUse,
+		Short: i18n.T().Cmd.NewShort,
 		Example: `  lore new
   lore new feature "add auth middleware" "JWT for stateless auth"
   lore new --commit abc1234`,
@@ -49,7 +50,7 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				}
 				if !exists {
 					// AC-3: actionable error for invalid/nonexistent commit
-					fmt.Fprintf(streams.Err, "Error: Commit '%s' not found.\n", commitRef)
+					_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.NewCommitNotFound+"\n", commitRef)
 					return fmt.Errorf("cmd: new: commit '%s': %w", commitRef, domain.ErrNotFound)
 				}
 
@@ -77,6 +78,6 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&commitRef, "commit", "", "Document a past commit retroactively")
+	cmd.Flags().StringVar(&commitRef, "commit", "", i18n.T().Cmd.NewCommitFlagDesc)
 	return cmd
 }

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 // ResolveOpts holds options for ResolvePending.
@@ -23,10 +24,10 @@ func ResolvePending(ctx context.Context, workDir string, streams domain.IOStream
 	pendingDir := filepath.Join(workDir, ".lore", "pending")
 
 	// --- Display commit context ---
-	fmt.Fprintf(streams.Err, "\nResolving pending documentation:\n")
-	fmt.Fprintf(streams.Err, "  Commit:  %s\n", item.CommitHash)
-	fmt.Fprintf(streams.Err, "  Message: %s\n", item.CommitMessage)
-	fmt.Fprintf(streams.Err, "  Date:    %s\n", item.CommitDate.Format("2006-01-02 15:04"))
+	fmt.Fprintf(streams.Err, "\n%s\n", i18n.T().Workflow.ResolveHeader)
+	fmt.Fprintf(streams.Err, "  "+i18n.T().Workflow.ResolveCommitLabel+"\n", item.CommitHash)
+	fmt.Fprintf(streams.Err, "  "+i18n.T().Workflow.ResolveMessageLabel+"\n", item.CommitMessage)
+	fmt.Fprintf(streams.Err, "  "+i18n.T().Workflow.ResolveDateLabel+"\n", item.CommitDate.Format("2006-01-02 15:04"))
 	fmt.Fprintf(streams.Err, "\n")
 
 	// --- Try to retrieve full commit info ---
@@ -34,7 +35,7 @@ func ResolvePending(ctx context.Context, workDir string, streams domain.IOStream
 	if item.CommitHash != "" {
 		exists, existsErr := gitAdapter.CommitExists(item.CommitHash)
 		if existsErr != nil {
-			fmt.Fprintf(streams.Err, "Warning: could not check commit %s: %v\n", item.CommitHash, existsErr)
+			fmt.Fprintf(streams.Err, i18n.T().Workflow.ResolveCheckCommitW+"\n", item.CommitHash, existsErr)
 		}
 		if exists {
 			info, logErr := gitAdapter.Log(item.CommitHash)
@@ -42,7 +43,7 @@ func ResolvePending(ctx context.Context, workDir string, streams domain.IOStream
 				commit = info
 			}
 		} else if existsErr == nil {
-			fmt.Fprintf(streams.Err, "Warning: Commit %s no longer exists. Resolving from saved context.\n\n", item.CommitHash)
+			fmt.Fprintf(streams.Err, i18n.T().Workflow.ResolveCommitGoneW+"\n\n", item.CommitHash)
 		}
 	}
 
@@ -75,7 +76,7 @@ func ResolvePending(ctx context.Context, workDir string, streams domain.IOStream
 
 	// --- Delete pending file only after successful write ---
 	if delErr := deletePendingFile(pendingDir, item.Filename); delErr != nil {
-		fmt.Fprintf(streams.Err, "Warning: could not remove pending file: %v\n", delErr)
+		fmt.Fprintf(streams.Err, i18n.T().Workflow.ResolveDeletePendingW+"\n", delErr)
 	}
 
 	tty := IsInteractiveTTY(streams)

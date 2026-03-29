@@ -42,12 +42,12 @@ func NewProvider(cfg *config.Config, store credential.CredentialStore, warnW io.
 	switch cfg.AI.Provider {
 	case "anthropic":
 		if apiKey == "" {
-			return nil, fmt.Errorf("ai: provider: No API key found for anthropic. Run: lore config set-key anthropic")
+			return nil, fmt.Errorf("ai: provider: No API key found. Run: lore config set-key %s", cfg.AI.Provider)
 		}
 		return newAnthropicProvider(&resolved), nil
 	case "openai":
 		if apiKey == "" {
-			return nil, fmt.Errorf("ai: provider: No API key found for openai. Run: lore config set-key openai")
+			return nil, fmt.Errorf("ai: provider: No API key found. Run: lore config set-key %s", cfg.AI.Provider)
 		}
 		return newOpenAIProvider(&resolved), nil
 	case "ollama":

@@ -45,7 +45,7 @@ func CollectReleaseDocuments(docsDir string, commits []string) ([]ReleaseDoc, er
 		if d.Meta.Commit == "" {
 			continue
 		}
-		rd := ReleaseDoc{DocMeta: d.Meta, Title: extractTitle(d.Body, d.Name)}
+		rd := ReleaseDoc{DocMeta: d.Meta, Title: ExtractTitle(d.Body, d.Name)}
 		if commitSet[d.Meta.Commit] {
 			matched = append(matched, rd)
 			continue

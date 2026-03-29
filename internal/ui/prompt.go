@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 // Confirm waits for Enter key press.
@@ -25,9 +26,9 @@ func Confirm(streams domain.IOStreams, message string) error {
 // Prompt asks a question with optional default, returns answer.
 func Prompt(streams domain.IOStreams, question string, defaultVal string) (string, error) {
 	if defaultVal != "" {
-		fmt.Fprintf(streams.Err, "? %s [%s]: ", question, defaultVal)
+		fmt.Fprintf(streams.Err, i18n.T().UI.PromptWithDefault, question, defaultVal)
 	} else {
-		fmt.Fprintf(streams.Err, "? %s\n> ", question)
+		fmt.Fprintf(streams.Err, i18n.T().UI.PromptNoDefault, question)
 	}
 	reader := bufio.NewReader(streams.In)
 	answer, err := reader.ReadString('\n')

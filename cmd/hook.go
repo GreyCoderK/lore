@@ -10,19 +10,20 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/git"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-func newHookCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+func newHookCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hook",
-		Short: "Manage the post-commit hook",
+		Short: i18n.T().Cmd.HookShort,
 	}
 
 	cmd.AddCommand(
-		newHookInstallCmd(cfg, streams),
-		newHookUninstallCmd(cfg, streams),
+		newHookInstallCmd(nil, streams),
+		newHookUninstallCmd(nil, streams),
 	)
 
 	return cmd
@@ -31,7 +32,7 @@ func newHookCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 func newHookInstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:           "install",
-		Short:         "Install the Lore post-commit hook",
+		Short:         i18n.T().Cmd.HookInstallShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -47,14 +48,14 @@ func newHookInstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 			}
 
 			if result.HooksPathWarn != "" {
-				fmt.Fprintf(streams.Err, "Warning: core.hooksPath is set to %q.\n", result.HooksPathWarn)
-				fmt.Fprintf(streams.Err, "Lore cannot install hooks automatically.\n")
-				fmt.Fprintf(streams.Err, "Add the following to your hook manually:\n\n")
-				fmt.Fprintf(streams.Err, "  # LORE-START\n  exec lore _hook-post-commit\n  # LORE-END\n")
+				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.HookInstallHooksPathW+"\n", result.HooksPathWarn)
+				_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.HookInstallCannotAuto)
+				_, _ = fmt.Fprintf(streams.Err, "%s\n\n", i18n.T().Cmd.HookInstallManualHint)
+				_, _ = fmt.Fprintf(streams.Err, "  # LORE-START\n  exec lore _hook-post-commit\n  # LORE-END\n")
 				return nil
 			}
 
-			ui.Verb(streams, "Installed", "post-commit hook")
+			ui.Verb(streams, "Installed", i18n.T().Cmd.HookInstallVerb)
 			return nil
 		},
 	}
@@ -63,7 +64,7 @@ func newHookInstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 func newHookUninstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:           "uninstall",
-		Short:         "Remove the Lore post-commit hook",
+		Short:         i18n.T().Cmd.HookUninstallShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -77,7 +78,7 @@ func newHookUninstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comm
 				return fmt.Errorf("cmd: hook uninstall: %w", err)
 			}
 
-			ui.Verb(streams, "Removed", "post-commit hook")
+			ui.Verb(streams, "Removed", i18n.T().Cmd.HookUninstallVerb)
 			return nil
 		},
 	}

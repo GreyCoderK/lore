@@ -48,6 +48,10 @@ func (m *mockGitAdapter) HeadRef() (string, error) {
 	return "", fmt.Errorf("mock: HeadRef not configured")
 }
 
+func (m *mockGitAdapter) HeadCommit() (*domain.CommitInfo, error) {
+	return nil, fmt.Errorf("mock: HeadCommit not configured")
+}
+
 func (m *mockGitAdapter) CommitExists(ref string) (bool, error) {
 	if m.CommitExistsFunc != nil {
 		return m.CommitExistsFunc(ref)
@@ -130,6 +134,14 @@ func (m *mockGitAdapter) LatestTag() (string, error) {
 		return m.LatestTagFunc()
 	}
 	return "", fmt.Errorf("mock: LatestTag not configured")
+}
+
+func (m *mockGitAdapter) LogAll() ([]domain.CommitInfo, error) {
+	return nil, nil
+}
+
+func (m *mockGitAdapter) CurrentBranch() (string, error) {
+	return "main", nil
 }
 
 func testStreams(input ...string) (domain.IOStreams, *bytes.Buffer, *bytes.Buffer) {

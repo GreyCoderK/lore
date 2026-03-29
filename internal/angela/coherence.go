@@ -84,15 +84,7 @@ func hasSharedTag(a, b []string) bool {
 }
 
 func sharedTags(a, b []string) string {
-	var shared []string
-	for _, tagA := range a {
-		for _, tagB := range b {
-			if tagA == tagB {
-				shared = append(shared, tagA)
-			}
-		}
-	}
-	return strings.Join(shared, ", ")
+	return strings.Join(sharedTagList(a, b), ", ")
 }
 
 func isAlreadyRelated(related []string, filename string) bool {

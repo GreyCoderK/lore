@@ -12,6 +12,7 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/generator"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	loretemplate "github.com/greycoderk/lore/internal/template"
 	"github.com/greycoderk/lore/internal/ui"
@@ -32,7 +33,7 @@ const demoCommitMessage = "feat(auth): add JWT middleware"
 func newDemoCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:           "demo",
-		Short:         "See Lore in action with a guided walkthrough",
+		Short:         i18n.T().Cmd.DemoShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -41,14 +42,14 @@ func newDemoCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	}
 }
 
-func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) error {
+func runDemo(ctx context.Context, _ *config.Config, streams domain.IOStreams) error {
 	// AC-4: Check if Lore is initialized
 	if err := requireLoreDir(streams); err != nil {
 		return err
 	}
 
 	// AC-1: Temporal consent
-	if err := ui.Confirm(streams, "Demo interactive ~45s. Press Enter to begin.\n"); err != nil {
+	if err := ui.Confirm(streams, i18n.T().Cmd.DemoConsentPrompt); err != nil {
 		return fmt.Errorf("cmd: demo consent: %w", err)
 	}
 
@@ -56,22 +57,22 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	ui.PrintLogo(streams)
 
 	// Step 3: Simulated commit
-	fmt.Fprintf(streams.Err, "%s\n\n", ui.Dim("Simulating: git commit -m '"+demoCommitMessage+"'"))
+	_, _ = fmt.Fprintf(streams.Err, "%s\n\n", ui.Dim(fmt.Sprintf(i18n.T().Cmd.DemoSimCommit, demoCommitMessage)))
 	demoPause(ctx)
 
 	// Step 4: Question flow (simulated — user watches, doesn't type)
 	ui.Progress(streams, 1, 3, "Type")
-	fmt.Fprintf(streams.Err, "? Type [feature]: %s\n", demoAnswers["type"])
-	fmt.Fprintf(streams.Err, "%s Type: %s\n\n", ui.Success("✓"), demoAnswers["type"])
+	_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DemoTypePrompt+"\n", demoAnswers["type"])
+	_, _ = fmt.Fprintf(streams.Err, "%s %s\n\n", ui.Success("✓"), fmt.Sprintf(i18n.T().Cmd.DemoTypeConfirm, demoAnswers["type"]))
 	demoPause(ctx)
 
 	ui.Progress(streams, 2, 3, "What")
-	fmt.Fprintf(streams.Err, "? What [add JWT auth middleware]: %s\n", demoAnswers["what"])
-	fmt.Fprintf(streams.Err, "%s What: %s\n\n", ui.Success("✓"), demoAnswers["what"])
+	_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DemoWhatPrompt+"\n", demoAnswers["what"])
+	_, _ = fmt.Fprintf(streams.Err, "%s %s\n\n", ui.Success("✓"), fmt.Sprintf(i18n.T().Cmd.DemoWhatConfirm, demoAnswers["what"]))
 	demoPause(ctx)
 
 	ui.Progress(streams, 3, 3, "Why")
-	fmt.Fprintf(streams.Err, "? Why was this approach chosen?\n> %s\n\n", demoAnswers["why"])
+	_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DemoWhyPrompt+"\n\n", demoAnswers["why"])
 	demoPause(ctx)
 
 	// Step 5: Generate document through real pipeline
@@ -109,14 +110,19 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	demoMeta.Status = "demo"
 	demoMeta.Tags = []string{"authentication", "jwt", "middleware"}
 
-	docsDir := filepath.Join(".lore", "docs")
+	docsDir := filepath.Join(domain.LoreDir, domain.DocsDir)
 	result, err := storage.WriteDoc(docsDir, demoMeta, demoAnswers["what"], genResult.Body)
 	if err != nil {
 		return fmt.Errorf("cmd: demo write: %w", err)
 	}
 
+	// Regenerate index after write
+	if indexErr := storage.RegenerateIndex(docsDir); indexErr != nil {
+		result.IndexErr = indexErr
+	}
+
 	if result.IndexErr != nil {
-		fmt.Fprintf(streams.Err, "Warning: index update failed: %v\n", result.IndexErr)
+		_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DemoIndexWarning+"\n", result.IndexErr)
 	}
 
 	ui.Verb(streams, "Created", result.Filename)
@@ -124,18 +130,18 @@ func runDemo(ctx context.Context, cfg *config.Config, streams domain.IOStreams) 
 	demoPause(ctx)
 
 	// Step 6: Simulated lore show
-	fmt.Fprintf(streams.Err, "%s\n\n", ui.Dim("Simulating: lore show auth"))
+	_, _ = fmt.Fprintf(streams.Err, "%s\n\n", ui.Dim(i18n.T().Cmd.DemoSimShow))
 
-	fmt.Fprintf(streams.Err, "  %s\n\n", ui.Bold(result.Filename))
-	fmt.Fprintf(streams.Err, "  Type:    %s\n", demoAnswers["type"])
-	fmt.Fprintf(streams.Err, "  What:    %s\n", demoAnswers["what"])
-	fmt.Fprintf(streams.Err, "  Why:     %s\n", demoAnswers["why"])
-	fmt.Fprintf(streams.Err, "  Date:    %s\n", now.Format("2006-01-02"))
-	fmt.Fprintf(streams.Err, "  Commit:  %s\n", demoCommitHash)
-	fmt.Fprintf(streams.Err, "  Status:  demo\n\n")
+	_, _ = fmt.Fprintf(streams.Err, "  %s\n\n", ui.Bold(result.Filename))
+	_, _ = fmt.Fprintf(streams.Err, "  %s\n", fmt.Sprintf(i18n.T().Cmd.DemoShowType, demoAnswers["type"]))
+	_, _ = fmt.Fprintf(streams.Err, "  %s\n", fmt.Sprintf(i18n.T().Cmd.DemoShowWhat, demoAnswers["what"]))
+	_, _ = fmt.Fprintf(streams.Err, "  %s\n", fmt.Sprintf(i18n.T().Cmd.DemoShowWhy, demoAnswers["why"]))
+	_, _ = fmt.Fprintf(streams.Err, "  %s\n", fmt.Sprintf(i18n.T().Cmd.DemoShowDate, now.Format("2006-01-02")))
+	_, _ = fmt.Fprintf(streams.Err, "  %s\n", fmt.Sprintf(i18n.T().Cmd.DemoShowCommit, demoCommitHash))
+	_, _ = fmt.Fprintf(streams.Err, "  %s\n\n", i18n.T().Cmd.DemoShowStatus)
 
 	// Step 7: Tagline AFTER proof of value
-	fmt.Fprintf(streams.Err, "%s\n\n", ui.Bold("Your code knows what. Lore knows why."))
+	_, _ = fmt.Fprintf(streams.Err, "%s\n\n", ui.Bold(i18n.T().Cmd.DemoTagline))
 
 	return nil
 }

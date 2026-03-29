@@ -26,6 +26,9 @@ func (l *linuxStore) Set(provider string, secret []byte) error {
 	if err := ValidateProvider(provider); err != nil {
 		return err
 	}
+	// --label is passed as a single argument with "=" syntax because secret-tool
+	// requires it. ValidateProvider above ensures provider is alphanumeric, so
+	// concatenation is safe from shell/argument injection.
 	cmd := exec.Command("secret-tool", "store",
 		"--label="+ServiceName+"/"+provider,
 		"service", ServiceName,
@@ -85,6 +88,9 @@ func (l *linuxStore) List() ([]string, error) {
 		if err == nil {
 			found = append(found, p)
 		} else if !errors.Is(err, ErrNotFound) {
+			// Distinguish real errors (permissions, dbus failures) from
+			// simply-absent entries. Absent entries return ErrNotFound and
+			// are silently skipped; anything else is a hard failure.
 			return nil, fmt.Errorf("credential: secret-tool: list: %w", err)
 		}
 	}

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 )
 
@@ -45,7 +46,7 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 			_, _ = fmt.Fprintf(streams.Err, "Warning: %v\n", findErr)
 		}
 		if existing != nil {
-			fmt.Fprintf(streams.Err, "A document already exists for this commit.\n")
+			fmt.Fprintf(streams.Err, "%s\n", i18n.T().Workflow.AlreadyDocumented)
 			relPath, relErr := filepath.Rel(workDir, existing.Path)
 			if relErr != nil {
 				relPath = existing.Path
@@ -61,7 +62,10 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 				return nil
 			}
 
-			fmt.Fprintf(streams.Err, "Create another document? [y/N] ")
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.CreateAnother)
 			// Read stdin byte-by-byte instead of bufio.NewReader to avoid
 			// buffering ahead: bufio would consume bytes meant for the
 			// subsequent question flow (AskType, AskWhat, etc.), causing
@@ -113,7 +117,9 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 				commitHash = opts.Commit.Hash
 			}
 			record := BuildPendingRecord(answers, commitHash, "", "interrupted", "partial")
-			_ = SavePending(workDir, record) // best-effort
+			if saveErr := SavePending(workDir, record); saveErr != nil {
+				fmt.Fprintf(streams.Err, "warning: could not save pending answers: %v\n", saveErr)
+			}
 		}
 		return fmt.Errorf("workflow: proactive: %w", err)
 	}

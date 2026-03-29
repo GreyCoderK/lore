@@ -36,8 +36,16 @@ func Marshal(meta domain.DocMeta, body string) ([]byte, error) {
 
 // Unmarshal parses front matter + body from a document.
 func Unmarshal(data []byte) (domain.DocMeta, string, error) {
+	const maxDocSize = 10 << 20 // 10 MB
+	if len(data) > maxDocSize {
+		return domain.DocMeta{}, "", fmt.Errorf("storage: document too large (%d bytes, max %d)", len(data), maxDocSize)
+	}
+
 	// Normalize CRLF to LF for Windows compatibility
-	content := strings.ReplaceAll(string(data), "\r\n", "\n")
+	content := string(data)
+	if strings.Contains(content, "\r\n") {
+		content = strings.ReplaceAll(content, "\r\n", "\n")
+	}
 
 	if !strings.HasPrefix(content, "---\n") {
 		return domain.DocMeta{}, "", fmt.Errorf("storage: unmarshal: missing front matter delimiter")
@@ -65,6 +73,10 @@ func Unmarshal(data []byte) (domain.DocMeta, string, error) {
 		}
 		yamlPart = rest[:idx]
 		body = rest[idx+5:] // skip "\n---\n"
+	}
+
+	if strings.TrimSpace(yamlPart) == "" {
+		return domain.DocMeta{}, "", fmt.Errorf("storage: empty front matter")
 	}
 
 	var meta domain.DocMeta

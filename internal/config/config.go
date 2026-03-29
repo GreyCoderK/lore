@@ -19,17 +19,33 @@ import (
 // It defaults to os.Stderr but can be overridden in tests.
 var WarnWriter io.Writer = os.Stderr
 
+// maxConfigSize is the maximum allowed size for a config file (1 MB).
+const maxConfigSize = 1 << 20
+
 type Config struct {
+	Language  string          `yaml:"language" mapstructure:"language"`
 	AI        AIConfig        `yaml:"ai"`
 	Angela    AngelaConfig    `yaml:"angela"`
+	Decision  DecisionConfig  `yaml:"decision"`
 	Templates TemplatesConfig `yaml:"templates"`
 	Hooks     HooksConfig     `yaml:"hooks"`
 	Output    OutputConfig    `yaml:"output"`
 }
 
-// warnIfInsecurePerms warns to WarnWriter if .lorerc.local has permissions
+type DecisionConfig struct {
+	ThresholdFull      int      `yaml:"threshold_full" mapstructure:"threshold_full"`
+	ThresholdReduced   int      `yaml:"threshold_reduced" mapstructure:"threshold_reduced"`
+	ThresholdSuggest   int      `yaml:"threshold_suggest" mapstructure:"threshold_suggest"`
+	AlwaysAsk          []string `yaml:"always_ask" mapstructure:"always_ask"`
+	AlwaysSkip         []string `yaml:"always_skip" mapstructure:"always_skip"`
+	CriticalScopes     []string `yaml:"critical_scopes" mapstructure:"critical_scopes"`
+	Learning           bool     `yaml:"learning" mapstructure:"learning"`
+	LearningMinCommits int      `yaml:"learning_min_commits" mapstructure:"learning_min_commits"`
+}
+
+// enforceSecurePerms checks and fixes permissions on .lorerc.local if they're
 // broader than owner-only (0600). This file may contain API keys.
-func warnIfInsecurePerms(dir string) {
+func enforceSecurePerms(dir string) {
 	path := filepath.Join(dir, ".lorerc.local.yaml")
 	info, err := os.Stat(path)
 	if err != nil {
@@ -44,9 +60,12 @@ func warnIfInsecurePerms(dir string) {
 			}
 		}
 	}
-	mode := info.Mode().Perm()
-	if mode&0o077 != 0 {
-		_, _ = fmt.Fprintf(WarnWriter, "Warning: %s is readable by others (mode %04o). Consider: chmod 600 %s\n", filepath.Base(path), mode, filepath.Base(path))
+	if info.Mode().Perm()&0o077 != 0 {
+		if chmodErr := os.Chmod(path, 0o600); chmodErr != nil {
+			_, _ = fmt.Fprintf(WarnWriter, "Warning: could not fix permissions on %s: %v\n", filepath.Base(path), chmodErr)
+		} else {
+			_, _ = fmt.Fprintf(WarnWriter, "Notice: fixed %s permissions to 0600\n", filepath.Base(path))
+		}
 	}
 }
 
@@ -55,11 +74,36 @@ func Load() (*Config, error) {
 	return LoadFromDir(".")
 }
 
+// checkConfigFileSize checks that a config file does not exceed maxConfigSize.
+// It tries .yaml, .yml, and bare extensions in order.
+func checkConfigFileSize(dir, name string) error {
+	for _, ext := range []string{".yaml", ".yml", ""} {
+		candidate := filepath.Join(dir, name+ext)
+		info, err := os.Stat(candidate)
+		if err != nil {
+			continue
+		}
+		if info.Size() > maxConfigSize {
+			return fmt.Errorf("config: %s is too large (%d bytes, max %d)", filepath.Base(candidate), info.Size(), maxConfigSize)
+		}
+		return nil
+	}
+	return nil // file not found — not an error
+}
+
 // loadViper builds a Viper instance with defaults, config files, and env vars.
 func loadViper(dir string) (*viper.Viper, error) {
 	v := viper.New()
 
 	setDefaults(v)
+
+	// Pre-check config file sizes before parsing.
+	if err := checkConfigFileSize(dir, ".lorerc"); err != nil {
+		return nil, err
+	}
+	if err := checkConfigFileSize(dir, ".lorerc.local"); err != nil {
+		return nil, err
+	}
 
 	// Read .lorerc (shared, version-controlled)
 	v.SetConfigName(".lorerc")
@@ -78,8 +122,8 @@ func loadViper(dir string) (*viper.Viper, error) {
 			return nil, fmt.Errorf("config: read .lorerc.local: %w", err)
 		}
 	} else {
-		// Warn if .lorerc.local is world-readable (may contain API keys).
-		warnIfInsecurePerms(dir)
+		// Enforce secure permissions on .lorerc.local (may contain API keys).
+		enforceSecurePerms(dir)
 	}
 
 	// Environment variables
@@ -105,7 +149,7 @@ func unmarshalConfig(v *viper.Viper) (*Config, error) {
 		dc.DecodeHook = decodeHook
 	})
 	if strictErr != nil {
-		_, _ = fmt.Fprintf(WarnWriter, "Warning: %s\n", strictErr)
+		_, _ = fmt.Fprintf(WarnWriter, "Warning: %s\nRun 'lore doctor' to validate configuration.\n", strictErr)
 	}
 
 	// Second pass: always succeed so unknown fields don't block the user.
@@ -131,6 +175,7 @@ func LoadFromDir(dir string) (*Config, error) {
 // Called by cmd/root.go — no Viper dependency is exposed.
 func RegisterFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().String("ai-provider", "", "AI provider (anthropic, openai, ollama)")
+	cmd.PersistentFlags().String("language", "", "Override display language (en, fr)")
 	cmd.PersistentFlags().Bool("quiet", false, "Suppress non-essential output")
 	cmd.PersistentFlags().Bool("verbose", false, "Show detailed output")
 	cmd.PersistentFlags().Bool("no-color", false, "Disable color output")
@@ -142,6 +187,9 @@ func RegisterFlags(cmd *cobra.Command) {
 func bindFlags(v *viper.Viper, cmd *cobra.Command) error {
 	if err := v.BindPFlag("ai.provider", cmd.Flags().Lookup("ai-provider")); err != nil {
 		return fmt.Errorf("config: bind flag ai-provider: %w", err)
+	}
+	if err := v.BindPFlag("language", cmd.Flags().Lookup("language")); err != nil {
+		return fmt.Errorf("config: bind flag language: %w", err)
 	}
 	return nil
 }

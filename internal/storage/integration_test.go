@@ -56,6 +56,11 @@ func TestIntegration_FullLifecycle(t *testing.T) {
 		}
 	}
 
+	// --- Regenerate index (WriteDoc no longer calls RegenerateIndex) ---
+	if err := RegenerateIndex(dir); err != nil {
+		t.Fatalf("RegenerateIndex: %v", err)
+	}
+
 	// --- Verify README index ---
 	readme, err := os.ReadFile(filepath.Join(dir, "README.md"))
 	if err != nil {
@@ -215,6 +220,11 @@ func TestIntegration_WriteAndIndex_MultiFile(t *testing.T) {
 	_, _ = WriteDoc(dir, domain.DocMeta{Type: "decision", Date: "2026-03-05", Status: "published"}, "one", "body\n")
 	_, _ = WriteDoc(dir, domain.DocMeta{Type: "feature", Date: "2026-03-07", Status: "published"}, "two", "body\n")
 	_, _ = WriteDoc(dir, domain.DocMeta{Type: "note", Date: "2026-03-10", Status: "draft"}, "three", "body\n")
+
+	// Regenerate index (WriteDoc no longer calls RegenerateIndex)
+	if err := RegenerateIndex(dir); err != nil {
+		t.Fatalf("RegenerateIndex: %v", err)
+	}
 
 	// Verify all files exist (3 docs + README)
 	entries, _ := os.ReadDir(dir)

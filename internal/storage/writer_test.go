@@ -216,6 +216,19 @@ func TestWriteDoc_CollisionReturnsError(t *testing.T) {
 	}
 }
 
+func TestWriteDoc_DoesNotRegenerateIndex(t *testing.T) {
+	dir := t.TempDir()
+	meta := domain.DocMeta{Type: "decision", Date: "2026-03-07", Status: "published"}
+	_, err := WriteDoc(dir, meta, "test-no-index", "body content\n")
+	if err != nil {
+		t.Fatalf("WriteDoc: %v", err)
+	}
+	readmePath := filepath.Join(dir, "README.md")
+	if _, statErr := os.Stat(readmePath); !os.IsNotExist(statErr) {
+		t.Error("WriteDoc should not regenerate index; README.md should not exist")
+	}
+}
+
 func TestWriteDoc_IndexErrSurfaced(t *testing.T) {
 	dir := t.TempDir()
 	meta := domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}

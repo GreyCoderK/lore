@@ -315,3 +315,55 @@ func TestLoadFromDir_UnknownFieldWarnsToStderr(t *testing.T) {
 		t.Errorf("expected warning to mention 'providerr', got %q", warning)
 	}
 }
+
+func TestLoadFromDir_LanguageDefault(t *testing.T) {
+	dir := t.TempDir()
+	cfg, err := LoadFromDir(dir)
+	if err != nil {
+		t.Fatalf("LoadFromDir: %v", err)
+	}
+	if cfg.Language != "en" {
+		t.Errorf("Language = %q, want 'en' (default)", cfg.Language)
+	}
+}
+
+func TestLoadFromDir_LanguageFromLorerc(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("language: fr\n"), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	cfg, err := LoadFromDir(dir)
+	if err != nil {
+		t.Fatalf("LoadFromDir: %v", err)
+	}
+	if cfg.Language != "fr" {
+		t.Errorf("Language = %q, want 'fr' from .lorerc", cfg.Language)
+	}
+}
+
+func TestLoadFromDir_LanguageFromEnv(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("LORE_LANGUAGE", "de")
+	cfg, err := LoadFromDir(dir)
+	if err != nil {
+		t.Fatalf("LoadFromDir: %v", err)
+	}
+	if cfg.Language != "de" {
+		t.Errorf("Language = %q, want 'de' from env LORE_LANGUAGE", cfg.Language)
+	}
+}
+
+func TestLoadFromDir_LanguageEnvOverridesLorerc(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("language: fr\n"), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	t.Setenv("LORE_LANGUAGE", "es")
+	cfg, err := LoadFromDir(dir)
+	if err != nil {
+		t.Fatalf("LoadFromDir: %v", err)
+	}
+	if cfg.Language != "es" {
+		t.Errorf("Language = %q, want 'es' (env overrides .lorerc)", cfg.Language)
+	}
+}

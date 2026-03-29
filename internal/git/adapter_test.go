@@ -96,6 +96,93 @@ func TestHeadRef_NoCommits(t *testing.T) {
 	}
 }
 
+func TestHeadCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	// Use initGitRepoWithCommit so the test commit has a parent (non-root).
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "feat(auth): add login endpoint")
+	a := NewAdapter(dir)
+
+	info, err := a.HeadCommit()
+	if err != nil {
+		t.Fatalf("HeadCommit: %v", err)
+	}
+	if info.Hash == "" || len(info.Hash) < 7 {
+		t.Errorf("expected a valid commit hash, got %q", info.Hash)
+	}
+	if info.Author != "Test" {
+		t.Errorf("expected author 'Test', got %q", info.Author)
+	}
+	if info.Type != "feat" {
+		t.Errorf("expected type 'feat', got %q", info.Type)
+	}
+	if info.Scope != "auth" {
+		t.Errorf("expected scope 'auth', got %q", info.Scope)
+	}
+	if info.Subject != "add login endpoint" {
+		t.Errorf("expected subject 'add login endpoint', got %q", info.Subject)
+	}
+	if info.Date.IsZero() {
+		t.Error("expected non-zero date")
+	}
+	if info.IsMerge {
+		t.Error("expected IsMerge = false for non-merge commit")
+	}
+	if info.ParentCount != 1 {
+		t.Errorf("expected ParentCount = 1, got %d", info.ParentCount)
+	}
+
+	// Verify HeadCommit matches HeadRef + Log
+	ref, err := a.HeadRef()
+	if err != nil {
+		t.Fatalf("HeadRef: %v", err)
+	}
+	if info.Hash != ref {
+		t.Errorf("HeadCommit hash %q != HeadRef %q", info.Hash, ref)
+	}
+}
+
+func TestHeadCommit_NoCommits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t)
+	a := NewAdapter(dir)
+
+	_, err := a.HeadCommit()
+	if err == nil {
+		t.Error("expected error for HeadCommit with no commits")
+	}
+}
+
+func TestHeadCommit_MergeCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "checkout", "-b", "feature")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "feature commit")
+	run(t, dir, "git", "checkout", "-")
+	run(t, dir, "git", "merge", "--no-ff", "feature", "-m", "merge feature")
+
+	a := NewAdapter(dir)
+	info, err := a.HeadCommit()
+	if err != nil {
+		t.Fatalf("HeadCommit: %v", err)
+	}
+	if !info.IsMerge {
+		t.Error("expected IsMerge = true for merge commit")
+	}
+	if info.ParentCount < 2 {
+		t.Errorf("expected ParentCount >= 2, got %d", info.ParentCount)
+	}
+}
+
 func TestCommitExists_True(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -510,8 +597,57 @@ func TestValidateRef_DoubleDot(t *testing.T) {
 }
 
 func TestValidateRef_Empty(t *testing.T) {
-	if err := validateRef(""); err != nil {
-		t.Errorf("empty ref should be valid, got: %v", err)
+	if err := validateRef(""); err == nil {
+		t.Error("empty ref should be invalid")
+	}
+}
+
+// --- parseHeadCommitOutput unit tests ---
+
+func TestParseHeadCommitOutput_Valid(t *testing.T) {
+	out := "abc1234567890abcdef1234567890abcdef123456\nAlice\n2026-03-15T10:00:00+00:00\nparent123\nfeat(api): add endpoint\n"
+	info, err := parseHeadCommitOutput(out)
+	if err != nil {
+		t.Fatalf("parseHeadCommitOutput: %v", err)
+	}
+	if info.Hash != "abc1234567890abcdef1234567890abcdef123456" {
+		t.Errorf("Hash = %q", info.Hash)
+	}
+	if info.Author != "Alice" {
+		t.Errorf("Author = %q", info.Author)
+	}
+	if info.Type != "feat" {
+		t.Errorf("Type = %q", info.Type)
+	}
+	if info.Scope != "api" {
+		t.Errorf("Scope = %q", info.Scope)
+	}
+	if info.Subject != "add endpoint" {
+		t.Errorf("Subject = %q", info.Subject)
+	}
+	if info.ParentCount != 1 {
+		t.Errorf("ParentCount = %d, want 1", info.ParentCount)
+	}
+}
+
+func TestParseHeadCommitOutput_MergeCommit(t *testing.T) {
+	out := "abc123\nAlice\n2026-03-15T10:00:00+00:00\nparent1 parent2\nMerge branch 'feature'\n"
+	info, err := parseHeadCommitOutput(out)
+	if err != nil {
+		t.Fatalf("parseHeadCommitOutput: %v", err)
+	}
+	if !info.IsMerge {
+		t.Error("expected IsMerge = true for merge commit")
+	}
+	if info.ParentCount != 2 {
+		t.Errorf("ParentCount = %d, want 2", info.ParentCount)
+	}
+}
+
+func TestParseHeadCommitOutput_BadFormat(t *testing.T) {
+	_, err := parseHeadCommitOutput("too\nfew\nlines")
+	if err == nil {
+		t.Error("expected error for malformed output")
 	}
 }
 

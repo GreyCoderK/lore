@@ -284,7 +284,7 @@ func TestShowCmd_NoKeywordNoAll(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for no keyword and no --all")
 	}
-	if cli.ExitCodeFrom(err) != cli.ExitError {
-		t.Errorf("expected exit code %d, got %d", cli.ExitError, cli.ExitCodeFrom(err))
+	if cli.ExitCodeFrom(err) != cli.ExitUserError {
+		t.Errorf("expected exit code %d, got %d", cli.ExitUserError, cli.ExitCodeFrom(err))
 	}
 }

@@ -5,11 +5,13 @@ package template
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
+	"time"
 )
 
 //go:embed defaults/*.tmpl
@@ -118,11 +120,31 @@ func (e *Engine) Render(name string, data TemplateContext) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("template: render %s: %w", name, err)
 	}
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("template: render %s: %w", name, err)
+	// Guard against infinite loops in user-provided templates
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	type renderResult struct {
+		text string
+		err  error
 	}
-	return buf.String(), nil
+	done := make(chan renderResult, 1)
+	go func() {
+		var buf bytes.Buffer
+		err := tmpl.Execute(&buf, data)
+		done <- renderResult{buf.String(), err}
+	}()
+	select {
+	case res := <-done:
+		if res.err != nil {
+			return "", fmt.Errorf("template: render %s: %w", name, res.err)
+		}
+		return res.text, nil
+	case <-ctx.Done():
+		// Note: the goroutine will finish eventually but its result is discarded.
+		// Go's text/template does not support cancellation.
+		return "", fmt.Errorf("template: render %s: execution timed out (5s limit)", name)
+	}
 }
 
 // TemplateExists checks whether a template with the given name is available

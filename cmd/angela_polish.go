@@ -14,6 +14,8 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/credential"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
+	"github.com/greycoderk/lore/internal/service"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +26,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 
 	cmd := &cobra.Command{
 		Use:           "polish <filename>",
-		Short:         "Improve a document with AI assistance",
+		Short:         i18n.T().Cmd.AngelaPolishShort,
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -35,7 +37,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			if err := requireLoreDir(streams); err != nil {
 				return err
 			}
-			docsDir := filepath.Join(".lore", "docs")
+			docsDir := filepath.Join(domain.LoreDir, domain.DocsDir)
 
 			// AC-8: Validate filename and check exists
 			if err := storage.ValidateFilename(filename); err != nil {
@@ -44,7 +46,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			docPath := filepath.Join(docsDir, filename)
 			if _, err := os.Stat(docPath); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("document '%s' not found in .lore/docs/", filename)
+					return fmt.Errorf(i18n.T().Cmd.AngelaPolishNotFound, filename)
 				}
 				return fmt.Errorf("angela: polish: %w", err)
 			}
@@ -56,63 +58,27 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 				return err
 			}
 			if provider == nil {
-				return fmt.Errorf("no AI provider configured, set ai.provider in .lorerc.local (try: lore angela draft, no API needed)")
+				return fmt.Errorf("%s", i18n.T().Cmd.AngelaPolishNoProvider)
 			}
 
-			// Read document
-			raw, err := os.ReadFile(docPath)
-			if err != nil {
-				return fmt.Errorf("angela: polish: read: %w", err)
-			}
-			originalContent := string(raw)
-
-			meta, _, err := storage.Unmarshal(raw)
-			if err != nil {
-				return fmt.Errorf("angela: polish: parse: %w", err)
-			}
-			meta.Filename = filename
-
-			// Style guide
-			var styleGuideStr string
-			if cfg.Angela.StyleGuide != nil {
-				guide := angela.ParseStyleGuide(cfg.Angela.StyleGuide)
-				if guide.RequireWhy {
-					styleGuideStr += "- Section '## Why' is required\n"
-				}
-				if guide.RequireAlternatives {
-					styleGuideStr += "- Section '## Alternatives' is required\n"
-				}
-				if guide.MaxBodyLength > 0 {
-					styleGuideStr += fmt.Sprintf("- Maximum body length: %d characters\n", guide.MaxBodyLength)
-				}
-			}
-
-			// Corpus summary
-			corpusStore := &storage.CorpusStore{Dir: docsDir}
-			corpus, _ := corpusStore.ListDocs(domain.DocFilter{})
-			corpusSummary := angela.BuildCorpusSummary(corpus)
-
-			// Resolve personas for this document (AC-4)
-			scored := angela.ResolvePersonas(meta.Type, originalContent)
-			personas := angela.Profiles(scored)
-
-			// AC-1: Exactly 1 API call
-			polished, err := angela.Polish(cmd.Context(), provider, originalContent, meta, styleGuideStr, corpusSummary, personas)
+			// Orchestrate polish via service layer
+			result, err := service.PolishDocument(cmd.Context(), provider, cfg, docsDir, filename)
 			if err != nil {
 				return err
 			}
 
-			// Compute diff
-			hunks := angela.ComputeDiff(originalContent, polished)
+			originalContent := result.Original
+			meta := result.Meta
+			hunks := result.Diff
 
 			// AC-10: No changes
 			if len(hunks) == 0 {
-				_, _ = fmt.Fprintf(streams.Err, "Angela: No changes suggested.\n")
+				_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.AngelaPolishNoChanges)
 				return nil
 			}
 
 			// AC-2: Interactive diff / AC-7: reject all
-			accepted, err := angela.InteractiveDiff(hunks, streams, flagDryRun, flagYes)
+			accepted, err := angela.InteractiveDiff(hunks, streams, angela.DiffOptions{DryRun: flagDryRun, YesAll: flagYes})
 			if err != nil {
 				return fmt.Errorf("angela: polish: %w", err)
 			}
@@ -132,7 +98,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 
 			// AC-7: All rejected
 			if !anyAccepted {
-				_, _ = fmt.Fprintf(streams.Err, "No changes applied.\n")
+				_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.AngelaPolishNoneApplied)
 				return nil
 			}
 
@@ -141,21 +107,26 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			if err != nil {
 				return fmt.Errorf("angela: polish: re-read: %w", err)
 			}
-			if !bytes.Equal(currentRaw, raw) {
-				return fmt.Errorf("angela: polish: document modified during review. Aborting to prevent data loss")
+			if !bytes.Equal(currentRaw, []byte(originalContent)) {
+				return fmt.Errorf("angela: polish: %s", i18n.T().Cmd.AngelaPolishModified)
 			}
 
 			// AC-3: Apply changes
-			result := angela.ApplyDiff(originalContent, hunks, accepted)
+			applied := angela.ApplyDiff(originalContent, hunks, accepted)
 
-			// Update angela_mode in front matter
-			resultMeta, resultBody, err := storage.Unmarshal([]byte(result))
+			// Validate and update angela_mode in front matter
+			resultMeta, resultBody, err := storage.Unmarshal([]byte(applied))
 			if err != nil {
 				// If parsing fails, use the result as-is with original meta
 				resultMeta = meta
-				resultBody = result
+				resultBody = applied
 			}
 			resultMeta.AngelaMode = "polish"
+
+			// Validate the resulting frontmatter before writing to disk
+			if valErr := storage.ValidateMeta(resultMeta); valErr != nil {
+				return fmt.Errorf("angela: polish: AI response produced invalid frontmatter: %w", valErr)
+			}
 
 			// Write atomically
 			marshaled, err := storage.Marshal(resultMeta, resultBody)
@@ -168,10 +139,10 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 
 			// Regenerate index
 			if err := storage.RegenerateIndex(docsDir); err != nil {
-				_, _ = fmt.Fprintf(streams.Err, "Warning: index regeneration: %s\n", err)
+				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaPolishIndexWarn+"\n", err)
 			}
 
-			_, _ = fmt.Fprintf(streams.Err, "Polished   %s\n", filename)
+			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaPolishVerb+"\n", filename)
 			return nil
 		},
 	}

@@ -16,6 +16,42 @@ import (
 	"github.com/greycoderk/lore/internal/storage"
 )
 
+// detectAIProvider determines if an AI provider is configured and returns its name.
+// Returns "" if no provider is available. Checks: env var > plaintext config > keychain.
+func detectAIProvider(cfg *config.Config) string {
+	if os.Getenv("LORE_AI_API_KEY") != "" {
+		if cfg.AI.Provider != "" {
+			return cfg.AI.Provider
+		}
+		return "configured"
+	}
+	if cfg.AI.APIKey != "" && cfg.AI.APIKey != "@keychain" {
+		if cfg.AI.Provider != "" {
+			return cfg.AI.Provider
+		}
+		return "configured"
+	}
+	if cfg.AI.Provider != "" {
+		store := credential.NewStore()
+		if key, err := store.Get(cfg.AI.Provider); err == nil && len(key) > 0 {
+			return cfg.AI.Provider
+		}
+	}
+	return ""
+}
+
+// countUniqueDocsInFindings counts the number of unique document filenames
+// referenced across all review findings.
+func countUniqueDocsInFindings(findings []angela.ReviewFinding) int {
+	seen := make(map[string]bool)
+	for _, f := range findings {
+		for _, d := range f.Documents {
+			seen[d] = true
+		}
+	}
+	return len(seen)
+}
+
 // StatusInfo holds all data needed to render the status dashboard.
 type StatusInfo struct {
 	ProjectName      string
@@ -60,8 +96,10 @@ func CollectStatus(cfg *config.Config, git domain.GitAdapter, loreDir string) (*
 	}
 	info.DocCount = len(docs)
 
-	// Single-pass: express ratio + Angela score (reads each doc once)
-	guide := angela.ParseStyleGuide(nil)
+	// Express ratio: read each doc's content once (O(n), no corpus cross-checks)
+	// TODO(optimization): store is_complete flag in doc_index DB table
+	// to avoid reading all document files on every status call.
+	// For now, this is acceptable for corpora under 500 documents.
 	var readErrors int
 	for _, meta := range docs {
 		content, err := storage.ReadDocContent(filepath.Join(docsDir, meta.Filename))
@@ -69,21 +107,26 @@ func CollectStatus(cfg *config.Config, git domain.GitAdapter, loreDir string) (*
 			readErrors++
 			continue
 		}
-		// Express ratio
 		if strings.Contains(content, "## Alternatives") || strings.Contains(content, "## Impact") {
 			info.CompleteCount++
 		} else {
 			info.ExpressCount++
 		}
-		// Angela score
-		suggestions := angela.AnalyzeDraft(content, meta, guide, docs, nil)
-		suggestions = append(suggestions, angela.CheckCoherence(content, meta, docs)...)
-		if len(suggestions) > 0 {
-			info.AngelaDocsNeedReview++
-			info.AngelaSuggestions += len(suggestions)
-		}
 	}
 	info.ReadErrors = readErrors
+
+	// Angela suggestions: use cached review results instead of recomputing
+	// O(n²) AnalyzeDraft+CheckCoherence on every status call.
+	// The cache is populated by `lore angela review`.
+	reviewCache, _ := angela.LoadReviewCache(loreDir)
+	if reviewCache != nil {
+		info.AngelaSuggestions = len(reviewCache.Findings)
+		// Each finding may reference multiple docs, but for the dashboard
+		// we just show total findings as the review indicator.
+		if len(reviewCache.Findings) > 0 {
+			info.AngelaDocsNeedReview = countUniqueDocsInFindings(reviewCache.Findings)
+		}
+	}
 
 	// Pending count
 	pendingDir := filepath.Join(loreDir, "pending")
@@ -98,21 +141,9 @@ func CollectStatus(cfg *config.Config, git domain.GitAdapter, loreDir string) (*
 
 	// Angela mode — check env > keychain > plaintext config
 	info.AngelaMode = "draft"
-	if envKey := os.Getenv("LORE_AI_API_KEY"); envKey != "" {
+	info.AIProvider = detectAIProvider(cfg)
+	if info.AIProvider != "" {
 		info.AngelaMode = "polish"
-		info.AIProvider = cfg.AI.Provider
-	} else if cfg.AI.APIKey != "" && cfg.AI.APIKey != "@keychain" {
-		info.AngelaMode = "polish"
-		info.AIProvider = cfg.AI.Provider
-	} else if cfg.AI.Provider != "" {
-		store := credential.NewStore()
-		if key, err := store.Get(cfg.AI.Provider); err == nil && len(key) > 0 {
-			info.AngelaMode = "polish"
-			info.AIProvider = cfg.AI.Provider
-		}
-	}
-	if info.AIProvider == "" && info.AngelaMode == "polish" {
-		info.AIProvider = "configured"
 	}
 
 	// Health check

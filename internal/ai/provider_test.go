@@ -37,6 +37,7 @@ func noopStore() *mockStore {
 }
 
 func TestNewProvider_Empty_ReturnsNilNil(t *testing.T) {
+	t.Parallel()
 	cfg := &config.Config{}
 	p, err := NewProvider(cfg, noopStore(), io.Discard)
 	if err != nil {
@@ -48,6 +49,7 @@ func TestNewProvider_Empty_ReturnsNilNil(t *testing.T) {
 }
 
 func TestNewProvider_Unknown_ReturnsError(t *testing.T) {
+	t.Parallel()
 	cfg := &config.Config{AI: config.AIConfig{Provider: "xyz"}}
 	_, err := NewProvider(cfg, noopStore(), io.Discard)
 	if err == nil {
@@ -59,6 +61,7 @@ func TestNewProvider_Unknown_ReturnsError(t *testing.T) {
 }
 
 func TestNewProvider_Anthropic_NoKey_ReturnsError(t *testing.T) {
+	t.Parallel()
 	cfg := &config.Config{AI: config.AIConfig{Provider: "anthropic"}}
 	_, err := NewProvider(cfg, noopStore(), io.Discard)
 	if err == nil {
@@ -70,6 +73,7 @@ func TestNewProvider_Anthropic_NoKey_ReturnsError(t *testing.T) {
 }
 
 func TestNewProvider_OpenAI_NoKey_ReturnsError(t *testing.T) {
+	t.Parallel()
 	cfg := &config.Config{AI: config.AIConfig{Provider: "openai"}}
 	_, err := NewProvider(cfg, noopStore(), io.Discard)
 	if err == nil {
@@ -81,6 +85,7 @@ func TestNewProvider_OpenAI_NoKey_ReturnsError(t *testing.T) {
 }
 
 func TestNewProvider_Ollama_NoKey_OK(t *testing.T) {
+	t.Parallel()
 	cfg := &config.Config{AI: config.AIConfig{Provider: "ollama"}}
 	p, err := NewProvider(cfg, noopStore(), io.Discard)
 	if err != nil {
@@ -92,6 +97,7 @@ func TestNewProvider_Ollama_NoKey_OK(t *testing.T) {
 }
 
 func TestNewProvider_Anthropic_WithKey_Plaintext(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	cfg := &config.Config{AI: config.AIConfig{Provider: "anthropic", APIKey: "sk-test"}}
 	p, err := NewProvider(cfg, noopStore(), &buf)
@@ -108,6 +114,7 @@ func TestNewProvider_Anthropic_WithKey_Plaintext(t *testing.T) {
 }
 
 func TestNewProvider_OpenAI_WithKey_Plaintext(t *testing.T) {
+	t.Parallel()
 	cfg := &config.Config{AI: config.AIConfig{Provider: "openai", APIKey: "sk-test"}}
 	p, err := NewProvider(cfg, noopStore(), io.Discard)
 	if err != nil {
@@ -135,6 +142,7 @@ func TestResolveAPIKey_EnvVar_Priority(t *testing.T) {
 }
 
 func TestResolveAPIKey_Keychain_OK(t *testing.T) {
+	t.Parallel()
 	store := &mockStore{
 		GetFunc: func(provider string) ([]byte, error) {
 			if provider == "anthropic" {
@@ -153,6 +161,7 @@ func TestResolveAPIKey_Keychain_OK(t *testing.T) {
 }
 
 func TestResolveAPIKey_Keychain_AtKeychain(t *testing.T) {
+	t.Parallel()
 	store := &mockStore{
 		GetFunc: func(string) ([]byte, error) { return []byte("kc-val"), nil },
 	}
@@ -166,6 +175,7 @@ func TestResolveAPIKey_Keychain_AtKeychain(t *testing.T) {
 }
 
 func TestResolveAPIKey_Keychain_Miss(t *testing.T) {
+	t.Parallel()
 	store := &mockStore{
 		GetFunc: func(string) ([]byte, error) { return nil, credential.ErrNotFound },
 	}
@@ -179,6 +189,7 @@ func TestResolveAPIKey_Keychain_Miss(t *testing.T) {
 }
 
 func TestResolveAPIKey_Plaintext_Warning(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	store := noopStore()
 	key, err := ResolveAPIKey("anthropic", "sk-plain", store, &buf)
@@ -194,6 +205,7 @@ func TestResolveAPIKey_Plaintext_Warning(t *testing.T) {
 }
 
 func TestResolveAPIKey_KeychainUnavailable_Warning(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	store := &mockStore{
 		GetFunc: func(string) ([]byte, error) { return nil, credential.ErrKeychainNotAvailable },
@@ -211,6 +223,7 @@ func TestResolveAPIKey_KeychainUnavailable_Warning(t *testing.T) {
 }
 
 func TestResolveAPIKey_KeychainError_Propagated(t *testing.T) {
+	t.Parallel()
 	store := &mockStore{
 		GetFunc: func(string) ([]byte, error) { return nil, errors.New("keychain locked") },
 	}
@@ -224,6 +237,7 @@ func TestResolveAPIKey_KeychainError_Propagated(t *testing.T) {
 }
 
 func TestResolveAPIKey_NilStore_EmptyKey(t *testing.T) {
+	t.Parallel()
 	key, err := ResolveAPIKey("anthropic", "", nil, io.Discard)
 	if err != nil {
 		t.Fatalf("ResolveAPIKey nil store: %v", err)

@@ -3,7 +3,10 @@
 
 package angela
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // StyleGuide holds parsed style rules for Angela draft analysis.
 type StyleGuide struct {
@@ -77,4 +80,26 @@ func ParseStyleGuide(rules map[string]interface{}) *StyleGuide {
 	}
 
 	return guide
+}
+
+// FormatStyleGuideRules returns a prompt-ready string describing the active rules.
+// Returns empty string if no rules are active.
+func FormatStyleGuideRules(guide *StyleGuide) string {
+	if guide == nil {
+		return ""
+	}
+	var b strings.Builder
+	if guide.RequireWhy {
+		b.WriteString("- Section '## Why' is required\n")
+	}
+	if guide.RequireAlternatives {
+		b.WriteString("- Section '## Alternatives' is required\n")
+	}
+	if guide.MaxBodyLength > 0 {
+		fmt.Fprintf(&b, "- Maximum body length: %d characters\n", guide.MaxBodyLength)
+	}
+	if guide.MinTags > 0 {
+		fmt.Fprintf(&b, "- Minimum %d tags required per document\n", guide.MinTags)
+	}
+	return b.String()
 }

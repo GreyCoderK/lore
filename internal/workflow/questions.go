@@ -14,11 +14,12 @@ import (
 	"time"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 const defaultExpressThreshold = 3 * time.Second
 
-// ccTypeMap maps Conventional Commit prefixes to Lore document types.
+// ccTypeMap maps conventional commit type prefixes to human-readable labels.
 var ccTypeMap = map[string]string{
 	"feat":     "feature",
 	"fix":      "bugfix",
@@ -229,6 +230,41 @@ func (q *QuestionFlow) RunFlow(ctx context.Context, commit *domain.CommitInfo) (
 	})
 }
 
+// RunFlowWithMode orchestrates the question flow with Decision Engine context.
+// In "reduced" mode: Type and What are pre-filled, only Why is asked interactively.
+// In "confirm" mode: all 3 are pre-filled, user confirms with Enter.
+// If detection is nil, behaves like RunFlow (full mode).
+func (q *QuestionFlow) RunFlowWithMode(ctx context.Context, commit *domain.CommitInfo, detection *DetectionResult) (Answers, error) {
+	if detection == nil || detection.QuestionMode == "" || detection.QuestionMode == "full" {
+		return q.RunFlow(ctx, commit)
+	}
+
+	prefilled := Answers{}
+
+	// Pre-fill Type from commit info
+	if commit != nil && commit.Type != "" {
+		prefilled.Type = MapCommitType(commit.Type)
+	}
+
+	// Pre-fill What from Decision Engine or commit subject
+	if detection.PrefilledWhat != "" {
+		prefilled.What = detection.PrefilledWhat
+	} else if commit != nil {
+		prefilled.What = commit.Subject
+	}
+
+	// Pre-fill Why if confidence is sufficient (ask-confirm mode)
+	if detection.PrefilledWhy != "" && detection.PrefilledWhyConfidence >= 0.6 {
+		prefilled.Why = detection.PrefilledWhy
+	}
+
+	return q.AskQuestions(ctx, QuestionOpts{
+		Express:    detection.QuestionMode != "reduced", // no express timer in reduced mode
+		CommitInfo: commit,
+		PreFilled:  prefilled,
+	})
+}
+
 // AskType prompts for document type with a pre-filled default.
 // Enter confirms, any input replaces.
 func (q *QuestionFlow) AskType(ctx context.Context, defaultType string) (string, error) {
@@ -242,17 +278,17 @@ func (q *QuestionFlow) AskWhat(ctx context.Context, defaultWhat string) (string,
 
 // AskWhy prompts for the reason — the single true question of the flow.
 func (q *QuestionFlow) AskWhy(ctx context.Context) (string, error) {
-	return q.askOpen(ctx, "Why was this approach chosen?")
+	return q.askOpen(ctx, i18n.T().Workflow.QuestionWhyLabel)
 }
 
 // AskAlternatives prompts for alternatives considered (optional).
 func (q *QuestionFlow) AskAlternatives(ctx context.Context) (string, error) {
-	return q.askWithDefault(ctx, "Alternatives considered (optional, Enter to skip)", "")
+	return q.askWithDefault(ctx, i18n.T().Workflow.QuestionAlternativesLabel, "")
 }
 
 // AskImpact prompts for impact (optional).
 func (q *QuestionFlow) AskImpact(ctx context.Context) (string, error) {
-	return q.askWithDefault(ctx, "Impact (optional, Enter to skip)", "")
+	return q.askWithDefault(ctx, i18n.T().Workflow.QuestionImpactLabel, "")
 }
 
 // askWithDefault shows "? label [default]: " and returns the answer or default.

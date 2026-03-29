@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 func TestOllamaProvider_Complete_OK(t *testing.T) {
@@ -62,6 +63,68 @@ func TestOllamaProvider_CustomEndpoint(t *testing.T) {
 	p := newOllamaProvider(cfg)
 	if p.endpoint != "http://custom-host:9999/api/generate" {
 		t.Errorf("endpoint = %q, want http://custom-host:9999/api/generate", p.endpoint)
+	}
+}
+
+func TestOllamaProvider_Complete_WithSystemPrompt(t *testing.T) {
+	var captured ollamaRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := decodeJSON(r.Body, &captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"response":"ok"}`))
+	}))
+	defer srv.Close()
+
+	p := &ollamaProvider{
+		client:   srv.Client(),
+		model:    "llama3",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "user content", domain.WithSystem("You are Angela"))
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	// System prompt should be in the native system field
+	if captured.System != "You are Angela" {
+		t.Errorf("system = %q, want 'You are Angela'", captured.System)
+	}
+	// User content should be in the prompt field (not mixed with system)
+	if captured.Prompt != "user content" {
+		t.Errorf("prompt = %q, want 'user content'", captured.Prompt)
+	}
+}
+
+func TestOllamaProvider_Complete_WithoutSystemPrompt(t *testing.T) {
+	var captured ollamaRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := decodeJSON(r.Body, &captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"response":"ok"}`))
+	}))
+	defer srv.Close()
+
+	p := &ollamaProvider{
+		client:   srv.Client(),
+		model:    "llama3",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "just a prompt")
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	// No system prompt, so prompt should be exactly what was passed
+	if captured.Prompt != "just a prompt" {
+		t.Errorf("prompt = %q, want %q", captured.Prompt, "just a prompt")
 	}
 }
 

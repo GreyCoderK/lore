@@ -18,6 +18,7 @@ import (
 // Adapter implements domain.GitAdapter via exec.Command("git", ...).
 type Adapter struct {
 	workDir string
+	getenv  func(string) string // injectable for testing; defaults to os.Getenv
 }
 
 // compile-time check
@@ -25,7 +26,7 @@ var _ domain.GitAdapter = (*Adapter)(nil)
 
 // New creates an Adapter for the given working directory (M4: canonical constructor name).
 func New(workDir string) *Adapter {
-	return &Adapter{workDir: workDir}
+	return &Adapter{workDir: workDir, getenv: os.Getenv}
 }
 
 // NewAdapter is an alias for New, kept for compatibility with existing callers.
@@ -56,7 +57,52 @@ func (a *Adapter) HeadRef() (string, error) {
 	return ref, nil
 }
 
+// HeadCommit returns the full commit info for HEAD in a single git invocation,
+// avoiding multiple exec.Command calls. It replaces separate HeadRef() + Log()
+// calls with one `git log` invocation.
+func (a *Adapter) HeadCommit() (*domain.CommitInfo, error) {
+	out, err := a.run("log", "-1", "HEAD", "--format=%H%n%an%n%aI%n%P%n%B")
+	if err != nil {
+		return nil, fmt.Errorf("git: head commit: %w", err)
+	}
+	return parseHeadCommitOutput(out)
+}
+
+// parseHeadCommitOutput parses the output of git log -1 HEAD --format=%H%n%an%n%aI%n%P%n%B.
+// The %P line contains space-separated parent hashes; >1 parent means a merge commit.
+func parseHeadCommitOutput(out string) (*domain.CommitInfo, error) {
+	lines := strings.SplitN(out, "\n", 5)
+	if len(lines) < 5 {
+		return nil, fmt.Errorf("git: head commit: unexpected format")
+	}
+
+	date, err := time.Parse(time.RFC3339, lines[2])
+	if err != nil {
+		return nil, fmt.Errorf("git: head commit: parse date: %w", err)
+	}
+
+	message := strings.TrimSpace(lines[4])
+	ccType, scope, subject := ParseConventionalCommit(message)
+
+	parentCount := len(strings.Fields(lines[3]))
+
+	return &domain.CommitInfo{
+		Hash:         lines[0],
+		Author:       lines[1],
+		Date:         date,
+		Message:      message,
+		Type:         ccType,
+		Scope:        scope,
+		Subject:      subject,
+		IsMerge:      parentCount > 1,
+		ParentCount:  parentCount,
+	}, nil
+}
+
 func (a *Adapter) CommitExists(ref string) (bool, error) {
+	if err := validateRef(ref); err != nil {
+		return false, err
+	}
 	_, err := a.run("cat-file", "-t", ref)
 	if err != nil {
 		return false, nil
@@ -65,6 +111,9 @@ func (a *Adapter) CommitExists(ref string) (bool, error) {
 }
 
 func (a *Adapter) Log(ref string) (*domain.CommitInfo, error) {
+	if err := validateRef(ref); err != nil {
+		return nil, err
+	}
 	out, err := a.run("log", "-1", "--format=%H%n%an%n%aI%n%B", ref)
 	if err != nil {
 		return nil, fmt.Errorf("git: log %s: %w", ref, err)
@@ -98,6 +147,9 @@ func parseLogOutput(out string) (*domain.CommitInfo, error) {
 }
 
 func (a *Adapter) Diff(ref string) (string, error) {
+	if err := validateRef(ref); err != nil {
+		return "", err
+	}
 	out, err := a.run("diff", ref+"^!", "--")
 	if err != nil {
 		return "", fmt.Errorf("git: diff %s: %w", ref, err)
@@ -106,6 +158,9 @@ func (a *Adapter) Diff(ref string) (string, error) {
 }
 
 func (a *Adapter) IsMergeCommit(ref string) (bool, error) {
+	if err := validateRef(ref); err != nil {
+		return false, err
+	}
 	out, err := a.run("rev-list", "--parents", "-1", ref)
 	if err != nil {
 		return false, fmt.Errorf("git: is merge commit %s: %w", ref, err)
@@ -119,7 +174,7 @@ func (a *Adapter) IsRebaseInProgress() (bool, error) {
 	// H1 fix: GIT_SEQUENCE_EDITOR is set by git when an interactive rebase is
 	// being initiated — before the rebase-merge/ directory is created. Checking
 	// it first ensures we catch `git rebase -i` launched from IDEs or scripts.
-	if os.Getenv("GIT_SEQUENCE_EDITOR") != "" {
+	if a.getenv("GIT_SEQUENCE_EDITOR") != "" {
 		return true, nil
 	}
 	// H3 partial: use GitDir() so rebase dirs are resolved correctly in worktrees.
@@ -148,6 +203,9 @@ func (a *Adapter) GitDir() (string, error) {
 }
 
 func (a *Adapter) CommitMessageContains(ref, marker string) (bool, error) {
+	if err := validateRef(ref); err != nil {
+		return false, err
+	}
 	out, err := a.run("log", "-1", "--format=%B", ref)
 	if err != nil {
 		return false, fmt.Errorf("git: commit message %s: %w", ref, err)
@@ -186,7 +244,7 @@ var validRef = regexp.MustCompile(`^[a-zA-Z0-9._\-/^~]+$`)
 // validateRef rejects refs that look like flags or contain unsafe characters.
 func validateRef(ref string) error {
 	if ref == "" {
-		return nil
+		return fmt.Errorf("git: ref cannot be empty")
 	}
 	if strings.HasPrefix(ref, "-") {
 		return fmt.Errorf("git: invalid ref %q: must not start with '-'", ref)
@@ -222,7 +280,7 @@ func (a *Adapter) CommitRange(from, to string) ([]string, error) {
 		return nil, fmt.Errorf("git: commit range %s..%s: %w", from, to, err)
 	}
 	if out == "" {
-		return nil, nil
+		return []string{}, nil
 	}
 	return strings.Split(out, "\n"), nil
 }
@@ -233,4 +291,44 @@ func (a *Adapter) LatestTag() (string, error) {
 		return "", fmt.Errorf("git: no tags found: create a tag first: git tag v0.1.0")
 	}
 	return tag, nil
+}
+
+// LogAll returns all commits in the repository.
+func (a *Adapter) LogAll() ([]domain.CommitInfo, error) {
+	out, err := a.run("log", "--all", "--format=%H%n%an%n%aI%n%B%x00")
+	if err != nil {
+		return nil, fmt.Errorf("git: log all: %w", err)
+	}
+	if out == "" {
+		return nil, nil
+	}
+
+	entries := strings.Split(out, "\x00")
+	var commits []domain.CommitInfo
+	var skipped int
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		ci, err := parseLogOutput(entry)
+		if err != nil {
+			skipped++
+			continue
+		}
+		commits = append(commits, *ci)
+	}
+	if skipped > 0 {
+		fmt.Fprintf(os.Stderr, "warning: skipped %d unparseable git log entries\n", skipped)
+	}
+	return commits, nil
+}
+
+// CurrentBranch returns the current branch name.
+func (a *Adapter) CurrentBranch() (string, error) {
+	branch, err := a.run("rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return "", fmt.Errorf("git: current branch: %w", err)
+	}
+	return branch, nil
 }

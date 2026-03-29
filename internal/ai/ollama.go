@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -46,6 +47,7 @@ func newOllamaProvider(cfg *config.Config) *ollamaProvider {
 type ollamaRequest struct {
 	Model  string `json:"model"`
 	Prompt string `json:"prompt"`
+	System string `json:"system,omitempty"`
 	Stream bool   `json:"stream"`
 }
 
@@ -65,6 +67,7 @@ func (p *ollamaProvider) Complete(ctx context.Context, prompt string, opts ...do
 	body := ollamaRequest{
 		Model:  resolved.Model,
 		Prompt: prompt,
+		System: resolved.System,
 		Stream: false,
 	}
 
@@ -83,7 +86,11 @@ func (p *ollamaProvider) Complete(ctx context.Context, prompt string, opts ...do
 	if err != nil {
 		return "", fmt.Errorf("ai: ollama: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Fprintf(os.Stderr, "ai: ollama: body close: %v\n", cerr)
+		}
+	}()
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
 	if err != nil {
@@ -91,12 +98,16 @@ func (p *ollamaProvider) Complete(ctx context.Context, prompt string, opts ...do
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ai: ollama: HTTP %d: %s", resp.StatusCode, TruncateForError(string(respBody), 512))
+		return "", fmt.Errorf("ai: ollama: HTTP %d: %s", resp.StatusCode, scrubSensitive(TruncateForError(string(respBody), 512)))
 	}
 
 	var result ollamaResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {
 		return "", fmt.Errorf("ai: ollama: unmarshal response: %w", err)
+	}
+
+	if result.Response == "" {
+		return "", fmt.Errorf("ai: ollama: empty response")
 	}
 
 	return result.Response, nil

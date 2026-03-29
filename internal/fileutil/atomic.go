@@ -21,19 +21,27 @@ func AtomicWrite(path string, data []byte, perm os.FileMode) error {
 
 	if _, err := tmp.Write(data); err != nil {
 		_ = tmp.Close()
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return fmt.Errorf("fileutil: write temp: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return fmt.Errorf("fileutil: close temp: %w", err)
 	}
 	if err := os.Chmod(tmpName, perm); err != nil {
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return fmt.Errorf("fileutil: chmod temp: %w", err)
 	}
 	if err := os.Rename(tmpName, path); err != nil {
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return fmt.Errorf("fileutil: rename temp: %w", err)
 	}
 	return nil
@@ -53,22 +61,30 @@ func AtomicWriteExclusive(path string, data []byte, perm os.FileMode) error {
 
 	if _, err := tmp.Write(data); err != nil {
 		_ = tmp.Close()
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return fmt.Errorf("fileutil: write temp: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return fmt.Errorf("fileutil: close temp: %w", err)
 	}
 	if err := os.Chmod(tmpName, perm); err != nil {
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return fmt.Errorf("fileutil: chmod temp: %w", err)
 	}
 	// os.Link fails atomically with EEXIST if path already exists (POSIX).
 	// NOTE: the os.Link error is returned unwrapped intentionally so that
 	// callers can use os.IsExist(err) to detect the "already exists" case.
 	if err := os.Link(tmpName, path); err != nil {
-		_ = os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to clean temp file %s: %v\n", tmpName, removeErr)
+		}
 		return err
 	}
 	_ = os.Remove(tmpName) // hard link created; remove temp name

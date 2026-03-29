@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/greycoderk/lore/internal/i18n"
 	"gopkg.in/yaml.v3"
 )
 
@@ -54,7 +55,7 @@ func ListPending(ctx context.Context, pendingDir string, warnWriter func(string)
 		data, readErr := os.ReadFile(path)
 		if readErr != nil {
 			if warnWriter != nil {
-				warnWriter(fmt.Sprintf("Warning: could not read %s: %v", entry.Name(), readErr))
+				warnWriter(fmt.Sprintf(i18n.T().Workflow.PendingReadWarn, entry.Name(), readErr))
 			}
 			continue
 		}
@@ -62,7 +63,7 @@ func ListPending(ctx context.Context, pendingDir string, warnWriter func(string)
 		var record PendingRecord
 		if parseErr := yaml.Unmarshal(data, &record); parseErr != nil {
 			if warnWriter != nil {
-				warnWriter(fmt.Sprintf("Warning: could not parse %s: %v", entry.Name(), parseErr))
+				warnWriter(fmt.Sprintf(i18n.T().Workflow.PendingParseWarn, entry.Name(), parseErr))
 			}
 			continue
 		}
@@ -139,7 +140,9 @@ func deletePendingFile(pendingDir, filename string) error {
 	if resolved != expectedDir {
 		return fmt.Errorf("workflow: pending: path traversal detected")
 	}
-	return os.Remove(path)
+	// Use resolved path to avoid TOCTOU: remove the validated target, not the original
+	resolvedPath := filepath.Join(resolved, filepath.Base(filename))
+	return os.Remove(resolvedPath)
 }
 
 // computeProgress counts non-empty answer fields and returns "N/5".
@@ -173,31 +176,32 @@ func RelativeAge(d time.Duration) string {
 	days := hours / 24
 	weeks := days / 7
 
+	t := i18n.T().Workflow
 	switch {
 	case minutes < 5:
-		return "just now"
+		return t.RelativeAgeJustNow
 	case minutes < 60:
-		return fmt.Sprintf("%d minutes ago", minutes)
+		return fmt.Sprintf(t.RelativeAgeMinutes, minutes)
 	case hours < 24:
 		if hours == 1 {
-			return "1 hour ago"
+			return t.RelativeAge1Hour
 		}
-		return fmt.Sprintf("%d hours ago", hours)
+		return fmt.Sprintf(t.RelativeAgeHours, hours)
 	case days < 7:
 		if days == 1 {
-			return "1 day ago"
+			return t.RelativeAge1Day
 		}
-		return fmt.Sprintf("%d days ago", days)
+		return fmt.Sprintf(t.RelativeAgeDays, days)
 	case weeks < 4:
 		if weeks == 1 {
-			return "1 week ago"
+			return t.RelativeAge1Week
 		}
-		return fmt.Sprintf("%d weeks ago", weeks)
+		return fmt.Sprintf(t.RelativeAgeWeeks, weeks)
 	default:
 		months := days / 30
 		if months <= 1 {
-			return "1 month ago"
+			return t.RelativeAge1Month
 		}
-		return fmt.Sprintf("%d months ago", months)
+		return fmt.Sprintf(t.RelativeAgeMonths, months)
 	}
 }

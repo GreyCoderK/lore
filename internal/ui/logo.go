@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 var logoUnicode = ` ██╗      ██████╗ ██████╗ ███████╗
@@ -26,7 +27,8 @@ var logoASCII = `+---+ +---+ +--+ +---+
 |   | | | | |++| |
 +---+ +---+ +  + +---+`
 
-const tagline = "your code knows what. lore knows why."
+// tagline returns the localized tagline.
+func getTagline() string { return i18n.T().UI.Tagline }
 
 func supportsUnicode() bool {
 	for _, env := range []string{"LANG", "LC_CTYPE", "LC_ALL"} {
@@ -65,6 +67,6 @@ func colorizeLogo(logo string) string {
 func PrintLogo(streams domain.IOStreams) {
 	logo := pickLogo()
 	colored := colorizeLogo(logo)
-	tag := Dim(tagline)
+	tag := Dim(getTagline())
 	fmt.Fprintf(streams.Err, "\n%s\n  %s\n\n", colored, tag)
 }

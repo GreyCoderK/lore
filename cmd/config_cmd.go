@@ -11,15 +11,16 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/credential"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/spf13/cobra"
 )
 
 // Use credential.KnownProviders as the single source of truth.
 
-func newConfigCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+func newConfigCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "config",
-		Short:         "Manage Lore configuration",
+		Short:         i18n.T().Cmd.ConfigShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -38,18 +39,18 @@ func newConfigCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 func newSetKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:           "set-key <provider>",
-		Short:         "Store an API key in the system keychain",
+		Short:         i18n.T().Cmd.SetKeyShort,
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
 			if !credential.IsKnownProvider(provider) {
-				return fmt.Errorf("unknown provider %q, supported: %s", provider, strings.Join(credential.KnownProviders, ", "))
+				return fmt.Errorf(i18n.T().Cmd.SetKeyUnknownProv, provider, strings.Join(credential.KnownProviders, ", "))
 			}
 
 			// Read key from stdin
-			_, _ = fmt.Fprintf(streams.Err, "Enter API key for %s: ", provider)
+			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.SetKeyPrompt, provider)
 			scanner := bufio.NewScanner(streams.In)
 			if !scanner.Scan() {
 				return fmt.Errorf("config: set-key: no input received")
@@ -63,7 +64,7 @@ func newSetKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *c
 				return fmt.Errorf("config: set-key: %w", err)
 			}
 
-			_, _ = fmt.Fprintf(streams.Err, "Stored   api key for %s in system keychain\n", provider)
+			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.SetKeyStored+"\n", provider)
 			return nil
 		},
 	}
@@ -72,21 +73,21 @@ func newSetKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *c
 func newDeleteKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:           "delete-key <provider>",
-		Short:         "Remove an API key from the system keychain",
+		Short:         i18n.T().Cmd.DeleteKeyShort,
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
 			if !credential.IsKnownProvider(provider) {
-				return fmt.Errorf("unknown provider %q, supported: %s", provider, strings.Join(credential.KnownProviders, ", "))
+				return fmt.Errorf(i18n.T().Cmd.DeleteKeyUnknownProv, provider, strings.Join(credential.KnownProviders, ", "))
 			}
 
 			if err := store.Delete(provider); err != nil {
 				return fmt.Errorf("config: delete-key: %w", err)
 			}
 
-			_, _ = fmt.Fprintf(streams.Err, "Deleted   api key for %s from system keychain\n", provider)
+			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DeleteKeyDeleted+"\n", provider)
 			return nil
 		},
 	}
@@ -95,7 +96,7 @@ func newDeleteKeyCmd(store credential.CredentialStore, streams domain.IOStreams)
 func newListKeysCmd(store credential.CredentialStore, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:           "list-keys",
-		Short:         "List stored API keys (masked)",
+		Short:         i18n.T().Cmd.ListKeysShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -112,9 +113,9 @@ func newListKeysCmd(store credential.CredentialStore, streams domain.IOStreams) 
 
 			for _, p := range credential.KnownProviders {
 				if storedSet[p] {
-					_, _ = fmt.Fprintf(streams.Out, "%s: ****\n", p)
+					_, _ = fmt.Fprintf(streams.Out, i18n.T().Cmd.ListKeysStored+"\n", p)
 				} else {
-					_, _ = fmt.Fprintf(streams.Out, "%s: (not set)\n", p)
+					_, _ = fmt.Fprintf(streams.Out, i18n.T().Cmd.ListKeysNotSet+"\n", p)
 				}
 			}
 			return nil

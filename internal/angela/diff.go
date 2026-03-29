@@ -25,8 +25,8 @@ type DiffHunk struct {
 }
 
 // maxDiffLines is the maximum line count before falling back to full-document replacement.
-// Prevents O(n*m) memory explosion from malicious AI responses.
-const maxDiffLines = 5000
+// Prevents O(n*m) memory explosion: 2000×2000 = 4M ints ≈ 32MB (acceptable for CLI).
+const maxDiffLines = 2000
 
 // ComputeDiff produces a list of diff hunks between original and modified text.
 // Uses a simple LCS-based line diff. Returns nil if texts are identical.
@@ -204,18 +204,23 @@ func FormatDiff(hunks []DiffHunk, streams domain.IOStreams) {
 	}
 }
 
+// DiffOptions controls the behavior of InteractiveDiff.
+type DiffOptions struct {
+	DryRun bool
+	YesAll bool
+}
+
 // InteractiveDiff prompts the user for each hunk.
 // Returns a slice of booleans indicating acceptance per hunk.
-// dryRun: show diff only, no prompts. yesAll: accept all without prompting.
-func InteractiveDiff(hunks []DiffHunk, streams domain.IOStreams, dryRun bool, yesAll bool) ([]bool, error) {
+func InteractiveDiff(hunks []DiffHunk, streams domain.IOStreams, opts DiffOptions) ([]bool, error) {
 	accepted := make([]bool, len(hunks))
 
-	if dryRun {
+	if opts.DryRun {
 		FormatDiff(hunks, streams)
 		return accepted, nil // all false — dry run doesn't apply
 	}
 
-	if yesAll {
+	if opts.YesAll {
 		for i := range accepted {
 			accepted[i] = true
 		}

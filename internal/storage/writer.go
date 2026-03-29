@@ -18,7 +18,8 @@ import (
 type WriteResult struct {
 	Filename string // e.g. "decision-auth-strategy-2026-03-07.md"
 	Path     string // e.g. "/path/to/.lore/docs/decision-auth-strategy-2026-03-07.md"
-	IndexErr error  // non-nil if index regeneration failed (non-fatal)
+	// Deprecated: always nil — callers should call RegenerateIndex explicitly.
+	IndexErr error
 }
 
 // AtomicWrite writes data to path via a temp file + rename for crash safety.
@@ -74,9 +75,10 @@ func WriteDoc(dir string, meta domain.DocMeta, subject string, body string) (Wri
 		return WriteResult{}, fmt.Errorf("storage: write %s: %w", filename, err)
 	}
 
-	indexErr := RegenerateIndex(dir)
-
-	return WriteResult{Filename: filename, Path: path, IndexErr: indexErr}, nil
+	// Defer index regeneration to callers that need it, rather than running
+	// a full directory scan on every single write. The caller can invoke
+	// RegenerateIndex explicitly when appropriate (e.g. after batch writes).
+	return WriteResult{Filename: filename, Path: path}, nil
 }
 
 // accentMap maps common accented characters to ASCII equivalents.

@@ -8,6 +8,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/engagement"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/ui"
 )
@@ -27,9 +28,26 @@ func showMilestone(streams domain.IOStreams, docsDir string, tty bool) {
 	}
 	store := &storage.CorpusStore{Dir: docsDir}
 	docs, _ := store.ListDocs(domain.DocFilter{})
-	msg, ok := engagement.GetMilestoneMessage(len(docs))
+	msg, ok := engagement.GetMilestoneMessage(len(docs), milestoneI18N)
 	if !ok {
 		return
 	}
 	_, _ = fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(msg))
+}
+
+// milestoneI18N maps milestone thresholds to i18n catalog strings.
+func milestoneI18N(count int) string {
+	t := i18n.T().Engagement
+	switch count {
+	case 3:
+		return t.Milestone3
+	case 8:
+		return t.Milestone8
+	case 21:
+		return t.Milestone21
+	case 55:
+		return t.Milestone55
+	default:
+		return ""
+	}
 }

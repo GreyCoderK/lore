@@ -12,12 +12,13 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/git"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-func newReleaseCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+func newReleaseCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	var (
 		fromFlag    string
 		toFlag      string
@@ -27,7 +28,7 @@ func newReleaseCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command 
 
 	cmd := &cobra.Command{
 		Use:           "release",
-		Short:         "Generate release notes from your documentation",
+		Short:         i18n.T().Cmd.ReleaseShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -52,7 +53,7 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 	// AC-8: Check if Lore is initialized
 	if _, err := os.Stat(".lore"); os.IsNotExist(err) {
 		if !quiet {
-			ui.ActionableError(streams, "Lore not initialized.", "lore init")
+			ui.ActionableError(streams, i18n.T().Cmd.ReleaseNotInitMsg, i18n.T().Cmd.ReleaseNotInitHint)
 		}
 		return fmt.Errorf("cmd: release: %w", domain.ErrNotInitialized)
 	}
@@ -82,8 +83,8 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 		tag, tagErr := latestTag()
 		if tagErr != nil {
 			if !quiet {
-				fmt.Fprintf(streams.Err, "%s No Git tags found. Create a tag first: git tag v0.1.0\n", ui.Error("Error:"))
-			fmt.Fprintf(streams.Err, "  Or use: lore release --from <commit-sha>\n")
+				_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Error("Error:"), i18n.T().Cmd.ReleaseNoTagsError)
+			_, _ = fmt.Fprintf(streams.Err, "  %s\n", i18n.T().Cmd.ReleaseNoTagsHint)
 			}
 			return fmt.Errorf("cmd: release: %w", tagErr)
 		}
@@ -119,14 +120,14 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 		return fmt.Errorf("cmd: release: %w", err)
 	}
 	if parseErr != nil && !quiet {
-		fmt.Fprintf(streams.Err, "%s\n", ui.Warning("Warning: some documents could not be parsed: "+parseErr.Error()))
+		_, _ = fmt.Fprintf(streams.Err, "%s\n", ui.Warning(fmt.Sprintf(i18n.T().Cmd.ReleaseParseWarning, parseErr.Error())))
 	}
 
 	// AC-6: No documents
 	if len(docs) == 0 {
 		if !quiet {
-			fmt.Fprintf(streams.Err, "No documented changes in this range.\n")
-			fmt.Fprintf(streams.Err, "  Try: lore release --from <earlier-tag>\n")
+			_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.ReleaseNoChanges)
+			_, _ = fmt.Fprintf(streams.Err, "  %s\n", i18n.T().Cmd.ReleaseNoChangesHint)
 		}
 		return nil
 	}
@@ -156,20 +157,20 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 		return fmt.Errorf("cmd: release: %w", err)
 	}
 	if headerMissing && !quiet {
-		fmt.Fprintf(streams.Err, "%s\n", ui.Warning("Warning: CHANGELOG.md header not found, inserting at top."))
+		_, _ = fmt.Fprintf(streams.Err, "%s\n", ui.Warning(i18n.T().Cmd.ReleaseChangelogHdrWarn))
 	}
 
 	// Regenerate index
 	if indexErr := storage.RegenerateIndex(docsDir); indexErr != nil {
 		if !quiet {
-			fmt.Fprintf(streams.Err, "%s\n", ui.Warning("Warning: index regeneration failed: "+indexErr.Error()))
+			_, _ = fmt.Fprintf(streams.Err, "%s\n", ui.Warning(fmt.Sprintf(i18n.T().Cmd.ReleaseIndexRegenWarn, indexErr.Error())))
 		}
 	}
 
 	// Output
 	if quiet {
 		// AC-7: stdout = path only
-		fmt.Fprintln(streams.Out, filepath.Join(docsDir, filename))
+		_, _ = fmt.Fprintln(streams.Out, filepath.Join(docsDir, filename))
 	} else {
 		ui.Verb(streams, "Released", filename)
 	}

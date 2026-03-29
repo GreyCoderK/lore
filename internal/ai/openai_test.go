@@ -118,6 +118,75 @@ func TestOpenAIProvider_Complete_WithModelOverride(t *testing.T) {
 	}
 }
 
+func TestOpenAIProvider_Complete_WithSystemPrompt(t *testing.T) {
+	var captured openaiRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := decodeJSON(r.Body, &captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"ok"}}]}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "gpt-4o",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "user content", domain.WithSystem("You are Angela"))
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	// Should have system message first, then user message
+	if len(captured.Messages) != 2 {
+		t.Fatalf("messages count = %d, want 2", len(captured.Messages))
+	}
+	if captured.Messages[0].Role != "system" || captured.Messages[0].Content != "You are Angela" {
+		t.Errorf("messages[0] = %+v, want system 'You are Angela'", captured.Messages[0])
+	}
+	if captured.Messages[1].Role != "user" || captured.Messages[1].Content != "user content" {
+		t.Errorf("messages[1] = %+v, want user 'user content'", captured.Messages[1])
+	}
+}
+
+func TestOpenAIProvider_Complete_WithoutSystemPrompt(t *testing.T) {
+	var captured openaiRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := decodeJSON(r.Body, &captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"ok"}}]}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "gpt-4o",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "just a prompt")
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	// Only user message, no system
+	if len(captured.Messages) != 1 {
+		t.Fatalf("messages count = %d, want 1", len(captured.Messages))
+	}
+	if captured.Messages[0].Role != "user" {
+		t.Errorf("messages[0].role = %q, want user", captured.Messages[0].Role)
+	}
+}
+
 func TestOpenAIProvider_DefaultModel(t *testing.T) {
 	cfg := &config.Config{AI: config.AIConfig{Provider: "openai", APIKey: "sk-test"}}
 	p := newOpenAIProvider(cfg)

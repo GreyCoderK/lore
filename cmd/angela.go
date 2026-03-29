@@ -12,6 +12,7 @@ import (
 	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/spf13/cobra"
 )
@@ -19,13 +20,14 @@ import (
 func newAngelaCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "angela",
-		Short:         "AI-assisted documentation enhancement",
+		Short:         i18n.T().Cmd.AngelaShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
 
 	cmd.AddCommand(newAngelaDraftCmd(cfg, streams))
 	cmd.AddCommand(newAngelaPolishCmd(cfg, streams))
+	cmd.AddCommand(newAngelaReviewCmd(cfg, streams))
 
 	return cmd
 }
@@ -35,7 +37,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 
 	cmd := &cobra.Command{
 		Use:           "draft [filename]",
-		Short:         "Review a document locally (no API needed)",
+		Short:         i18n.T().Cmd.AngelaDraftShort,
 		Args:          cobra.MaximumNArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -45,7 +47,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 				return runDraftAll(cfg, streams)
 			}
 			if len(args) == 0 {
-				return fmt.Errorf("provide a filename or use --all to analyze the entire corpus")
+				return fmt.Errorf("%s", i18n.T().Cmd.AngelaDraftNoFile)
 			}
 			filename := args[0]
 
@@ -62,7 +64,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			docPath := filepath.Join(docsDir, filename)
 			if _, err := os.Stat(docPath); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("document '%s' not found in .lore/docs/", filename)
+					return fmt.Errorf(i18n.T().Cmd.AngelaDraftNotFound, filename)
 				}
 				return fmt.Errorf("angela: draft: %w", err)
 			}
@@ -85,7 +87,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			store := &storage.CorpusStore{Dir: docsDir}
 			corpus, corpusErr := store.ListDocs(domain.DocFilter{})
 			if corpusErr != nil {
-				_, _ = fmt.Fprintf(streams.Err, "Warning: corpus load: %s\n", corpusErr)
+				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaDraftCorpusWarn+"\n", corpusErr)
 			}
 
 			// Parse style guide
@@ -109,7 +111,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 
 			// AC-5: No suggestions
 			if len(suggestions) == 0 {
-				_, _ = fmt.Fprintf(streams.Err, "Angela: Document looks good. No suggestions.\n")
+				_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.AngelaDraftNoSuggestions)
 				return nil
 			}
 
@@ -121,13 +123,13 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			}
 
 			// Format output
-			_, _ = fmt.Fprintf(streams.Err, "lore angela draft — %s\n", filename)
-			_, _ = fmt.Fprintf(streams.Err, "  Angela score: %.1f  (%s)\n\n", avg, strings.Join(activeNames, " + "))
+			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaDraftHeader+"\n", filename)
+			_, _ = fmt.Fprintf(streams.Err, "  "+i18n.T().Cmd.AngelaDraftScoreLine+"\n\n", avg, strings.Join(activeNames, " + "))
 			for _, s := range suggestions {
 				_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s\n",
 					s.Severity, s.Category, s.Message)
 			}
-			_, _ = fmt.Fprintf(streams.Err, "\n%d suggestions. Apply manually to your document.\n", len(suggestions))
+			_, _ = fmt.Fprintf(streams.Err, "\n"+i18n.T().Cmd.AngelaDraftSuggCount+"\n", len(suggestions))
 
 			return nil
 		},
@@ -151,7 +153,7 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 	}
 
 	if len(corpus) == 0 {
-		_, _ = fmt.Fprintf(streams.Err, "Angela: No documents found in .lore/docs/\n")
+		_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.AngelaDraftAllNoDocs)
 		return nil
 	}
 
@@ -164,7 +166,7 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 	var totalSuggestions int
 	var docsWithIssues int
 
-	_, _ = fmt.Fprintf(streams.Err, "lore angela draft --all — %d documents\n\n", len(corpus))
+	_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaDraftAllHeader+"\n\n", len(corpus))
 
 	for _, meta := range corpus {
 		raw, err := os.ReadFile(filepath.Join(docsDir, meta.Filename))
@@ -188,9 +190,9 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 				}
 			}
 			avg := angela.AverageScore(scored)
-			label := fmt.Sprintf("%d suggestions (score: %.0f)", len(suggestions), avg)
+			label := fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSugg, len(suggestions), avg)
 			if warnings > 0 {
-				label = fmt.Sprintf("%d suggestions (%d warnings, score: %.0f)", len(suggestions), warnings, avg)
+				label = fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSuggWarn, len(suggestions), warnings, avg)
 			}
 			_, _ = fmt.Fprintf(streams.Err, "  %-8s %-40s %s\n", "review", meta.Filename, label)
 		} else {
@@ -198,7 +200,7 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 		}
 	}
 
-	_, _ = fmt.Fprintf(streams.Err, "\n%d/%d documents need attention. %d total suggestions.\n",
+	_, _ = fmt.Fprintf(streams.Err, "\n"+i18n.T().Cmd.AngelaDraftAllSummary+"\n",
 		docsWithIssues, len(corpus), totalSuggestions)
 
 	return nil

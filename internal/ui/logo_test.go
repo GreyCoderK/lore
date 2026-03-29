@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/greycoderk/lore/internal/i18n"
+
 	"github.com/greycoderk/lore/internal/domain"
 )
 
@@ -27,8 +29,8 @@ func TestPrintLogo_Unicode(t *testing.T) {
 	if !strings.Contains(output, "██") {
 		t.Errorf("expected Unicode block logo, got %q", output)
 	}
-	if !strings.Contains(output, tagline) {
-		t.Errorf("expected tagline in output, got %q", output)
+	if !strings.Contains(output, i18n.T().UI.Tagline) {
+		t.Errorf("expected i18n.T().UI.Tagline in output, got %q", output)
 	}
 }
 
@@ -50,8 +52,8 @@ func TestPrintLogo_ASCIIFallback(t *testing.T) {
 	if !strings.Contains(output, "+---+") {
 		t.Errorf("expected ASCII logo fallback, got %q", output)
 	}
-	if !strings.Contains(output, tagline) {
-		t.Errorf("expected tagline in output, got %q", output)
+	if !strings.Contains(output, i18n.T().UI.Tagline) {
+		t.Errorf("expected i18n.T().UI.Tagline in output, got %q", output)
 	}
 }
 

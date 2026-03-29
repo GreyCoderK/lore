@@ -8,13 +8,14 @@ import (
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/spf13/cobra"
 )
 
-func newNoteCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+func newNoteCmd(_ *config.Config, _ domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:           "note",
-		Short:         "Manage reusable notes",
+		Short:         i18n.T().Cmd.NoteShort,
 		Hidden:        true,
 		SilenceUsage:  true,
 		SilenceErrors: true,

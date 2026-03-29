@@ -79,7 +79,7 @@ var registry = []PersonaProfile{
 		},
 		PromptDirective: "STORYTELLING LENS (Affoue):\n- The Why is the protagonist — make it compelling\n- Move from abstract to concrete with examples\n- Use analogies to anchor understanding\n- Lists are scaffolding, not the final form",
 		DocTypes:        []string{"decision", "note"},
-		ContentSignals:  []string{"decision", "décision", "chose", "choisi", "trade-off", "compromis", "context", "contexte", "pourquoi", "raison"},
+		ContentSignals:  signalsStoryteller,
 	},
 	{
 		Name:        "tech-writer",
@@ -122,7 +122,7 @@ var registry = []PersonaProfile{
 		},
 		PromptDirective: "TECHNICAL WRITING LENS (Sialou):\n- Every word must serve a purpose — cut filler\n- Prefer bullets over long paragraphs\n- Use diagrams or code blocks when they communicate better than prose",
 		DocTypes:        []string{"feature", "refactor", "release"},
-		ContentSignals:  []string{"api", "endpoint", "schema", "module", "configuration", "implémentation"},
+		ContentSignals:  signalsTechWriter,
 	},
 	{
 		Name:        "qa-reviewer",
@@ -161,7 +161,7 @@ var registry = []PersonaProfile{
 		},
 		PromptDirective: "QA LENS (Kouame):\n- Every claim needs testable validation criteria\n- Make edge cases and failure modes explicit\n- Consider the shelf life of this documentation",
 		DocTypes:        []string{"bugfix", "feature"},
-		ContentSignals:  []string{"bugfix", "test", "validation", "vérification", "bogue", "correctif", "régression"},
+		ContentSignals:  signalsQAReviewer,
 	},
 	{
 		Name:        "architect",
@@ -204,7 +204,7 @@ var registry = []PersonaProfile{
 		},
 		PromptDirective: "ARCHITECTURE LENS (Doumbia):\n- Make trade-offs explicit — what was considered and rejected?\n- Prioritize user value over technical elegance\n- Boring technology is a feature, not a compromise",
 		DocTypes:        []string{"decision", "refactor"},
-		ContentSignals:  []string{"architecture", "design", "conception", "component", "composant", "scale", "scalabilité", "système", "dimensionnement"},
+		ContentSignals:  signalsArchitect,
 	},
 	{
 		Name:        "ux-designer",
@@ -245,7 +245,7 @@ var registry = []PersonaProfile{
 		},
 		PromptDirective: "UX LENS (Gougou):\n- Start from user empathy — who is affected and how?\n- Respect the user's mental model\n- Accessibility is not optional",
 		DocTypes:        []string{"feature"},
-		ContentSignals:  []string{"interface", "utilisateur", "accessibilité", "ergonomie", "expérience"},
+		ContentSignals:  signalsUXDesigner,
 	},
 	{
 		Name:        "business-analyst",
@@ -293,7 +293,7 @@ var registry = []PersonaProfile{
 		},
 		PromptDirective: "BUSINESS LENS (Beda):\n- Requirements must be traceable to business goals\n- Make business value explicit — not assumed\n- Ensure stakeholder alignment is addressed",
 		DocTypes:        []string{"feature", "release"},
-		ContentSignals:  []string{"requirement", "exigence", "stakeholder", "partie-prenante", "business", "métier", "customer", "client", "besoin"},
+		ContentSignals:  signalsBusinessAnalyst,
 	},
 }
 

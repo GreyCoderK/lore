@@ -27,6 +27,7 @@ type mockGitAdapter struct {
 }
 
 func (m *mockGitAdapter) HeadRef() (string, error)                              { return m.headRef, m.headErr }
+func (m *mockGitAdapter) HeadCommit() (*domain.CommitInfo, error)               { return m.commit, m.headErr }
 func (m *mockGitAdapter) Log(_ string) (*domain.CommitInfo, error)              { return m.commit, m.logErr }
 func (m *mockGitAdapter) Diff(_ string) (string, error)                         { return "", nil }
 func (m *mockGitAdapter) CommitExists(_ string) (bool, error)                   { return true, nil }
@@ -40,6 +41,8 @@ func (m *mockGitAdapter) UninstallHook(_ string) error                          
 func (m *mockGitAdapter) HookExists(_ string) (bool, error)                     { return false, nil }
 func (m *mockGitAdapter) CommitRange(_, _ string) ([]string, error)              { return nil, nil }
 func (m *mockGitAdapter) LatestTag() (string, error)                             { return "", nil }
+func (m *mockGitAdapter) LogAll() ([]domain.CommitInfo, error)                   { return nil, nil }
+func (m *mockGitAdapter) CurrentBranch() (string, error)                         { return "main", nil }
 
 // newReactiveWorkDir creates a minimal .lore directory structure under a temp dir.
 func newReactiveWorkDir(t *testing.T) string {
@@ -79,7 +82,7 @@ func TestHandleReactive_FullFlow(t *testing.T) {
 		Err: stderr,
 	}
 
-	err := handleReactiveWithOpts(context.Background(), workDir, streams, adapter, DetectOpts{IsTTY: func(_ domain.IOStreams) bool { return true }})
+	err := handleReactiveWithOpts(context.Background(), workDir, streams, adapter, DetectOpts{IsTTY: func(_ domain.IOStreams) bool { return true }}, nil)
 	if err != nil {
 		t.Fatalf("HandleReactive: %v", err)
 	}
@@ -134,7 +137,7 @@ func TestHandleReactive_ContextCancelled_SavesPending(t *testing.T) {
 		Err: &bytes.Buffer{},
 	}
 
-	err := handleReactiveWithOpts(ctx, workDir, streams, adapter, DetectOpts{IsTTY: func(_ domain.IOStreams) bool { return true }})
+	err := handleReactiveWithOpts(ctx, workDir, streams, adapter, DetectOpts{IsTTY: func(_ domain.IOStreams) bool { return true }}, nil)
 	if err == nil {
 		t.Fatal("expected error with cancelled context, got nil")
 	}
@@ -173,7 +176,7 @@ func TestDispatch_NonTTY_SavesPending(t *testing.T) {
 		Err: &bytes.Buffer{},
 	}
 
-	err := Dispatch(context.Background(), workDir, streams, adapter)
+	err := Dispatch(context.Background(), workDir, streams, adapter, nil, nil)
 	if err != nil {
 		t.Fatalf("Dispatch non-TTY: %v", err)
 	}
@@ -258,7 +261,7 @@ func TestHandleReactive_AmendWithExistingDoc(t *testing.T) {
 			}
 			return ""
 		},
-	})
+	}, nil)
 	if err != nil {
 		t.Fatalf("HandleReactive amend: %v", err)
 	}
@@ -313,7 +316,7 @@ func TestHandleReactive_MilestoneAtThreshold3(t *testing.T) {
 
 	err := handleReactiveWithOpts(context.Background(), workDir, streams, adapter, DetectOpts{
 		IsTTY: func(_ domain.IOStreams) bool { return true },
-	})
+	}, nil)
 	if err != nil {
 		t.Fatalf("HandleReactive milestone: %v", err)
 	}

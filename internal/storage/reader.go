@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -43,7 +44,12 @@ func validateResolvedPath(dir, fullPath string) error {
 		return fmt.Errorf("storage: resolve path: %w", err)
 	}
 	// Ensure the resolved path lives under the resolved dir.
-	if !strings.HasPrefix(resolvedPath, resolvedDir+string(filepath.Separator)) {
+	prefix := resolvedDir + string(filepath.Separator)
+	contained := strings.HasPrefix(resolvedPath, prefix)
+	if !contained && runtime.GOOS == "darwin" {
+		contained = strings.HasPrefix(strings.ToLower(resolvedPath), strings.ToLower(prefix))
+	}
+	if !contained {
 		return fmt.Errorf("storage: path %s escapes docs directory", fullPath)
 	}
 	return nil
@@ -58,6 +64,10 @@ func ValidateFilename(filename string) error {
 func validateFilename(filename string) error {
 	if filename == "" {
 		return fmt.Errorf("storage: filename is empty")
+	}
+	lower := strings.ToLower(filename)
+	if lower == "readme.md" || lower == "index.md" || lower == ".index.lock" {
+		return fmt.Errorf("storage: %q is a reserved filename", filename)
 	}
 	if filepath.IsAbs(filename) {
 		return fmt.Errorf("storage: filename must be relative: %s", filename)
@@ -262,7 +272,7 @@ func SearchDocs(dir string, keyword string, filter domain.DocFilter) ([]SearchRe
 			Filename: d.Name,
 			Path:     filepath.Join(dir, d.Name),
 			Meta:     d.Meta,
-			Title:    extractTitle(d.Body, d.Name),
+			Title:    ExtractTitle(d.Body, d.Name),
 		})
 	}
 
@@ -288,7 +298,7 @@ func FindDocByCommit(dir string, commitHash string) (*SearchResult, error) {
 				Filename: d.Name,
 				Path:     filepath.Join(dir, d.Name),
 				Meta:     d.Meta,
-				Title:    extractTitle(d.Body, d.Name),
+				Title:    ExtractTitle(d.Body, d.Name),
 			}, parseErr
 		}
 	}
@@ -309,7 +319,8 @@ func ReadDocContent(path string) (string, error) {
 // extractTitle returns the first top-level markdown heading (# ...) from body.
 // Falls back to the slug portion of filename (e.g. "auth-strategy" from "decision-auth-strategy-2026-03-07.md")
 // when the body has no heading. Only matches # (h1), not ## or deeper.
-func extractTitle(body string, filename string) string {
+// ExtractTitle returns the first # heading from body, or a slug from filename.
+func ExtractTitle(body string, filename string) string {
 	for _, line := range strings.Split(body, "\n") {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "# ") {

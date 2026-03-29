@@ -28,13 +28,15 @@ type IOStreams struct {
 }
 
 type CommitInfo struct {
-	Hash    string
-	Author  string
-	Date    time.Time
-	Message string
-	Type    string
-	Scope   string
-	Subject string
+	Hash        string
+	Author      string
+	Date        time.Time
+	Message     string
+	Type        string
+	Scope       string
+	Subject     string
+	IsMerge     bool // true when the commit has more than one parent
+	ParentCount int  // number of parent commits (0 for root, 1 for normal, 2+ for merge)
 }
 
 // InstallResult describes the outcome of a hook install operation.
@@ -43,14 +45,38 @@ type InstallResult struct {
 	HooksPathWarn string // non-empty if core.hooksPath is configured
 }
 
+// DocStatus represents the lifecycle state of a document.
+type DocStatus = string
+
+const (
+	StatusDraft     DocStatus = "draft"
+	StatusPublished DocStatus = "published"
+	StatusArchived  DocStatus = "archived"
+)
+
+// DocType represents the category of a document.
+type DocType = string
+
 // Document type constants.
 const (
-	DocTypeDecision = "decision"
-	DocTypeFeature  = "feature"
-	DocTypeBugfix   = "bugfix"
-	DocTypeRefactor = "refactor"
-	DocTypeRelease  = "release"
-	DocTypeNote     = "note"
+	DocTypeDecision DocType = "decision"
+	DocTypeFeature  DocType = "feature"
+	DocTypeBugfix   DocType = "bugfix"
+	DocTypeRefactor DocType = "refactor"
+	DocTypeRelease  DocType = "release"
+	DocTypeNote     DocType = "note"
+)
+
+// Decision represents the outcome of the documentation decision engine.
+type Decision = string
+
+const (
+	DecisionDocumented   Decision = "documented"
+	DecisionSkipped      Decision = "skipped"
+	DecisionAutoSkipped  Decision = "auto-skipped"
+	DecisionMergeSkipped Decision = "merge-skipped"
+	DecisionPending      Decision = "pending"
+	DecisionUnknown      Decision = "unknown"
 )
 
 // validDocTypes is the single source of truth for accepted document types.
@@ -99,9 +125,133 @@ type CallOptions struct {
 	MaxTokens   int
 	Temperature float64
 	Timeout     time.Duration
+	System      string
 }
 
-func WithModel(m string) Option       { return func(o *CallOptions) { o.Model = m } }
-func WithMaxTokens(n int) Option      { return func(o *CallOptions) { o.MaxTokens = n } }
-func WithTemperature(t float64) Option      { return func(o *CallOptions) { o.Temperature = t } }
-func WithTimeout(d time.Duration) Option     { return func(o *CallOptions) { o.Timeout = d } }
+// CommitRecord is the store-layer view of a commit (what we persist).
+// Not a replacement for CommitInfo which is the git-layer view.
+type CommitRecord struct {
+	Hash               string
+	Date               time.Time
+	Branch             string
+	Scope              string
+	ConvType           string
+	Subject            string
+	Message            string
+	FilesChanged       int
+	LinesAdded         int
+	LinesDeleted       int
+	DocID              string  // nullable — filename of generated doc
+	Decision           string  // documented|skipped|pending|auto-skipped|merge-skipped|unknown
+	DecisionScore      int     // nullable — score 0-100
+	DecisionConfidence float64 // nullable
+	SkipReason         string  // nullable
+	QuestionMode       string  // full|reduced|confirm|none
+}
+
+// DocIndexEntry is the store-layer view of a document's metadata.
+type DocIndexEntry struct {
+	Filename         string
+	Type             string
+	Date             string
+	CommitHash       string
+	Branch           string
+	Scope            string
+	Status           string
+	Tags             []string // stored as comma-separated in DB
+	Related          []string // stored as comma-separated in DB
+	GeneratedBy      string
+	AngelaMode       string
+	ConsolidatedInto string
+	ContentHash      string // SHA-256 of body
+	SummaryWhy       string
+	SummaryWhat      string
+	TitleExtracted   string
+	WordCount        int
+	UpdatedAt        time.Time
+}
+
+type CodeSignature struct {
+	CommitHash string
+	FilePath   string
+	EntityName string
+	EntityType string // func|method|type|struct|interface|class|trait|enum|const_block
+	SigHash    string // SHA-256 of normalized body
+	Lang       string
+	LineStart  int
+	ChangeType string // added|deleted|modified|moved|context
+}
+
+type AIUsageRecord struct {
+	Timestamp     time.Time
+	Mode          string // polish|review|render|ask|consult|merge
+	Provider      string
+	Model         string
+	TokensIn      int
+	TokensOut     int
+	CachedIn      int
+	CostUSD       float64
+	LatencyMS     int
+	CommitHash    string
+	DocID         string
+	PromptVersion int
+}
+
+type AIStatsAggregate struct {
+	TotalCalls     int
+	TotalTokensIn  int
+	TotalTokensOut int
+	TotalCachedIn  int
+	TotalCostUSD   float64
+	AvgLatencyMS   int
+	CacheHitRate   float64
+	ByMode         map[string]AIStatsAggregate
+}
+
+type DailyAIStats struct {
+	Date      string
+	Calls     int
+	TokensIn  int
+	TokensOut int
+	CostUSD   float64
+}
+
+// ScopeStatsResult holds aggregated statistics for a scope,
+// computed via SQL instead of loading all records into memory.
+type ScopeStatsResult struct {
+	TotalCommits    int
+	DocumentedCount int
+	SkippedCount    int
+	LastDocDate     int64
+	LastCommitDate  int64
+}
+
+type CommitPattern struct {
+	ConvType         string
+	Scope            string
+	TotalCount       int
+	DocumentedCount  int
+	SkippedCount     int
+	AutoSkippedCount int
+	AvgDiffLines     int
+	AvgScore         int
+	DocRate          float64 // DocumentedCount / TotalCount
+	SkipRate         float64 // SkippedCount / TotalCount
+}
+
+type ReviewCacheEntry struct {
+	ReviewDate  time.Time
+	CorpusHash  string
+	CorpusCount int
+	FindingsJSON string
+	TokensIn    int
+	TokensOut   int
+	Provider    string
+	Model       string
+}
+
+func WithModel(m string) Option        { return func(o *CallOptions) { o.Model = m } }
+func WithMaxTokens(n int) Option       { return func(o *CallOptions) { o.MaxTokens = n } }
+func WithTemperature(t float64) Option { return func(o *CallOptions) { o.Temperature = t } }
+func WithTimeout(d time.Duration) Option { return func(o *CallOptions) { o.Timeout = d } }
+func WithSystem(s string) Option       { return func(o *CallOptions) { o.System = s } }

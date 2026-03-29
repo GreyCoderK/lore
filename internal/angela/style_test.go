@@ -3,7 +3,10 @@
 
 package angela
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseStyleGuide_WithRules(t *testing.T) {
 	rules := map[string]interface{}{
@@ -75,5 +78,43 @@ func TestParseStyleGuide_CustomRules_Applied(t *testing.T) {
 	// Defaults preserved for unset keys
 	if !guide.RequireWhy {
 		t.Error("RequireWhy default should remain true")
+	}
+}
+
+func TestFormatStyleGuideRules_Nil(t *testing.T) {
+	if got := FormatStyleGuideRules(nil); got != "" {
+		t.Errorf("FormatStyleGuideRules(nil) = %q, want empty", got)
+	}
+}
+
+func TestFormatStyleGuideRules_AllRules(t *testing.T) {
+	guide := &StyleGuide{
+		RequireWhy:          true,
+		RequireAlternatives: true,
+		MaxBodyLength:       5000,
+		MinTags:             3,
+	}
+	got := FormatStyleGuideRules(guide)
+	for _, want := range []string{
+		"'## Why' is required",
+		"'## Alternatives' is required",
+		"5000 characters",
+		"3 tags required",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("FormatStyleGuideRules missing %q in:\n%s", want, got)
+		}
+	}
+}
+
+func TestFormatStyleGuideRules_NoActiveRules(t *testing.T) {
+	guide := &StyleGuide{
+		RequireWhy:          false,
+		RequireAlternatives: false,
+		MaxBodyLength:       0,
+		MinTags:             0,
+	}
+	if got := FormatStyleGuideRules(guide); got != "" {
+		t.Errorf("FormatStyleGuideRules with no active rules = %q, want empty", got)
 	}
 }

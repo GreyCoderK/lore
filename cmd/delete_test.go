@@ -369,7 +369,8 @@ func TestDeleteCmd_Registered(t *testing.T) {
 		Err: &bytes.Buffer{},
 		In:  strings.NewReader(""),
 	}
-	root := newRootCmd(&config.Config{}, streams)
+	var s domain.LoreStore
+	root := newRootCmd(&config.Config{}, streams, &s)
 
 	for _, sub := range root.Commands() {
 		if sub.Name() == "delete" {

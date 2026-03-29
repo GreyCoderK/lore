@@ -17,6 +17,7 @@ import (
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/testutil"
 	"github.com/greycoderk/lore/internal/ui"
+	"github.com/stretchr/testify/require"
 )
 
 func setupDoctorDir(t *testing.T) string {
@@ -26,7 +27,7 @@ func setupDoctorDir(t *testing.T) string {
 	return dir
 }
 
-func runDoctor(t *testing.T, dir string, args ...string) (stdout, stderr string, exitErr error) {
+func runDoctor(t *testing.T, _ string, args ...string) (stdout, stderr string, exitErr error) {
 	t.Helper()
 	restore := ui.SaveAndDisableColor()
 	defer restore()
@@ -219,6 +220,94 @@ func TestDoctor_NotInitialized(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "Lore not initialized") {
 		t.Errorf("expected 'Lore not initialized' in stderr, got: %q", stderr)
+	}
+}
+
+// --- Config Validation Tests ---
+
+func TestDoctor_ConfigValid(t *testing.T) {
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".lorerc.yaml"), []byte("ai:\n  provider: anthropic\n"), 0o644))
+
+	_, stderr, err := runDoctor(t, dir, "--config")
+	if err != nil {
+		t.Fatalf("expected no error for valid config, got: %v", err)
+	}
+	if !strings.Contains(stderr, "Config OK") {
+		t.Errorf("expected 'Config OK' in stderr, got: %q", stderr)
+	}
+	if !strings.Contains(stderr, "ai.provider") {
+		t.Errorf("expected active values in stderr, got: %q", stderr)
+	}
+}
+
+func TestDoctor_ConfigTypoWithSuggestion(t *testing.T) {
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".lorerc.yaml"), []byte("ai:\n  povider: anthropic\n"), 0o644))
+
+	_, stderr, err := runDoctor(t, dir, "--config")
+	if err == nil {
+		t.Fatal("expected exit code 1 with config warnings")
+	}
+	if !strings.Contains(stderr, "ai.povider") {
+		t.Errorf("expected typo field in stderr, got: %q", stderr)
+	}
+	if !strings.Contains(stderr, "did you mean") {
+		t.Errorf("expected suggestion in stderr, got: %q", stderr)
+	}
+}
+
+func TestDoctor_ConfigIncludedInStandardDiagnostic(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := setupDoctorDir(t)
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	_, _ = storage.WriteDoc(docsDir, domain.DocMeta{Type: "note", Date: "2026-03-07", Status: "published"}, "test", "# T\n\nBody.\n")
+	_ = storage.RegenerateIndex(docsDir)
+
+	// Valid config — should appear as ✓ config
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".lorerc.yaml"), []byte("ai:\n  provider: anthropic\n"), 0o644))
+
+	_, stderr, err := runDoctor(t, dir)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stderr, "config") {
+		t.Errorf("expected 'config' category in standard diagnostic, got: %q", stderr)
+	}
+}
+
+func TestDoctor_ConfigNoFiles(t *testing.T) {
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	_, stderr, err := runDoctor(t, dir, "--config")
+	if err != nil {
+		t.Fatalf("expected no error with no config files (defaults used), got: %v", err)
+	}
+	if !strings.Contains(stderr, "Config OK") {
+		t.Errorf("expected 'Config OK' in stderr, got: %q", stderr)
+	}
+}
+
+func TestDoctor_ConfigQuietMode(t *testing.T) {
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".lorerc.yaml"), []byte("ai:\n  povider: bad\n"), 0o644))
+
+	stdout, stderr, err := runDoctor(t, dir, "--config", "--quiet")
+	if err == nil {
+		t.Fatal("expected exit code 1 with config warnings in quiet mode")
+	}
+	if stderr != "" {
+		t.Errorf("expected empty stderr in quiet mode, got: %q", stderr)
+	}
+	if !strings.Contains(stdout, "1") {
+		t.Errorf("expected warning count in stdout, got: %q", stdout)
 	}
 }
 

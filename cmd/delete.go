@@ -11,6 +11,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
@@ -24,8 +25,8 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	var force bool
 
 	cmd := &cobra.Command{
-		Use:   "delete <filename>",
-		Short: "Remove a document from your corpus",
+		Use:   i18n.T().Cmd.DeleteUse,
+		Short: i18n.T().Cmd.DeleteShort,
 		Example: `  lore delete decision-auth-strategy-2026-03-07.md
   lore delete decision-auth-strategy-2026-03-07.md --force`,
 		Args:         cobra.ExactArgs(1),
@@ -38,7 +39,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 
 			filename := args[0]
 			if err := storage.ValidateFilename(filename); err != nil {
-				_, _ = fmt.Fprintf(streams.Err, "%s Invalid filename '%s'.\n", ui.Error("Error:"), filename)
+				_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Error("Error:"), fmt.Sprintf(i18n.T().Cmd.DeleteInvalidName, filename))
 				return fmt.Errorf("cmd: delete: %w", err)
 			}
 			docsDir := filepath.Join(".lore", "docs")
@@ -47,7 +48,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			// AC-5: read document — produces friendly error if missing
 			data, err := os.ReadFile(docPath)
 			if os.IsNotExist(err) {
-				_, _ = fmt.Fprintf(streams.Err, "%s Document '%s' not found.\n", ui.Error("Error:"), filename)
+				_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Error("Error:"), fmt.Sprintf(i18n.T().Cmd.DeleteNotFound, filename))
 				return fmt.Errorf("cmd: delete: %s: %w", filename, domain.ErrNotFound)
 			} else if err != nil {
 				return fmt.Errorf("cmd: delete: read %s: %w", filename, err)
@@ -63,11 +64,11 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				_, _ = fmt.Fprintf(streams.Err, "Warning: %v\n", refErr)
 			}
 			if len(refs) > 0 {
-				fmt.Fprintf(streams.Err, "%s This document is referenced by:\n", ui.Warning("Warning:"))
+				_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Warning("Warning:"), i18n.T().Cmd.DeleteRefWarning)
 				for _, ref := range refs {
-					fmt.Fprintf(streams.Err, "  - %s\n", ref)
+					_, _ = fmt.Fprintf(streams.Err, "  - %s\n", ref)
 				}
-				fmt.Fprintf(streams.Err, "References will NOT be updated automatically.\n")
+				_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.DeleteRefNotUpdated)
 			}
 
 			// AC-3: demo documents skip confirmation
@@ -76,12 +77,15 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			if needConfirm {
 				// AC-8: non-TTY without --force → refuse
 				if !deleteIsTTY(streams) {
-					fmt.Fprintf(streams.Err, "%s Confirmation required. Use --force in non-interactive mode.\n", ui.Error("Error:"))
+					_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Error("Error:"), i18n.T().Cmd.DeleteForceRequired)
 					return fmt.Errorf("cmd: delete: %w", domain.ErrNotInteractive)
 				}
 
 				// AC-2: interactive confirmation
-				fmt.Fprintf(streams.Err, "Delete %s? [y/N] ", filename)
+				if cmd.Context().Err() != nil {
+					return cmd.Context().Err()
+				}
+				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DeleteConfirmPrompt, filename)
 				// Read stdin byte-by-byte instead of bufio.NewReader to avoid
 				// buffering ahead — same pattern as proactive.go AC-4 confirmation.
 				var answerBuf []byte
@@ -100,7 +104,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				}
 				answer := strings.TrimSpace(strings.ToLower(string(answerBuf)))
 				if answer != "y" && answer != "yes" {
-					fmt.Fprintf(streams.Err, "Not deleted.\n")
+					_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.DeleteCancelled)
 					return nil
 				}
 			}

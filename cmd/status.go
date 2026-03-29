@@ -5,9 +5,12 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	gitpkg "github.com/greycoderk/lore/internal/git"
 	"github.com/greycoderk/lore/internal/status"
 	"github.com/greycoderk/lore/internal/ui"
@@ -19,8 +22,8 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "status",
-		Short: "Check your documentation health",
-		Long:  "Display a dashboard showing hooks, documents, pending items, and health.",
+		Short: i18n.T().Cmd.StatusShort,
+		Long:  i18n.T().Cmd.StatusLong,
 		Example: `  lore status
   lore status --quiet`,
 		SilenceUsage:  true,
@@ -49,67 +52,96 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	return cmd
 }
 
+// renderDashboard writes the human-readable dashboard to stderr (interactive use).
+// For pipeable output, use --quiet which writes to stdout.
 func renderDashboard(streams domain.IOStreams, info *status.StatusInfo) error {
 	w := streams.Err
 
 	// Header
-	fmt.Fprintf(w, "lore status — %s\n\n", info.ProjectName)
+	_, _ = fmt.Fprintf(w, i18n.T().Cmd.StatusHeader+"\n\n", info.ProjectName)
 
 	// Hook
-	hookVal := ui.Error("not installed") + ". Run: lore hook install"
+	hookVal := ui.Error(i18n.T().Cmd.StatusHookNotInstalled) + i18n.T().Cmd.StatusHookNotInstHint
 	if info.HookInstalled {
-		hookVal = "installed (post-commit)"
+		hookVal = i18n.T().Cmd.StatusHookInstalled
 	}
-	fmt.Fprintf(w, "%-10s%s\n", "Hook:", hookVal)
+	_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusHookLabel, hookVal)
 
 	// Docs
-	docsVal := fmt.Sprintf("%d documented", info.DocCount)
+	docsVal := fmt.Sprintf(i18n.T().Cmd.StatusDocsDocumented, info.DocCount)
 	if info.PendingCount > 0 {
-		docsVal += fmt.Sprintf(", %d pending", info.PendingCount)
+		docsVal += fmt.Sprintf(i18n.T().Cmd.StatusDocsPending, info.PendingCount)
 	}
-	fmt.Fprintf(w, "%-10s%s\n", "Docs:", docsVal)
+	_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusDocsLabel, docsVal)
 
 	// Express ratio
 	total := info.ExpressCount + info.CompleteCount
 	if total > 0 {
 		pctComplete := info.CompleteCount * 100 / total
 		pctExpress := 100 - pctComplete
-		expressLine := fmt.Sprintf("%d%% (%d/%d) — %d%% with alternatives/impact",
+		expressLine := fmt.Sprintf(i18n.T().Cmd.StatusExpressLine,
 			pctExpress, info.ExpressCount, total, pctComplete)
 		if info.ReadErrors > 0 {
-			expressLine += fmt.Sprintf(" (%d unreadable)", info.ReadErrors)
+			expressLine += " " + fmt.Sprintf(i18n.T().Cmd.StatusExpressUnreadable, info.ReadErrors)
 		}
-		fmt.Fprintf(w, "%-10s%s\n", "Express:", expressLine)
+		_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusExpressLabel, expressLine)
 	} else if info.ReadErrors > 0 {
-		fmt.Fprintf(w, "%-10s%s\n", "Express:", fmt.Sprintf("(%d unreadable)", info.ReadErrors))
+		_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusExpressLabel, fmt.Sprintf(i18n.T().Cmd.StatusExpressUnreadable, info.ReadErrors))
 	}
 
 	// Angela
-	angelaVal := fmt.Sprintf("%s mode", info.AngelaMode)
+	angelaVal := fmt.Sprintf(i18n.T().Cmd.StatusAngelaMode, info.AngelaMode)
 	if info.AngelaMode == "draft" {
-		angelaVal += " (no API key)"
+		angelaVal += " " + i18n.T().Cmd.StatusAngelaNoApiKey
 	} else if info.AIProvider != "" {
-		angelaVal += fmt.Sprintf(" (%s)", info.AIProvider)
+		angelaVal += " " + fmt.Sprintf(i18n.T().Cmd.StatusAngelaProvider, info.AIProvider)
 	}
 	if info.DocCount > 0 && info.AngelaDocsNeedReview > 0 {
-		angelaVal += fmt.Sprintf(" — %d docs need review", info.AngelaDocsNeedReview)
+		angelaVal += " " + fmt.Sprintf(i18n.T().Cmd.StatusAngelaDocsReview, info.AngelaDocsNeedReview)
 	} else if info.DocCount > 0 {
-		angelaVal += " — " + ui.Success("all docs clean")
+		angelaVal += " — " + ui.Success(i18n.T().Cmd.StatusAngelaAllClean)
 	}
-	fmt.Fprintf(w, "%-10s%s\n", "Angela:", angelaVal)
+	_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusAngelaLabel, angelaVal)
+
+	// Last Angela Review (from cache)
+	reviewCache, _ := angela.LoadReviewCache(".lore")
+	if reviewCache != nil {
+		reviewAge := formatReviewAge(reviewCache.LastReview)
+		if len(reviewCache.Findings) == 0 {
+			_, _ = fmt.Fprintf(w, "%-10s%s (%s)\n", i18n.T().Cmd.StatusReviewLabel, ui.Success(i18n.T().Cmd.StatusReviewNoIssues), reviewAge)
+		} else {
+			_, _ = fmt.Fprintf(w, "%-10s%s\n",
+				i18n.T().Cmd.StatusReviewLabel, fmt.Sprintf(i18n.T().Cmd.StatusReviewFindings, len(reviewCache.Findings), reviewAge))
+		}
+	}
 
 	// Health
 	if info.HealthIssues == 0 {
-		fmt.Fprintf(w, "%-10s%s all good\n", "Health:", ui.Success("\u2713"))
+		_, _ = fmt.Fprintf(w, "%-10s%s %s\n", i18n.T().Cmd.StatusHealthLabel, ui.Success("\u2713"), i18n.T().Cmd.StatusHealthAllGood)
 	} else {
-		fmt.Fprintf(w, "%-10s%s %d issues. Run: lore doctor\n",
-			"Health:", ui.Error("\u2717"), info.HealthIssues)
+		_, _ = fmt.Fprintf(w, "%-10s%s %s\n",
+			i18n.T().Cmd.StatusHealthLabel, ui.Error("\u2717"), fmt.Sprintf(i18n.T().Cmd.StatusHealthIssues, info.HealthIssues))
 	}
 
 	// Tagline
-	fmt.Fprintf(w, "\n%s\n", ui.Dim("Your code knows what. Lore knows why."))
+	_, _ = fmt.Fprintf(w, "\n%s\n", ui.Dim(i18n.T().Cmd.StatusTagline))
 
 	return nil
+}
+
+// formatReviewAge returns a human-friendly age string for the last review.
+func formatReviewAge(t time.Time) string {
+	d := time.Since(t)
+	switch {
+	case d < time.Hour:
+		return i18n.T().Cmd.StatusReviewAgeJustNow
+	case d < 24*time.Hour:
+		return fmt.Sprintf(i18n.T().Cmd.StatusReviewAgeHours, int(d.Hours()))
+	case d < 7*24*time.Hour:
+		return fmt.Sprintf(i18n.T().Cmd.StatusReviewAgeDays, int(d.Hours()/24))
+	default:
+		return t.Format("2006-01-02")
+	}
 }
 
 func renderQuiet(streams domain.IOStreams, info *status.StatusInfo) error {
@@ -125,16 +157,22 @@ func renderQuiet(streams domain.IOStreams, info *status.StatusInfo) error {
 		healthStatus = fmt.Sprintf("%d-issues", info.HealthIssues)
 	}
 
-	fmt.Fprintf(w, "hook=%s\n", hookStatus)
-	fmt.Fprintf(w, "docs=%d\n", info.DocCount)
-	fmt.Fprintf(w, "pending=%d\n", info.PendingCount)
-	fmt.Fprintf(w, "health=%s\n", healthStatus)
+	_, _ = fmt.Fprintf(w, "hook=%s\n", hookStatus)
+	_, _ = fmt.Fprintf(w, "docs=%d\n", info.DocCount)
+	_, _ = fmt.Fprintf(w, "pending=%d\n", info.PendingCount)
+	_, _ = fmt.Fprintf(w, "health=%s\n", healthStatus)
 	if info.ReadErrors > 0 {
-		fmt.Fprintf(w, "read_errors=%d\n", info.ReadErrors)
+		_, _ = fmt.Fprintf(w, "read_errors=%d\n", info.ReadErrors)
 	}
-	fmt.Fprintf(w, "angela=%s\n", info.AngelaMode)
-	fmt.Fprintf(w, "angela_review=%d\n", info.AngelaDocsNeedReview)
-	fmt.Fprintf(w, "angela_suggestions=%d\n", info.AngelaSuggestions)
+	_, _ = fmt.Fprintf(w, "angela=%s\n", info.AngelaMode)
+	_, _ = fmt.Fprintf(w, "angela_review=%d\n", info.AngelaDocsNeedReview)
+	_, _ = fmt.Fprintf(w, "angela_suggestions=%d\n", info.AngelaSuggestions)
+
+	reviewCache, _ := angela.LoadReviewCache(".lore")
+	if reviewCache != nil {
+		_, _ = fmt.Fprintf(w, "review_findings=%d\n", len(reviewCache.Findings))
+		_, _ = fmt.Fprintf(w, "review_age=%s\n", formatReviewAge(reviewCache.LastReview))
+	}
 
 	return nil
 }

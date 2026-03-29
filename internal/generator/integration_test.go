@@ -95,6 +95,11 @@ func TestIntegration_FullPipeline(t *testing.T) {
 		t.Error("expected status in front matter")
 	}
 
+	// Regenerate index (WriteDoc no longer calls RegenerateIndex)
+	if err := storage.RegenerateIndex(docsDir); err != nil {
+		t.Fatalf("RegenerateIndex: %v", err)
+	}
+
 	// AC-3: README.md index regenerated
 	readmePath := filepath.Join(docsDir, "README.md")
 	readme, err := os.ReadFile(readmePath)

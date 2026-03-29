@@ -138,6 +138,20 @@ func TestAtomicWriteExclusive_SetsPermissions(t *testing.T) {
 	}
 }
 
+func TestAtomicWrite_ReadOnlyDir(t *testing.T) {
+	dir := t.TempDir()
+	roDir := filepath.Join(dir, "readonly")
+	os.MkdirAll(roDir, 0o755)
+	os.Chmod(roDir, 0o555)
+	t.Cleanup(func() { os.Chmod(roDir, 0o755) })
+
+	path := filepath.Join(roDir, "test.txt")
+	err := fileutil.AtomicWrite(path, []byte("data"), 0644)
+	if err == nil {
+		t.Error("expected error writing to read-only directory")
+	}
+}
+
 func TestAtomicWrite_BadDir(t *testing.T) {
 	err := fileutil.AtomicWrite("/nonexistent/dir/file.txt", []byte("data"), 0644)
 	if err == nil {

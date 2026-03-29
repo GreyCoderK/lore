@@ -7,10 +7,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/greycoderk/lore/internal/domain"
 )
+
+// defaultOllamaEndpoint is the Ollama default endpoint used by config/defaults.go.
+// Providers check against this to avoid sending API calls to Ollama when they have
+// their own default endpoint.
+const defaultOllamaEndpoint = "http://localhost:11434"
 
 // DefaultCallOptions returns sensible defaults for AI provider calls.
 func DefaultCallOptions() domain.CallOptions {
@@ -39,6 +45,7 @@ func EnsureTimeout(t time.Duration) time.Duration {
 
 // ValidateEndpoint checks that an endpoint URL uses http or https scheme only.
 // Rejects file://, gopher://, javascript:, and other dangerous schemes.
+// Also rejects plain http for non-localhost endpoints to prevent credential leakage.
 func ValidateEndpoint(endpoint string) error {
 	u, err := url.Parse(endpoint)
 	if err != nil {
@@ -50,7 +57,16 @@ func ValidateEndpoint(endpoint string) error {
 	if u.Host == "" {
 		return fmt.Errorf("ai: endpoint: missing host in %q", endpoint)
 	}
+	if u.Scheme == "http" && !isLocalhost(u.Host) {
+		return fmt.Errorf("ai: endpoint: http not allowed for remote hosts (use https), got %q", endpoint)
+	}
 	return nil
+}
+
+// isLocalhost returns true if host (with optional port) resolves to a loopback address.
+func isLocalhost(host string) bool {
+	h := strings.Split(host, ":")[0]
+	return h == "localhost" || h == "127.0.0.1" || h == "::1"
 }
 
 // TruncateForError returns s truncated to maxLen bytes for safe inclusion in error messages.
@@ -62,10 +78,17 @@ func TruncateForError(s string, maxLen int) string {
 	return s[:maxLen] + "...(truncated)"
 }
 
-// SafeHTTPClient returns an http.Client that refuses to follow redirects.
-// This prevents SSRF attacks via open redirects (e.g. 302 → internal services).
+// SafeHTTPClient returns an http.Client with connection limits, a global timeout,
+// and redirect-following disabled (prevents SSRF via open redirects).
 func SafeHTTPClient() *http.Client {
 	return &http.Client{
+		Timeout: 120 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        10,
+			MaxIdleConnsPerHost: 2,
+			MaxConnsPerHost:     5,
+			IdleConnTimeout:     90 * time.Second,
+		},
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},

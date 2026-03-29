@@ -15,6 +15,11 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/greycoderk/lore/internal/version.Version={{.Version}}
+      - -X github.com/greycoderk/lore/internal/version.Commit={{.ShortCommit}}
+      - -X github.com/greycoderk/lore/internal/version.Date={{.Date}}
 
 archives:
   - formats: [tar.gz]
@@ -29,18 +34,57 @@ archives:
       - goos: windows
         formats: [zip]
 
-# brews:
-#   - repository:
-#       owner: GreyCoderK
-#       name: homebrew-lore
-#       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-#     homepage: "https://github.com/GreyCoderK/lore"
-#     description: "A CLI tool that captures the why behind your code, one commit at a time"
-#     license: "AGPL-3.0-or-later"
-#     install: |
-#       bin.install "lore"
-#     test: |
-#       system "#{bin}/lore", "--help"
+brews:
+  - repository:
+      owner: GreyCoderK
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/GreyCoderK/lore"
+    description: "A CLI tool that captures the why behind your code, one commit at a time"
+    license: "AGPL-3.0-or-later"
+    install: |
+      bin.install "lore"
+    test: |
+      system "#{bin}/lore", "--help"
+
+nfpms:
+  - package_name: lore
+    homepage: "https://github.com/GreyCoderK/lore"
+    maintainer: "Museigen <museigen@greycoderk.com>"
+    description: "A CLI tool that captures the why behind your code, one commit at a time"
+    license: "AGPL-3.0-or-later"
+    section: utils
+    bindir: /usr/bin
+    formats:
+      - deb
+      - rpm
+      - apk
+
+snapcrafts:
+  - name: lore
+    summary: "Capture the why behind your code, one commit at a time"
+    description: "Lore is a CLI tool that captures the why behind your code decisions at commit time, building a searchable documentation corpus."
+    grade: stable
+    confinement: strict
+    license: "AGPL-3.0-or-later"
+    publish: false # Set to true once SNAPCRAFT_STORE_CREDENTIALS is configured
+    apps:
+      lore:
+        command: lore
+        plugs:
+          - home
+          - network
+          - dot-gitconfig
+
+chocolateys:
+  - name: lore
+    title: "Lore CLI"
+    authors: "Museigen"
+    project_url: "https://github.com/GreyCoderK/lore"
+    license_url: "https://github.com/GreyCoderK/lore/blob/main/LICENSE"
+    description: "A CLI tool that captures the why behind your code, one commit at a time"
+    tags: "documentation cli git developer-tools"
+    api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
 
 changelog:
   sort: asc
@@ -48,6 +92,9 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+checksum:
+  name_template: "checksums.txt"
 
 release:
   footer: >-
@@ -57,7 +104,19 @@ release:
     **Install:**
     ```
     # Homebrew (macOS / Linux)
-    brew install GreyCoderK/lore/lore
+    brew install GreyCoderK/tap/lore
+
+    # Script (Linux / macOS)
+    curl -sSfL https://raw.githubusercontent.com/GreyCoderK/lore/main/install.sh | sh
+
+    # Debian / Ubuntu
+    sudo dpkg -i lore_*.deb
+
+    # Fedora / RHEL
+    sudo rpm -i lore_*.rpm
+
+    # Chocolatey (Windows)
+    choco install lore
 
     # Go
     go install github.com/greycoderk/lore@{{ .Tag }}

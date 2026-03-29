@@ -10,6 +10,8 @@ import (
 	"golang.org/x/term"
 )
 
+// IsTerminal returns false for non-file streams (e.g., pipes, test buffers).
+// This is intentional: non-interactive contexts should not prompt for input.
 func IsTerminal(streams domain.IOStreams) bool {
 	inFile, ok := streams.In.(*os.File)
 	if !ok {

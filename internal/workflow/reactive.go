@@ -4,6 +4,7 @@
 package workflow
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -11,7 +12,9 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
+	"github.com/greycoderk/lore/internal/workflow/decision"
 )
 
 // HandleReactive runs the full interactive post-commit flow:
@@ -27,21 +30,34 @@ import (
 // HandleReactive runs the full interactive post-commit flow with default
 // detection options. Use handleReactiveWithOpts for injection in tests.
 func HandleReactive(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter) error {
-	return handleReactiveWithOpts(ctx, workDir, streams, gitAdapter, DetectOpts{})
+	return HandleReactiveWithEngine(ctx, workDir, streams, gitAdapter, nil, nil)
 }
 
-func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, detectOpts DetectOpts) error {
-	// --- 1. Resolve HEAD commit ---
-	ref, err := gitAdapter.HeadRef()
-	if err != nil {
-		return fmt.Errorf("workflow: reactive: head ref: %w", err)
+// HandleReactiveWithEngine runs the full interactive post-commit flow with optional Decision Engine and store.
+func HandleReactiveWithEngine(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, engine *decision.Engine, store domain.LoreStore) error {
+	opts := DetectOpts{Store: store}
+	if engine != nil {
+		opts.Engine = engine
 	}
+	return handleReactiveWithOpts(ctx, workDir, streams, gitAdapter, opts, store)
+}
 
-	commit, _ := gitAdapter.Log(ref) // non-fatal; nil → flow uses defaults
+func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, detectOpts DetectOpts, store domain.LoreStore) error {
+	// --- 1. Resolve HEAD commit ---
+	commit, ref, err := resolveHeadCommit(gitAdapter, streams)
+	if err != nil {
+		return err
+	}
 
 	// H1/H2 fix: provide corpus reader for doc existence checks (AC-4, AC-5).
 	if detectOpts.Corpus == nil {
 		detectOpts.Corpus = &storage.CorpusStore{Dir: filepath.Join(workDir, ".lore", "docs")}
+	}
+
+	// Build SignalContext for Decision Engine if available
+	if detectOpts.Engine != nil && commit != nil && detectOpts.SignalCtx == nil {
+		diffContent, _ := gitAdapter.Diff(ref) // best-effort
+		detectOpts.SignalCtx = buildSignalContext(commit, diffContent)
 	}
 
 	// N2 fix: normalize IsTTY BEFORE Detect so both Detect and showMilestone
@@ -65,11 +81,65 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 		return fmt.Errorf("workflow: reactive: detect: %w", err)
 	}
 
+	return handleDetectionResult(ctx, workDir, streams, gitAdapter, store, commit, detection, tty)
+}
+
+// resolveHeadCommit gets HEAD commit info in a single git call via HeadCommit().
+// Falls back to separate HeadRef() + Log() if HeadCommit() fails.
+// Returns the commit info (may be nil on log failure), the ref hash, and any fatal error.
+func resolveHeadCommit(gitAdapter domain.GitAdapter, streams domain.IOStreams) (*domain.CommitInfo, string, error) {
+	commit, err := gitAdapter.HeadCommit()
+	if err == nil && commit != nil {
+		return commit, commit.Hash, nil
+	}
+
+	// Fallback: HeadCommit failed, try separate calls.
+	ref, err := gitAdapter.HeadRef()
+	if err != nil {
+		return nil, "", fmt.Errorf("workflow: reactive: head ref: %w", err)
+	}
+
+	commit, logErr := gitAdapter.Log(ref)
+	if logErr != nil {
+		// Log failure is non-fatal but worth surfacing — documents created without
+		// commit metadata are harder to trace.
+		_, _ = fmt.Fprintf(streams.Err, "Warning: could not read commit %s: %v\n", ref, logErr)
+	}
+	return commit, ref, nil
+}
+
+// buildSignalContext constructs a decision.SignalContext from commit info and diff content.
+func buildSignalContext(commit *domain.CommitInfo, diffContent string) *decision.SignalContext {
+	var filesChanged []string
+	if diffContent != "" {
+		filesChanged = ExtractFilesFromDiff(diffContent)
+	}
+	linesAdded, linesDeleted := CountDiffLines(diffContent)
+	return &decision.SignalContext{
+		ConvType:     commit.Type,
+		Scope:        commit.Scope,
+		Subject:      commit.Subject,
+		Message:      commit.Message,
+		DiffContent:  diffContent,
+		FilesChanged: filesChanged,
+		LinesAdded:   linesAdded,
+		LinesDeleted: linesDeleted,
+	}
+}
+
+// handleDetectionResult processes the detection action (skip, defer, amend, etc.)
+// and either terminates the flow or continues to the documentation flow.
+func handleDetectionResult(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, store domain.LoreStore, commit *domain.CommitInfo, detection DetectionResult, tty bool) error {
 	switch detection.Action {
 	case "skip":
 		if detection.Message != "" {
 			_, _ = fmt.Fprintln(streams.Err, detection.Message)
 		}
+		skipType := "skipped"
+		if detection.Reason == "merge" {
+			skipType = "merge-skipped"
+		}
+		recordDecision(store, commit, detection, skipType)
 		return nil
 	case "defer":
 		hash, msg := commitFields(commit)
@@ -77,21 +147,74 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 		if err := SavePending(workDir, record); err != nil {
 			return fmt.Errorf("workflow: reactive: defer: %w", err)
 		}
+		recordDecision(store, commit, detection, "pending")
 		return nil
 	case "amend":
-		return handleAmend(ctx, workDir, streams, gitAdapter, commit, tty)
-	// "proceed" falls through to the normal interactive flow below.
+		err := handleAmend(ctx, workDir, streams, gitAdapter, commit, tty)
+		if err == nil {
+			recordDecision(store, commit, detection, "documented")
+		}
+		return err
+	case "auto-skip":
+		if detection.Message != "" {
+			_, _ = fmt.Fprintln(streams.Err, detection.Message)
+		}
+		recordDecision(store, commit, detection, "auto-skipped")
+		return nil
+	case "suggest-skip":
+		if ctx.Err() != nil {
+			recordDecision(store, commit, detection, "skipped")
+			return ctx.Err()
+		}
+		_, _ = fmt.Fprintf(streams.Err, "📝 %s", i18n.T().Workflow.SuggestSkipPrompt)
+		reader := bufio.NewReader(streams.In)
+		line, _ := reader.ReadString('\n')
+		line = strings.TrimSpace(strings.ToLower(line))
+		if line != "y" && line != "yes" && line != "o" && line != "oui" {
+			_, _ = fmt.Fprintln(streams.Err, i18n.T().Workflow.SuggestSkipSkipped)
+			recordDecision(store, commit, detection, "skipped")
+			return nil
+		}
+		// User said yes → proceed as ask-reduced
+		detection.QuestionMode = "reduced"
+		// fall through to documentation flow
+	case "ask-reduced", "ask-full", "proceed":
+		// fall through to documentation flow
+	default:
+		// Unknown action — treat as proceed (defensive fallback)
+		_, _ = fmt.Fprintf(streams.Err, "Warning: unknown detection action %q, proceeding with documentation flow\n", detection.Action)
 	}
 
-	// --- 2-5. Question flow + generate + persist (H2: shared via helper) ---
-	result, err := runDocumentationFlow(ctx, workDir, streams, commit, "")
+	// --- 2-5. Question flow + generate + persist ---
+	result, err := runDocumentationFlow(ctx, workDir, streams, commit, "", detection)
 	if err != nil {
 		return err
 	}
 
+	recordDecision(store, commit, detection, "documented")
 	displayCompletion(streams, result, "Captured", workDir, tty)
 
 	return nil
+}
+
+// recordDecision persists the decision to the LKS store (best-effort, nil-safe).
+func recordDecision(store domain.LoreStore, commit *domain.CommitInfo, detection DetectionResult, decisionType string) {
+	if store == nil || commit == nil {
+		return
+	}
+	rec := domain.CommitRecord{
+		Hash:         commit.Hash,
+		Date:         commit.Date,
+		Scope:        commit.Scope,
+		ConvType:     commit.Type,
+		Subject:      commit.Subject,
+		Message:      commit.Message,
+		Decision:     decisionType,
+		DecisionScore: detection.Score,
+		QuestionMode: detection.QuestionMode,
+		SkipReason:   detection.Reason,
+	}
+	_ = store.RecordCommit(rec) // best-effort, never block the hook
 }
 
 // commitFields extracts hash and message from a CommitInfo, safely handling nil.
@@ -105,11 +228,17 @@ func commitFields(commit *domain.CommitInfo) (hash, msg string) {
 // runDocumentationFlow orchestrates the question flow, document generation, and
 // persistence. If overwritePath is non-empty the document is written to that
 // exact path (atomic overwrite) rather than creating a new file via WriteDoc.
-func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IOStreams, commit *domain.CommitInfo, overwritePath string) (storage.WriteResult, error) {
+// detection carries QuestionMode and pre-filled answers from the Decision Engine.
+func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IOStreams, commit *domain.CommitInfo, overwritePath string, detection ...DetectionResult) (storage.WriteResult, error) {
 	renderer := NewRenderer(streams)
 	flow := NewQuestionFlow(streams, renderer)
 
-	answers, flowErr := flow.RunFlow(ctx, commit)
+	// Apply pre-fill and reduced mode from Decision Engine
+	var prefill *DetectionResult
+	if len(detection) > 0 {
+		prefill = &detection[0]
+	}
+	answers, flowErr := flow.RunFlowWithMode(ctx, commit, prefill)
 	if flowErr != nil {
 		// Context cancelled → persist partial answers silently.
 		if ctx.Err() != nil {
@@ -154,7 +283,7 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	}
 
 	if existingFilename != "" {
-		_, _ = fmt.Fprintf(streams.Err, "Amend detected — updating existing document: %s\n", existingFilename)
+		_, _ = fmt.Fprintf(streams.Err, i18n.T().Workflow.AmendUpdatingExisting+"\n", existingFilename)
 	} else if origHash != "" {
 		// L10 fix: inform the user when amend detection fired but no existing document
 		// was found — the silent fallback to creating a new doc was confusing.
@@ -162,7 +291,7 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 		if len(shortHash) > 7 {
 			shortHash = shortHash[:7]
 		}
-		_, _ = fmt.Fprintf(streams.Err, "Amend detected — no existing document found for %s, creating new document.\n", shortHash)
+		_, _ = fmt.Fprintf(streams.Err, i18n.T().Workflow.AmendNoDocCreatingNew+"\n", shortHash)
 	}
 
 	// H2 fix: delegate to the shared helper instead of duplicating the flow.
@@ -196,4 +325,34 @@ func readORIGHEAD(gitAdapter domain.GitAdapter) string {
 		return ""
 	}
 	return strings.TrimSpace(string(data))
+}
+
+// ExtractFilesFromDiff parses file names from unified diff output (+++ b/ lines).
+func ExtractFilesFromDiff(diff string) []string {
+	seen := make(map[string]bool, 16)
+	files := make([]string, 0, 16)
+	for _, line := range strings.Split(diff, "\n") {
+		if len(line) > 6 && line[:6] == "+++ b/" {
+			f := line[6:]
+			if !seen[f] {
+				seen[f] = true
+				files = append(files, f)
+			}
+		}
+	}
+	return files
+}
+
+// CountDiffLines counts added and deleted lines from unified diff output.
+// Limited to first 10000 lines for performance on very large diffs.
+func CountDiffLines(diff string) (added, deleted int) {
+	lines := strings.SplitN(diff, "\n", 10001)
+	for _, line := range lines {
+		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
+			added++
+		} else if strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---") {
+			deleted++
+		}
+	}
+	return
 }

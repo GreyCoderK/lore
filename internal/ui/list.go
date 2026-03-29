@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 const maxListItems = 15
@@ -51,7 +52,7 @@ func List(streams domain.IOStreams, items []ListItem, prompt string) (int, error
 
 	if truncated {
 		remaining := len(items) - maxListItems
-		_, _ = fmt.Fprintf(out, "... and %d more. Refine your search.\n", remaining)
+		_, _ = fmt.Fprintf(out, i18n.T().UI.ListTruncated+"\n", remaining)
 	}
 
 	// Non-TTY: no interactive selection
@@ -64,7 +65,7 @@ func List(streams domain.IOStreams, items []ListItem, prompt string) (int, error
 	for {
 		fmt.Fprintf(streams.Err, "%s [1-%d]: ", prompt, displayCount)
 		if !scanner.Scan() {
-			return -1, fmt.Errorf("ui: list: no input")
+			return -1, fmt.Errorf("ui: list: %s", i18n.T().UI.ListNoInput)
 		}
 		text := strings.TrimSpace(scanner.Text())
 		if text == "" {
@@ -72,7 +73,7 @@ func List(streams domain.IOStreams, items []ListItem, prompt string) (int, error
 		}
 		n, err := strconv.Atoi(text)
 		if err != nil || n < 1 || n > displayCount {
-			fmt.Fprintf(streams.Err, "Please enter a number between 1 and %d.\n", displayCount)
+			fmt.Fprintf(streams.Err, i18n.T().UI.ListPromptRange+"\n", displayCount)
 			continue
 		}
 		return n - 1, nil

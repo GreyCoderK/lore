@@ -357,6 +357,14 @@ func TestUnmarshal_HorizontalRuleInBody(t *testing.T) {
 	})
 }
 
+func TestUnmarshal_EmptyFrontmatter(t *testing.T) {
+	data := []byte("---\n---\nBody content here\n")
+	_, _, err := Unmarshal(data)
+	if err == nil {
+		t.Error("expected error for empty frontmatter")
+	}
+}
+
 func TestUnmarshal_InvalidType(t *testing.T) {
 	input := "---\ntype: banana\ndate: \"2026-03-07\"\nstatus: published\n---\n# Body\n"
 	_, _, err := Unmarshal([]byte(input))
