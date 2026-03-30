@@ -403,4 +403,17 @@ Pour charger les complétions :
 		ReleaseSectionNotes:     "Notes",
 		ReleaseTitle:            "# Version %s",
 	},
+	Notify: NotifyMessages{
+		DialogTitle:     "Lore",
+		DialogTitleWhat: "Lore — Quoi",
+		DialogTitleWhy:  "Lore — Pourquoi",
+		PromptType:      "Type :",
+		PromptWhat:      "Qu'avez-vous changé ?",
+		PromptWhy:       "Pourquoi ce changement ?",
+		ButtonCancel:    "Annuler",
+		ButtonNext:      "Suivant",
+		ButtonSave:      "Enregistrer",
+		ButtonSkip:      "Ignorer",
+		SimplePending:   "lore en attente — %s",
+	},
 }

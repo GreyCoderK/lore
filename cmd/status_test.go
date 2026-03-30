@@ -89,6 +89,8 @@ func TestStatusCmd_Dashboard(t *testing.T) {
 	if !strings.Contains(stderr, "lore status") {
 		t.Errorf("expected header, got %q", stderr)
 	}
+	// NOTE: Label assertions below are coupled to i18n English strings.
+	// If we add multi-language support, switch these to use i18n.T() references.
 	if !strings.Contains(stderr, "Hook:") {
 		t.Errorf("expected Hook label, got %q", stderr)
 	}
@@ -117,6 +119,7 @@ func TestStatusCmd_HealthOK(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	// NOTE: "all good" is an i18n English string; acceptable for MVP.
 	if !strings.Contains(errBuf.String(), "all good") {
 		t.Errorf("expected 'all good', got %q", errBuf.String())
 	}
@@ -179,6 +182,7 @@ func TestStatusCmd_HookInstalled(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	// NOTE: i18n-coupled assertion; acceptable for MVP.
 	if !strings.Contains(errBuf.String(), "installed (post-commit)") {
 		t.Errorf("expected 'installed (post-commit)', got %q", errBuf.String())
 	}
@@ -267,6 +271,7 @@ func TestStatusCmd_Tagline(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	// NOTE: Tagline is an i18n English string; acceptable for MVP.
 	if !strings.Contains(errBuf.String(), "Your code knows what. Lore knows why.") {
 		t.Errorf("expected tagline, got %q", errBuf.String())
 	}

@@ -56,6 +56,7 @@ func TestShowCmd_NotInitialized(t *testing.T) {
 	if !errors.Is(err, domain.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
+	// NOTE: These assertions are coupled to i18n English strings; acceptable for MVP.
 	errOutput := errBuf.String()
 	if !strings.Contains(errOutput, "Lore not initialized") {
 		t.Errorf("expected 'Lore not initialized', got %q", errOutput)
@@ -81,6 +82,7 @@ func TestShowCmd_ZeroResults(t *testing.T) {
 	if out.Len() != 0 {
 		t.Errorf("expected no stdout output, got %q", out.String())
 	}
+	// NOTE: These assertions are coupled to i18n English strings; acceptable for MVP.
 	errOutput := errBuf.String()
 	if !strings.Contains(errOutput, "No documents matching 'nonexistent'") {
 		t.Errorf("expected zero-result message, got %q", errOutput)

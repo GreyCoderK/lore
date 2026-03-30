@@ -82,11 +82,17 @@ func BuildCorpusSummary(corpus []domain.DocMeta) string {
 	return sb.String()
 }
 
+// maxAIInputSize is the maximum document size accepted for AI processing (~100KB, roughly 25K tokens).
+const maxAIInputSize = 100_000
+
 // Polish sends a document to the AI provider for enhancement.
 // Returns the improved document content. Exactly 1 API call.
 func Polish(ctx context.Context, provider domain.AIProvider, doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile) (string, error) {
 	if provider == nil {
 		return "", fmt.Errorf("angela: polish: no AI provider configured")
+	}
+	if len(doc) > maxAIInputSize {
+		return "", fmt.Errorf("angela: document too large for AI processing (%d bytes, max %d)", len(doc), maxAIInputSize)
 	}
 
 	systemPrompt, userContent := BuildPolishPrompt(doc, meta, styleGuide, corpusSummary, personas)

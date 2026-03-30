@@ -77,7 +77,7 @@ func TestGetRegistry_AllFieldsPopulated(t *testing.T) {
 	}
 }
 
-func TestGetRegistry_NoBMADImport(t *testing.T) {
+func TestGetRegistry_NotNil(t *testing.T) {
 	if GetRegistry() == nil {
 		t.Fatal("GetRegistry must not return nil")
 	}

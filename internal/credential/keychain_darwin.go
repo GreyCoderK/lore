@@ -16,7 +16,9 @@ import (
 )
 
 type darwinStore struct {
-	account string // OS username, used as the keychain account field
+	account    string // OS username, used as the keychain account field
+	cachedList []string
+	listCached bool
 }
 
 func newPlatformStore() CredentialStore {
@@ -32,6 +34,7 @@ func (d *darwinStore) serviceName(provider string) string {
 }
 
 func (d *darwinStore) Set(provider string, secret []byte) error {
+	d.listCached = false // Invalidate cache
 	if err := ValidateProvider(provider); err != nil {
 		return err
 	}
@@ -81,6 +84,7 @@ func (d *darwinStore) Get(provider string) ([]byte, error) {
 }
 
 func (d *darwinStore) Delete(provider string) error {
+	d.listCached = false // Invalidate cache
 	if err := ValidateProvider(provider); err != nil {
 		return err
 	}
@@ -102,6 +106,9 @@ func (d *darwinStore) Delete(provider string) error {
 }
 
 func (d *darwinStore) List() ([]string, error) {
+	if d.listCached {
+		return d.cachedList, nil
+	}
 	// Check each known provider rather than parsing dump-keychain
 	var found []string
 
@@ -113,5 +120,7 @@ func (d *darwinStore) List() ([]string, error) {
 			return nil, fmt.Errorf("credential: keychain: list: %w", err)
 		}
 	}
+	d.cachedList = found
+	d.listCached = true
 	return found, nil
 }

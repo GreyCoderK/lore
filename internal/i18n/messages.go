@@ -14,4 +14,5 @@ type Messages struct {
 	Engagement EngagementMessages
 	Decision   DecisionMessages
 	Shared     SharedMessages
+	Notify     NotifyMessages
 }

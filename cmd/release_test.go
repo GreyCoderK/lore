@@ -64,6 +64,7 @@ func TestRelease_WithDocuments(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
+	// NOTE: "Released" is an i18n English string; acceptable for MVP.
 	errOutput := errBuf.String()
 	if !strings.Contains(errOutput, "Released") {
 		t.Errorf("expected 'Released' verb in stderr, got: %s", errOutput)
@@ -129,6 +130,7 @@ func TestRelease_NoDocuments(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
+	// NOTE: i18n-coupled assertion; acceptable for MVP.
 	errOutput := errBuf.String()
 	if !strings.Contains(errOutput, "No documented changes") {
 		t.Errorf("expected 'No documented changes' message, got: %s", errOutput)
@@ -253,6 +255,7 @@ func TestRelease_NotInitialized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for not initialized")
 	}
+	// NOTE: i18n-coupled assertions; acceptable for MVP.
 	if !strings.Contains(err.Error(), "not initialized") {
 		t.Errorf("expected 'not initialized' error, got: %v", err)
 	}

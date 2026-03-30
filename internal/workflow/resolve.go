@@ -12,9 +12,27 @@ import (
 	"github.com/greycoderk/lore/internal/i18n"
 )
 
+// isValidDocType checks if the given type is a recognized document type.
+func isValidDocType(t string) bool {
+	switch t {
+	case domain.DocTypeFeature, domain.DocTypeBugfix, domain.DocTypeDecision,
+		domain.DocTypeRefactor, domain.DocTypeRelease, domain.DocTypeNote:
+		return true
+	}
+	return false
+}
+
 // ResolveOpts holds options for ResolvePending.
 type ResolveOpts struct {
 	IsTTY func(domain.IOStreams) bool // optional TTY override for testing
+
+	// Batch fields — when Type, What, and Why are all non-empty,
+	// skip interactive prompts and generate directly (ADR-023 AC-12).
+	Type         string
+	What         string
+	Why          string
+	Alternatives string
+	Impact       string
 }
 
 // ResolvePending resolves a pending item: displays commit context, asks only
@@ -56,16 +74,44 @@ func ResolvePending(ctx context.Context, workDir string, streams domain.IOStream
 		Impact:       item.Answers.Impact,
 	}
 
-	// --- Ask only remaining questions (pre-filled answers are preserved) ---
-	renderer := NewRenderer(streams)
-	flow := NewQuestionFlow(streams, renderer)
+	// Override with batch flags if provided (ADR-023 AC-12).
+	if opts.Type != "" {
+		answers.Type = opts.Type
+	}
+	if opts.What != "" {
+		answers.What = opts.What
+	}
+	if opts.Why != "" {
+		answers.Why = opts.Why
+	}
+	if opts.Alternatives != "" {
+		answers.Alternatives = opts.Alternatives
+	}
+	if opts.Impact != "" {
+		answers.Impact = opts.Impact
+	}
 
-	remaining, err := flow.AskQuestions(ctx, QuestionOpts{
-		PreFilled:  answers,
-		CommitInfo: commit,
-	})
-	if err != nil {
-		return fmt.Errorf("workflow: resolve pending: %w", err)
+	// Batch mode: if all required fields are provided, skip prompts.
+	var remaining Answers
+	if answers.Type != "" && answers.What != "" && answers.Why != "" {
+		// Validate doc type against known values.
+		if !isValidDocType(answers.Type) {
+			return fmt.Errorf("workflow: resolve pending: invalid document type %q (valid: feature, bugfix, decision, refactor, release, note)", answers.Type)
+		}
+		remaining = answers
+	} else {
+		// --- Ask only remaining questions (pre-filled answers are preserved) ---
+		renderer := NewRenderer(streams)
+		flow := NewQuestionFlow(streams, renderer)
+
+		var err error
+		remaining, err = flow.AskQuestions(ctx, QuestionOpts{
+			PreFilled:  answers,
+			CommitInfo: commit,
+		})
+		if err != nil {
+			return fmt.Errorf("workflow: resolve pending: %w", err)
+		}
 	}
 
 	// --- Generate and write document ---

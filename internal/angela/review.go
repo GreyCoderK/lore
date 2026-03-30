@@ -117,6 +117,9 @@ func Review(ctx context.Context, provider domain.AIProvider, docs []DocSummary, 
 
 	signals := AnalyzeCorpusSignals(docs)
 	systemPrompt, userContent := BuildReviewPrompt(docs, styleGuide, signals)
+	if len(userContent) > maxAIInputSize {
+		return nil, fmt.Errorf("angela: review corpus too large for AI processing (%d bytes, max %d)", len(userContent), maxAIInputSize)
+	}
 	maxTokens := ResolveMaxTokens("review", 0)
 	result, err := provider.Complete(ctx, userContent, domain.WithSystem(systemPrompt), domain.WithMaxTokens(maxTokens))
 	if err != nil {

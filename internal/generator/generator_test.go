@@ -71,11 +71,13 @@ func TestGenerate_DateFromCommitInfo(t *testing.T) {
 }
 
 func TestGenerate_DateFallsBackToToday(t *testing.T) {
+	before := time.Now().Format("2006-01-02")
 	input := GenerateInput{} // no CommitInfo
 	got := input.Date()
-	today := time.Now().Format("2006-01-02")
-	if got != today {
-		t.Errorf("Date() = %q, want today %q", got, today)
+	after := time.Now().Format("2006-01-02")
+	// Accept either before or after to handle midnight crossing.
+	if got != before && got != after {
+		t.Errorf("Date() = %q, want %q or %q", got, before, after)
 	}
 }
 

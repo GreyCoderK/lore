@@ -324,6 +324,44 @@ func (a *Adapter) LogAll() ([]domain.CommitInfo, error) {
 	return commits, nil
 }
 
+// LogAllWithLimit returns up to maxCommits from git log --all.
+// If maxCommits <= 0, all commits are returned (no limit).
+// This method is not part of the GitAdapter interface; use it directly
+// on *Adapter when you need bounded output (e.g. doctor rebuild).
+func (a *Adapter) LogAllWithLimit(maxCommits int) ([]domain.CommitInfo, error) {
+	args := []string{"log", "--all", "--format=%H%n%an%n%aI%n%B%x00"}
+	if maxCommits > 0 {
+		args = append(args, fmt.Sprintf("--max-count=%d", maxCommits))
+	}
+	out, err := a.run(args...)
+	if err != nil {
+		return nil, fmt.Errorf("git: log all: %w", err)
+	}
+	if out == "" {
+		return nil, nil
+	}
+
+	entries := strings.Split(out, "\x00")
+	var commits []domain.CommitInfo
+	var skipped int
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		ci, err := parseLogOutput(entry)
+		if err != nil {
+			skipped++
+			continue
+		}
+		commits = append(commits, *ci)
+	}
+	if skipped > 0 {
+		fmt.Fprintf(os.Stderr, "warning: skipped %d unparseable git log entries\n", skipped)
+	}
+	return commits, nil
+}
+
 // CurrentBranch returns the current branch name.
 func (a *Adapter) CurrentBranch() (string, error) {
 	branch, err := a.run("rev-parse", "--abbrev-ref", "HEAD")

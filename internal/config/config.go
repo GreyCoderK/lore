@@ -6,6 +6,7 @@ package config
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,13 +24,14 @@ var WarnWriter io.Writer = os.Stderr
 const maxConfigSize = 1 << 20
 
 type Config struct {
-	Language  string          `yaml:"language" mapstructure:"language"`
-	AI        AIConfig        `yaml:"ai"`
-	Angela    AngelaConfig    `yaml:"angela"`
-	Decision  DecisionConfig  `yaml:"decision"`
-	Templates TemplatesConfig `yaml:"templates"`
-	Hooks     HooksConfig     `yaml:"hooks"`
-	Output    OutputConfig    `yaml:"output"`
+	Language     string             `yaml:"language" mapstructure:"language"`
+	AI           AIConfig           `yaml:"ai"`
+	Angela       AngelaConfig       `yaml:"angela"`
+	Decision     DecisionConfig     `yaml:"decision"`
+	Notification NotificationConfig `yaml:"notification"`
+	Templates    TemplatesConfig    `yaml:"templates"`
+	Hooks        HooksConfig        `yaml:"hooks"`
+	Output       OutputConfig       `yaml:"output"`
 }
 
 type DecisionConfig struct {
@@ -91,11 +93,31 @@ func checkConfigFileSize(dir, name string) error {
 	return nil // file not found — not an error
 }
 
+// warnConfigVariants warns if multiple config file variants exist in dir,
+// which would make the effective config ambiguous.
+func warnConfigVariants(dir string, w io.Writer) {
+	variants := []string{".lorerc", ".lorerc.yaml", ".lorerc.yml"}
+	var found []string
+	for _, v := range variants {
+		path := filepath.Join(dir, v)
+		if _, err := os.Stat(path); err == nil {
+			found = append(found, v)
+		}
+	}
+	if len(found) > 1 {
+		_, _ = fmt.Fprintf(w, "Warning: multiple config files found (%s) — using %s\n",
+			strings.Join(found, ", "), found[0])
+	}
+}
+
 // loadViper builds a Viper instance with defaults, config files, and env vars.
 func loadViper(dir string) (*viper.Viper, error) {
 	v := viper.New()
 
 	setDefaults(v)
+
+	// Warn if ambiguous config file variants exist.
+	warnConfigVariants(dir, WarnWriter)
 
 	// Pre-check config file sizes before parsing.
 	if err := checkConfigFileSize(dir, ".lorerc"); err != nil {
@@ -124,6 +146,17 @@ func loadViper(dir string) (*viper.Viper, error) {
 	} else {
 		// Enforce secure permissions on .lorerc.local (may contain API keys).
 		enforceSecurePerms(dir)
+
+		// Warn if .lorerc.local overrides ai.endpoint to a non-HTTPS remote host
+		if endpoint := v.GetString("ai.endpoint"); endpoint != "" {
+			if u, err := url.Parse(endpoint); err == nil {
+				host := strings.Split(u.Host, ":")[0]
+				isLocal := host == "localhost" || host == "127.0.0.1" || host == "::1"
+				if u.Scheme == "http" && !isLocal {
+					_, _ = fmt.Fprintf(WarnWriter, "Warning: ai.endpoint uses insecure http:// for remote host %q — consider https://\n", u.Host)
+				}
+			}
+		}
 	}
 
 	// Environment variables

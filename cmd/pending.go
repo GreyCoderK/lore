@@ -76,16 +76,40 @@ func newPendingListCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 }
 
 func newPendingResolveCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
-	return &cobra.Command{
+	var (
+		flagCommit       string
+		flagType         string
+		flagWhat         string
+		flagWhy          string
+		flagAlternatives string
+		flagImpact       string
+	)
+
+	cmd := &cobra.Command{
 		Use:           "resolve [number]",
 		Short:         i18n.T().Cmd.PendingResolveShort,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runPendingResolve(cmd, streams, args)
+			return runPendingResolve(cmd, streams, args, workflow.ResolveOpts{
+				Type:         flagType,
+				What:         flagWhat,
+				Why:          flagWhy,
+				Alternatives: flagAlternatives,
+				Impact:       flagImpact,
+			}, flagCommit)
 		},
 	}
+
+	cmd.Flags().StringVar(&flagCommit, "commit", "", "Resolve pending for specific commit hash")
+	cmd.Flags().StringVar(&flagType, "type", "", "Document type (feature, bugfix, decision, refactor, release, note)")
+	cmd.Flags().StringVar(&flagWhat, "what", "", "What was changed")
+	cmd.Flags().StringVar(&flagWhy, "why", "", "Why the change was made")
+	cmd.Flags().StringVar(&flagAlternatives, "alternatives", "", "Alternatives considered (optional)")
+	cmd.Flags().StringVar(&flagImpact, "impact", "", "Impact of the change (optional)")
+
+	return cmd
 }
 
 func newPendingSkipCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
@@ -148,7 +172,7 @@ func runPendingListQuiet(cmd *cobra.Command, streams domain.IOStreams) error {
 	return nil
 }
 
-func runPendingResolve(cmd *cobra.Command, streams domain.IOStreams, args []string) error {
+func runPendingResolve(cmd *cobra.Command, streams domain.IOStreams, args []string, resolveOpts workflow.ResolveOpts, commitFilter string) error {
 	if err := requireLoreDir(streams); err != nil {
 		return err
 	}
@@ -170,6 +194,18 @@ func runPendingResolve(cmd *cobra.Command, streams domain.IOStreams, args []stri
 	if len(items) == 0 {
 		_, _ = fmt.Fprintln(streams.Err, i18n.T().Cmd.PendingNoPendingRes)
 		return nil
+	}
+
+	// --commit flag: find the pending item by commit hash prefix.
+	if commitFilter != "" {
+		for _, item := range items {
+			if strings.HasPrefix(item.CommitHash, commitFilter) {
+				adapter := git.NewAdapter(workDir)
+				return workflow.ResolvePending(cmd.Context(), workDir, streams, item, adapter, resolveOpts)
+			}
+		}
+		_, _ = fmt.Fprintf(streams.Err, "No pending commit matching %q\n", commitFilter)
+		return &cli.ExitCodeError{Code: cli.ExitError}
 	}
 
 	var selected workflow.PendingItem
@@ -208,7 +244,7 @@ func runPendingResolve(cmd *cobra.Command, streams domain.IOStreams, args []stri
 	}
 
 	adapter := git.NewAdapter(workDir)
-	return workflow.ResolvePending(cmd.Context(), workDir, streams, selected, adapter, workflow.ResolveOpts{})
+	return workflow.ResolvePending(cmd.Context(), workDir, streams, selected, adapter, resolveOpts)
 }
 
 func runPendingSkip(cmd *cobra.Command, streams domain.IOStreams, args []string) error {

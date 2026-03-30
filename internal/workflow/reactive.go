@@ -13,6 +13,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
+	"github.com/greycoderk/lore/internal/notify"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/workflow/decision"
 )
@@ -81,7 +82,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 		return fmt.Errorf("workflow: reactive: detect: %w", err)
 	}
 
-	return handleDetectionResult(ctx, workDir, streams, gitAdapter, store, commit, detection, tty)
+	return handleDetectionResult(ctx, workDir, streams, gitAdapter, store, commit, detection, tty, detectOpts.NotifyConfig)
 }
 
 // resolveHeadCommit gets HEAD commit info in a single git call via HeadCommit().
@@ -129,7 +130,7 @@ func buildSignalContext(commit *domain.CommitInfo, diffContent string) *decision
 
 // handleDetectionResult processes the detection action (skip, defer, amend, etc.)
 // and either terminates the flow or continues to the documentation flow.
-func handleDetectionResult(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, store domain.LoreStore, commit *domain.CommitInfo, detection DetectionResult, tty bool) error {
+func handleDetectionResult(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, store domain.LoreStore, commit *domain.CommitInfo, detection DetectionResult, tty bool, notifyCfg *notify.NotifyConfig) error {
 	switch detection.Action {
 	case "skip":
 		if detection.Message != "" {
@@ -148,6 +149,12 @@ func handleDetectionResult(ctx context.Context, workDir string, streams domain.I
 			return fmt.Errorf("workflow: reactive: defer: %w", err)
 		}
 		recordDecision(store, commit, detection, "pending")
+
+		// ADR-023: notify the developer via IDE terminal or OS dialog.
+		// Best-effort: notification failure is not an error.
+		if detection.Reason == "non-tty" {
+			notifyAfterDefer(hash, msg, commit, detection, notifyCfg)
+		}
 		return nil
 	case "amend":
 		err := handleAmend(ctx, workDir, streams, gitAdapter, commit, tty)
@@ -355,4 +362,67 @@ func CountDiffLines(diff string) (added, deleted int) {
 		}
 	}
 	return
+}
+
+// notifyAfterDefer sends a notification to the developer after a commit is
+// deferred to pending in a non-TTY environment (ADR-023).
+// Best-effort: runs in the current goroutine but does not block (all commands
+// are detached via cmd.Start()). Errors are silently ignored.
+func notifyAfterDefer(hash, commitMsg string, commit *domain.CommitInfo, detection DetectionResult, notifyCfg *notify.NotifyConfig) {
+	env := notify.DetectEnvironment(notify.EnvOpts{})
+
+	// CI environments are already handled by Detect() (action=defer with reason=non-tty).
+	// But double-check: never notify in CI.
+	if env == notify.EnvCI {
+		return
+	}
+
+	prefillType := ""
+	if commit != nil {
+		prefillType = mapConvTypeToDocType(commit.Type)
+	}
+
+	cfg := notify.DefaultNotifyConfig()
+	if notifyCfg != nil {
+		cfg = *notifyCfg
+	}
+
+	notify.NotifyNonTTY(
+		hash, env, commitMsg, "",
+		prefillType,
+		detection.PrefilledWhat,
+		detection.PrefilledWhy,
+		notify.NotifyOpts{
+			Config: cfg,
+			I18nLabels: func(data *notify.DialogData) {
+				n := i18n.T().Notify
+				data.LabelTitle = n.DialogTitle
+				data.LabelTitleWhat = n.DialogTitleWhat
+				data.LabelTitleWhy = n.DialogTitleWhy
+				data.LabelType = n.PromptType
+				data.LabelWhat = n.PromptWhat
+				data.LabelWhy = n.PromptWhy
+				data.LabelCancel = n.ButtonCancel
+				data.LabelNext = n.ButtonNext
+				data.LabelSave = n.ButtonSave
+				data.LabelSkip = n.ButtonSkip
+			},
+		},
+	)
+}
+
+// mapConvTypeToDocType maps conventional commit types to Lore doc types.
+func mapConvTypeToDocType(convType string) string {
+	switch convType {
+	case "feat":
+		return "feature"
+	case "fix":
+		return "bugfix"
+	case "refactor":
+		return "refactor"
+	case "docs", "style", "ci", "build", "chore":
+		return "note"
+	default:
+		return ""
+	}
 }

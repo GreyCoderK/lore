@@ -13,7 +13,10 @@ import (
 	"strings"
 )
 
-type linuxStore struct{}
+type linuxStore struct {
+	cachedList []string
+	listCached bool
+}
 
 func newPlatformStore() CredentialStore {
 	if _, err := exec.LookPath("secret-tool"); err != nil {
@@ -23,6 +26,7 @@ func newPlatformStore() CredentialStore {
 }
 
 func (l *linuxStore) Set(provider string, secret []byte) error {
+	l.listCached = false // Invalidate cache
 	if err := ValidateProvider(provider); err != nil {
 		return err
 	}
@@ -65,6 +69,7 @@ func (l *linuxStore) Get(provider string) ([]byte, error) {
 }
 
 func (l *linuxStore) Delete(provider string) error {
+	l.listCached = false // Invalidate cache
 	if err := ValidateProvider(provider); err != nil {
 		return err
 	}
@@ -82,6 +87,9 @@ func (l *linuxStore) Delete(provider string) error {
 }
 
 func (l *linuxStore) List() ([]string, error) {
+	if l.listCached {
+		return l.cachedList, nil
+	}
 	var found []string
 	for _, p := range KnownProviders {
 		_, err := l.Get(p)
@@ -94,6 +102,8 @@ func (l *linuxStore) List() ([]string, error) {
 			return nil, fmt.Errorf("credential: secret-tool: list: %w", err)
 		}
 	}
+	l.cachedList = found
+	l.listCached = true
 	return found, nil
 }
 

@@ -48,6 +48,11 @@ type OutputConfig struct {
 	Format string `yaml:"format" mapstructure:"format"`
 }
 
+type NotificationConfig struct {
+	Mode         string   `yaml:"mode" mapstructure:"mode"`
+	DisabledEnvs []string `yaml:"disabled_envs" mapstructure:"disabled_envs"`
+}
+
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("language", "en")
 
@@ -66,6 +71,9 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("output.format", "markdown")
 	v.SetDefault("output.dir", filepath.Join(domain.LoreDir, domain.DocsDir))
+
+	v.SetDefault("notification.mode", "auto")
+	v.SetDefault("notification.disabled_envs", []string{})
 
 	v.SetDefault("decision.threshold_full", defaultThresholdFull)
 	v.SetDefault("decision.threshold_reduced", defaultThresholdReduced)

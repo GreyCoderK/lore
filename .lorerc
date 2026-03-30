@@ -1,5 +1,6 @@
 # Lore configuration — shared with team (commit this file)
 # See: https://github.com/greycoderk/lore/docs/configuration
+language: "fr"
 
 ai:
   provider: ""       # anthropic, openai, ollama

@@ -170,13 +170,3 @@ func parseDateToDays(date string) int {
 	return int(t.Unix() / 86400)
 }
 
-// atoi is a simple string-to-int without error handling (dates are validated upstream).
-func atoi(s string) int {
-	n := 0
-	for _, c := range s {
-		if c >= '0' && c <= '9' {
-			n = n*10 + int(c-'0')
-		}
-	}
-	return n
-}

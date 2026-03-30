@@ -400,4 +400,17 @@ To load completions:
 		ReleaseSectionNotes:     "Notes",
 		ReleaseTitle:            "# Release %s",
 	},
+	Notify: NotifyMessages{
+		DialogTitle:     "Lore",
+		DialogTitleWhat: "Lore — What",
+		DialogTitleWhy:  "Lore — Why",
+		PromptType:      "Type:",
+		PromptWhat:      "What did you change?",
+		PromptWhy:       "Why did you make this change?",
+		ButtonCancel:    "Cancel",
+		ButtonNext:      "Next",
+		ButtonSave:      "Save",
+		ButtonSkip:      "Skip",
+		SimplePending:   "lore pending — %s",
+	},
 }

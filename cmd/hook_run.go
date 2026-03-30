@@ -41,7 +41,10 @@ func newHookPostCommitCmd(cfg *config.Config, streams domain.IOStreams, storePtr
 			}
 			engine := decision.NewEngine(loreStore, engineCfg)
 
-			if err := workflow.Dispatch(cmd.Context(), workDir, streams, adapter, engine, loreStore); err != nil {
+			// Wire notification config from .lorerc (ADR-023).
+			notifyCfg := notifyConfigFromApp(cfg)
+
+			if err := workflow.DispatchWithNotifyConfig(cmd.Context(), workDir, streams, adapter, engine, loreStore, notifyCfg); err != nil {
 				return fmt.Errorf("cmd: hook-post-commit: %w", err)
 			}
 			return nil

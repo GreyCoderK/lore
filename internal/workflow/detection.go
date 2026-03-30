@@ -12,6 +12,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
+	"github.com/greycoderk/lore/internal/notify"
 	"github.com/greycoderk/lore/internal/workflow/decision"
 )
 
@@ -79,6 +80,11 @@ type DetectOpts struct {
 	// SignalCtx holds pre-built signal context for the Decision Engine.
 	// Only used when Engine is non-nil.
 	SignalCtx *decision.SignalContext
+
+	// NotifyConfig holds notification preferences from .lorerc.
+	// Used by handleDetectionResult to configure non-TTY notifications (ADR-023).
+	// When nil, DefaultNotifyConfig() is used.
+	NotifyConfig *notify.NotifyConfig
 }
 
 // Detect determines the appropriate action for the current commit context.
