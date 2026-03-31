@@ -4,7 +4,7 @@
 Stateless authentication for microservices
 
 ## Fix
-- API routes now require Bearer token
+- API routes now require valid credentials
 
 ## Root Cause
 - Session-based auth with Redis

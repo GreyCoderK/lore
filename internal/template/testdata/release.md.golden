@@ -4,4 +4,4 @@
 Stateless authentication for microservices
 
 ## Changes
-- API routes now require Bearer token
+- API routes now require valid credentials

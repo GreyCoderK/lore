@@ -11,4 +11,4 @@ Stateless authentication for microservices
 - OAuth2 with external provider
 
 ## Impact
-- API routes now require Bearer token
+- API routes now require valid credentials

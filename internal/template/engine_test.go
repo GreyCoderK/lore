@@ -20,7 +20,7 @@ func TestEngine_RenderDecisionTemplate(t *testing.T) {
 		Title:        "Add JWT auth middleware",
 		Why:          "Stateless authentication for microservices",
 		Alternatives: "- Session-based auth with Redis\n- OAuth2 with external provider",
-		Impact:       "- API routes now require Bearer token\n- Auth middleware added to router chain",
+		Impact:       "- API routes now require valid credentials\n- Auth middleware added to router chain",
 	}
 
 	result, err := engine.Render("decision.md.tmpl", data)
@@ -341,7 +341,7 @@ func TestEngine_GoldenFiles(t *testing.T) {
 		Title:        "Add JWT auth middleware",
 		Why:          "Stateless authentication for microservices",
 		Alternatives: "- Session-based auth with Redis\n- OAuth2 with external provider",
-		Impact:       "- API routes now require Bearer token",
+		Impact:       "- API routes now require valid credentials",
 	}
 
 	types := []string{"decision", "feature", "bugfix", "refactor", "release", "note"}

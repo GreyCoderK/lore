@@ -7,4 +7,4 @@ Add JWT auth middleware
 Stateless authentication for microservices
 
 ## Impact
-- API routes now require Bearer token
+- API routes now require valid credentials

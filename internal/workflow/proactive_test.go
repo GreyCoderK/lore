@@ -73,9 +73,11 @@ func TestHandleProactive_FullFlowNoArgs(t *testing.T) {
 		t.Errorf("expected 'Captured' in stderr, got: %q", stderr.String())
 	}
 
-	// M6: dim path line must appear below "Captured" (AC-2 second display)
-	if !strings.Contains(stderr.String(), ".lore/docs/") {
-		t.Errorf("expected dim path '.lore/docs/' in stderr, got: %q", stderr.String())
+	// M6: dim path line must appear below "Captured" (AC-2 second display).
+	// Use filepath.Join for cross-platform path separator.
+	expectedPath := filepath.Join(".lore", "docs")
+	if !strings.Contains(stderr.String(), expectedPath) {
+		t.Errorf("expected dim path %q in stderr, got: %q", expectedPath, stderr.String())
 	}
 }
 

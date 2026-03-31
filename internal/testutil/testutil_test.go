@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -49,7 +50,7 @@ func TestSetupGitRepoWithHook(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm()&0100 == 0 {
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0100 == 0 {
 		t.Fatal("hook file is not executable")
 	}
 }
