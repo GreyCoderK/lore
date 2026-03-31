@@ -116,13 +116,9 @@ func runDemo(ctx context.Context, _ *config.Config, streams domain.IOStreams) er
 		return fmt.Errorf("cmd: demo write: %w", err)
 	}
 
-	// Regenerate index after write
+	// Regenerate index after write (best-effort).
 	if indexErr := storage.RegenerateIndex(docsDir); indexErr != nil {
-		result.IndexErr = indexErr
-	}
-
-	if result.IndexErr != nil {
-		_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DemoIndexWarning+"\n", result.IndexErr)
+		_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DemoIndexWarning+"\n", indexErr)
 	}
 
 	ui.Verb(streams, "Created", result.Filename)

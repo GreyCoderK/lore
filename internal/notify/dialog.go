@@ -3,6 +3,8 @@
 
 package notify
 
+import "os/exec"
+
 // DialogData holds the pre-filled data for OS dialog questions.
 type DialogData struct {
 	CommitHash  string
@@ -31,10 +33,17 @@ type DialogData struct {
 type DialogOpts struct {
 	// StartCommand launches a detached command. Defaults to defaultStartCommand.
 	StartCommand func(name string, args []string, env []string) error
+
+	// LookPath searches for a binary in PATH. Defaults to exec.LookPath.
+	// Used on Linux to detect zenity/kdialog/yad.
+	LookPath func(file string) (string, error)
 }
 
 func (o *DialogOpts) defaults() {
 	if o.StartCommand == nil {
 		o.StartCommand = defaultStartCommand
+	}
+	if o.LookPath == nil {
+		o.LookPath = exec.LookPath
 	}
 }

@@ -177,7 +177,7 @@ func acquireLock(path string) bool {
 	if err := os.WriteFile(tmp, []byte(strconv.Itoa(os.Getpid())), 0o644); err != nil {
 		return false
 	}
-	defer os.Remove(tmp)
+	defer func() { _ = os.Remove(tmp) }()
 
 	if err := os.Link(tmp, path); err != nil {
 		// Lock exists — check if the process is still alive.
@@ -188,13 +188,13 @@ func acquireLock(path string) bool {
 		pid, parseErr := strconv.Atoi(string(data))
 		if parseErr != nil {
 			// Corrupt lock → remove and retry.
-			os.Remove(path)
+			_ = os.Remove(path)
 			return os.Link(tmp, path) == nil
 		}
 		// Check if PID is still running.
 		if !isProcessAlive(pid) {
 			// Process dead → stale lock.
-			os.Remove(path)
+			_ = os.Remove(path)
 			return os.Link(tmp, path) == nil
 		}
 		return false // Process alive → lock held.
@@ -204,5 +204,5 @@ func acquireLock(path string) bool {
 
 // releaseLock removes the lock file.
 func releaseLock(path string) {
-	os.Remove(path)
+	_ = os.Remove(path)
 }

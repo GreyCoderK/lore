@@ -5,7 +5,6 @@ package notify
 
 import (
 	"fmt"
-	"os/exec"
 	"runtime"
 )
 
@@ -26,7 +25,7 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 		return opts.StartCommand("osascript", []string{"-e", script}, nil)
 
 	case "linux":
-		if _, err := exec.LookPath("notify-send"); err == nil {
+		if _, err := opts.LookPath("notify-send"); err == nil {
 			// Pass commit message as a separate argument (not interpolated in shell).
 			// Use --icon flag instead of -a for broader compatibility.
 			return opts.StartCommand("notify-send",

@@ -7,7 +7,6 @@ package notify
 
 import (
 	"fmt"
-	"os/exec"
 )
 
 // NotifyOSDialog launches a Linux GUI dialog (zenity/kdialog/yad) for Lore documentation.
@@ -15,7 +14,7 @@ import (
 func NotifyOSDialog(data DialogData, opts DialogOpts) error {
 	opts.defaults()
 
-	tool := detectLinuxDialogTool()
+	tool := detectLinuxDialogTool(opts.LookPath)
 	if tool == "" {
 		return errUnsupportedOS
 	}
@@ -24,9 +23,9 @@ func NotifyOSDialog(data DialogData, opts DialogOpts) error {
 	return opts.StartCommand("bash", []string{"-c", script}, nil)
 }
 
-func detectLinuxDialogTool() string {
+func detectLinuxDialogTool(lookPath func(string) (string, error)) string {
 	for _, tool := range []string{"zenity", "kdialog", "yad"} {
-		if _, err := exec.LookPath(tool); err == nil {
+		if _, err := lookPath(tool); err == nil {
 			return tool
 		}
 	}

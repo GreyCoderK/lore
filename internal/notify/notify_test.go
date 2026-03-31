@@ -29,6 +29,7 @@ func mockOpts(t *testing.T) NotifyOpts {
 		},
 		DialogOpts: DialogOpts{
 			StartCommand: func(string, []string, []string) error { return nil },
+			LookPath:     func(string) (string, error) { return "/usr/bin/mock", nil },
 		},
 		VSCodeOpts: VSCodeOpts{
 			LookPath:     func(string) (string, error) { return "/usr/bin/code", nil },
