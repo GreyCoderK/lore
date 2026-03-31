@@ -6,6 +6,7 @@ package fileutil_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/greycoderk/lore/internal/fileutil"
@@ -29,6 +30,9 @@ func TestAtomicWrite_CreatesFile(t *testing.T) {
 }
 
 func TestAtomicWrite_SetsPermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod not supported on Windows")
+	}
 	dir := t.TempDir()
 	path := filepath.Join(dir, "hook.sh")
 
@@ -122,6 +126,9 @@ func TestAtomicWriteExclusive_FailsIfExists(t *testing.T) {
 }
 
 func TestAtomicWriteExclusive_SetsPermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod not supported on Windows")
+	}
 	dir := t.TempDir()
 	path := filepath.Join(dir, "exec.sh")
 
@@ -139,6 +146,9 @@ func TestAtomicWriteExclusive_SetsPermissions(t *testing.T) {
 }
 
 func TestAtomicWrite_ReadOnlyDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("read-only directories not enforced on Windows")
+	}
 	dir := t.TempDir()
 	roDir := filepath.Join(dir, "readonly")
 	os.MkdirAll(roDir, 0o755)

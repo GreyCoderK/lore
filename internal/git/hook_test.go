@@ -6,6 +6,7 @@ package git
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -42,10 +43,12 @@ func TestInstallHook_Fresh(t *testing.T) {
 		t.Error("expected hook command")
 	}
 
-	// Verify executable
-	info, _ := os.Stat(hookPath)
-	if info.Mode()&0111 == 0 {
-		t.Error("hook file should be executable")
+	// Verify executable (skip on Windows where chmod has no effect).
+	if runtime.GOOS != "windows" {
+		info, _ := os.Stat(hookPath)
+		if info.Mode()&0111 == 0 {
+			t.Error("hook file should be executable")
+		}
 	}
 }
 
@@ -311,7 +314,7 @@ func TestIntegration_FullHookLifecycle(t *testing.T) {
 	if !strings.Contains(content, "#!/bin/sh") {
 		t.Error("missing shebang")
 	}
-	if !strings.Contains(content, "# LORE-START\n") || !strings.Contains(content, "\n# LORE-END") {
+	if !strings.Contains(content, "# LORE-START") || !strings.Contains(content, "# LORE-END") {
 		t.Errorf("hook content missing LORE marker block, got:\n%s", content)
 	}
 	if !strings.Contains(content, "exec lore _hook-post-commit") {

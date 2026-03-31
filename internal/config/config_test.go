@@ -32,8 +32,9 @@ func TestLoadFromDir_DefaultsOnly(t *testing.T) {
 	if cfg.Angela.MaxTokens != 2000 {
 		t.Errorf("expected angela.max_tokens 2000, got %d", cfg.Angela.MaxTokens)
 	}
-	if cfg.Templates.Dir != ".lore/templates" {
-		t.Errorf("expected templates.dir '.lore/templates', got %q", cfg.Templates.Dir)
+	expectedTplDir := filepath.Join(".lore", "templates")
+	if cfg.Templates.Dir != expectedTplDir {
+		t.Errorf("expected templates.dir %q, got %q", expectedTplDir, cfg.Templates.Dir)
 	}
 	if !cfg.Hooks.PostCommit {
 		t.Error("expected hooks.post_commit=true by default")
@@ -41,8 +42,9 @@ func TestLoadFromDir_DefaultsOnly(t *testing.T) {
 	if cfg.Output.Format != "markdown" {
 		t.Errorf("expected format 'markdown', got %q", cfg.Output.Format)
 	}
-	if cfg.Output.Dir != ".lore/docs" {
-		t.Errorf("expected output.dir '.lore/docs', got %q", cfg.Output.Dir)
+	expectedOutDir := filepath.Join(".lore", "docs")
+	if cfg.Output.Dir != expectedOutDir {
+		t.Errorf("expected output.dir %q, got %q", expectedOutDir, cfg.Output.Dir)
 	}
 	if cfg.AI.Endpoint != "http://localhost:11434" {
 		t.Errorf("expected ai.endpoint 'http://localhost:11434', got %q", cfg.AI.Endpoint)

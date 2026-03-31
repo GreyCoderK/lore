@@ -135,7 +135,7 @@ func TestValidateConfig_ActiveValuesShowDefaults(t *testing.T) {
 	assert.Equal(t, "30s", report.Active["ai.timeout"])
 	assert.Equal(t, "2000", report.Active["angela.max_tokens"])
 	assert.Equal(t, "markdown", report.Active["output.format"])
-	assert.Equal(t, ".lore/docs", report.Active["output.dir"])
+	assert.Equal(t, filepath.Join(".lore", "docs"), report.Active["output.dir"])
 	assert.Equal(t, "true", report.Active["hooks.post_commit"])
 }
 
