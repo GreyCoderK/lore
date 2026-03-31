@@ -90,9 +90,11 @@ func TestNewCmd_NoArgs_FullInteractiveFlow(t *testing.T) {
 		t.Errorf("expected 'Captured' in stderr, got: %q", errBuf.String())
 	}
 
-	// M6: dim path line must appear below "Captured"
-	if !strings.Contains(errBuf.String(), ".lore/docs/") {
-		t.Errorf("expected dim path '.lore/docs/' in stderr, got: %q", errBuf.String())
+	// M6: dim path line must appear below "Captured".
+	// Use filepath.Join for cross-platform path separator (Windows uses backslash).
+	expectedPath := filepath.Join(".lore", "docs")
+	if !strings.Contains(errBuf.String(), expectedPath) {
+		t.Errorf("expected dim path %q in stderr, got: %q", expectedPath, errBuf.String())
 	}
 }
 

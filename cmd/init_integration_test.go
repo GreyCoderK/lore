@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -103,10 +104,12 @@ func TestIntegration_FullInit(t *testing.T) {
 		t.Error("hook missing LORE-START marker")
 	}
 
-	// Verify hook is executable
-	info, _ := os.Stat(hookPath)
-	if info.Mode()&0111 == 0 {
-		t.Error("hook should be executable")
+	// Verify hook is executable (skip on Windows where chmod has no effect).
+	if runtime.GOOS != "windows" {
+		info, _ := os.Stat(hookPath)
+		if info.Mode()&0111 == 0 {
+			t.Error("hook should be executable")
+		}
 	}
 
 	// Verify output

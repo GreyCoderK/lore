@@ -63,6 +63,7 @@ func TestT_ConcurrentAccess_NoRace(t *testing.T) {
 			m := T()
 			if m == nil {
 				t.Error("T() returned nil in goroutine")
+				return
 			}
 			_ = m.Engagement.Milestone3
 		}()

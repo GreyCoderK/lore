@@ -51,7 +51,7 @@ func (s *SQLiteStore) CommitsByScope(scope string, days int) ([]domain.CommitRec
 	if err != nil {
 		return nil, fmt.Errorf("store: commits by scope: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanCommits(rows)
 }
 
@@ -62,7 +62,7 @@ func (s *SQLiteStore) CommitsByBranch(branch string) ([]domain.CommitRecord, err
 	if err != nil {
 		return nil, fmt.Errorf("store: commits by branch: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanCommits(rows)
 }
 
@@ -73,7 +73,7 @@ func (s *SQLiteStore) CommitsSince(since time.Time) ([]domain.CommitRecord, erro
 	if err != nil {
 		return nil, fmt.Errorf("store: commits since: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanCommits(rows)
 }
 
@@ -84,7 +84,7 @@ func (s *SQLiteStore) UndocumentedCommits() ([]domain.CommitRecord, error) {
 	if err != nil {
 		return nil, fmt.Errorf("store: undocumented commits: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanCommits(rows)
 }
 
@@ -94,7 +94,7 @@ func (s *SQLiteStore) CommitCountByDecision() (map[string]int, error) {
 	if err != nil {
 		return nil, fmt.Errorf("store: commit count by decision: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	counts := make(map[string]int)
 	for rows.Next() {

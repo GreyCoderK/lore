@@ -233,7 +233,9 @@ func TestRelease_QuietMode(t *testing.T) {
 	if !strings.HasSuffix(stdout, ".md") {
 		t.Errorf("expected .md path on stdout, got: %s", stdout)
 	}
-	if !strings.Contains(stdout, ".lore/docs/release-v1.0.0") {
+	// Use filepath.Join for cross-platform path separator.
+	expectedRelPath := filepath.Join(".lore", "docs", "release-v1.0.0")
+	if !strings.Contains(stdout, expectedRelPath) {
 		t.Errorf("expected release file path on stdout, got: %s", stdout)
 	}
 

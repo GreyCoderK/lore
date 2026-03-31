@@ -239,7 +239,7 @@ func runRebuildStore(streams domain.IOStreams) error {
 	if err != nil {
 		return fmt.Errorf("cmd: doctor: open store: %w", err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	git := gitpkg.NewAdapter(".")
 

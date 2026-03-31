@@ -30,8 +30,8 @@ func RegenerateIndex(docsDir string) error {
 		return fmt.Errorf("storage: index lock: %w", err)
 	}
 	defer func() {
-		lock.Close()
-		os.Remove(lockPath)
+		_ = lock.Close()
+		_ = os.Remove(lockPath)
 	}()
 
 	entries, err := os.ReadDir(docsDir)

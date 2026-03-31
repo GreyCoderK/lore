@@ -67,9 +67,10 @@ func ComputeCalibration(store domain.LoreStore) (*CalibrationReport, error) {
 		switch c.QuestionMode {
 		case "full":
 			askFullTotal++
-			if c.Decision == "skipped" {
+			switch c.Decision {
+			case "skipped":
 				askFullSkipped++
-			} else if c.Decision == "documented" {
+			case "documented":
 				askFullDocumented++
 			}
 		case "reduced":

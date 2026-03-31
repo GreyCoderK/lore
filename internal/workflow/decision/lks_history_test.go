@@ -13,9 +13,8 @@ import (
 
 // mockLoreStore implements domain.LoreStore for testing Signal 5.
 type mockLoreStore struct {
-	commits       []domain.CommitRecord
-	commitCounts  map[string]int
-	scopeCommits  map[string][]domain.CommitRecord
+	commitCounts map[string]int
+	scopeCommits map[string][]domain.CommitRecord
 }
 
 func (m *mockLoreStore) RecordCommit(domain.CommitRecord) error                          { return nil }

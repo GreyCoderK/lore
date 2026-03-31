@@ -132,7 +132,7 @@ func (s *SQLiteStore) queryDocsCtx(ctx context.Context, query string, args ...in
 	if err != nil {
 		return nil, fmt.Errorf("store: query docs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanDocs(rows)
 }
 
