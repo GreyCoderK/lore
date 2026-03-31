@@ -359,8 +359,11 @@ func TestEngine_GoldenFiles(t *testing.T) {
 				t.Fatalf("read golden file %s: %v", goldenPath, err)
 			}
 
-			if result != string(want) {
-				t.Errorf("%s output mismatch.\n--- got ---\n%s\n--- want ---\n%s", typ, result, string(want))
+			// Normalize line endings for cross-platform comparison (Windows CRLF vs Unix LF).
+			got := strings.ReplaceAll(result, "\r\n", "\n")
+			expected := strings.ReplaceAll(string(want), "\r\n", "\n")
+			if got != expected {
+				t.Errorf("%s output mismatch.\n--- got ---\n%s\n--- want ---\n%s", typ, got, expected)
 			}
 		})
 	}

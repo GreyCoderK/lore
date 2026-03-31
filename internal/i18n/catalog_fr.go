@@ -84,6 +84,7 @@ var catalogFR = &Messages{
 		PendingListShort:    "Lister les éléments en attente",
 		PendingResolveShort: "Résoudre un élément en répondant aux questions restantes",
 		PendingSkipShort:    "Ignorer un élément sans créer de document",
+		PendingFlagQuiet:    "Sortie machine sur stdout",
 		PendingFlagCommit:   "Résoudre le pending pour un hash de commit spécifique",
 		PendingFlagType:     "Type de document (feature, bugfix, decision, refactor, release, note)",
 		PendingFlagWhat:     "Ce qui a été changé",
@@ -130,6 +131,7 @@ var catalogFR = &Messages{
 		StatusReviewAgeJustNow:  "à l'instant",
 		StatusReviewAgeHours:    "il y a %dh",
 		StatusReviewAgeDays:     "il y a %dj",
+		StatusFlagQuiet:         "Sortie machine sur stdout",
 		StatusFlagBadge:         "Générer le badge de couverture en Markdown",
 
 		// hook.go
@@ -434,6 +436,10 @@ Pour charger les complétions :
 		ButtonNext:      "Suivant",
 		ButtonSave:      "Enregistrer",
 		ButtonSkip:      "Ignorer",
-		SimplePending:   "lore en attente — %s",
+		SimplePending:     "lore en attente — %s",
+		ErrorPrefix:       "Erreur Lore : ",
+		ErrorResolve:      "Échec de la résolution du pending",
+		ButtonOK:          "OK",
+		NoMatchingPending: "Aucun commit pending correspondant à %q",
 	},
 }

@@ -405,6 +405,9 @@ func notifyAfterDefer(hash, commitMsg string, commit *domain.CommitInfo, detecti
 				data.LabelNext = n.ButtonNext
 				data.LabelSave = n.ButtonSave
 				data.LabelSkip = n.ButtonSkip
+				data.LabelOK = n.ButtonOK
+				data.LabelError = n.ErrorPrefix
+				data.LabelErrResolve = n.ErrorResolve
 			},
 		},
 	)

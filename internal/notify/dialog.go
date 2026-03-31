@@ -27,6 +27,9 @@ type DialogData struct {
 	LabelNext      string // "Next"
 	LabelSave      string // "Save"
 	LabelSkip      string // "Skip"
+	LabelOK        string // "OK"
+	LabelError     string // "Lore error: "
+	LabelErrResolve string // "Failed to resolve pending"
 }
 
 // DialogOpts holds injectable dependencies for OS dialog notification.

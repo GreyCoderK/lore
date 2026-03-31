@@ -42,7 +42,7 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 				return renderBadge(streams, git)
 			}
 
-			info, err := status.CollectStatus(cfg, git, ".lore")
+			info, err := status.CollectStatus(cfg, git, domain.LoreDir)
 			if err != nil {
 				return fmt.Errorf("cmd: status: %w", err)
 			}
@@ -54,7 +54,7 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Machine-readable output on stdout")
+	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, i18n.T().Cmd.StatusFlagQuiet)
 	cmd.Flags().BoolVar(&flagBadge, "badge", false, i18n.T().Cmd.StatusFlagBadge)
 
 	return cmd
@@ -112,7 +112,7 @@ func renderDashboard(streams domain.IOStreams, info *status.StatusInfo) error {
 	_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusAngelaLabel, angelaVal)
 
 	// Last Angela Review (from cache)
-	reviewCache, _ := angela.LoadReviewCache(".lore")
+	reviewCache, _ := angela.LoadReviewCache(domain.LoreDir)
 	if reviewCache != nil {
 		reviewAge := formatReviewAge(reviewCache.LastReview)
 		if len(reviewCache.Findings) == 0 {
@@ -208,7 +208,7 @@ func renderQuiet(streams domain.IOStreams, info *status.StatusInfo) error {
 	_, _ = fmt.Fprintf(w, "angela_review=%d\n", info.AngelaDocsNeedReview)
 	_, _ = fmt.Fprintf(w, "angela_suggestions=%d\n", info.AngelaSuggestions)
 
-	reviewCache, _ := angela.LoadReviewCache(".lore")
+	reviewCache, _ := angela.LoadReviewCache(domain.LoreDir)
 	if reviewCache != nil {
 		_, _ = fmt.Fprintf(w, "review_findings=%d\n", len(reviewCache.Findings))
 		_, _ = fmt.Fprintf(w, "review_age=%s\n", formatReviewAge(reviewCache.LastReview))

@@ -14,7 +14,7 @@ import (
 )
 
 // showMilestone displays a milestone reinforcement message on stderr when the
-// document count in docsDir hits an exact threshold (3, 10, 25, 50).
+// document count in docsDir hits an exact Fibonacci threshold (3, 8, 21, 55).
 // When tty is false the call is a no-op (AC-5: non-TTY suppression).
 //
 // Error handling: ListDocs returns (partialDocs, joinedParseErrors) when some

@@ -44,7 +44,7 @@ func newPendingCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Machine-readable output on stdout")
+	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, i18n.T().Cmd.PendingFlagQuiet)
 
 	cmd.AddCommand(
 		newPendingListCmd(nil, streams),
@@ -71,7 +71,7 @@ func newPendingListCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 		},
 	}
 
-	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Machine-readable output on stdout")
+	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, i18n.T().Cmd.PendingFlagQuiet)
 	return cmd
 }
 
@@ -205,7 +205,7 @@ func runPendingResolve(cmd *cobra.Command, streams domain.IOStreams, args []stri
 				return workflow.ResolvePending(cmd.Context(), workDir, streams, item, adapter, resolveOpts)
 			}
 		}
-		_, _ = fmt.Fprintf(streams.Err, "No pending commit matching %q\n", commitFilter)
+		_, _ = fmt.Fprintf(streams.Err, i18n.T().Notify.NoMatchingPending+"\n", commitFilter)
 		return &cli.ExitCodeError{Code: cli.ExitError}
 	}
 

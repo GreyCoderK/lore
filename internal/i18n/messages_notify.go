@@ -23,4 +23,12 @@ type NotifyMessages struct {
 
 	// Simple notification
 	SimplePending string // "lore pending — %s"
+
+	// Dialog error handling
+	ErrorPrefix string // "Lore error: "
+	ErrorResolve string // "Failed to resolve pending"
+	ButtonOK     string // "OK"
+
+	// Pending resolve
+	NoMatchingPending string // "No pending commit matching %q"
 }

@@ -67,7 +67,7 @@ WHAT=$(zenity --entry --title=%s --text=%s --entry-text="$PREFILL_WHAT" 2>/dev/n
 WHY=$(zenity --entry --title=%s --text=%s --entry-text="$PREFILL_WHY" 2>/dev/null)
 [ -z "$WHY" ] && exit 0
 
-cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || zenity --error --title="Lore" --text="Failed to resolve pending" 2>/dev/null
+cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || zenity --error --title=%s --text=%s 2>/dev/null
 `,
 		bashQuote(sanitizeForShell(data.CommitMsg)),
 		bashQuote(sanitizeForShell(data.DiffStat)),
@@ -78,6 +78,8 @@ cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --wh
 		bashQuote(titleWhy), bashQuote(labelWhy),
 		bashQuote(sanitizeForShell(data.RepoRoot)),
 		bashQuote(sanitizeForShell(data.LorePath)), hash,
+		bashQuote(coalesce(data.LabelTitle, "Lore")),
+		bashQuote(coalesce(data.LabelErrResolve, "Failed to resolve pending")),
 	)
 }
 
@@ -102,7 +104,7 @@ WHAT=$(kdialog --inputbox %s %s --title %s)
 WHY=$(kdialog --inputbox %s %s --title %s)
 [ -z "$WHY" ] && exit 0
 
-cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || kdialog --error "Failed to resolve pending" --title "Lore"
+cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || kdialog --error %s --title %s
 `,
 		bashQuote(sanitizeForShell(data.CommitMsg)),
 		bashQuote(sanitizeForShell(data.DiffStat)),
@@ -111,5 +113,7 @@ cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --wh
 		bashQuote(labelWhy), bashQuote(sanitizeForShell(data.PrefillWhy)), bashQuote(titleWhy),
 		bashQuote(sanitizeForShell(data.RepoRoot)),
 		bashQuote(sanitizeForShell(data.LorePath)), hash,
+		bashQuote(coalesce(data.LabelErrResolve, "Failed to resolve pending")),
+		bashQuote(coalesce(data.LabelTitle, "Lore")),
 	)
 }

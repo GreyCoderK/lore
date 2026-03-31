@@ -81,6 +81,7 @@ var catalogEN = &Messages{
 		PendingListShort:    "List pending documentation items",
 		PendingResolveShort: "Resolve a pending item by answering remaining questions",
 		PendingSkipShort:    "Skip a pending item without creating a document",
+		PendingFlagQuiet:    "Machine-readable output on stdout",
 		PendingFlagCommit:   "Resolve pending for specific commit hash",
 		PendingFlagType:     "Document type (feature, bugfix, decision, refactor, release, note)",
 		PendingFlagWhat:     "What was changed",
@@ -127,6 +128,7 @@ var catalogEN = &Messages{
 		StatusReviewAgeJustNow:  "just now",
 		StatusReviewAgeHours:    "%dh ago",
 		StatusReviewAgeDays:     "%dd ago",
+		StatusFlagQuiet:         "Machine-readable output on stdout",
 		StatusFlagBadge:         "Generate coverage badge markdown",
 
 		// hook.go
@@ -431,6 +433,10 @@ To load completions:
 		ButtonNext:      "Next",
 		ButtonSave:      "Save",
 		ButtonSkip:      "Skip",
-		SimplePending:   "lore pending — %s",
+		SimplePending:     "lore pending — %s",
+		ErrorPrefix:       "Lore error: ",
+		ErrorResolve:      "Failed to resolve pending",
+		ButtonOK:          "OK",
+		NoMatchingPending: "No pending commit matching %q",
 	},
 }

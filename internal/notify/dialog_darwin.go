@@ -55,7 +55,7 @@ set whyAnswer to text returned of (display dialog "%s" default answer "%s" with 
 try
 	do shell script "cd " & quoted form of "%s" & " && " & quoted form of "%s" & " pending resolve --commit %s --type " & quoted form of (docType as text) & " --what " & quoted form of whatAnswer & " --why " & quoted form of whyAnswer
 on error errMsg
-	display dialog "Lore error: " & errMsg with title "Lore" buttons {"OK"} default button "OK"
+	display dialog "%s" & errMsg with title "%s" buttons {"%s"} default button "%s"
 end try
 `,
 		commitMsg, diffStat,
@@ -64,6 +64,10 @@ end try
 		escapeAppleScript(labelWhy), prefillWhy, escapeAppleScript(titleWhy), escapeAppleScript(btnCancel), escapeAppleScript(btnSave), escapeAppleScript(btnSave),
 		escapeAppleScript(sanitizeForShell(data.RepoRoot)),
 		escapeAppleScript(sanitizeForShell(data.LorePath)), hash,
+		escapeAppleScript(coalesce(data.LabelError, "Lore error: ")),
+		escapeAppleScript(coalesce(data.LabelTitle, "Lore")),
+		escapeAppleScript(coalesce(data.LabelOK, "OK")),
+		escapeAppleScript(coalesce(data.LabelOK, "OK")),
 	)
 }
 
