@@ -40,7 +40,9 @@ type TemplatesConfig struct {
 }
 
 type HooksConfig struct {
-	PostCommit bool `yaml:"post_commit" mapstructure:"post_commit"`
+	PostCommit      bool `yaml:"post_commit" mapstructure:"post_commit"`
+	StarPrompt      bool `yaml:"star_prompt" mapstructure:"star_prompt"`
+	StarPromptAfter int  `yaml:"star_prompt_after" mapstructure:"star_prompt_after"`
 }
 
 type OutputConfig struct {
@@ -68,6 +70,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("templates.dir", filepath.Join(domain.LoreDir, domain.TemplatesDir))
 
 	v.SetDefault("hooks.post_commit", true)
+	v.SetDefault("hooks.star_prompt", true)
+	v.SetDefault("hooks.star_prompt_after", 5)
 
 	v.SetDefault("output.format", "markdown")
 	v.SetDefault("output.dir", filepath.Join(domain.LoreDir, domain.DocsDir))

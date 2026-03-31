@@ -120,6 +120,17 @@ func Execute() {
 
 	ui.SetColorEnabled(ui.ColorEnabled(streams))
 
+	// Resolve language BEFORE Cobra command construction so that
+	// i18n.T().Cmd.* strings (Short, Long, Use) are in the correct language.
+	// Cascade: env LORE_LANGUAGE > .lorerc lightweight read > default "en".
+	earlyLang := os.Getenv("LORE_LANGUAGE")
+	if earlyLang == "" {
+		earlyLang = config.ReadLanguageOnly(".")
+	}
+	if earlyLang != "" && i18n.IsSupported(earlyLang) {
+		i18n.Init(earlyLang)
+	}
+
 	cfg := &config.Config{}
 	var loreStore domain.LoreStore
 	cmd := newRootCmd(cfg, streams, &loreStore)

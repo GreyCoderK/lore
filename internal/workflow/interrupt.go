@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
 	"gopkg.in/yaml.v3"
 )
@@ -45,7 +46,7 @@ type PendingAnswers struct {
 // The directory is created with os.MkdirAll if absent (per NOTE m19).
 // Relative paths work when CWD is the git work tree (item L19).
 func SavePending(workDir string, record PendingRecord) error {
-	pendingDir := filepath.Join(workDir, ".lore", "pending")
+	pendingDir := filepath.Join(workDir, domain.LoreDir, "pending")
 	if err := os.MkdirAll(pendingDir, 0o755); err != nil {
 		return fmt.Errorf("workflow: save pending: mkdir: %w", err)
 	}

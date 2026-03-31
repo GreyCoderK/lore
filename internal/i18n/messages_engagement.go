@@ -10,4 +10,7 @@ type EngagementMessages struct {
 	Milestone8  string
 	Milestone21 string
 	Milestone55 string
+
+	// Star prompt (Story 7f.3 AC2)
+	StarPrompt string // "Enjoying Lore? Star us → ..."
 }

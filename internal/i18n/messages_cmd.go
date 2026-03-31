@@ -81,6 +81,12 @@ type CmdMessages struct {
 	PendingListShort      string
 	PendingResolveShort   string
 	PendingSkipShort      string
+	PendingFlagCommit     string
+	PendingFlagType       string
+	PendingFlagWhat       string
+	PendingFlagWhy        string
+	PendingFlagAlt        string
+	PendingFlagImpact     string
 	PendingNoPending      string
 	PendingResolveHint    string
 	PendingSkipHint       string
@@ -121,6 +127,7 @@ type CmdMessages struct {
 	StatusReviewAgeJustNow   string
 	StatusReviewAgeHours     string // arg: hours
 	StatusReviewAgeDays      string // arg: days
+	StatusFlagBadge          string
 
 	// hook.go
 	HookShort               string

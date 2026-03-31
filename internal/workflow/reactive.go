@@ -52,7 +52,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 
 	// H1/H2 fix: provide corpus reader for doc existence checks (AC-4, AC-5).
 	if detectOpts.Corpus == nil {
-		detectOpts.Corpus = &storage.CorpusStore{Dir: filepath.Join(workDir, ".lore", "docs")}
+		detectOpts.Corpus = &storage.CorpusStore{Dir: domain.DocsPath(workDir)}
 	}
 
 	// Build SignalContext for Decision Engine if available
@@ -268,8 +268,7 @@ func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IO
 //  3. If found: run the question flow and overwrite that document.
 //  4. If not found: run the normal flow (create a new document).
 func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, commit *domain.CommitInfo, tty bool) error {
-	loreDir := filepath.Join(workDir, ".lore")
-	docsDir := filepath.Join(loreDir, "docs")
+	docsDir := domain.DocsPath(workDir)
 
 	// Locate pre-amend hash via ORIG_HEAD.
 	origHash := readORIGHEAD(gitAdapter)

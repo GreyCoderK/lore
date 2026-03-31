@@ -39,7 +39,7 @@ type ResolveOpts struct {
 // remaining questions (preserving partial answers), generates the document
 // via the standard pipeline, and deletes the pending file.
 func ResolvePending(ctx context.Context, workDir string, streams domain.IOStreams, item PendingItem, gitAdapter domain.GitAdapter, opts ResolveOpts) error {
-	pendingDir := filepath.Join(workDir, ".lore", "pending")
+	pendingDir := filepath.Join(workDir, domain.LoreDir, "pending")
 
 	// --- Display commit context ---
 	fmt.Fprintf(streams.Err, "\n%s\n", i18n.T().Workflow.ResolveHeader)

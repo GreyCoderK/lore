@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/greycoderk/lore/internal/domain"
 )
 
 // NotificationMode controls notification behavior.
@@ -84,7 +86,7 @@ func NotifyNonTTY(hash string, env EnvironmentSource, commitMsg, diffStat string
 	}
 
 	// Acquire lock to prevent concurrent dialogs/terminals.
-	lockPath := filepath.Join(repoRoot, ".lore", "notification.lock")
+	lockPath := filepath.Join(repoRoot, domain.LoreDir, "notification.lock")
 	if !acquireLock(lockPath) {
 		return // Another notification is in progress.
 	}

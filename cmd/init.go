@@ -142,6 +142,11 @@ func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams dom
 		ui.Verb(streams, "Installed", i18n.T().Cmd.InitInstalledHook)
 	}
 
+	// 6. Generate .lore/README.md discovery bridge (AC1 — Story 7f.3)
+	if err := storage.GenerateReadmeBridge(loreDir); err != nil {
+		fmt.Fprintf(streams.Err, "%s %s\n", ui.Warning("  "+i18n.T().Cmd.InitWarningPrefix), err.Error())
+	}
+
 	// Check if lore is in PATH and suggest adding it if not
 	if _, lookErr := exec.LookPath("lore"); lookErr != nil {
 		fmt.Fprintf(streams.Err, "\n%s %s\n", ui.Warning(i18n.T().Cmd.InitWarningPrefix), i18n.T().Cmd.InitNotInPathWarn)

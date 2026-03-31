@@ -10,7 +10,6 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/generator"
-	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	loretemplate "github.com/greycoderk/lore/internal/template"
 	"github.com/greycoderk/lore/internal/ui"
@@ -19,15 +18,7 @@ import (
 // displayCompletion shows the "Captured" (or custom verb) message, the dim
 // relative path, and the milestone reinforcement. Used by all 4 documentation
 // paths after a successful document write.
-//
-// Callers must check result.IndexErr or call storage.RegenerateIndex explicitly
-// if they need to guarantee the index is up-to-date; this function only prints
-// a warning when IndexErr is non-nil.
 func displayCompletion(streams domain.IOStreams, result storage.WriteResult, verb string, workDir string, tty bool) {
-	if result.IndexErr != nil {
-		_, _ = fmt.Fprintf(streams.Err, i18n.T().Workflow.IndexWarning+"\n", result.IndexErr)
-	}
-
 	ui.Verb(streams, verb, result.Filename)
 	displayPath, relErr := filepath.Rel(workDir, result.Path)
 	if relErr != nil {
@@ -35,8 +26,9 @@ func displayCompletion(streams domain.IOStreams, result storage.WriteResult, ver
 	}
 	_, _ = fmt.Fprintf(streams.Err, "%10s %s\n", "", ui.Dim(displayPath))
 
-	docsDir := filepath.Join(workDir, ".lore", "docs")
+	docsDir := domain.DocsPath(workDir)
 	showMilestone(streams, docsDir, tty)
+	showStarPrompt(streams, workDir, docsDir, tty)
 }
 
 // generateAndWrite handles the shared pipeline: template engine init → generate →
@@ -51,9 +43,9 @@ func displayCompletion(streams domain.IOStreams, result storage.WriteResult, ver
 //
 // On generate or write failure, answers are saved as pending (best-effort).
 func generateAndWrite(ctx context.Context, workDir string, answers Answers, commit *domain.CommitInfo, generatedBy string, overwritePath string) (storage.WriteResult, error) {
-	loreDir := filepath.Join(workDir, ".lore")
+	loreDir := filepath.Join(workDir, domain.LoreDir)
 	engine, err := loretemplate.New(
-		filepath.Join(loreDir, "templates"),
+		filepath.Join(loreDir, domain.TemplatesDir),
 		loretemplate.GlobalDir(),
 	)
 	if err != nil {
@@ -71,7 +63,7 @@ func generateAndWrite(ctx context.Context, workDir string, answers Answers, comm
 		return storage.WriteResult{}, fmt.Errorf("workflow: generate: %w", err)
 	}
 
-	docsDir := filepath.Join(loreDir, "docs")
+	docsDir := filepath.Join(loreDir, domain.DocsDir)
 	if overwritePath != "" {
 		// Atomic overwrite of an existing document (amend path).
 		data, marshalErr := storage.Marshal(genResult.Meta, genResult.Body)
@@ -81,8 +73,8 @@ func generateAndWrite(ctx context.Context, workDir string, answers Answers, comm
 		if writeErr := storage.AtomicWrite(overwritePath, data); writeErr != nil {
 			return storage.WriteResult{}, fmt.Errorf("workflow: write: %w", writeErr)
 		}
-		indexErr := storage.RegenerateIndex(docsDir)
-		return storage.WriteResult{Filename: filepath.Base(overwritePath), Path: overwritePath, IndexErr: indexErr}, nil
+		_ = storage.RegenerateIndex(docsDir) // best-effort
+		return storage.WriteResult{Filename: filepath.Base(overwritePath), Path: overwritePath}, nil
 	}
 
 	result, err := storage.WriteDoc(docsDir, genResult.Meta, input.What, genResult.Body)
@@ -95,9 +87,7 @@ func generateAndWrite(ctx context.Context, workDir string, answers Answers, comm
 		return storage.WriteResult{}, fmt.Errorf("workflow: write doc: %w", err)
 	}
 
-	// Regenerate index after successful write
-	if indexErr := storage.RegenerateIndex(docsDir); indexErr != nil {
-		result.IndexErr = indexErr
-	}
+	// Regenerate index after successful write (best-effort).
+	_ = storage.RegenerateIndex(docsDir)
 	return result, nil
 }

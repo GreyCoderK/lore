@@ -40,7 +40,7 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 		}
 
 		// AC-4: check if commit is already documented
-		docsDir := filepath.Join(workDir, ".lore", "docs")
+		docsDir := domain.DocsPath(workDir)
 		existing, findErr := storage.FindDocByCommit(docsDir, opts.Commit.Hash)
 		if findErr != nil {
 			_, _ = fmt.Fprintf(streams.Err, "Warning: %v\n", findErr)

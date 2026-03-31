@@ -126,7 +126,7 @@ func (p *openaiProvider) Complete(ctx context.Context, prompt string, opts ...do
 		return "", fmt.Errorf("ai: openai: unmarshal response: %w", err)
 	}
 
-	if result.Choices == nil || len(result.Choices) == 0 {
+	if len(result.Choices) == 0 {
 		return "", fmt.Errorf("ai: openai: empty response choices")
 	}
 

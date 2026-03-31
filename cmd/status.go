@@ -19,13 +19,15 @@ import (
 
 func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	var flagQuiet bool
+	var flagBadge bool
 
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: i18n.T().Cmd.StatusShort,
 		Long:  i18n.T().Cmd.StatusLong,
 		Example: `  lore status
-  lore status --quiet`,
+  lore status --quiet
+  lore status --badge`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,6 +37,11 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 			}
 
 			git := gitpkg.NewAdapter(".")
+
+			if flagBadge {
+				return renderBadge(streams, git)
+			}
+
 			info, err := status.CollectStatus(cfg, git, ".lore")
 			if err != nil {
 				return fmt.Errorf("cmd: status: %w", err)
@@ -48,6 +55,7 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Machine-readable output on stdout")
+	cmd.Flags().BoolVar(&flagBadge, "badge", false, i18n.T().Cmd.StatusFlagBadge)
 
 	return cmd
 }
@@ -142,6 +150,38 @@ func formatReviewAge(t time.Time) string {
 	default:
 		return t.Format("2006-01-02")
 	}
+}
+
+// renderBadge outputs a shields.io badge markdown snippet to stdout and
+// coverage details to stderr (AC3 — Story 7f.3).
+func renderBadge(streams domain.IOStreams, gitAdapter domain.GitAdapter) error {
+	docsDir := domain.DocsPath(".")
+	result := status.CalculateCoverage(docsDir, gitAdapter)
+	t := i18n.T().UI
+
+	if result.Eligible == 0 {
+		_, _ = fmt.Fprintln(streams.Err, t.BadgeNoEligible)
+		return nil
+	}
+
+	label := t.BadgeLabelDocumented
+	badge := status.FormatBadgeMarkdown(result.Coverage, label)
+
+	// Badge snippet → stdout (pipeable).
+	_, _ = fmt.Fprintln(streams.Out, badge)
+
+	// Detail → stderr.
+	_, _ = fmt.Fprintf(streams.Err, t.BadgeCoverageDetail+"\n",
+		result.Coverage, result.Eligible, result.Documented, result.DocSkipped, result.Gaps)
+
+	// Skip rate warning.
+	if result.SkipRate > 0.70 {
+		skipPct := int(result.SkipRate * 100)
+		_, _ = fmt.Fprintf(streams.Err, t.BadgeSkipRateWarning+"\n", skipPct, result.DocSkipped, result.Eligible)
+		_, _ = fmt.Fprintln(streams.Err, t.BadgeSkipRateHint)
+	}
+
+	return nil
 }
 
 func renderQuiet(streams domain.IOStreams, info *status.StatusInfo) error {

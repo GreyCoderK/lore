@@ -102,12 +102,13 @@ func newPendingResolveCmd(_ *config.Config, streams domain.IOStreams) *cobra.Com
 		},
 	}
 
-	cmd.Flags().StringVar(&flagCommit, "commit", "", "Resolve pending for specific commit hash")
-	cmd.Flags().StringVar(&flagType, "type", "", "Document type (feature, bugfix, decision, refactor, release, note)")
-	cmd.Flags().StringVar(&flagWhat, "what", "", "What was changed")
-	cmd.Flags().StringVar(&flagWhy, "why", "", "Why the change was made")
-	cmd.Flags().StringVar(&flagAlternatives, "alternatives", "", "Alternatives considered (optional)")
-	cmd.Flags().StringVar(&flagImpact, "impact", "", "Impact of the change (optional)")
+	t := i18n.T().Cmd
+	cmd.Flags().StringVar(&flagCommit, "commit", "", t.PendingFlagCommit)
+	cmd.Flags().StringVar(&flagType, "type", "", t.PendingFlagType)
+	cmd.Flags().StringVar(&flagWhat, "what", "", t.PendingFlagWhat)
+	cmd.Flags().StringVar(&flagWhy, "why", "", t.PendingFlagWhy)
+	cmd.Flags().StringVar(&flagAlternatives, "alternatives", "", t.PendingFlagAlt)
+	cmd.Flags().StringVar(&flagImpact, "impact", "", t.PendingFlagImpact)
 
 	return cmd
 }

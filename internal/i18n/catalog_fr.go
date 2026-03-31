@@ -84,6 +84,12 @@ var catalogFR = &Messages{
 		PendingListShort:    "Lister les éléments en attente",
 		PendingResolveShort: "Résoudre un élément en répondant aux questions restantes",
 		PendingSkipShort:    "Ignorer un élément sans créer de document",
+		PendingFlagCommit:   "Résoudre le pending pour un hash de commit spécifique",
+		PendingFlagType:     "Type de document (feature, bugfix, decision, refactor, release, note)",
+		PendingFlagWhat:     "Ce qui a été changé",
+		PendingFlagWhy:      "Pourquoi le changement a été fait",
+		PendingFlagAlt:      "Alternatives considérées (optionnel)",
+		PendingFlagImpact:   "Impact du changement (optionnel)",
 		PendingNoPending:    "Aucune documentation en attente. Tous les commits sont documentés.",
 		PendingResolveHint:  "Résoudre : lore pending resolve [numéro]",
 		PendingSkipHint:     "Ignorer :  lore pending skip <hash>",
@@ -124,6 +130,7 @@ var catalogFR = &Messages{
 		StatusReviewAgeJustNow:  "à l'instant",
 		StatusReviewAgeHours:    "il y a %dh",
 		StatusReviewAgeDays:     "il y a %dj",
+		StatusFlagBadge:         "Générer le badge de couverture en Markdown",
 
 		// hook.go
 		HookShort:             "Gérer le hook post-commit",
@@ -283,6 +290,7 @@ Pour charger les complétions :
 		Milestone8:  "8 décisions documentées. Votre futur vous a une bibliothèque.",
 		Milestone21: "21 décisions. Ce dépôt a une mémoire.",
 		Milestone55: "55 décisions. Vous forgez l'or de votre équipe.",
+		StarPrompt:  "Lore vous est utile ? Une ⭐ aide d'autres devs à découvrir l'or → github.com/greycoderk/lore",
 	},
 
 	UI: UIMessages{
@@ -295,6 +303,18 @@ Pour charger les complétions :
 		ListNoInput:       "aucune saisie",
 		PromptWithDefault: "? %s [%s] : ",
 		PromptNoDefault:   "? %s\n> ",
+
+		ReadmeBridgeTitle:   "À propos de .lore/",
+		ReadmeBridgeIntro:   "Ce dépôt est documenté avec [Lore](https://github.com/greycoderk/lore).",
+		ReadmeBridgeDesc:    "Lore capture *l'or* de vos décisions techniques — le *pourquoi* derrière chaque changement de code.",
+		ReadmeBridgeLink:    "En savoir plus : https://github.com/greycoderk/lore#quickstart",
+		ReadmeBridgeGenNote: "Ce fichier a été généré par `lore init`. N'hésitez pas à le modifier.",
+
+		BadgeCoverageDetail:  "Couverture : %d%% (%d éligibles : %d documentés, %d ignorés, %d manquants)",
+		BadgeNoEligible:      "aucun commit éligible",
+		BadgeSkipRateWarning: "⚠ Taux d'ignorés : %d%% (%d/%d commits éligibles ignorés)",
+		BadgeSkipRateHint:    "Un taux élevé peut indiquer un évitement de la documentation.",
+		BadgeLabelDocumented: "documenté",
 	},
 
 	Workflow: WorkflowMessages{

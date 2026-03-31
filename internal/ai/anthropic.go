@@ -148,7 +148,7 @@ func (p *anthropicProvider) Complete(ctx context.Context, prompt string, opts ..
 		return "", fmt.Errorf("ai: anthropic: API error: %s", result.Error.Message)
 	}
 
-	if result.Content == nil || len(result.Content) == 0 {
+	if len(result.Content) == 0 {
 		return "", fmt.Errorf("ai: anthropic: empty response content")
 	}
 
