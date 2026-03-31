@@ -321,10 +321,12 @@ func TestIntegration_FullHookLifecycle(t *testing.T) {
 		t.Errorf("hook content missing exec command, got:\n%s", content)
 	}
 
-	// Step 3: Verify executable
-	info, _ := os.Stat(hookPath)
-	if info.Mode()&0111 == 0 {
-		t.Error("hook should be executable")
+	// Step 3: Verify executable (skip on Windows where chmod has no effect).
+	if runtime.GOOS != "windows" {
+		info, _ := os.Stat(hookPath)
+		if info.Mode()&0111 == 0 {
+			t.Error("hook should be executable")
+		}
 	}
 
 	// Step 4: Uninstall hook

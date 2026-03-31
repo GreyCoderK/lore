@@ -6,6 +6,7 @@ package storage
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -160,9 +161,11 @@ func TestAtomicWrite_Success(t *testing.T) {
 		t.Errorf("content: got %q", string(got))
 	}
 
-	info, _ := os.Stat(path)
-	if info.Mode().Perm() != 0644 {
-		t.Errorf("permissions: got %o, want 0644", info.Mode().Perm())
+	if runtime.GOOS != "windows" {
+		info, _ := os.Stat(path)
+		if info.Mode().Perm() != 0644 {
+			t.Errorf("permissions: got %o, want 0644", info.Mode().Perm())
+		}
 	}
 }
 

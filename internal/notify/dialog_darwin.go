@@ -52,7 +52,11 @@ set whatAnswer to text returned of (display dialog "%s" default answer "%s" with
 
 set whyAnswer to text returned of (display dialog "%s" default answer "%s" with title "%s" buttons {"%s", "%s"} default button "%s")
 
-do shell script "cd " & quoted form of "%s" & " && " & quoted form of "%s" & " pending resolve --commit %s --type " & quoted form of (docType as text) & " --what " & quoted form of whatAnswer & " --why " & quoted form of whyAnswer
+try
+	do shell script "cd " & quoted form of "%s" & " && " & quoted form of "%s" & " pending resolve --commit %s --type " & quoted form of (docType as text) & " --what " & quoted form of whatAnswer & " --why " & quoted form of whyAnswer
+on error errMsg
+	display dialog "Lore error: " & errMsg with title "Lore" buttons {"OK"} default button "OK"
+end try
 `,
 		commitMsg, diffStat,
 		escapeAppleScript(title), escapeAppleScript(labelType), defaultType,

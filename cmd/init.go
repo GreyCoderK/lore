@@ -38,6 +38,12 @@ templates:
 
 hooks:
   post_commit: true
+  star_prompt: true       # one-time "star us" prompt after N documented commits
+  star_prompt_after: 5    # threshold to trigger the star prompt
+
+notification:
+  mode: auto             # auto, terminal, dialog, notify, silent
+  # disabled_envs: []    # environments to skip (e.g., vim, emacs)
 
 output:
   format: markdown
