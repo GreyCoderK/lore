@@ -54,14 +54,17 @@ brew install GreyCoderK/lore/lore
 # Snap (Linux)
 sudo snap install lore --classic
 
-# Go
+# Chocolatey (Windows)
+choco install lore
+
+# Go (any platform)
 go install github.com/greycoderk/lore@latest
 
-# Pre-built binaries
+# Pre-built binaries (macOS / Linux)
 curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh | sh
 ```
 
-Or download from [GitHub Releases](https://github.com/GreyCoderK/lore/releases).
+Or download from [GitHub Releases](https://github.com/GreyCoderK/lore/releases) — binaries for macOS, Linux, and Windows.
 
 ## Quickstart (5 minutes)
 
