@@ -1,0 +1,106 @@
+site_name: Lore
+site_url: https://greycoderk.github.io/lore/
+site_description: "Your code knows what. Lore knows why."
+repo_url: https://github.com/greycoderk/lore
+repo_name: greycoderk/lore
+
+theme:
+  name: material
+  language: en
+  logo: docs/assets/logo-placeholder.png
+  favicon: docs/assets/logo-placeholder.png
+  palette:
+    - scheme: default
+      primary: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - i18n:
+      languages:
+        - locale: en
+          name: English
+          build: true
+          default: true
+        - locale: fr
+          name: "Français"
+          build: true
+  - search:
+      lang:
+        - en
+        - fr
+
+extra:
+  alternate:
+    - name: English
+      link: /lore/
+      lang: en
+    - name: "Français"
+      link: /lore/fr/
+      lang: fr
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/greycoderk/lore
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+    - Shell Completions: getting-started/completions.md
+  - Commands:
+    - Overview: commands/index.md
+    - lore init: commands/init.md
+    - lore new: commands/new.md
+    - lore show: commands/show.md
+    - lore list: commands/list.md
+    - lore status: commands/status.md
+    - lore delete: commands/delete.md
+    - lore pending: commands/pending.md
+    - lore doctor: commands/doctor.md
+    - lore release: commands/release.md
+    - lore demo: commands/demo.md
+    - lore hook: commands/hook.md
+    - lore config: commands/config.md
+    - lore angela draft: commands/angela-draft.md
+    - lore angela polish: commands/angela-polish.md
+    - lore angela review: commands/angela-review.md
+    - lore decision: commands/decision.md
+    - lore completion: commands/completion.md
+  - Guides:
+    - Configuration: guides/configuration.md
+    - Document Types & Metadata: guides/document-types.md
+    - Contextual Detection: guides/contextual-detection.md
+    - How Lore Compares: guides/comparaison.md
+    - Examples: guides/exemples.md
+  - Contributing:
+    - Architecture: contributing/architecture.md
+  - FAQ: faq.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables

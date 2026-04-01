@@ -1,0 +1,17 @@
+# lychee link checker configuration
+# https://lychee.cli.rs/
+
+# Exclude URLs that are known to be problematic or require auth
+exclude = [
+  "https://github.com/greycoderk/lore/discussions",
+  "https://github.com/greycoderk/lore/issues/new",
+]
+
+# Accept these status codes
+accept = [200, 204, 301, 302]
+
+# Timeout per request
+timeout = 10
+
+# Don't check mailto links
+exclude_mail = true

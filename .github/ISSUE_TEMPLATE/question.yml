@@ -1,0 +1,29 @@
+name: Question
+description: Ask a question about Lore
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? You can also ask in [GitHub Discussions Q&A](https://github.com/greycoderk/lore/discussions/categories/q-a).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to accomplish?
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What You Tried
+      description: Any approaches you've already attempted?

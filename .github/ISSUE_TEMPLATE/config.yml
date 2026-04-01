@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: General Discussion
+    url: https://github.com/greycoderk/lore/discussions
+    about: For general questions and discussions, please use GitHub Discussions.
+  - name: Q&A
+    url: https://github.com/greycoderk/lore/discussions/categories/q-a
+    about: Ask and answer questions in our Q&A section.

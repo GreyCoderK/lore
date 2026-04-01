@@ -1,0 +1,6 @@
+hooks:
+  post_commit: true
+
+output:
+  format: markdown
+  dir: .lore/docs

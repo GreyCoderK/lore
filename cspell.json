@@ -1,0 +1,12 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "dictionaries": ["en_US", "softwareTerms"],
+  "dictionaryDefinitions": [
+    { "name": "project-words", "path": ".cspell/project-words.txt" }
+  ],
+  "overrides": [
+    { "filename": "**/*.fr.md", "language": "fr" }
+  ],
+  "ignorePaths": ["site/**", "node_modules/**", ".git/**"]
+}
