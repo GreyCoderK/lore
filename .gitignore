@@ -4,3 +4,9 @@ dist/
 .DS_Store
 /lore
 .lorerc.local
+
+# Generated assets (reproducible via VHS)
+assets/demo.gif
+
+# MkDocs build output
+site/

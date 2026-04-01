@@ -1,13 +1,39 @@
-# Lore
+<p align="center">
+  <img src="assets/logo.svg" alt="Lore" width="128">
+</p>
 
-[![CI](https://github.com/GreyCoderK/lore/actions/workflows/ci.yml/badge.svg)](https://github.com/GreyCoderK/lore/actions/workflows/ci.yml)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/GreyCoderK/lore)](https://github.com/GreyCoderK/lore)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
-[![GitHub Release](https://img.shields.io/github/v/release/GreyCoderK/lore)](https://github.com/GreyCoderK/lore/releases)
+<h1 align="center">Lore</h1>
 
-**A CLI tool that captures the *why* behind your code, one commit at a time.**
+<p align="center">
+  <strong>Your code knows what. Lore knows why.</strong><br>
+  <em>L'or de vos decisions techniques.</em>
+</p>
 
-Lore hooks into your Git workflow to document decisions, trade-offs, and context that code alone can't convey. Every commit becomes an opportunity to build a searchable knowledge base — no wiki, no Confluence, just Markdown files living next to your code.
+<p align="center">
+  <a href="https://github.com/GreyCoderK/lore/actions/workflows/ci.yml"><img src="https://github.com/GreyCoderK/lore/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/GreyCoderK/lore"><img src="https://img.shields.io/github/go-mod/go-version/GreyCoderK/lore" alt="Go Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"></a>
+  <a href="https://github.com/GreyCoderK/lore/releases"><img src="https://img.shields.io/github/v/release/GreyCoderK/lore" alt="GitHub Release"></a>
+  <a href="https://github.com/GreyCoderK/lore/actions/workflows/ci.yml"><img src="https://img.shields.io/codecov/c/github/GreyCoderK/lore?label=coverage&color=d4a" alt="Coverage"></a>
+  <a href="https://github.com/sponsors/GreyCoderK"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github-sponsors" alt="Sponsor"></a>
+</p>
+
+<!-- GIF demo — generate with: vhs assets/demo.tape -->
+<!-- ![Demo](assets/demo.gif) -->
+
+---
+
+## The Problem
+
+You're 50 commits in. Six months later, someone asks: *"Why did we build it this way?"*
+
+Git blame shows **who** changed **what** and **when**. But not **why**. The reasoning is gone — buried in a Slack thread, a PR comment, or the memory of a developer who left three months ago.
+
+Every codebase has an invisible layer of decisions that code alone can't convey. And every day that passes, more of that knowledge evaporates.
+
+## The Solution
+
+Three questions. Ninety seconds. Done.
 
 ```
 $ git commit -m "feat: add JWT auth middleware"
@@ -17,40 +43,7 @@ $ git commit -m "feat: add JWT auth middleware"
   Captured  feature-add-jwt-auth-middleware-2026-03-16.md
 ```
 
-*Your code knows what. Lore knows why.*
-
-## Built For
-
-- **Solo developers** who revisit their own code months later and wonder *"why did I do this?"*
-- **Teams** that lose institutional knowledge when people leave or rotate
-- **Open-source maintainers** who want contributors to understand the reasoning behind design choices
-- **Anyone tired of decisions buried in Slack threads, PR comments, or someone's memory**
-
-## Why Lore?
-
-Code captures **what** you built. Git captures **when** you changed it. But neither captures **why** you made the decisions you made.
-
-Six months later, you're staring at a piece of code wondering: *Why did we choose JWT over sessions? What alternatives did we consider? What was the impact?* The answer is lost — buried in a Slack thread, a PR comment, or someone's memory.
-
-Lore fixes this by making documentation a natural part of your commit workflow:
-
-- **3 questions, <10 seconds** — Type, What, Why. That's it. Express mode skips optional questions when you're fast.
-- **Zero friction** — Post-commit hook asks automatically. No context switch, no separate tool.
-- **Markdown files in your repo** — Searchable, versionable, portable. No external service required.
-- **Works offline** — Everything is local. No network calls, no API keys (unless you opt in to Angela).
-
-## How Lore Compares
-
-| | Lore | ADRs | Conventional Commits | Commit linters |
-|---|---|---|---|---|
-| Captures *why* | Yes | Yes | No (format only) | No |
-| Automated prompt | Post-commit hook | Manual | Manual | Pre-commit |
-| Lives in repo | Markdown files | Markdown files | Commit messages | N/A |
-| Searchable corpus | Yes (`lore show`) | Grep | `git log` | N/A |
-| Works offline | Yes | Yes | Yes | Yes |
-| AI-assisted | Optional (Angela) | No | No | No |
-
-Lore is not a replacement for ADRs — it's the everyday capture layer that feeds into them. ADRs document big architectural decisions; Lore documents the daily *why* behind every commit.
+Lore hooks into your Git workflow and asks **3 questions** after every commit — Type, What, Why. The answers become a Markdown file living in your repo, searchable, versionable, portable. No wiki. No SaaS. No friction.
 
 ## Installation
 
@@ -63,68 +56,99 @@ sudo snap install lore --classic
 
 # Go
 go install github.com/greycoderk/lore@latest
+
+# Pre-built binaries
+curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh | sh
 ```
 
-Or download pre-built binaries from [GitHub Releases](https://github.com/GreyCoderK/lore/releases).
+Or download from [GitHub Releases](https://github.com/GreyCoderK/lore/releases).
 
-## Quick Start
+## Quickstart (5 minutes)
 
 ```bash
-# Initialize Lore in your project
+# 1. Initialize Lore in your project
 lore init
+# Creates .lore/ directory and installs the post-commit hook
 
-# That's it. Next time you commit, Lore will ask 3 questions.
-# Or create documentation on demand:
-lore new
+# 2. Make a commit — Lore asks 3 questions automatically
+git add . && git commit -m "Add rate limiting"
+# → Type? feature
+# → What? Add rate limiting (pre-filled from commit)
+# → Why? API was getting hammered, 10K req/min from one client
 
-# Retroactively document a past commit:
+# 3. See your captured decision
+lore show
+# → Displays the Markdown document with the full context
+
+# 4. Check your documentation health
+lore status
+# → Shows coverage, pending commits, corpus stats
+
+# Bonus: document a past commit retroactively
 lore new --commit abc1234
 ```
+
+## How Lore Compares
+
+| | **Lore** | Swimm | Confluence | GitBook | Nothing |
+|---|---|---|---|---|---|
+| **When** | Commit-time | After the fact | After the fact | After the fact | Never |
+| **Where** | Local (`.lore/`) | SaaS | SaaS | SaaS | — |
+| **Friction** | 90 seconds | 30 minutes | 30 minutes | 15 minutes | 0 |
+| **AI** | Angela (opt-in) | Generic | Generic | Generic | — |
+| **Lock-in** | Markdown | Proprietary | Proprietary | Mixed | — |
+| **Price** | Free | $28/seat | $5.75/user | $8/user | Free |
+
+Lore is also complementary to ADRs — it captures the daily *why* that feeds into bigger architectural decisions.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
 | `lore init` | Initialize Lore in the current repository |
-| `lore new` | Create documentation on demand (manual mode) |
+| `lore new` | Create documentation on demand |
 | `lore new --commit <hash>` | Document a past commit retroactively |
-| `lore show <query>` | Search and display a document |
+| `lore show [query]` | Search and display documents |
 | `lore list` | List all documents in the corpus |
 | `lore status` | Repository health dashboard |
-| `lore delete <filename>` | Delete a document with confirmation |
-| `lore pending` | List commits with incomplete documentation |
+| `lore status --badge` | Generate shields.io coverage badge |
+| `lore delete <file>` | Delete a document with confirmation |
+| `lore pending` | List undocumented commits |
 | `lore pending resolve` | Resume interrupted documentation |
 | `lore pending skip <hash>` | Skip a pending commit |
 | `lore doctor` | Diagnose corpus inconsistencies |
-| `lore doctor --fix` | Automatically repair fixable issues |
-| `lore demo` | Interactive demo of the documentation flow |
+| `lore doctor --fix` | Auto-repair fixable issues |
+| `lore doctor --config` | Validate `.lorerc` configuration |
+| `lore release [tag]` | Generate release notes from corpus |
+| `lore demo` | Interactive demo of the workflow |
+| `lore hook install` | Install the post-commit hook |
+| `lore config` | Show current configuration |
+| `lore angela draft` | Zero-API structural analysis |
+| `lore angela polish` | AI-assisted rewrite with diff review |
+| `lore angela review` | Corpus-wide coherence analysis |
+| `lore decision` | Decision engine status and calibration |
+| `lore completion <shell>` | Generate shell completions (bash/zsh/fish) |
 
 ## How It Works
 
 ### The Documentation Flow
 
-When you commit, Lore's post-commit hook triggers an interactive flow:
-
 1. **Type** — What kind of change? (feature, bugfix, decision, refactor, note)
 2. **What** — Pre-filled from your commit message. Press Enter to confirm.
 3. **Why** — The one question that matters. Why this approach?
 
-If you're fast (all 3 answers in <3 seconds), Lore enters **express mode** and skips the optional questions (Alternatives, Impact). If you take your time, it asks all 5.
+If all 3 answers come in under 3 seconds, Lore enters **express mode** and skips optional questions.
 
 ### Contextual Detection
 
-Lore intelligently handles Git contexts:
-
-- **Merge commits** — Skipped automatically (no documentation needed)
-- **Rebase** — Deferred to pending (you can resolve later)
-- **Cherry-pick with existing doc** — Skipped (already documented)
-- **Amend** — Updates the existing document instead of creating a new one
-- **Non-TTY** (CI, scripts) — Deferred to pending silently
-- **Ctrl+C** — Partial answers saved to pending (nothing lost)
+- **Merge commits** — Skipped automatically
+- **Rebase** — Deferred to pending
+- **Cherry-pick with doc** — Skipped
+- **Amend** — Updates existing document
+- **Non-TTY** (IDE, CI) — Deferred with OS notification (VS Code, dialog)
+- **Ctrl+C** — Partial answers saved to pending
 
 ### Document Format
-
-Documents are Markdown files with YAML front matter:
 
 ```markdown
 ---
@@ -137,34 +161,16 @@ generated_by: hook
 # JWT Auth Middleware
 
 ## Why
-
 Stateless authentication scales better than server-side sessions...
 
 ## Alternatives Considered
-
 Session-based auth with Redis...
 
 ## Impact
-
 Users can now authenticate without server-side state...
 ```
 
-### Corpus Health
-
-```bash
-$ lore doctor
-  ✓  orphan-tmp          (none found)
-  ✗  stale-index         README.md (out of sync)
-  ✓  broken-ref          (none found)
-  ✓  stale-cache         (none found)
-  ✓  invalid-frontmatter (none found)
-
-1 issue found. Run: lore doctor --fix
-```
-
 ## Configuration
-
-Lore uses a cascading config system:
 
 | File | Purpose | Git |
 |------|---------|-----|
@@ -174,102 +180,72 @@ Lore uses a cascading config system:
 
 ```yaml
 # .lorerc
+language: "en"           # "en" or "fr" — bilingual UI
 ai:
-  provider: ""          # "anthropic", "openai", "ollama", or "" (zero-API)
-
+  provider: ""            # "anthropic", "openai", "ollama", or "" (zero-API)
 hooks:
   post_commit: true
-
 templates:
   dir: .lore/templates
 ```
 
-## Architecture
+## Architecture (for contributors)
 
 ```
-lore_cli/
-├── cmd/                    # Cobra commands (CLI layer)
-├── internal/
-│   ├── ai/                 # AI provider implementations (Epic 6)
-│   ├── angela/             # AI-assisted documentation logic (Epic 6)
-│   ├── cli/                # Exit codes, CLI utilities
-│   ├── config/             # Configuration cascade (.lorerc)
-│   ├── domain/             # Interfaces, types, DTOs
-│   ├── engagement/         # Milestone messages
-│   ├── fileutil/           # Atomic file operations
-│   ├── generator/          # Document generation pipeline
-│   ├── git/                # Git adapter (hooks, log, diff)
-│   ├── status/             # Repository status collector
-│   ├── storage/            # Document storage, front matter, index, doctor
-│   ├── template/           # Go template engine
-│   ├── ui/                 # Terminal UI (colors, verbs, lists)
-│   └── workflow/           # Reactive/proactive documentation flows
-└── .lore/                  # Lore data directory
-    ├── docs/               # Documentation corpus (Markdown)
-    ├── pending/            # Interrupted/deferred commits
-    └── templates/          # Custom templates (optional)
+cmd/           → Cobra commands (CLI entry points)
+internal/
+  domain/      → Interfaces, types, DTOs (no dependencies)
+  config/      → Configuration cascade (.lorerc → .lorerc.local → env)
+  git/         → Git adapter (hooks, log, diff)
+  storage/     → Document storage, front matter, index, doctor
+  workflow/    → Reactive (hook) and proactive (lore new) flows
+  generator/   → Document generation pipeline
+  angela/      → AI-assisted documentation logic
+  ai/          → AI provider implementations
+  i18n/        → Bilingual message catalogs (EN/FR)
+  ui/          → Terminal UI (colors, progress, lists)
+.lore/
+  docs/        → Documentation corpus (Markdown)
+  pending/     → Interrupted/deferred commits
+  store.db     → LKS index (SQLite, reconstructible)
 ```
 
-### Design Principles
-
-- **Markdown is the source of truth** — Everything else (index, cache) is derived and reconstructible
-- **Zero implicit network calls** — AI features are opt-in, everything works offline
-- **Atomic writes** — `.tmp` + `os.Rename()` prevents corruption
-- **stderr for humans, stdout for machines** — `--quiet` outputs machine-parseable data on stdout
-- **No external dependencies for core** — stdlib `net/http` for AI providers, no SDKs
+**Principles:** Markdown is source of truth. Zero implicit network calls. Atomic writes. stderr for humans, stdout for machines.
 
 ## Project Roadmap
 
-Lore is developed in epics, each delivering a cohesive set of features:
-
-| Epic | Name | Status | Stories |
-|------|------|--------|---------|
-| 1 | Project Setup & First Impression | Done | 4 stories |
-| 2 | Document Capture at Commit | Done | 9 stories |
-| 3 | Search & Retrieval | Done | 3 stories |
-| 4 | Documentation Lifecycle | Done | 3 stories |
-| 5 | Maintenance & Resilience | Done | 2 stories |
-| 6 | Angela — AI-Assisted Documentation | **Next** | 3 stories |
-| 7 | Release & Advanced Review | Backlog | 2 stories |
-| 8 | User Notes | Backlog | 3 stories |
-| 9 | References & Resolution | Backlog | 5 stories |
-| 10 | Interactive Selection & Flow | Backlog | 4 stories |
-| 11 | Reference Health & Diagnostics | Backlog | 3 stories |
-| 12 | Cross-Cutting Reference Integration | Backlog | 3 stories |
-
-### Current Status: Epic 6 — Angela
-
-The next milestone introduces **Angela**, an AI-assisted documentation companion:
-
-- **Story 6-1**: AI provider abstraction (Anthropic, OpenAI, Ollama) with factory pattern
-- **Story 6-2**: `lore angela draft` — zero-API structural analysis, style guide alignment, corpus coherence checks
-- **Story 6-3**: `lore angela polish` — single API call with interactive diff review
-
-Angela operates in two modes:
-- **Draft mode** (zero-API) — Local analysis: missing sections, style guide compliance, related documents. No network calls.
-- **Polish mode** (1 API call) — AI rewrites with interactive diff. Accept/reject each change individually. Atomic writes preserve originals.
+| Circle | Name | Status |
+|--------|------|--------|
+| 1 | Validation — Setup, Capture, Search | Done |
+| 2 | MVP Completion — Lifecycle, Resilience, Angela | Done |
+| 2b | Release, i18n, Hardening, IDE, Intelligence | Done |
+| 3 | Consolidation — Branches, Templates, Analytics | Backlog |
+| 4 | Notes & References — Composition, Search | Backlog |
+| 5 | Angela Advanced — Render, Zones, Audience | Backlog |
+| 6-7 | Platform — Federation, Knowledge Graph | Backlog |
 
 ## Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs, suggesting features, and submitting pull requests.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-For security vulnerabilities, please follow the responsible disclosure process in [SECURITY.md](SECURITY.md).
+For security vulnerabilities, see [SECURITY.md](SECURITY.md).
 
-## Community & Support
+## Community
 
-- **Bug reports & feature requests** — [GitHub Issues](https://github.com/GreyCoderK/lore/issues)
-- **Security issues** — See [SECURITY.md](SECURITY.md)
-- **Commercial licensing** — leshodaimekossonou@gmail.com
+- [GitHub Issues](https://github.com/GreyCoderK/lore/issues) — Bugs & feature requests
+- [GitHub Discussions](https://github.com/GreyCoderK/lore/discussions) — Q&A, ideas, show & tell
+- [SUPPORT.md](SUPPORT.md) — Where to get help
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Community guidelines
 
-## Support the Project
+## Sponsor
 
-If Lore helps you capture better documentation, consider [sponsoring the project](https://github.com/sponsors/GreyCoderK). Your support helps fund continued development, new features like Angela AI, and long-term maintenance.
+If Lore helps you capture better decisions, consider [sponsoring the project](https://github.com/sponsors/GreyCoderK).
 
-[![Sponsor](https://img.shields.io/badge/Sponsor-GreyCoderK-ea4aaa?logo=github-sponsors)](https://github.com/sponsors/GreyCoderK)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github-sponsors)](https://github.com/sponsors/GreyCoderK)
+
+![lore-documented](assets/lore-documented.svg)
 
 ## Third-Party Notices
-
-The following dependencies require attribution under their respective licenses:
 
 | Dependency | License |
 |------------|---------|
@@ -282,8 +258,6 @@ The following dependencies require attribution under their respective licenses:
 | [x/sys](https://pkg.go.dev/golang.org/x/sys) | BSD-3-Clause |
 | [x/text](https://pkg.go.dev/golang.org/x/text) | BSD-3-Clause |
 
-Full license texts are available in each dependency's repository.
-
 ## License
 
-AGPL-3.0 — see [LICENSE](LICENSE). A commercial license is available for proprietary use — see [LICENSING.md](../LICENSING.md).
+AGPL-3.0 — see [LICENSE](LICENSE). Commercial license available — see [LICENSING.md](../LICENSING.md).
