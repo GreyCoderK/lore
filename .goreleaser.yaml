@@ -60,21 +60,28 @@ nfpms:
       - rpm
       - apk
 
-snapcrafts:
-  - name: lore
-    summary: "Capture the why behind your code, one commit at a time"
-    description: "Lore is a CLI tool that captures the why behind your code decisions at commit time, building a searchable documentation corpus."
-    grade: stable
-    confinement: strict
-    license: "AGPL-3.0-or-later"
-    publish: false # Set to true once SNAPCRAFT_STORE_CREDENTIALS is configured
-    apps:
-      lore:
-        command: lore
-        plugs:
-          - home
-          - network
-          - dot-gitconfig
+# snapcrafts: (DISABLED — requires snapcraft in CI runner + SNAPCRAFT_STORE_CREDENTIALS)
+# Uncomment when ready:
+#   1. Install snapcraft in release.yml: sudo snap install snapcraft --classic
+#   2. Add SNAPCRAFT_STORE_CREDENTIALS secret
+#   3. Request classic confinement on forum.snapcraft.io
+#   4. Uncomment this section
+#
+# snapcrafts:
+#   - name: lore
+#     summary: "Capture the why behind your code, one commit at a time"
+#     description: "Lore is a CLI tool that captures the why behind your code decisions at commit time, building a searchable documentation corpus."
+#     grade: stable
+#     confinement: classic
+#     license: "AGPL-3.0-or-later"
+#     publish: true
+#     apps:
+#       lore:
+#         command: lore
+#         plugs:
+#           - home
+#           - network
+#           - dot-gitconfig
 
 chocolateys:
   - name: lore
