@@ -285,6 +285,33 @@ Pour charger les complétions :
 
 		// show.go
 		ShowAllDeprecated: "Conseil : préférez `lore list` pour lister tous les documents. `show --all` sera supprimé dans une prochaine version.",
+
+		// upgrade.go
+		UpgradeShort:         "Mettre lore à jour vers la dernière version",
+		UpgradeChecking:      "Recherche de mises à jour...",
+		UpgradeAlreadyLatest: "Déjà à jour (%s).",
+		UpgradeNewVersion:    "Nouvelle version disponible : %s → %s",
+		UpgradeDownloading:   "Téléchargement de %s...",
+		UpgradeVerifying:     "Vérification de la somme de contrôle...",
+		UpgradeChecksumFail:  "Échec de la vérification — abandon.",
+		UpgradeInstalling:    "Installation...",
+		UpgradeSuccess:       "Mis à jour vers %s.",
+		UpgradeHomebrew:      "Installé via Homebrew. Lancez :\n  %s",
+		UpgradeGoInstall:     "Installé via go install. Lancez :\n  %s",
+		UpgradePermissionErr: "Impossible d'écrire dans %s — essayez avec des droits élevés.",
+		UpgradeNetworkErr:    "Erreur réseau — vérifiez votre connexion.",
+		UpgradeAPIErr:        "Erreur API GitHub : %s",
+		UpgradeNoRelease:     "Aucune release trouvée.",
+		UpgradeSkipDevBuild:  "Build de développement — la mise à jour nécessite un binaire release.",
+		UpgradeVersionFlag:   "Cibler une version spécifique (ex. v1.2.0 ou v1.3.0-beta.1)",
+		UpgradeVersionNotFnd: "Version %s introuvable dans les releases récentes.",
+
+		// check_update.go
+		CheckUpdateShort:    "Vérifier si une nouvelle version de lore est disponible",
+		CheckUpdateUpToDate: "À jour (%s).",
+		CheckUpdateAvail:    "Mise à jour disponible : %s → %s",
+		CheckUpdateHint:       "Lancez : lore upgrade",
+		CheckUpdatePreRelease: "pre-release",
 	},
 
 	Engagement: EngagementMessages{

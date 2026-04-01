@@ -282,6 +282,33 @@ To load completions:
 
 		// show.go
 		ShowAllDeprecated: "Hint: prefer `lore list` for listing all documents. `show --all` will be removed in a future release.",
+
+		// upgrade.go
+		UpgradeShort:         "Upgrade lore to the latest version",
+		UpgradeChecking:      "Checking for updates...",
+		UpgradeAlreadyLatest: "Already up to date (%s).",
+		UpgradeNewVersion:    "New version available: %s → %s",
+		UpgradeDownloading:   "Downloading %s...",
+		UpgradeVerifying:     "Verifying checksum...",
+		UpgradeChecksumFail:  "Checksum verification failed — aborting.",
+		UpgradeInstalling:    "Installing...",
+		UpgradeSuccess:       "Upgraded to %s.",
+		UpgradeHomebrew:      "Installed via Homebrew. Run:\n  %s",
+		UpgradeGoInstall:     "Installed via go install. Run:\n  %s",
+		UpgradePermissionErr: "Cannot write to %s — try running with elevated permissions.",
+		UpgradeNetworkErr:    "Network error — check your connection and try again.",
+		UpgradeAPIErr:        "GitHub API error: %s",
+		UpgradeNoRelease:     "No releases found.",
+		UpgradeSkipDevBuild:  "Running a dev build — upgrade is only available for release binaries.",
+		UpgradeVersionFlag:   "Target a specific version (e.g. v1.2.0 or v1.3.0-beta.1)",
+		UpgradeVersionNotFnd: "Version %s not found in recent releases.",
+
+		// check_update.go
+		CheckUpdateShort:    "Check if a newer version of lore is available",
+		CheckUpdateUpToDate: "Up to date (%s).",
+		CheckUpdateAvail:    "Update available: %s → %s",
+		CheckUpdateHint:       "Run: lore upgrade",
+		CheckUpdatePreRelease: "pre-release",
 	},
 
 	Engagement: EngagementMessages{

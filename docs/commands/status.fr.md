@@ -25,7 +25,7 @@ Affiche un tableau de bord complet : couverture documentaire, commits en attente
 Project     my-project
 Hook        installed
 Docs        12 documented, 2 pending
-Express     25% express (3 docs), 75% complete
+Express     25% express (3 docs), 75% complète
 Angela      draft [anthropic], 2 docs need review
 Review      3 findings, 2 days ago
 Health      ✓ all good

@@ -85,7 +85,7 @@
 3. **How it works**: Hook triggers after commit. Express mode skips optional questions. Contextual detection handles merges, rebases, non-TTY.
 4. **Tech stack**: Go + Cobra, single binary, zero runtime dependencies. SQLite for indexing. AGPL-3.0.
 5. **AI (optional)**: Angela — zero-API local analysis + opt-in AI polish. Works fully offline.
-6. **Try it**: `brew install GreyCoderK/lore/lore && cd your-project && lore init`
+6. **Try it**: `brew install GreyCoderK/tap/lore && cd your-project && lore init`
 7. **What's next**: Branch consolidation, dynamic templates, knowledge graph. Feedback welcome.
 
 ### dev.to Article Title

@@ -1,6 +1,6 @@
 # lore pending
 
-Gérer les commits non documentés (différés, interrompus où ignorés).
+Gérer les commits non documentés (différés, interrompus ou ignorés).
 
 ## Synopsis
 

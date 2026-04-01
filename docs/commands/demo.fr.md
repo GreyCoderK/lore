@@ -21,7 +21,7 @@ sequenceDiagram
     participant F as File System
 
     U->>L: lore demo
-    L->>U: "Interactive demo ~45s. Press Enter to begin."
+    L->>U: "Interactive démo ~45s. Press Enter to begin."
     U->>L: [Enter]
     L->>U: ASCII logo wordmark
     L->>U: Simulated commit message
@@ -33,10 +33,10 @@ sequenceDiagram
     L->>U: Tagline + "Next: lore init"
 ```
 
-## Details de comportement
+## Détails de comportement
 
 1. **Consentement temporel** — Affiche la durée estimée et attend la touche Entrée (pas de surprise)
-2. **Affichage du logo** — Wordmark ASCII (Unicode où fallback ASCII selon le terminal)
+2. **Affichage du logo** — Wordmark ASCII (Unicode ou fallback ASCII selon le terminal)
 3. **Flux simulé** — Faux commit → 3 questions avec pauses → document généré
 4. **Vrai document** — Le document de démo est réellement créé dans `.lore/docs/` avec `status: "demo"`
 5. **Accroche** — EN : "Your code knows what. Lore knows why." / FR : "Votre code sait quoi. Lore sait pourquoi."

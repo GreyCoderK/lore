@@ -39,7 +39,7 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams, storePtr *domain.L
 
 			// Skip config loading for commands that must work without a valid config
 			name := c.Name()
-			if name == "init" || name == "doctor" {
+			if name == "init" || name == "doctor" || name == "upgrade" || name == "check-update" {
 				return nil
 			}
 
@@ -106,6 +106,8 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams, storePtr *domain.L
 		newDemoCmd(cfg, streams),
 		newDecisionCmd(cfg, streams, storePtr),
 		newCompletionCmd(),
+		newUpgradeCmd(cfg, streams),
+		newCheckUpdateCmd(cfg, streams),
 	)
 
 	return cmd

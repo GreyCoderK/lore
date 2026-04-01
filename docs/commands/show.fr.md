@@ -27,7 +27,7 @@ Recherche dans le corpus de documentation par mot-clé et affiche les documents 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
 | `--type` | string | — | Filtrer par type de document |
-| `--after` | string | — | Afficher les documents après une date (`YYYY-MM` où `YYYY-MM-DD`) |
+| `--after` | string | — | Afficher les documents après une date (`YYYY-MM` ou `YYYY-MM-DD`) |
 | `--all` | bool | `false` | Afficher tous les documents (déprécié — utilisez `lore list`) |
 | `--quiet` | bool | `false` | Sortie machine : valeurs séparées par des tabulations vers stdout |
 | `--feature` | bool | — | Raccourci pour `--type feature` |
@@ -53,7 +53,7 @@ lore show "auth middleware"
 Select [1-2]:
 ```
 
-**Résultats multiples (non-TTY où --quiet)** → Séparés par des tabulations :
+**Résultats multiples (non-TTY ou --quiet)** → Séparés par des tabulations :
 ```
 feature\tAdd JWT auth middleware\t2026-02-15
 refactor\tExtract auth middleware\t2026-03-01

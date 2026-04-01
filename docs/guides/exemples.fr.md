@@ -1,16 +1,16 @@
 # Exemples
 
-## Depot de demonstration
+## Dépôt de démonstration
 
-Un dépôt demo pre-configure est disponible dans [`examples/demo-repo/`](https://github.com/greycoderk/lore/tree/main/examples/demo-repo) :
+Un dépôt démo pré-configuré est disponible dans [`examples/demo-repo/`](https://github.com/greycoderk/lore/tree/main/examples/demo-repo) :
 
 - `.lorerc` — Configuration minimale
-- `.lore/docs/` — 3-5 documents reels generes par Lore (dogfooding)
+- `.lore/docs/` — 3-5 documents réels générés par Lore (dogfooding)
 - `README.md` — Comment reproduire le setup
 
 ## Cas d'usage courants
 
-### Developpeur solo
+### Développeur solo
 
 ```yaml
 # .lorerc — config minimale, zero friction
@@ -36,7 +36,7 @@ output:
 
 Les contributeurs documentent leurs changements. Le corpus devient un journal de design vivant.
 
-### Equipe avec IA
+### Équipe avec IA
 
 ```yaml
 # .lorerc — partage
@@ -50,9 +50,9 @@ ai:
   api_key: "sk-ant-..."
 ```
 
-Utilisez `lore angela draft` pour l'analyse sans API et `lore angela polish` pour la reécriture assistee.
+Utilisez `lore angela draft` pour l'analyse sans API et `lore angela polish` pour la réécriture assistée.
 
 ## Voir aussi
 
 - [Quickstart](../getting-started/quickstart.md) — Guide pratique 5 minutes
-- [Configuration](configuration.md) — Référence complete
+- [Configuration](configuration.md) — Référence complète

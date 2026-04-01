@@ -268,4 +268,31 @@ type CmdMessages struct {
 
 	// show.go — deprecation
 	ShowAllDeprecated      string
+
+	// upgrade.go
+	UpgradeShort         string
+	UpgradeChecking      string
+	UpgradeAlreadyLatest string // arg: version
+	UpgradeNewVersion    string // args: current, latest
+	UpgradeDownloading   string // arg: version
+	UpgradeVerifying     string
+	UpgradeChecksumFail  string
+	UpgradeInstalling    string
+	UpgradeSuccess       string // arg: version
+	UpgradeHomebrew      string // arg: command
+	UpgradeGoInstall     string // arg: command
+	UpgradePermissionErr string // arg: path
+	UpgradeNetworkErr    string
+	UpgradeAPIErr        string // arg: error
+	UpgradeNoRelease     string
+	UpgradeSkipDevBuild  string
+	UpgradeVersionFlag   string
+	UpgradeVersionNotFnd string // arg: version
+
+	// check_update.go
+	CheckUpdateShort      string
+	CheckUpdateUpToDate   string // arg: version
+	CheckUpdateAvail      string // args: current, latest
+	CheckUpdateHint       string
+	CheckUpdatePreRelease string
 }

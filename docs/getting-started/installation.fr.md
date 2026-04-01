@@ -3,7 +3,7 @@
 ## Homebrew (macOS / Linux)
 
 ```bash
-brew install GreyCoderK/lore/lore
+brew install GreyCoderK/tap/lore
 ```
 
 ## Snap (Linux)
@@ -86,7 +86,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 | Canal | Commande | Plateformes |
 |-------|----------|-------------|
-| **Homebrew** | `brew install GreyCoderK/lore/lore` | macOS, Linux |
+| **Homebrew** | `brew install GreyCoderK/tap/lore` | macOS, Linux |
 | **Snap** | `sudo snap install lore --classic` | Linux |
 | **Chocolatey** | `choco install lore` | Windows |
 | **Go** | `go install github.com/greycoderk/lore@latest` | Toutes (Go 1.21+) |

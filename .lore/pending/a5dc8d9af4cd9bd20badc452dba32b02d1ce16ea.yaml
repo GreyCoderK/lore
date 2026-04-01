@@ -1,0 +1,8 @@
+commit: a5dc8d9af4cd9bd20badc452dba32b02d1ce16ea
+date: "2026-04-02T10:57:51Z"
+message: 'fix: disable chocolatey in goreleaser (choco not in CI runner)'
+answers:
+    type: ""
+    what: ""
+status: deferred
+reason: non-tty

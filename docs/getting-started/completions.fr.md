@@ -5,14 +5,14 @@ Activer la completion par tabulation pour les commandes Lore.
 ## Bash
 
 ```bash
-# Ajouter a ~/.bashrc
+# Ajouter à ~/.bashrc
 eval "$(lore completion bash)"
 ```
 
 ## Zsh
 
 ```bash
-# Ajouter a ~/.zshrc
+# Ajouter à ~/.zshrc
 eval "$(lore completion zsh)"
 ```
 
@@ -28,7 +28,7 @@ lore completion zsh > "${fpath[1]}/_lore"
 lore completion fish | source
 ```
 
-Ou sauvegarder de facon permanente :
+Ou sauvegarder de façon permanente :
 
 ```bash
 lore completion fish > ~/.config/fish/completions/lore.fish
@@ -40,12 +40,12 @@ lore completion fish > ~/.config/fish/completions/lore.fish
 lore completion powershell | Out-String | Invoke-Expression
 ```
 
-## Verifier
+## Vérifier
 
-Apres avoir recharge votre shell, tapez `lore ` et appuyez sur Tab :
+Après avoir rechargé votre shell, tapez `lore ` et appuyez sur Tab :
 
 ```
 $ lore <TAB>
-angela    config    delete    demo      doctor    hook
+angela    config    delete    démo      doctor    hook
 init      list      new       pending   release   show      status
 ```

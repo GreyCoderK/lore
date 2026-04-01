@@ -82,7 +82,7 @@ lore doctor --rebuild-store
 
 - Lancez `lore doctor` après avoir tiré les modifications d'une équipe — les commits des autres peuvent avoir créé des incohérences.
 - Après un `lore delete`, lancez `lore doctor` pour trouver les références cassées.
-- `--rebuild-store` est sans danger : il reconstruit `store.db` à partir des fichiers Markdown source de vérité. Utilisez-le après des migrations où en cas de corruption.
+- `--rebuild-store` est sans danger : il reconstruit `store.db` à partir des fichiers Markdown source de vérité. Utilisez-le après des migrations ou en cas de corruption.
 - `--config` détecte les fautes de frappe qui retomberaient silencieusement sur les valeurs par défaut — lancez-le après avoir modifié `.lorerc`.
 
 ## Codes de sortie

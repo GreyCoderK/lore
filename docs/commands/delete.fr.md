@@ -24,7 +24,7 @@ Supprime un document de `.lore/docs/` avec confirmation interactive. Signale les
 |------|------|--------|-------------|
 | `--force` | bool | `false` | Passer la confirmation (pour scripts/CI) |
 
-## Details de comportement
+## Détails de comportement
 
 - **Interactif (TTY) :** Affiche un résumé du document, signale les références, demande `Delete? [y/N]`
 - **Non-TTY sans `--force` :** Erreur, code de sortie 1 (sécurité — jamais de suppression automatique dans les pipes)

@@ -1,6 +1,6 @@
 # Quickstart (5 minutes)
 
-De zéro à votre premier "pourquoi" capture en 5 minutes.
+De zéro à votre premier "pourquoi" capturé en 5 minutes.
 
 ## 1. Initialiser Lore
 
@@ -9,7 +9,7 @@ cd votre-projet
 lore init
 ```
 
-Créé le dossier `.lore/` et installe le hook post-commit.
+Crée le dossier `.lore/` et installe le hook post-commit.
 
 ## 2. Faire un commit
 
@@ -47,7 +47,7 @@ commit: e4f5a6b
 L'API recevait 10K req/min d'un seul client, causant de la latence pour tous.
 ```
 
-## 4. Verifier la sante du corpus
+## 4. Vérifier la santé du corpus
 
 ```bash
 lore status
@@ -60,7 +60,7 @@ Documents : 1 | En attente : 0 | Couverture : 100%
 ## 5. Explorer davantage
 
 ```bash
-# Documenter un commit passe retroactivement
+# Documenter un commit passé rétroactivement
 lore new --commit abc1234
 
 # Lister tous les documents
@@ -72,6 +72,6 @@ lore doctor
 
 ## Et ensuite ?
 
-- [Référence commandes](../commands/index.md) — Toutes les commandes en detail
+- [Référence commandes](../commands/index.md) — Toutes les commandes en détail
 - [Configuration](../guides/configuration.md) — Personnaliser Lore
-- [Angela IA](../commands/angela-draft.md) — Documentation assistee par IA
+- [Angela IA](../commands/angela-draft.md) — Documentation assistée par IA

@@ -14,7 +14,7 @@
   <a href="https://github.com/GreyCoderK/lore"><img src="https://img.shields.io/github/go-mod/go-version/GreyCoderK/lore" alt="Go Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"></a>
   <a href="https://github.com/GreyCoderK/lore/releases"><img src="https://img.shields.io/github/v/release/GreyCoderK/lore" alt="GitHub Release"></a>
-  <a href="https://github.com/GreyCoderK/lore/actions/workflows/ci.yml"><img src="https://img.shields.io/codecov/c/github/GreyCoderK/lore?label=coverage&color=d4a" alt="Coverage"></a>
+  <a href="https://app.codecov.io/gh/GreyCoderK/lore"><img src="https://img.shields.io/codecov/c/github/GreyCoderK/lore?label=coverage&color=d4a" alt="Coverage"></a>
   <a href="https://github.com/sponsors/GreyCoderK"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github-sponsors" alt="Sponsor"></a>
 </p>
 
@@ -49,7 +49,7 @@ Lore hooks into your Git workflow and asks **3 questions** after every commit â€
 
 ```bash
 # Homebrew (macOS / Linux)
-brew install GreyCoderK/lore/lore
+brew install GreyCoderK/tap/lore
 
 # Snap (Linux)
 sudo snap install lore --classic

@@ -54,7 +54,7 @@ graph TD
 
 Pré-analyse sans appel API :
 - **Contradictions** — Documents sur le même sujet avec du contenu contradictoire
-- **Documents isolés** — Aucune référence croisée vers où depuis d'autres documents
+- **Documents isolés** — Aucune référence croisée vers ou depuis d'autres documents
 - **Contenu obsolète** — Documents datant de plus de N jours sans mise à jour
 
 ## Exemples

@@ -11,7 +11,7 @@ This is an example project showing what a Lore-documented repository looks like.
 
 ```bash
 # 1. Install Lore
-brew install GreyCoderK/lore/lore
+brew install GreyCoderK/tap/lore
 
 # 2. Create a new project
 mkdir my-project && cd my-project

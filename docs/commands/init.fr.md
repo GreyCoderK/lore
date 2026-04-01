@@ -46,7 +46,7 @@ Si `.lore/` existe déjà, la commande se termine silencieusement (idempotent).
 - `.gitignore` — Mis à jour pour inclure `.lorerc.local` s'il n'y figure pas déjà
 - `.git/hooks/post-commit` — Hook installé (ou à l'emplacement de `core.hooksPath`)
 
-## Details de comportement
+## Détails de comportement
 
 1. **Pas un dépôt Git** → Erreur, code de sortie 1. Lore nécessite Git.
 2. **Déjà initialisé** → Sortie silencieuse, code 0 (peut être relancé sans risque).
