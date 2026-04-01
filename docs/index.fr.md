@@ -2,7 +2,7 @@
 
 > **L'or de vos decisions techniques.**
 
-![Logo](assets/logo.svg){ width="128" }
+<img src="assets/logo.svg" alt="Lore" width="128">
 
 <!-- GIF demo placeholder — sera remplace dans story 7e-1a -->
 <!-- ![Demo](assets/demo.gif) -->

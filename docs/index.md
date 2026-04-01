@@ -2,7 +2,7 @@
 
 > **Your code knows what. Lore knows why.**
 
-![Logo](assets/logo.svg){ width="128" }
+<img src="assets/logo.svg" alt="Lore" width="128">
 
 <!-- GIF demo placeholder — will be replaced in story 7e-1a -->
 <!-- ![Demo](assets/demo.gif) -->
