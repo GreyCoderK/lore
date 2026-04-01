@@ -1,13 +1,13 @@
-# Types de Documents & Metadonnees
+# Types de Documents & Metadonnées
 
-Reference complete des types, statuts et metadonnees front matter.
+Référence complete des types, statuts et metadonnées front matter.
 
 ## Types de Documents
 
 | Type | But | Quand l'utiliser |
 |------|-----|------------------|
-| **`decision`** | Decisions architecturales, choix de design | "Pourquoi X plutot que Y ?" — choix de base de donnees, framework, API |
-| **`feature`** | Implementations de nouvelles fonctionnalites | "Que fait cette feature et pourquoi ?" — endpoints, composants, integrations |
+| **`decision`** | Decisions architecturales, choix de design | "Pourquoi X plutot que Y ?" — choix de base de données, framework, API |
+| **`feature`** | Implementations de nouvelles fonctionnalités | "Que fait cette feature et pourquoi ?" — endpoints, composants, integrations |
 | **`bugfix`** | Corrections de bugs | "Qu'est-ce qui etait casse et pourquoi ?" — race conditions, cas limites |
 | **`refactor`** | Refactoring, optimisation | "Pourquoi restructurer ?" — extraction de packages, deduplication |
 | **`release`** | Notes de version | Auto-genere par `lore release` |
@@ -26,18 +26,18 @@ graph TD
     B -->|release| H[Auto-genere — pas de questions]
 ```
 
-Les documents **decision** ont des champs supplementaires (Alternatives, Impact) car les choix architecturaux necessitent plus de contexte.
+Les documents **decision** ont des champs supplementaires (Alternatives, Impact) car les choix architecturaux nécessitent plus de contexte.
 
 ## Statuts de Documents
 
 | Statut | Signification | Defini par |
 |--------|---------------|------------|
-| **`draft`** | En cours | Par defaut a la creation |
-| **`published`** | Final, revu | Manuel ou apres `angela polish` |
+| **`draft`** | En cours | Par défaut a la creation |
+| **`published`** | Final, revu | Manuel où apres `angela polish` |
 | **`archived`** | Obsolete, remplace | Manuel |
 | **`demo`** | Cree par `lore demo` | `lore demo` uniquement |
 
-## Reference Front Matter
+## Référence Front Matter
 
 ```yaml
 ---

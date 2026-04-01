@@ -29,7 +29,7 @@ Corpus Review — 12 documents analyzed
 SEVERITY  TITLE                            DOCUMENTS                    DESCRIPTION
 error     Contradictory auth approach       auth-jwt.md, auth-session.md  JWT chosen in one, sessions in another
 warning   Isolated document                 note-meeting-2026-03-01.md    No references to/from other docs
-info      Coverage gap                      —                            No decisions documented for database layer
+info      Coverage gap                      —                            No décisions documented for database layer
 
 3 findings (1 error, 1 warning, 1 info)
 ```
@@ -54,7 +54,7 @@ graph TD
 
 Pré-analyse sans appel API :
 - **Contradictions** — Documents sur le même sujet avec du contenu contradictoire
-- **Documents isolés** — Aucune référence croisée vers ou depuis d'autres documents
+- **Documents isolés** — Aucune référence croisée vers où depuis d'autres documents
 - **Contenu obsolète** — Documents datant de plus de N jours sans mise à jour
 
 ## Exemples

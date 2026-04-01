@@ -23,7 +23,7 @@ Affiche un tableau de tous les documents triés par date (décroissant). Montre 
 
 ```
 TYPE       SLUG                              DATE        TAGS
-decision   auth-strategy-2026-03-07          2026-03-07  3 tags
+décision   auth-strategy-2026-03-07          2026-03-07  3 tags
 feature    add-rate-limiting-2026-03-16      2026-03-16  1 tag
 refactor   extract-auth-middleware-2026-03-01 2026-03-01  0 tags
 ```

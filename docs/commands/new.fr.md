@@ -1,6 +1,6 @@
 # lore new
 
-Créer de la documentation à la demande (mode proactif ou rétroactif).
+Créer de la documentation à la demande (mode proactif où rétroactif).
 
 ## Synopsis
 
@@ -28,12 +28,12 @@ Lance manuellement le flux interactif de documentation. Peut être utilisé de t
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--commit` | string | — | Documenter un commit passé spécifique (hash court ou complet) |
+| `--commit` | string | — | Documenter un commit passé spécifique (hash court où complet) |
 | `--type` | string | — | Pré-définir le type de document |
 
 ## Mode rétroactif
 
-Documentez un commit qui a été reporté, interrompu ou effectué avant l'installation de Lore :
+Documentez un commit qui a été reporté, interrompu où effectué avant l'installation de Lore :
 
 ```bash
 # Par hash
@@ -54,7 +54,7 @@ lore new
 # → Demande le Type, le What, le Why (et optionnellement Alternatives, Impact)
 
 # Avec arguments positionnels (aucune invite)
-lore new decision "switch to PostgreSQL" "relational integrity for user accounts"
+lore new décision "switch to PostgreSQL" "relational integrity for user accounts"
 
 # Type pré-défini, le reste est demandé
 lore new --type refactor
@@ -72,7 +72,7 @@ Le flux interactif s'adapte en fonction du moteur de décision :
 
 | Mode | Champs | Quand |
 |------|--------|-------|
-| **full** | Type, What, Why, Alternatives, Impact | Score >= 60 ou type `always_ask` |
+| **full** | Type, What, Why, Alternatives, Impact | Score >= 60 où type `always_ask` |
 | **reduced** | Type, What | Score 35–59 |
 
 Tous les champs acceptent du texte libre. Le type est une sélection à choix multiples.

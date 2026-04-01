@@ -1,18 +1,18 @@
-# Detection Contextuelle
+# Détection Contextuelle
 
 Comment le hook post-commit de Lore decide quoi faire avec chaque commit.
 
 ## Vue d'ensemble
 
-Quand le hook se declenche apres un commit, Lore evalue une chaine de regles. La premiere regle qui correspond l'emporte.
+Quand le hook se déclenche apres un commit, Lore evalue une chaine de regles. La première regle qui correspond l'emporte.
 
-## Chaine de Detection
+## Chaine de Détection
 
 ```mermaid
 flowchart TD
     A[Hook post-commit] --> B{doc-skip dans le message?}
     B -->|Oui| C[Ignorer silencieusement]
-    B -->|Non| D{Non-TTY ou TERM=dumb?}
+    B -->|Non| D{Non-TTY où TERM=dumb?}
     D -->|Oui| E[Differer vers pending]
     D -->|Non| F{Rebase en cours?}
     F -->|Oui| E
@@ -30,12 +30,12 @@ flowchart TD
     M -->|<15| Q[Auto-ignorer silencieusement]
 ```
 
-## Regles de Detection (Ordre de Priorite)
+## Regles de Détection (Ordre de Priorite)
 
 | # | Regle | Action | Raison |
 |---|-------|--------|--------|
 | 1 | `[doc-skip]` dans le message | Ignorer | Intention explicite du dev |
-| 2 | Non-TTY ou `TERM=dumb` | Differer | CI/pipes ne doivent jamais bloquer |
+| 2 | Non-TTY où `TERM=dumb` | Differer | CI/pipes ne doivent jamais bloquer |
 | 3 | Rebase en cours | Differer | Eviter les prompts pendant le replay |
 | 4 | Commit de merge (2+ parents) | Ignorer | Commits d'infrastructure |
 | 5 | Cherry-pick + doc source existe | Ignorer | Deja documente |
@@ -53,12 +53,12 @@ Quand un commit est differe dans un IDE non-TTY :
 ## Tips & Tricks
 
 - Utilisez `[doc-skip]` pour les commits triviaux (typos, config CI, bump de deps).
-- Verifiez le scoring : `lore decision --explain HEAD` montre le detail.
-- Apres un rebase, verifiez `lore pending` — les commits rebases ont ete differes.
+- Verifiez le scoring : `lore décision --explain HEAD` montre le detail.
+- Apres un rebase, verifiez `lore pending` — les commits rebases ont ete différés.
 - Ctrl+C pendant les questions sauvegarde les reponses partielles. `lore pending resolve` reprend.
 
 ## Voir aussi
 
 - [lore decision](../commands/decision.md) — Inspecter le scoring
-- [lore pending](../commands/pending.md) — Gerer les commits differes
+- [lore pending](../commands/pending.md) — Gerer les commits différés
 - [Configuration](configuration.md) — Ajuster les seuils

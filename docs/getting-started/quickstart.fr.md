@@ -1,6 +1,6 @@
 # Quickstart (5 minutes)
 
-De zero a votre premier "pourquoi" capture en 5 minutes.
+De zéro à votre premier "pourquoi" capture en 5 minutes.
 
 ## 1. Initialiser Lore
 
@@ -9,7 +9,7 @@ cd votre-projet
 lore init
 ```
 
-Cree le dossier `.lore/` et installe le hook post-commit.
+Créé le dossier `.lore/` et installe le hook post-commit.
 
 ## 2. Faire un commit
 
@@ -18,7 +18,7 @@ git add .
 git commit -m "Add rate limiting to API"
 ```
 
-Le hook Lore se declenche automatiquement :
+Le hook Lore se déclenche automatiquement :
 
 ```
 [1/3] Type [feature]:
@@ -72,6 +72,6 @@ lore doctor
 
 ## Et ensuite ?
 
-- [Reference commandes](../commands/index.md) — Toutes les commandes en detail
+- [Référence commandes](../commands/index.md) — Toutes les commandes en detail
 - [Configuration](../guides/configuration.md) — Personnaliser Lore
 - [Angela IA](../commands/angela-draft.md) — Documentation assistee par IA

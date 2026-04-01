@@ -16,7 +16,7 @@ Rassemble tous les documents entre deux références Git et génère des notes d
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--from` | string | Dernier tag | Début de la plage de commits (tag ou SHA) |
+| `--from` | string | Dernier tag | Début de la plage de commits (tag où SHA) |
 | `--to` | string | HEAD | Fin de la plage de commits |
 | `--version` | string | — | Libellé de version pour les notes de release |
 | `--quiet` | bool | `false` | Afficher uniquement le chemin du fichier |

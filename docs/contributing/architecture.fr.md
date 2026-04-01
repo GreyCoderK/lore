@@ -20,20 +20,20 @@ internal/
   engagement/  Messages milestones, prompt star
   fileutil/    Operations fichiers atomiques
   notify/      Notification IDE (detection non-TTY)
-  status/      Collecteur de sante du depot
+  status/      Collecteur de sante du dépôt
   template/    Moteur de templates Go
 .lore/
   docs/        Corpus de documentation (Markdown + YAML front matter)
-  pending/     Commits interrompus/differes
+  pending/     Commits interrompus/différés
   store.db     Index LKS (SQLite — reconstructible depuis les docs)
 ```
 
-## Flux de donnees
+## Flux de données
 
 ```
 commit → hook post-commit → workflow/reactive.go
   → questions (ui/) → moteur templates → generator/
-  → ecriture atomique dans .lore/docs/ → mise a jour index (storage/)
+  → écriture atomique dans .lore/docs/ → mise a jour index (storage/)
 ```
 
 ## Patterns cles
@@ -41,7 +41,7 @@ commit → hook post-commit → workflow/reactive.go
 - **Markdown = source de verite** — index, cache, LKS sont tous reconstructibles
 - **Ecritures atomiques** — `.tmp` + `os.Rename()` evite la corruption
 - **IOStreams** — `stderr` pour les humains, `stdout` pour les machines
-- **Zero reseau implicite** — l'IA est opt-in, tout fonctionne hors ligne
+- **Zero réseau implicite** — l'IA est opt-in, tout fonctionne hors ligne
 
 ## Comment contribuer
 

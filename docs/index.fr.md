@@ -1,23 +1,23 @@
 # Lore
 
-> **L'or de vos decisions techniques.**
+> **L'or de vos décisions techniques.**
 
 <img src="assets/logo.svg" alt="Lore" width="128">
 
 <!-- GIF demo placeholder — sera remplace dans story 7e-1a -->
 <!-- ![Demo](assets/demo.gif) -->
 
-## Comment ca marche
+## Comment ça marche
 
 1. **Committez** votre code comme d'habitude
-2. **Repondez a 3 questions** — Type, Quoi, Pourquoi (90 secondes)
-3. **C'est fait** — Un document Markdown capture la decision pour toujours
+2. **Répondez a 3 questions** — Type, Quoi, Pourquoi (90 secondes)
+3. **C'est fait** — Un document Markdown capture la décision pour toujours
 
-## Demarrage rapide
+## Démarrage rapide
 
 - [Installation](getting-started/installation.md) — Homebrew, Go, curl
 - [Quickstart](getting-started/quickstart.md) — 5 minutes pour capturer votre premier "pourquoi"
-- [Commandes](commands/index.md) — Reference complete
+- [Commandes](commands/index.md) — Référence complete
 
 ## Pourquoi Lore ?
 
@@ -29,5 +29,5 @@ Chaque commit contient de l'or. Lore l'extrait.
 
 - [Comparaison](guides/comparaison.md) — vs Swimm, Confluence, GitBook
 - [Configuration](guides/configuration.md) — Personnalisez Lore
-- [FAQ](faq.md) — Questions frequentes
+- [FAQ](faq.md) — Questions fréquentes
 - [Architecture](contributing/architecture.md) — Pour les contributeurs

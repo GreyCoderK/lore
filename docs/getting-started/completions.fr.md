@@ -16,7 +16,7 @@ eval "$(lore completion bash)"
 eval "$(lore completion zsh)"
 ```
 
-Ou generer un fichier :
+Ou générer un fichier :
 
 ```bash
 lore completion zsh > "${fpath[1]}/_lore"

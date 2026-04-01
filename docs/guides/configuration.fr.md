@@ -1,30 +1,30 @@
 # Configuration
 
-Lore utilise un systeme de configuration en cascade.
+Lore utilise un système de configuration en cascade.
 
 ## Fichiers de configuration
 
 | Fichier | Role | Git |
 |---------|------|-----|
-| `.lorerc` | Configuration partagee du projet | Committe |
-| `.lorerc.local` | Surcharges personnelles (cles API) | Gitignore (chmod 600) |
+| `.lorerc` | Configuration partagée du projet | Committe |
+| `.lorerc.local` | Surcharges personnelles (clés API) | Gitignore (chmod 600) |
 | `LORE_*` env vars | Surcharges CI/automation | — |
 | `--language` flag | Surcharge CLI | — |
 
-**Ordre de resolution** (priorite decroissante) : flags CLI > env vars > `.lorerc.local` > `.lorerc` > defauts.
+**Ordre de résolution** (priorité décroissante) : flags CLI > env vars > `.lorerc.local` > `.lorerc` > défauts.
 
-## Reference complete
+## Référence complete
 
 ```yaml
-# .lorerc — config partagee
-language: "fr"              # "en" ou "fr" — langue de l'interface
+# .lorerc — config partagée
+language: "fr"              # "en" où "fr" — langue de l'interface
 
 ai:
-  provider: ""              # "anthropic", "openai", "ollama", ou "" (zero-API)
+  provider: ""              # "anthropic", "openai", "ollama", où "" (zero-API)
   model: ""                 # Nom du modele
 
 angela:
-  mode: draft               # Mode par defaut : "draft" (zero-API) ou "polish" (1 appel API)
+  mode: draft               # Mode par défaut : "draft" (zero-API) où "polish" (1 appel API)
   max_tokens: 2000
 
 hooks:

@@ -20,7 +20,7 @@ lore config <set-key|delete-key|list-keys>
 
 ## Description
 
-Gère les identifiants API pour les fonctionnalités Angela (IA). Les clés sont stockées dans le gestionnaire de credentials du système (Trousseau macOS, secret-service Linux, Gestionnaire d'identifiants Windows) ou dans `.lorerc.local` en solution de repli.
+Gère les identifiants API pour les fonctionnalités Angela (IA). Les clés sont stockées dans le gestionnaire de credentials du système (Trousseau macOS, secret-service Linux, Gestionnaire d'identifiants Windows) où dans `.lorerc.local` en solution de repli.
 
 ## `lore config set-key`
 

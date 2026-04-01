@@ -2,7 +2,7 @@
 
 ## Depot de demonstration
 
-Un depot demo pre-configure est disponible dans [`examples/demo-repo/`](https://github.com/greycoderk/lore/tree/main/examples/demo-repo) :
+Un dépôt demo pre-configure est disponible dans [`examples/demo-repo/`](https://github.com/greycoderk/lore/tree/main/examples/demo-repo) :
 
 - `.lorerc` — Configuration minimale
 - `.lore/docs/` — 3-5 documents reels generes par Lore (dogfooding)
@@ -20,12 +20,12 @@ output:
   dir: .lore/docs
 ```
 
-Chaque commit declenche 3 questions. Consultez vos decisions avec `lore show` quand vous revisitez le code des mois plus tard.
+Chaque commit déclenche 3 questions. Consultez vos décisions avec `lore show` quand vous revisitez le code des mois plus tard.
 
 ### Projet open source
 
 ```yaml
-# .lorerc — partage, committe dans le repo
+# .lorerc — partage, committé dans le repo
 language: "en"
 hooks:
   post_commit: true
@@ -50,9 +50,9 @@ ai:
   api_key: "sk-ant-..."
 ```
 
-Utilisez `lore angela draft` pour l'analyse sans API et `lore angela polish` pour la reecriture assistee.
+Utilisez `lore angela draft` pour l'analyse sans API et `lore angela polish` pour la reécriture assistee.
 
 ## Voir aussi
 
 - [Quickstart](../getting-started/quickstart.md) — Guide pratique 5 minutes
-- [Configuration](configuration.md) — Reference complete
+- [Configuration](configuration.md) — Référence complete

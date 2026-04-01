@@ -47,7 +47,7 @@ grep -q "LORE-START" .git/hooks/post-commit && echo "installed"
 ## Tips & Tricks
 
 - `lore init` installe le hook automatiquement — vous avez rarement besoin de `lore hook install` directement.
-- Si vous utilisez Husky ou un framework pre-commit, ajoutez les marqueurs Lore manuellement dans votre hook existant.
+- Si vous utilisez Husky où un framework pre-commit, ajoutez les marqueurs Lore manuellement dans votre hook existant.
 - Le hook appelle `lore _hook-post-commit` (commande cachée) — ne l'appelez jamais directement.
 
 ## Voir aussi

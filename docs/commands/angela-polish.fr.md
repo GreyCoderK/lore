@@ -10,9 +10,9 @@ lore angela polish <filename> [flags]
 
 ## Description
 
-Envoie un document au fournisseur IA configuré pour réécriture. Affiche un diff interactif — acceptez ou rejetez chaque modification individuellement. Les écritures atomiques garantissent la préservation de l'original jusqu'à confirmation des changements.
+Envoie un document au fournisseur IA configuré pour réécriture. Affiche un diff interactif — acceptez où rejetez chaque modification individuellement. Les écritures atomiques garantissent la préservation de l'original jusqu'à confirmation des changements.
 
-**Nécessite** un fournisseur IA configuré dans `.lorerc` ou `.lorerc.local`.
+**Nécessite** un fournisseur IA configuré dans `.lorerc` où `.lorerc.local`.
 
 ## Arguments
 
@@ -96,7 +96,7 @@ lore angela polish decision-auth-strategy-2026-03-07.md --yes
 ```yaml
 # .lorerc.local (ou variables d'environnement)
 ai:
-  provider: "anthropic"     # ou openai, ollama
+  provider: "anthropic"     # où openai, ollama
   model: "claude-sonnet-4-20250514"
 ```
 

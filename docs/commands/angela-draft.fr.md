@@ -41,7 +41,7 @@ Score: 7.2/10 by Technical Writer + Architect
 SEVERITY   CATEGORY        MESSAGE
 error      structure       Missing "Alternatives Considered" section
 warning    tone            Passive voice overused in "Why" section
-info       coherence       Related: feature-add-auth-2026-02-15.md
+info       cohérence       Related: feature-add-auth-2026-02-15.md
 
 3 suggestions
 ```
