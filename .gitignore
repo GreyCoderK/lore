@@ -10,3 +10,6 @@ assets/demo.gif
 
 # MkDocs build output
 site/
+
+# Corpus symlink (local only, breaks in CI)
+docs/lore-corpus
