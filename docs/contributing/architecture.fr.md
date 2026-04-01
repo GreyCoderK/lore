@@ -1,6 +1,6 @@
 # Architecture (pour contributeurs)
 
-Vue simplifiee du code Lore. Pour les directives de contribution, voir [CONTRIBUTING.md](../../CONTRIBUTING.md).
+Vue simplifiee du code Lore. Pour les directives de contribution, voir `CONTRIBUTING.md` a la racine du projet.
 
 ## Structure du projet
 

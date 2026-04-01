@@ -7,8 +7,8 @@ repo_name: greycoderk/lore
 theme:
   name: material
   language: en
-  logo: docs/assets/logo-placeholder.png
-  favicon: docs/assets/logo-placeholder.png
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   palette:
     - scheme: default
       primary: custom
@@ -21,7 +21,6 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.instant
     - navigation.tabs
     - navigation.sections
     - navigation.top

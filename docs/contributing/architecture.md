@@ -1,6 +1,6 @@
 # Architecture (for Contributors)
 
-A simplified overview of the Lore codebase. For contribution guidelines, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+A simplified overview of the Lore codebase. For contribution guidelines, see `CONTRIBUTING.md` at the project root.
 
 ## Project Structure
 
@@ -49,4 +49,4 @@ commit → post-commit hook → workflow/reactive.go
 1. Fork from `main`
 2. Write tests (`go test ./...`)
 3. Run `go vet ./...`
-4. Open a PR — see the [PR template](../../.github/PULL_REQUEST_TEMPLATE.md)
+4. Open a PR — see the PR template in `.github/PULL_REQUEST_TEMPLATE.md`

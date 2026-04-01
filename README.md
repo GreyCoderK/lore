@@ -212,18 +212,6 @@ internal/
 
 **Principles:** Markdown is source of truth. Zero implicit network calls. Atomic writes. stderr for humans, stdout for machines.
 
-## Project Roadmap
-
-| Circle | Name | Status |
-|--------|------|--------|
-| 1 | Validation — Setup, Capture, Search | Done |
-| 2 | MVP Completion — Lifecycle, Resilience, Angela | Done |
-| 2b | Release, i18n, Hardening, IDE, Intelligence | Done |
-| 3 | Consolidation — Branches, Templates, Analytics | Backlog |
-| 4 | Notes & References — Composition, Search | Backlog |
-| 5 | Angela Advanced — Render, Zones, Audience | Backlog |
-| 6-7 | Platform — Federation, Knowledge Graph | Backlog |
-
 ## Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
