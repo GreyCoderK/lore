@@ -8,9 +8,7 @@ Où va Lore — de la capture à l'intelligence.
 graph LR
     A["Cercles 1-2b<br/>✅ DONE<br/>Capture & Recherche"] --> B["Cercle 3<br/>Structure"]
     B --> C["Cercle 4<br/>Connexions"]
-    C --> D["Cercle 5<br/>Intelligence"]
-    D --> E["Cercles 6-7<br/>Plateforme"]
-    E --> F["Cercle 8<br/>Cloud"]
+    C --> D["...<br/>À venir"]
 ```
 
 > **Aujourd'hui, Lore capture.** Demain, Lore comprend, connecte et partage.
@@ -42,7 +40,7 @@ Le MVP est complet. Lore capture le "pourquoi" au moment du commit et le rend ch
 
 Aujourd'hui, quand vous créez un document sur `feature/auth`, il vit dans `.lore/docs/` sans mémoire de son origine. Quand vous mergez dans `main`, le document est là — mais aussi ceux de 5 autres branches, dont certaines ont été abandonnées. Avec le temps, votre corpus accumule des orphelins : des documents liés à des branches supprimées, décrivant des features jamais livrées.
 
-**La Consolidation de branches** (Epic 7c) ajoute la conscience :
+**La Consolidation de branches** ajoute la conscience :
 
 - Chaque document reçoit un champ `branch` et `scope` dans son front matter — capturé automatiquement à la création
 - `lore consolidate` regroupe les documents par feature après un merge — "Voici les 4 documents de la branche `feature/auth`, consolidés en une vue"
@@ -59,7 +57,7 @@ Les 3 questions par défaut (Type, Quoi, Pourquoi) fonctionnent pour la plupart 
 - Un studio de jeux veut "Budget performance" sur chaque feature
 - Un projet open source veut "Breaking Change ?" en oui/non
 
-**Les Templates dynamiques** (Epic 7d) rendent ça possible :
+**Les Templates dynamiques** rendent ça possible :
 
 - Un nouveau champ `extra` dans le front matter contient des paires clé-valeur custom
 - Les templates sont définis dans `.lore/templates/` en YAML avec des questions conditionnelles
@@ -73,7 +71,7 @@ Vous ne changez pas le cœur — vous l'étendez. Les 3 questions par défaut re
 
 La documentation est une habitude. Les habitudes ont besoin de renforcement. Sans feedback, les développeurs ne savent pas s'ils documentent assez, trop peu, ou de façon incohérente.
 
-**Analytics & Gamification** (Epic 7g) ajoute de la visibilité :
+**Analytics & Gamification** ajoute de la visibilité :
 
 - `lore stats` montre les tendances temporelles — documents par semaine, par type, par auteur, par scope
 - **Streaks** — "Vous documentez chaque jour ouvré depuis 2 semaines" — un rappel doux pour continuer
@@ -91,7 +89,7 @@ graph TD
     B --> E[Corpus organisé par feature]
     C --> F[Questions custom par projet]
     D --> G[La documentation devient une habitude]
-    E --> H[Prêt pour le Cercle 4 : Connexions]
+    E --> H[Prêt pour les Connexions]
     F --> H
     G --> H
 ```
@@ -114,7 +112,7 @@ Le Cercle 4 introduit les **références** — les hyperliens de votre corpus de
 
 Tout le savoir ne vient pas d'un commit. Certains viennent de réunions, de sessions de recherche, de conversations Slack, de revues d'architecture.
 
-**Les Notes utilisateur** (Epic 8) ajoutent `lore note` :
+**Les Notes utilisateur** ajoutent `lore note` :
 
 ```bash
 lore note create "Plan de migration PostgreSQL"
@@ -191,7 +189,7 @@ graph TD
     I --> L
     J --> L
     K --> L
-    L --> M[Prêt pour le Cercle 5 : Intelligence]
+    L --> M[Fondation du Knowledge Graph]
 ```
 
 ---
@@ -199,8 +197,6 @@ graph TD
 ## Ce qui vient après
 
 Les Cercles 3 et 4 posent les fondations de quelque chose de plus grand. Le corpus que vous construisez aujourd'hui — structuré, connecté, cherchable — devient la matière première de fonctionnalités d'intelligence que nous concevons activement.
-
-Nous ne sommes pas encore prêts à partager la roadmap complète. Ce que nous pouvons dire : **Angela va grandir.** Elle passera de la revue de documents à leur compréhension, de l'analyse d'un seul document à la compréhension de l'historique complet des décisions de votre projet.
 
 Le CLI restera toujours gratuit. Le corpus restera toujours le vôtre. Et le "pourquoi" que vous capturez aujourd'hui prendra de la valeur avec chaque future release.
 

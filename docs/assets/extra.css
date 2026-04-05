@@ -1,0 +1,376 @@
+/* ===== Impeccable Style for Lore Docs ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+/* ===== LIGHT MODE ===== */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #4f46e5;
+  --md-primary-fg-color--light: #818cf8;
+  --md-primary-fg-color--dark: #4338ca;
+  --md-accent-fg-color: #4f46e5;
+  --md-accent-fg-color--transparent: rgba(79,70,229,.1);
+  --md-default-bg-color: #fafafa;
+  --md-code-bg-color: #1e1e2e;
+  --md-code-fg-color: #cdd6f4;
+  --md-code-hl-color: rgba(79,70,229,.15);
+  --md-footer-bg-color: #1e1e2e;
+  --md-footer-fg-color: #cdd6f4;
+  --md-footer-fg-color--light: #a6adc8;
+  --md-footer-fg-color--lighter: #7f849c;
+}
+
+/* ===== DARK MODE ===== */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #818cf8;
+  --md-primary-fg-color--light: #a5b4fc;
+  --md-primary-fg-color--dark: #6366f1;
+  --md-accent-fg-color: #818cf8;
+  --md-accent-fg-color--transparent: rgba(129,140,248,.1);
+  --md-default-bg-color: #11111b;
+  --md-default-fg-color: #cdd6f4;
+  --md-default-fg-color--light: #a6adc8;
+  --md-default-fg-color--lighter: #7f849c;
+  --md-default-fg-color--lightest: rgba(205,214,244,.06);
+  --md-code-bg-color: #1e1e2e;
+  --md-code-fg-color: #cdd6f4;
+}
+
+/* ===== TYPOGRAPHY ===== */
+.md-typeset {
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-size: .82rem;
+  line-height: 1.75;
+}
+
+.md-typeset h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 2.4em;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  margin-bottom: .8em;
+}
+
+.md-typeset h2 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-style: italic;
+  font-size: 1.7em;
+  letter-spacing: -0.3px;
+  margin-top: 1.6em;
+  padding-bottom: .35em;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset h3 {
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.2em;
+}
+
+.md-typeset h4, .md-typeset h5, .md-typeset h6 {
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-weight: 600;
+}
+
+/* ===== CODE — Always dark ===== */
+.md-typeset code,
+.md-typeset pre code {
+  font-family: 'Space Grotesk', 'JetBrains Mono', monospace;
+  font-size: .82em;
+}
+
+.md-typeset pre {
+  border-radius: 8px;
+  border: 1px solid #313244;
+}
+
+/* Code blocks — dark background in light mode */
+[data-md-color-scheme="default"] .md-typeset pre,
+[data-md-color-scheme="default"] .md-typeset .highlight pre,
+[data-md-color-scheme="default"] .md-typeset .highlighttable,
+[data-md-color-scheme="default"] .md-typeset .highlight {
+  background: #1e1e2e !important;
+}
+
+[data-md-color-scheme="default"] .md-typeset pre code,
+[data-md-color-scheme="default"] .md-typeset .highlight code,
+[data-md-color-scheme="default"] .md-typeset .highlight pre code {
+  color: #cdd6f4 !important;
+}
+
+/* All syntax highlight spans inside code blocks — force light text */
+[data-md-color-scheme="default"] .md-typeset .highlight span {
+  color: inherit;
+}
+
+/* Pygments token colors for dark background */
+[data-md-color-scheme="default"] .highlight .c,
+[data-md-color-scheme="default"] .highlight .cm,
+[data-md-color-scheme="default"] .highlight .cp,
+[data-md-color-scheme="default"] .highlight .c1,
+[data-md-color-scheme="default"] .highlight .cs { color: #6c7086 !important; } /* comments */
+
+[data-md-color-scheme="default"] .highlight .k,
+[data-md-color-scheme="default"] .highlight .kn,
+[data-md-color-scheme="default"] .highlight .kp,
+[data-md-color-scheme="default"] .highlight .kr,
+[data-md-color-scheme="default"] .highlight .kd,
+[data-md-color-scheme="default"] .highlight .kt { color: #cba6f7 !important; } /* keywords */
+
+[data-md-color-scheme="default"] .highlight .s,
+[data-md-color-scheme="default"] .highlight .s1,
+[data-md-color-scheme="default"] .highlight .s2,
+[data-md-color-scheme="default"] .highlight .sb,
+[data-md-color-scheme="default"] .highlight .sc,
+[data-md-color-scheme="default"] .highlight .sd,
+[data-md-color-scheme="default"] .highlight .se,
+[data-md-color-scheme="default"] .highlight .sh,
+[data-md-color-scheme="default"] .highlight .si,
+[data-md-color-scheme="default"] .highlight .sx,
+[data-md-color-scheme="default"] .highlight .sr,
+[data-md-color-scheme="default"] .highlight .ss { color: #a6e3a1 !important; } /* strings */
+
+[data-md-color-scheme="default"] .highlight .m,
+[data-md-color-scheme="default"] .highlight .mi,
+[data-md-color-scheme="default"] .highlight .mf,
+[data-md-color-scheme="default"] .highlight .mh,
+[data-md-color-scheme="default"] .highlight .mo { color: #fab387 !important; } /* numbers */
+
+[data-md-color-scheme="default"] .highlight .n,
+[data-md-color-scheme="default"] .highlight .na,
+[data-md-color-scheme="default"] .highlight .nb,
+[data-md-color-scheme="default"] .highlight .nc,
+[data-md-color-scheme="default"] .highlight .nd,
+[data-md-color-scheme="default"] .highlight .ni,
+[data-md-color-scheme="default"] .highlight .ne,
+[data-md-color-scheme="default"] .highlight .nf,
+[data-md-color-scheme="default"] .highlight .nl,
+[data-md-color-scheme="default"] .highlight .nn,
+[data-md-color-scheme="default"] .highlight .no,
+[data-md-color-scheme="default"] .highlight .nt,
+[data-md-color-scheme="default"] .highlight .nv { color: #89b4fa !important; } /* names */
+
+[data-md-color-scheme="default"] .highlight .o,
+[data-md-color-scheme="default"] .highlight .ow,
+[data-md-color-scheme="default"] .highlight .p { color: #89dceb !important; } /* operators/punctuation */
+
+[data-md-color-scheme="default"] .highlight .gd { color: #f38ba8 !important; } /* diff deleted */
+[data-md-color-scheme="default"] .highlight .gi { color: #a6e3a1 !important; } /* diff inserted */
+[data-md-color-scheme="default"] .highlight .ge { font-style: italic; }
+[data-md-color-scheme="default"] .highlight .gs { font-weight: bold; }
+
+/* Generic text / plain code blocks */
+[data-md-color-scheme="default"] .highlight .go,
+[data-md-color-scheme="default"] .highlight .gp,
+[data-md-color-scheme="default"] .highlight .gt,
+[data-md-color-scheme="default"] .highlight .g { color: #cdd6f4 !important; }
+
+/* Line numbers */
+[data-md-color-scheme="default"] .highlight .linenos,
+[data-md-color-scheme="default"] .highlight .linenodiv { color: #585b70 !important; }
+
+/* Code copy button */
+[data-md-color-scheme="default"] .md-clipboard {
+  color: #7f849c !important;
+}
+[data-md-color-scheme="default"] .md-clipboard:hover {
+  color: #cdd6f4 !important;
+}
+
+/* Mermaid diagrams — always light readable background */
+.mermaid {
+  background: #ffffff !important;
+  border-radius: 8px;
+  border: 1px solid var(--md-default-fg-color--lightest) !important;
+  padding: 1rem;
+}
+
+[data-md-color-scheme="slate"] .mermaid {
+  background: #1e1e2e !important;
+  border-color: #313244 !important;
+}
+
+/* Ensure Mermaid text is readable */
+.mermaid text,
+.mermaid .nodeLabel,
+.mermaid .edgeLabel,
+.mermaid .label {
+  font-family: 'Instrument Sans', system-ui, sans-serif !important;
+}
+
+[data-md-color-scheme="default"] .mermaid text,
+[data-md-color-scheme="default"] .mermaid .nodeLabel,
+[data-md-color-scheme="default"] .mermaid .label {
+  fill: #1a1a1a !important;
+  color: #1a1a1a !important;
+}
+
+[data-md-color-scheme="default"] .mermaid .edgeLabel {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+}
+
+[data-md-color-scheme="default"] .mermaid .node rect,
+[data-md-color-scheme="default"] .mermaid .node circle,
+[data-md-color-scheme="default"] .mermaid .node polygon {
+  fill: rgba(79,70,229,.08) !important;
+  stroke: #4f46e5 !important;
+}
+
+[data-md-color-scheme="default"] .mermaid .edgePath .path {
+  stroke: #6b6b6b !important;
+}
+
+[data-md-color-scheme="default"] .mermaid marker path {
+  fill: #6b6b6b !important;
+}
+
+/* Inline code — light */
+[data-md-color-scheme="default"] .md-typeset :not(pre) > code {
+  background: rgba(79,70,229,.07);
+  color: #4338ca;
+  border: 1px solid rgba(79,70,229,.12);
+  border-radius: 4px;
+  padding: .05em .35em;
+  font-size: .85em;
+}
+
+/* Inline code — dark */
+[data-md-color-scheme="slate"] .md-typeset :not(pre) > code {
+  background: rgba(129,140,248,.08);
+  color: #a5b4fc;
+  border: 1px solid rgba(129,140,248,.12);
+  border-radius: 4px;
+  padding: .05em .35em;
+  font-size: .85em;
+}
+
+/* ===== HEADER — solid indigo ===== */
+.md-header {
+  background: var(--md-primary-fg-color) !important;
+  color: #fff;
+  box-shadow: none;
+}
+
+.md-header .md-header__title {
+  color: #fff;
+}
+
+.md-header .md-logo {
+  color: #fff;
+}
+
+.md-header .md-search__input {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+}
+
+.md-header .md-search__input::placeholder {
+  color: rgba(255,255,255,.6);
+}
+
+.md-header .md-header__button {
+  color: #fff;
+}
+
+/* ===== TABS — on indigo ===== */
+.md-tabs {
+  background: var(--md-primary-fg-color--dark) !important;
+  color: #fff;
+}
+
+.md-tabs__link {
+  color: rgba(255,255,255,.7) !important;
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-size: .78rem;
+  font-weight: 500;
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  color: #fff !important;
+}
+
+/* ===== SIDEBAR ===== */
+.md-nav__link {
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-size: .76rem;
+}
+
+/* ===== BLOCKQUOTES ===== */
+.md-typeset blockquote {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.15em;
+  font-style: italic;
+  border-left: 3px solid var(--md-accent-fg-color);
+  color: var(--md-default-fg-color--light);
+  padding: .4em 1.2em;
+  background: var(--md-accent-fg-color--transparent);
+  border-radius: 0 6px 6px 0;
+}
+
+/* ===== ADMONITIONS ===== */
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: 8px;
+  border-width: 1px;
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+
+/* ===== TABLES ===== */
+.md-typeset table:not([class]) {
+  font-size: .78rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--md-primary-fg-color);
+  color: #fff;
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: .72rem;
+  letter-spacing: .5px;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background: #313244;
+  color: #cdd6f4;
+}
+
+/* ===== FOOTER ===== */
+.md-footer-meta {
+  background: var(--md-footer-bg-color);
+}
+
+/* ===== SEARCH ===== */
+.md-search__input {
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  border-radius: 8px;
+}
+
+/* ===== TRANSITIONS ===== */
+.md-nav__link,
+.md-tabs__link {
+  transition: color .15s ease;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--md-default-fg-color--lighter);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-default-fg-color--light);
+}

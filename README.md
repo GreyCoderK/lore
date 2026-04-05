@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Lore" width="128">
+  <img src="assets/logo.svg" alt="Lore" width="180">
 </p>
 
 <h1 align="center">Lore</h1>

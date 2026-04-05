@@ -2,7 +2,7 @@
 
 > **Your code knows what. Lore knows why.**
 
-<img src="assets/logo.svg" alt="Lore" width="128">
+<img src="assets/logo.svg" alt="Lore" width="180">
 
 <!-- GIF demo — generate with: vhs assets/demo.tape -->
 <!-- ![Demo](assets/demo.gif) -->
