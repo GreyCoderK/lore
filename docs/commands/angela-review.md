@@ -4,6 +4,13 @@ Corpus-wide coherence analysis via AI.
 
 ## Synopsis
 
+## What Does This Do?
+
+`lore angela review` is the "big picture" analysis. While `angela draft` checks one document, `review` checks your **entire corpus** for coherence — contradictions between documents, isolated docs with no connections, stale content, and coverage gaps.
+
+> **Analogy:** If `angela draft` is a teacher grading one essay, `angela review` is the dean reviewing the entire curriculum for consistency.
+
+
 ```
 lore angela review [flags]
 ```
@@ -13,6 +20,18 @@ lore angela review [flags]
 Analyzes the entire documentation corpus for coherence: contradictions between documents, isolated documents, stale content, coverage gaps. Combines local pre-analysis (signals) with a single AI API call.
 
 **Requires** an AI provider configured.
+
+## Real World Scenario
+
+> The team has been documenting for 2 weeks. 15 documents in the corpus. Before the sprint review, you want to check consistency:
+>
+> ```bash
+> lore angela review
+> # 1 contradiction found: auth-jwt.md vs auth-session.md
+> # 2 isolated documents with no cross-references
+> ```
+>
+> You catch the contradiction before it confuses a new team member.
 
 ## Flags
 
@@ -83,6 +102,24 @@ lore angela review --quiet
 |------|---------|
 | `0` | Success |
 | `1` | Error (no provider configured, corpus too small) |
+
+## Common Questions
+
+### "How is this different from angela draft?"
+
+| | `angela draft` | `angela review` |
+|---|---|---|
+| **Scope** | One document | Entire corpus |
+| **Cost** | Free (zero-API) | 1 API call (or free with --local) |
+| **Finds** | Missing sections, style issues | Contradictions, isolated docs, coverage gaps |
+
+### "How often should I run this?"
+
+Before every release, or every 1-2 weeks during active development. Results are cached — `lore status` shows the latest findings without re-running.
+
+### "My corpus has 200+ documents. Will this be expensive?"
+
+One API call regardless of corpus size. Lore compresses document summaries before sending. For very large corpora (50+ docs), Lore warns you about token usage before proceeding.
 
 ## See Also
 

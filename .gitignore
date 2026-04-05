@@ -7,6 +7,7 @@ dist/
 
 # Generated assets (reproducible via VHS)
 assets/demo.gif
+assets/vhs/*.gif
 
 # MkDocs build output
 site/

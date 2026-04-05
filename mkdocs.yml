@@ -83,12 +83,16 @@ nav:
     - lore angela review: commands/angela-review.md
     - lore decision: commands/decision.md
     - lore completion: commands/completion.md
+    - lore upgrade: commands/upgrade.md
+    - lore check-update: commands/check-update.md
+  - Philosophy: guides/philosophy.md
   - Guides:
     - Configuration: guides/configuration.md
     - Document Types & Metadata: guides/document-types.md
     - Contextual Detection: guides/contextual-detection.md
     - How Lore Compares: guides/comparaison.md
     - Examples: guides/exemples.md
+  - Roadmap: guides/roadmap.md
   - Contributing:
     - Architecture: contributing/architecture.md
   - FAQ: faq.md

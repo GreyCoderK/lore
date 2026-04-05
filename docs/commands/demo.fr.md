@@ -1,6 +1,6 @@
 # lore demo
 
-Démonstration interactive du flux de travail Lore.
+Démonstration interactive du flux Lore — sans risque, sans configuration.
 
 ## Synopsis
 
@@ -8,59 +8,129 @@ Démonstration interactive du flux de travail Lore.
 lore demo
 ```
 
-## Description
+## Qu'est-ce que ça fait ?
 
-Lance une simulation guidée d'environ 45 secondes du flux de documentation complet. Crée un vrai document de démo (marqué `status: "demo"`). Sans risque — les documents de démo sont clairement identifiés et faciles à supprimer.
+Lance une simulation guidée de ~45 secondes du flux complet de documentation. Vous voyez exactement ce que Lore fait : commit → questions → document → consultation. Un vrai document est créé (marqué "demo" pour un nettoyage facile).
 
-## Séquence de la démo
+> **Analogie :** C'est comme un essai routier pour une voiture. Vous vivez l'expérience complète — direction, accélération, freinage — sans l'acheter. `lore demo` montre le flux Lore sans s'engager à l'utiliser.
+
+## Scénario concret
+
+> Votre tech lead est sceptique à propos d'un "énième outil." Vous avez 45 secondes pour le convaincre :
+>
+> ```bash
+> lore demo
+> ```
+>
+> Il voit le flux complet — commit, questions, document, consultation. Pas de setup, pas de risque.
+
+## Flags
+
+Cette commande ne prend pas de flags. Elle s'exécute de manière interactive et nécessite que `.lore/` soit initialisé.
+
+## Ce qui se passe étape par étape
 
 ```mermaid
 sequenceDiagram
-    participant U as User
+    participant U as Vous
     participant L as Lore
-    participant F as File System
 
     U->>L: lore demo
-    L->>U: "Interactive démo ~45s. Press Enter to begin."
-    U->>L: [Enter]
-    L->>U: ASCII logo wordmark
-    L->>U: Simulated commit message
-    L->>U: Question 1: Type
-    L->>U: Question 2: What
-    L->>U: Question 3: Why
-    L->>F: Generate document (status: demo)
-    L->>U: Simulated "lore show" output
-    L->>U: Tagline + "Next: lore init"
+    L->>U: "Démo interactive ~45s. Appuyez sur Entrée."
+    U->>L: [Entrée]
+    L->>U: 1. Logo ASCII wordmark
+    L->>U: 2. Message de commit simulé
+    L->>U: 3. Question : Type ? → feature
+    L->>U: 4. Question : Quoi ? → (pré-rempli)
+    L->>U: 5. Question : Pourquoi ? → (réponse exemple)
+    L->>U: 6. Document créé dans .lore/docs/
+    L->>U: 7. Simulation "lore show"
+    L->>U: 8. Tagline : "Your code knows what. Lore knows why."
 ```
 
-## Détails de comportement
+### Détails
 
-1. **Consentement temporel** — Affiche la durée estimée et attend la touche Entrée (pas de surprise)
-2. **Affichage du logo** — Wordmark ASCII (Unicode ou fallback ASCII selon le terminal)
-3. **Flux simulé** — Faux commit → 3 questions avec pauses → document généré
-4. **Vrai document** — Le document de démo est réellement créé dans `.lore/docs/` avec `status: "demo"`
-5. **Accroche** — EN : "Your code knows what. Lore knows why." / FR : "Votre code sait quoi. Lore sait pourquoi."
-6. **Chaque étape** — Pause de 800ms (respecte Ctrl+C)
+1. **Consentement temporel** — Affiche "~45 secondes" et attend Entrée. Pas de surprise.
+2. **Logo** — Wordmark ASCII (Unicode ou fallback ASCII selon le terminal)
+3. **Commit simulé** — Un faux message de commit apparaît
+4. **Flux de questions** — Type, Quoi, Pourquoi — avec des pauses réalistes
+5. **Document créé** — Un vrai fichier dans `.lore/docs/` avec `status: "demo"`
+6. **lore show** — Simule la consultation du document créé
+7. **Tagline** — EN : "Your code knows what. Lore knows why." / FR : "Votre code sait quoi. Lore sait pourquoi."
+8. **Prochaine étape** — Suggère `lore init` si vous avez aimé
+
+Chaque étape pause ~800ms (respecte Ctrl+C — vous pouvez sortir à tout moment).
+
+## Après la démo
+
+Le document créé a `status: "demo"`. Il est exclu des métriques de couverture et peut être supprimé sans confirmation :
+
+```bash
+# Voir le document démo
+lore list
+# → demo  example-demo-2026-03-16.md  2026-03-16
+
+# Le supprimer (pas de confirmation pour les docs démo)
+lore delete example-demo-2026-03-16.md
+
+# Ou le laisser — il n'affecte pas vos métriques
+```
+
+## Bilingue
+
+La démo s'adapte à votre paramètre `language` :
+
+| Langue | Tagline |
+|--------|---------|
+| EN | "Your code knows what. Lore knows why." |
+| FR | "Votre code sait quoi. Lore sait pourquoi." + "L'or de vos décisions techniques." (dim) |
+
+La version française inclut le jeu de mots "L'or" en seconde ligne subtile.
 
 ## Exemples
 
 ```bash
-# Lancer la démo
+# Lancer la démo (nécessite lore init d'abord)
 lore demo
-# → ~45 secondes, interactif
+# → Démo interactive ~45s. Appuyez sur Entrée.
+# → [Entrée]
+# → ... (logo, questions, document, show) ...
+# → Your code knows what. Lore knows why.
 
-# Nettoyer les documents de démo ensuite
-lore delete demo-example-2026-03-16.md
-# → Aucune confirmation requise pour les documents de démo
+# Nettoyer après
+lore delete example-demo-2026-03-16.md
 ```
+
+## Questions fréquentes
+
+### "Ça modifie mon repo ?"
+
+Seulement `.lore/docs/` — un document démo est créé. Votre code, historique git et configuration sont intacts.
+
+### "Dois-je lancer `lore init` d'abord ?"
+
+Oui — `.lore/` doit exister. Sinon, la démo vous le dira.
+
+### "Je peux montrer ça en screen share ?"
+
+C'est exactement à ça que ça sert. 45 secondes, visuel, auto-explicatif. Pas de slides nécessaires.
 
 ## Tips & Tricks
 
-- Lancez `lore demo` pour présenter Lore à vos collègues sans toucher au vrai corpus.
-- Les documents de démo ont `status: "demo"` dans leur front matter et sont exclus des métriques de couverture.
-- Après la démo, `lore init` est l'étape suivante naturelle.
+- **Convaincre votre équipe :** `lore demo` est le moyen le plus rapide de montrer Lore — 45 secondes, pas de slides.
+- **Screen sharing friendly :** Les pauses entre étapes sont conçues pour les démonstrations en direct.
+- **Sûr de relancer :** Chaque démo crée un nouveau document. Les anciens se suppriment sans confirmation.
+- **Les docs démo ne comptent pas :** Exclues des métriques de couverture dans `lore status`.
+
+## Codes de sortie
+
+| Code | Signification |
+|------|---------------|
+| `0` | Démo terminée |
+| `1` | Erreur (`.lore/` non initialisé) |
 
 ## Voir aussi
 
-- [lore init](init.fr.md) — Initialiser Lore pour de vrai
-- [Quickstart](../getting-started/quickstart.md) — Guide pratique en 5 minutes
+- [lore init](init.md) — Initialiser Lore pour de vrai (prochaine étape)
+- [Quickstart](../getting-started/quickstart.md) — Guide pratique 5 minutes
+- [Philosophie](../guides/philosophy.md) — Pourquoi Lore existe

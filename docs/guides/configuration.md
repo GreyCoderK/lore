@@ -65,6 +65,100 @@ lore doctor --config
 
 Checks for typos, unknown keys, and suggests corrections via Levenshtein distance.
 
+## Typical Configurations
+
+### Solo Developer (Minimal)
+
+```yaml
+# .lorerc — just the essentials
+hooks:
+  post_commit: true
+output:
+  dir: .lore/docs
+```
+
+No AI, no language config. Defaults to English, zero-API mode. Maximum simplicity.
+
+### Open Source Project
+
+```yaml
+# .lorerc — committed to repo
+language: "en"
+hooks:
+  post_commit: true
+  star_prompt_after: 5
+decision:
+  always_ask: [feat, breaking]
+  always_skip: [docs, style, ci]
+output:
+  dir: .lore/docs
+```
+
+Star prompt encourages contributors to star the repo. Decision engine skips trivial commits automatically.
+
+### Team with AI
+
+```yaml
+# .lorerc — shared settings (committed)
+language: "en"
+ai:
+  provider: "anthropic"
+  model: "claude-sonnet-4-20250514"
+hooks:
+  post_commit: true
+angela:
+  mode: draft
+  max_tokens: 2000
+```
+
+```yaml
+# .lorerc.local — personal (gitignored, chmod 600)
+ai:
+  api_key: "sk-ant-..."
+```
+
+Each team member stores their own API key. The shared config defines the provider and model.
+
+### Bilingual Project (FR/EN)
+
+```yaml
+# .lorerc
+language: "fr"
+hooks:
+  post_commit: true
+```
+
+All UI messages, prompts, badges, and reinforcement messages switch to French. "Lore" becomes "L'or."
+
+## Troubleshooting
+
+### "My config change has no effect"
+
+Check the cascade order — a higher-priority source may override your change:
+
+```
+CLI flag (--language fr)     ← highest priority
+  ↓
+Environment (LORE_LANGUAGE)
+  ↓
+.lorerc.local
+  ↓
+.lorerc                      ← you edited this
+  ↓
+Defaults                     ← lowest priority
+```
+
+Run `lore doctor --config` to see the resolved configuration.
+
+### "Unknown key warning"
+
+```bash
+lore doctor --config
+# ✗ unknown key "ai.providr" — did you mean "ai.provider"?
+```
+
+Lore uses Levenshtein distance to suggest corrections for typos.
+
 ## See Also
 
 - [`lore config`](../commands/config.md) — View and set config

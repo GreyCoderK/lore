@@ -14,6 +14,18 @@ Think of `lore init` like setting up a journal for your project. Just like a dia
 
 **In plain terms:** This command prepares your project to start documenting the "why" behind your code changes.
 
+## Real World Scenario
+
+> You just created a new Go project. You ran `git init`, wrote your first files, made your first commit. Now you want every future commit to carry its "why." One command:
+>
+> ```bash
+> lore init
+> ```
+>
+> From now on, every `git commit` triggers 3 questions. Your project has a memory.
+
+<!-- GIF: assets/vhs/init.gif (generate with: vhs assets/vhs/init.tape) -->
+
 ## Prerequisites
 
 - You must be inside a **Git repository** (a folder where you've run `git init`)
@@ -115,6 +127,13 @@ After `lore init`, the next time you run `git commit`, Lore will automatically a
 3. **Why** — The important one! Why did you make this choice?
 
 That's it — 90 seconds, and the "why" is captured forever.
+
+## Tips & Tricks
+
+- **Safe to re-run:** `lore init` is idempotent — running it twice does nothing.
+- **After cloning:** Team members should run `lore init` after cloning to install their local hook.
+- **CI setup:** `lore init --no-demo --quiet` in pipelines to ensure `.lore/` exists.
+- **Monorepo:** Run at the repo root. Documents capture full file paths.
 
 ## Exit Codes
 

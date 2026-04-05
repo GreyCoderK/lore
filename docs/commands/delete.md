@@ -14,6 +14,16 @@ Removes a documentation file from `.lore/docs/`. Lore asks for confirmation befo
 
 > **Analogy:** Tearing a page out of your project journal. Lore makes sure you really want to, because once it's gone, the "why" is lost.
 
+## Real World Scenario
+
+> You refactored the auth system completely. The old document "session-based-auth-2026-01.md" is now misleading — it describes an approach you abandoned. Time to clean up:
+>
+> ```bash
+> lore delete session-based-auth-2026-01.md
+> ```
+>
+> Lore warns you that another document references it, asks for confirmation. You delete and run `lore doctor` to clean up.
+
 ## Arguments
 
 | Argument | Required | Description |
@@ -77,6 +87,37 @@ lore delete decision-auth-strategy-2026-03-07.md --force
 |------|---------|
 | `0` | Deleted successfully |
 | `1` | Error (not found, non-TTY without `--force`) |
+
+## Examples
+
+```bash
+# Find the filename first
+lore list
+# → decision  database-selection-2026-02-10.md  2026-02-10
+
+# Delete with confirmation
+lore delete database-selection-2026-02-10.md
+# → decision — Database Selection (2026-02-10)
+# → Delete? [y/N] y
+# → Deleted
+
+# Force delete in scripts
+lore delete old-doc-2025-01-01.md --force
+```
+
+## Common Questions
+
+### "Should I delete or archive?"
+
+**Prefer archiving.** Edit the document and change `status: active` to `status: archived`. This preserves the historical record. Delete only when the document is truly wrong or harmful.
+
+### "I deleted a document but another doc references it"
+
+Run `lore doctor` — it will flag the broken reference. You can then edit the referencing document to remove or update the link.
+
+### "Can I undo a delete?"
+
+If you have not committed yet: `git checkout -- .lore/docs/filename.md`. If you have committed: `git show HEAD~1:.lore/docs/filename.md > .lore/docs/filename.md`. The document is just a file — Git is your undo button.
 
 ## See Also
 

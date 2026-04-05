@@ -1,93 +1,126 @@
 # lore show
 
-Rechercher et afficher des documents du corpus.
+Rechercher et afficher des documents de votre corpus.
 
 ## Synopsis
 
 ```
-lore show [keyword] [flags]
+lore show [mot-clé] [flags]
 ```
 
-## Description
+## Qu'est-ce que ça fait ?
 
-Recherche dans le corpus de documentation par mot-clé et affiche les documents correspondants. Le comportement s'adapte à l'environnement du terminal :
+`lore show` est la façon de **lire** votre documentation. Donnez un mot-clé, et il trouve les documents correspondants. C'est un moteur de recherche pour l'historique des décisions de votre projet.
 
-- **TTY** (terminal interactif) → Affiche une liste de sélection pour les résultats multiples
-- **Non-TTY** (pipe, script) → Produit une liste tabulée lisible par machine
-- **`--quiet`** → Sortie analysable uniquement, aucune invite
+> **Analogie :** Si `.lore/docs/` est le journal de votre projet, `lore show` c'est feuilleter pour trouver la page où vous avez écrit à propos de "authentication".
+
+## Scénario concret
+
+> Code review. Le reviewer demande : "Pourquoi JWT au lieu de sessions ?" Au lieu de fouiller Slack :
+>
+> ```bash
+> lore show "JWT"
+> ```
+>
+> 3 secondes plus tard, le raisonnement complet est à l'écran — écrit le jour de la décision.
 
 ## Arguments
 
 | Argument | Requis | Description |
 |----------|--------|-------------|
-| `keyword` | Oui (sauf `--all`) | Terme de recherche à comparer aux titres et contenus des documents |
+| `mot-clé` | Oui (sauf `--all`) | Terme de recherche — correspond aux titres et contenus |
 
 ## Flags
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--type` | string | — | Filtrer par type de document |
-| `--after` | string | — | Afficher les documents après une date (`YYYY-MM` ou `YYYY-MM-DD`) |
-| `--all` | bool | `false` | Afficher tous les documents (déprécié — utilisez `lore list`) |
-| `--quiet` | bool | `false` | Sortie machine : valeurs séparées par des tabulations vers stdout |
+| `--type <type>` | string | — | Afficher uniquement ce type |
+| `--after <date>` | string | — | Documents après cette date (`YYYY-MM` ou `YYYY-MM-DD`) |
+| `--all` | bool | `false` | Tous les documents (préférez `lore list`) |
+| `--quiet` | bool | `false` | Sortie machine (tab-séparée) |
 | `--feature` | bool | — | Raccourci pour `--type feature` |
 | `--decision` | bool | — | Raccourci pour `--type decision` |
 | `--bugfix` | bool | — | Raccourci pour `--type bugfix` |
 | `--refactor` | bool | — | Raccourci pour `--type refactor` |
 | `--note` | bool | — | Raccourci pour `--type note` |
 
-Les raccourcis de type sont mutuellement exclusifs entre eux et avec `--type`.
+> Les raccourcis de type sont mutuellement exclusifs.
 
-## Modes de sortie
+## Comment la recherche fonctionne
 
-**Résultat unique** → Contenu complet du document vers stdout :
+### Un résultat → Affiché directement
+
 ```bash
-lore show "auth middleware"
-# → Affiche le document Markdown complet
+lore show "JWT auth"
+# → Affiche le document complet
 ```
 
-**Résultats multiples (TTY)** → Liste numérotée interactive :
+### Plusieurs résultats → Sélection interactive (TTY)
+
 ```
-  1  feature   Add JWT auth middleware       2026-02-15
-  2  refactor  Extract auth middleware       2026-03-01
-Select [1-2]:
+  1  decision  Add JWT auth middleware        2026-02-15
+  2  refactor  Extract auth middleware        2026-03-01
+  3  feature   Add OAuth2 provider           2026-03-10
+
+Select [1-3]:
 ```
 
-**Résultats multiples (non-TTY ou --quiet)** → Séparés par des tabulations :
-```
-feature\tAdd JWT auth middleware\t2026-02-15
-refactor\tExtract auth middleware\t2026-03-01
+### Plusieurs résultats → Liste (Non-TTY / Quiet)
+
+```bash
+lore show "auth" --quiet
+# decision	Add JWT auth middleware	2026-02-15
+# refactor	Extract auth middleware	2026-03-01
 ```
 
 ## Exemples
 
 ```bash
-# Rechercher par mot-clé
-lore show "auth"
+# Recherche basique
+lore show "database"
 
 # Filtrer par type
-lore show "middleware" --type decision
-lore show "middleware" --décision  # raccourci
+lore show "middleware" --decision
 
 # Filtrer par date
 lore show "api" --after 2026-03
 
-# Envoyer vers grep
-lore show "rate" --quiet | grep feature
+# Pipe vers less
+lore show "auth" --quiet | less
 
-# Tous les documents (préférer lore list)
-lore show --all
+# Exporter un document
+lore show "JWT auth" > auth-decision.md
 ```
+
+## Questions fréquentes
+
+### "Pas de résultats ?"
+
+- Vérifiez l'orthographe — la recherche est exacte, pas fuzzy
+- Essayez des termes plus larges : "auth" au lieu de "authentication middleware"
+- Vérifiez que des documents existent : `lore list`
+
+### "Différence avec `lore list` ?"
+
+`lore list` = table des matières. `lore show` = lire un chapitre spécifique.
+
+## Tips & Tricks
+
+- **Pipe-friendly :** `lore show "auth" --quiet | less` pour paginer.
+- **Export :** `lore show "JWT auth" > auth-decision.md` sauvegarde un document.
+- **Combiner avec grep :** `lore show "api" --quiet | grep decision` — filtrer.
+- **Pas de résultats ?** Termes plus larges. Fuzzy search arrive au Cercle 4.
+- **Raccourcis type :** `--decision` est plus rapide que `--type decision`.
 
 ## Codes de sortie
 
 | Code | Signification |
 |------|---------------|
-| `0` | Correspondance trouvée et affichée |
-| `2` | Aucune correspondance (ignoré) |
-| `3` | Aucun mot-clé fourni (erreur utilisateur) |
+| `0` | Correspondance trouvée |
+| `2` | Aucune correspondance (pas une erreur) |
+| `3` | Pas de mot-clé fourni |
 
 ## Voir aussi
 
-- [lore list](list.fr.md) — Lister tous les documents avec métadonnées
-- [lore status](status.fr.md) — Statistiques du corpus
+- [lore list](list.md) — Parcourir tous les documents
+- [lore status](status.md) — Statistiques et santé du corpus

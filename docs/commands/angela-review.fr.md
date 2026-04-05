@@ -1,6 +1,6 @@
 # lore angela review
 
-Analyse de cohérence du corpus par IA.
+Analyse de cohérence du corpus complet via IA.
 
 ## Synopsis
 
@@ -8,46 +8,60 @@ Analyse de cohérence du corpus par IA.
 lore angela review [flags]
 ```
 
-## Description
+## Qu'est-ce que ça fait ?
 
-Analyse l'ensemble du corpus de documentation pour en vérifier la cohérence : contradictions entre documents, documents isolés, contenu obsolète, lacunes de couverture. Combine une pré-analyse locale (signaux) avec un unique appel API IA.
+`lore angela review` est l'analyse "vue d'ensemble". Tandis que `angela draft` vérifie un document, `review` vérifie la **cohérence de tout votre corpus** — contradictions entre documents, docs isolés sans connexions, contenu obsolète, et lacunes de couverture.
 
-**Nécessite** un fournisseur IA configuré.
+> **Analogie :** Si `angela draft` est un prof qui corrige un devoir, `angela review` est le doyen qui passe en revue tout le programme pour vérifier la cohérence.
+
+## Scénario concret
+
+> L'équipe documente depuis 2 semaines. 15 documents dans le corpus. Avant la revue de sprint :
+>
+> ```bash
+> lore angela review
+> # 1 contradiction trouvée : auth-jwt.md vs auth-session.md
+> # 2 documents isolés sans références croisées
+> ```
+>
+> Vous attrapez la contradiction avant qu'elle ne confonde un nouveau membre de l'équipe.
+
+**Nécessite** un fournisseur IA configuré (sauf avec `--local`).
 
 ## Flags
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--local` | bool | `false` | Signaux locaux uniquement (aucun appel IA) |
+| `--local` | bool | `false` | Signaux locaux uniquement (gratuit, aucun appel IA) |
 | `--quiet` | bool | `false` | Supprimer l'en-tête et le résumé sur stderr |
 
 ## Sortie
 
 ```
-Corpus Review — 12 documents analyzed
+Corpus Review — 12 documents analysés
 
 SEVERITY  TITLE                            DOCUMENTS                    DESCRIPTION
-error     Contradictory auth approach       auth-jwt.md, auth-session.md  JWT chosen in one, sessions in another
-warning   Isolated document                 note-meeting-2026-03-01.md    No references to/from other docs
-info      Coverage gap                      —                            No décisions documented for database layer
+error     Approche auth contradictoire     auth-jwt.md, auth-session.md JWT choisi dans l'un, sessions dans l'autre
+warning   Document isolé                   note-meeting-2026-03-01.md   Aucune référence vers/depuis d'autres docs
+info      Lacune de couverture             —                            Aucune décision documentée pour la couche DB
 
 3 findings (1 error, 1 warning, 1 info)
 ```
 
-## Flux de processus
+## Flux
 
 ```mermaid
 graph TD
-    A[lore angela review] --> B[Load all documents]
-    B --> C[Local pre-analysis: signals]
-    C --> D{--local?}
-    D -->|Yes| E[Display local findings]
-    D -->|No| F[Prepare summaries for AI]
-    F --> G[Single API call with corpus context]
-    G --> H[Parse AI findings]
-    H --> I[Merge local + AI findings]
-    I --> J[Display report]
-    J --> K[Cache results for lore status]
+    A[lore angela review] --> B[Charger tous les documents]
+    B --> C[Pré-analyse locale : signaux]
+    C --> D{--local ?}
+    D -->|Oui| E[Afficher les résultats locaux]
+    D -->|Non| F[Préparer les résumés pour l'IA]
+    F --> G[Un seul appel API avec contexte corpus]
+    G --> H[Parser les résultats IA]
+    H --> I[Fusionner local + IA]
+    I --> J[Afficher le rapport]
+    J --> K[Mettre en cache pour lore status]
 ```
 
 ## Signaux locaux (toujours calculés)
@@ -70,12 +84,30 @@ lore angela review --local
 lore angela review --quiet
 ```
 
+## Questions fréquentes
+
+### "Quelle différence avec angela draft ?"
+
+| | `angela draft` | `angela review` |
+|---|---|---|
+| **Portée** | Un document | Corpus entier |
+| **Coût** | Gratuit (zéro-API) | 1 appel API (ou gratuit avec `--local`) |
+| **Trouve** | Sections manquantes, style | Contradictions, docs isolés, lacunes |
+
+### "À quelle fréquence lancer ?"
+
+Avant chaque release, ou toutes les 1-2 semaines pendant le développement actif. Les résultats sont mis en cache — `lore status` affiche les derniers résultats sans relancer.
+
+### "Mon corpus a 200+ documents. C'est cher ?"
+
+Un seul appel API quelle que soit la taille du corpus. Lore compresse les résumés avant envoi. Pour les très gros corpus (50+ docs), Lore avertit de la consommation de tokens avant de continuer.
+
 ## Tips & Tricks
 
-- Lancez avant chaque release : `lore angela review` détecte les contradictions qui dérouteraient les lecteurs.
-- `--local` est gratuit et rapide — utilisez-le comme vérification quotidienne.
-- Les résultats sont mis en cache : `lore status` affiche les résultats de revue sans relancer l'analyse.
-- Corpus volumineux (> 50 docs) : Lore vous avertit de la consommation de tokens avant l'appel API.
+- **Avant chaque release :** `lore angela review` attrape les contradictions qui dérouteraient les lecteurs.
+- **`--local` est gratuit et rapide** — utilisez-le comme vérification quotidienne.
+- **Résultats en cache :** `lore status` affiche les findings sans relancer l'analyse.
+- **Gros corpus (> 50 docs) :** Lore avertit de la consommation de tokens avant l'appel.
 
 ## Codes de sortie
 
@@ -86,5 +118,5 @@ lore angela review --quiet
 
 ## Voir aussi
 
-- [lore angela draft](angela-draft.fr.md) — Analyse d'un document individuel
-- [lore status](status.fr.md) — Affiche les résultats de revue en cache
+- [lore angela draft](angela-draft.md) — Analyse d'un document individuel
+- [lore status](status.md) — Affiche les résultats de revue en cache

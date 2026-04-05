@@ -19,6 +19,19 @@ These commits go to the **pending queue**. `lore pending` helps you manage that 
 
 > **Analogy:** Think of pending commits like sticky notes on your desk that say "document me later." `lore pending` is looking at those sticky notes and deciding what to do with each one.
 
+## Real World Scenario
+
+> You just finished a big rebase — 5 commits replayed. Lore deferred all of them to pending (can't ask questions during rebase). Now you catch up:
+>
+> ```bash
+> lore pending
+> # 5 commits waiting
+> lore pending resolve 1
+> # Resume questions for each
+> ```
+
+<!-- GIF: assets/vhs/pending-resolve.gif -->
+
 ## Subcommands
 
 ### `lore pending` — See What's Waiting
@@ -151,6 +164,20 @@ lore pending resolve --commit abc1234 \
 | `0` | Success |
 | `1` | Error |
 | `2` | No pending commits |
+
+## Common Questions
+
+### "Can pending commits expire?"
+
+No. Pending commits stay until you resolve or skip them. Lost context is the problem Lore solves — expiring would defeat the purpose.
+
+### "I have 50 pending commits"
+
+Be selective. Recent ones (last few days) still have fresh context — resolve those. Older ones: skim `git show <hash>` and either write a quick "why" or `lore pending skip` for trivial ones.
+
+### "Why didn't Lore ask me during the commit?"
+
+Check `lore decision --explain <hash>` for the score. Common causes: non-TTY (IDE commit), rebase, merge, or `[doc-skip]` in the message. See [Contextual Detection](../guides/contextual-detection.md).
 
 ## See Also
 

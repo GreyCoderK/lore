@@ -16,6 +16,17 @@ Lore doesn't ask you to document every single commit. A `README.md` typo fix doe
 
 > **Analogy:** Think of the Decision Engine like a smart email filter. Just like Gmail decides "this is important" vs "this is spam," Lore's engine decides "this commit needs documentation" vs "this one can be skipped."
 
+## Real World Scenario
+
+> You committed a typo fix in the README. Lore asked you all 5 questions. That felt like overkill. Why?
+>
+> ```bash
+> lore decision --explain HEAD
+> # Score: 72/100 — feat detected in commit type
+> ```
+>
+> Ah — your commit message started with `feat:` instead of `docs:`. The Decision Engine scored it high. Fix the commit type, and Lore will auto-skip next time.
+
 ## Flags
 
 | Flag | Type | Default | Description |
@@ -161,6 +172,20 @@ If the engine asks too often, raise them.
 |------|---------|
 | `0` | Success |
 | `1` | Error |
+
+## Common Questions
+
+### "The score seems wrong for my commit"
+
+Run `lore decision --explain HEAD` to see which signal contributed most. Common cause: commit message starts with `feat:` when it should be `docs:`, inflating the score. Fix the type prefix and the engine adapts.
+
+### "Can I override the score for one commit?"
+
+Yes. Add `[doc-skip]` to your commit message for a one-time skip. Or use `always_ask`/`always_skip` in `.lorerc` for permanent overrides by type.
+
+### "How long until the engine learns my patterns?"
+
+Signal 5 (LKS History) activates after 20 commits. After 50+, accuracy improves noticeably. Before that, the 4 other signals are usually sufficient.
 
 ## See Also
 

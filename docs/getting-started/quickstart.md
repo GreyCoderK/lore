@@ -29,6 +29,8 @@ Lore's hook triggers automatically:
 
 Three questions. Ninety seconds. Done.
 
+> **What just happened?** Lore's post-commit hook detected your commit, asked 3 questions, and saved your answers as a Markdown file in `.lore/docs/`. The file contains YAML front matter (type, date, commit hash) and your "why" — permanently linked to this commit.
+
 ## 3. View your document
 
 ```bash
@@ -56,6 +58,8 @@ lore status
 ```
 Documents: 1 | Pending: 0 | Coverage: 100%
 ```
+
+> **What just happened?** Lore scanned your commits and documents. 1 commit, 1 document = 100% coverage. As you commit more, this dashboard tracks your documentation health over time.
 
 ## 5. Explore more
 

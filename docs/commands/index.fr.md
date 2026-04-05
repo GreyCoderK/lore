@@ -33,6 +33,13 @@ Toutes les commandes Lore CLI en un coup d'œil.
 | [`lore angela polish`](angela-polish.md) | Réécriture assistée avec revue de diff |
 | [`lore angela review`](angela-review.md) | Analyse de cohérence du corpus |
 
+## Mises à jour
+
+| Commande | Description |
+|----------|-------------|
+| [`lore check-update`](check-update.md) | Vérifier si une mise à jour est disponible |
+| [`lore upgrade`](upgrade.md) | Mettre lore à jour vers la dernière version |
+
 ## Utilitaires
 
 | Commande | Description |

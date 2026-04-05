@@ -5,35 +5,49 @@ A simplified overview of the Lore codebase. For contribution guidelines, see `CO
 ## Project Structure
 
 ```
-cmd/           Cobra commands — one file per CLI command
+cmd/           Cobra commands — one file per CLI command (the "what")
 internal/
-  domain/      Shared interfaces and types (no internal deps)
-  config/      Configuration cascade (.lorerc → .lorerc.local → env)
-  git/         Git adapter — hooks, log, diff, commit info
-  storage/     Document storage, front matter, index, doctor
-  workflow/    Reactive (hook) and proactive (lore new) flows
-  generator/   Document generation pipeline
-  angela/      AI-assisted documentation logic
-  ai/          AI provider implementations (Anthropic, OpenAI, Ollama)
-  i18n/        Bilingual message catalogs (EN/FR)
-  ui/          Terminal UI — colors, progress, lists
-  engagement/  Milestone messages, star prompt
-  fileutil/    Atomic file operations
-  notify/      IDE notification (non-TTY detection)
-  status/      Repository health collector
-  template/    Go template engine
+  domain/      Shared interfaces and types — the contract between packages (no deps)
+  config/      Configuration cascade — why: 5-level override system for flexibility
+  git/         Git adapter — why: abstract Git so we never shell out unsafely
+  storage/     Document storage — why: Markdown is source of truth, everything derives from it
+  workflow/    Reactive (hook) + proactive (lore new) — why: two entry points, same pipeline
+  generator/   Document generation — why: decouple template rendering from storage
+  angela/      AI logic — why: keep AI separate from core (opt-in, not required)
+  ai/          AI providers — why: interface-based, swap Anthropic/OpenAI/Ollama freely
+  i18n/        Bilingual catalogs — why: EN/FR from day one, not bolted on later
+  ui/          Terminal UI — why: IOStreams pattern (stderr=human, stdout=machine)
+  engagement/  Milestones, star prompt — why: behavioral hooks to build documentation habit
+  fileutil/    Atomic writes — why: .tmp + rename prevents corruption on Ctrl+C
+  notify/      IDE notification — why: non-TTY commits need visibility
+  status/      Health collector — why: one place to gather all metrics
+  template/    Go templates — why: stdlib, no external engine dependency
 .lore/
-  docs/        Documentation corpus (Markdown with YAML front matter)
-  pending/     Interrupted/deferred commits
-  store.db     LKS index (SQLite — reconstructible from docs)
+  docs/        The corpus — THE source of truth. Delete everything else, rebuild from here.
+  pending/     Deferred commits — why: never lose a commit, even on Ctrl+C
+  store.db     LKS index — reconstructible. If corrupted: lore doctor --rebuild-store
 ```
 
 ## Data Flow
 
+```mermaid
+graph LR
+    A[git commit] --> B[post-commit hook]
+    B --> C{Decision Engine}
+    C -->|score ≥ 60| D[Full questions]
+    C -->|score 35-59| E[Reduced questions]
+    C -->|score < 15| F[Auto-skip]
+    D --> G[Template engine]
+    E --> G
+    G --> H[Generator pipeline]
+    H --> I[Atomic write .lore/docs/]
+    I --> J[Index update]
 ```
-commit → post-commit hook → workflow/reactive.go
-  → questions (ui/) → template engine → generator/
-  → atomic write to .lore/docs/ → index update (storage/)
+
+**In words:**
+```
+commit → hook → Decision Engine scores → questions (if needed)
+  → template → generator → atomic write → index update
 ```
 
 ## Key Patterns

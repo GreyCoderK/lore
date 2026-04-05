@@ -14,6 +14,19 @@ lore angela draft [filename] [flags]
 
 > **Analogy:** Imagine a spell-checker, but instead of checking spelling, it checks: "Did you explain *why*? Did you mention alternatives? Is this consistent with your other documents?" All locally, all free.
 
+## Real World Scenario
+
+> Before pushing your PR, you want to check that the 3 new documents you created are well-structured — without spending API credits:
+>
+> ```bash
+> lore angela draft --all
+> # 2 docs need attention, 1 is great
+> ```
+>
+> Free, offline, instant. Fix the issues, THEN polish with AI.
+
+<!-- GIF: assets/vhs/angela-draft-polish.gif -->
+
 ## Arguments
 
 | Argument | Required | Description |

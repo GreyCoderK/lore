@@ -14,6 +14,21 @@ lore doctor [flags]
 
 > **Analogy:** Just like a real doctor checks your vitals and prescribes treatment, `lore doctor` checks your corpus health and prescribes `--fix`.
 
+## Real World Scenario
+
+> After merging 3 feature branches, something feels off — `lore show` returns stale results. Time for a checkup:
+>
+> ```bash
+> lore doctor
+> # ✗ stale-index (out of sync)
+> lore doctor --fix
+> # ✓ Fixed: rebuilt index
+> ```
+>
+> Like running `npm audit` or `go vet` — a habit that prevents surprises.
+
+<!-- GIF: assets/vhs/doctor-fix.gif -->
+
 ## Flags
 
 | Flag | Type | Default | Description |
@@ -156,6 +171,20 @@ lore doctor --fix --rebuild-store
 | `0` | No issues (or all fixed with `--fix`) |
 | `1` | Issues found (need `--fix` or manual intervention) |
 | `4` | Configuration error |
+
+## Common Questions
+
+### "Is `--rebuild-store` safe?"
+
+Yes. `store.db` is a cache reconstructed from your Markdown files. Rebuilding loses nothing — it re-indexes everything from the source of truth.
+
+### "Doctor says 'manual fix required'"
+
+Broken references and invalid front matter cannot be auto-fixed because Lore doesn't know the correct value. Open the flagged file, fix it, then `lore doctor` again.
+
+### "Should I run doctor after every merge?"
+
+Good habit. `lore doctor --fix` takes 1 second and catches stale indexes from other people's changes.
 
 ## See Also
 

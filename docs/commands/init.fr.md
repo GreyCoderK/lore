@@ -1,6 +1,6 @@
 # lore init
 
-Initialise un dépôt de documentation Lore dans le projet Git courant.
+Initialiser un dépôt de documentation Lore dans votre projet.
 
 ## Synopsis
 
@@ -8,68 +8,120 @@ Initialise un dépôt de documentation Lore dans le projet Git courant.
 lore init [flags]
 ```
 
-## Description
+## Qu'est-ce que ça fait ?
 
-Crée la structure du répertoire `.lore/`, génère les fichiers de configuration, installe le hook Git post-commit et produit un `.lore/README.md` comme pont de découverte pour les collaborateurs. Le répertoire courant doit se trouver dans un dépôt Git.
+Pensez à `lore init` comme configurer un journal pour votre projet. De même qu'un journal a besoin d'un cahier avant de pouvoir écrire dedans, Lore a besoin d'un dossier `.lore/` avant de pouvoir capturer vos décisions.
 
-Si `.lore/` existe déjà, la commande se termine silencieusement (idempotent).
+**En termes simples :** Cette commande prépare votre projet à documenter le "pourquoi" derrière vos changements de code.
+
+## Prérequis
+
+- Vous devez être dans un **dépôt Git** (un dossier où vous avez lancé `git init`)
+- C'est tout ! Pas de compte, pas de clé API, pas de connexion internet
+
+## Ce qui se passe quand vous lancez
+
+```bash
+cd mon-projet
+lore init
+```
+
+Lore fait 5 choses :
+
+1. **Crée le dossier `.lore/`** — C'est là que vit toute votre documentation
+
+```
+.lore/
+├── docs/          # Vos fichiers de documentation
+├── pending/       # Commits en attente de documentation
+├── templates/     # Templates personnalisés (optionnel, avancé)
+├── store.db       # Index intelligent (auto-géré, ignorez-le)
+└── README.md      # Explique Lore à quiconque clone votre repo
+```
+
+2. **Crée `.lorerc`** — Fichier de config partagé (committé dans git, visible par l'équipe)
+3. **Crée `.lorerc.local`** — Fichier de config personnel (gitignore, pour les clés API)
+4. **Installe le hook Git** — Un petit script qui déclenche Lore après chaque commit
+5. **Propose une démo** — Vous montre comment Lore fonctionne en ~45 secondes
+
+> **Analogie :** Pensez au hook Git comme un post-it sur votre écran qui dit "Pourquoi tu viens de faire ça ?" après chaque commit. C'est automatique — pas besoin de se rappeler de documenter.
 
 ## Flags
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--no-demo` | bool | `false` | Passer l'invitation à la démo après l'initialisation |
-
-## Global Flags
-
-| Flag | Type | Description |
-|------|------|-------------|
-| `--language` | string | Forcer la langue d'affichage (`en`, `fr`) |
-| `--quiet` | bool | Supprimer les messages non essentiels |
-| `--verbose` | bool | Afficher les détails de l'exécution |
-| `--no-color` | bool | Désactiver la couleur dans la sortie |
-
-## Ce qui est créé
-
-```
-.lore/
-├── docs/             # Corpus de documentation (vide)
-├── pending/          # Commits différés (vide)
-├── templates/        # Modèles personnalisés (optionnel)
-├── store.db          # Index LKS (généré automatiquement au premier usage)
-└── README.md         # Pont de découverte — présente Lore aux collaborateurs
-```
-
-Également :
-- `.lorerc` — Modèle de configuration partagé (commité dans Git)
-- `.lorerc.local` — Surcharges personnelles avec espace réservé pour la clé API (chmod 600, gitignored)
-- `.gitignore` — Mis à jour pour inclure `.lorerc.local` s'il n'y figure pas déjà
-- `.git/hooks/post-commit` — Hook installé (ou à l'emplacement de `core.hooksPath`)
-
-## Détails de comportement
-
-1. **Pas un dépôt Git** → Erreur, code de sortie 1. Lore nécessite Git.
-2. **Déjà initialisé** → Sortie silencieuse, code 0 (peut être relancé sans risque).
-3. **`core.hooksPath` configuré** → Avertissement : impossible d'installer le hook automatiquement. Suggère une installation manuelle avec les marqueurs `# LORE-START` / `# LORE-END`.
-4. **`lore` absent du PATH** → Avertissement avec instructions pour l'ajouter.
-5. **Après l'initialisation** → Propose une démo interactive (sauf si `--no-demo`).
+| `--no-demo` | bool | `false` | Sauter le prompt de démo après l'initialisation |
+| `--language` | string | `en` | Définir la langue de l'interface (`en` ou `fr`) |
+| `--quiet` | bool | `false` | Pas de sortie sauf erreurs |
+| `--verbose` | bool | `false` | Afficher les détails |
+| `--no-color` | bool | `false` | Désactiver la sortie colorée |
 
 ## Exemples
 
+### Configuration de base (le plus courant)
+
 ```bash
-# Initialisation standard
-cd my-project
+cd mon-projet
 lore init
-# → Crée .lore/, installe le hook, propose la démo
-
-# Initialisation silencieuse (CI/scripts)
-lore init --no-demo --quiet
-
-# Fonctionne aussi depuis un sous-répertoire
-cd my-project/src
-lore init
-# → Trouve .git/ dans le parent, initialise à cet endroit
+# → ✓ Dossier .lore/ créé
+# → ✓ Hook post-commit installé
+# → ✓ .lore/README.md généré
+# → Voulez-vous voir une démo ? [O/n]
 ```
+
+### Configuration silencieuse (CI/Scripts)
+
+```bash
+lore init --no-demo --quiet
+# → Pas de sortie, tout est configuré
+```
+
+### Déjà initialisé ?
+
+```bash
+lore init
+# → Déjà initialisé (ne fait rien, pas d'erreur)
+# Sûr de relancer plusieurs fois !
+```
+
+## Questions fréquentes
+
+### "C'est quoi un hook Git ?"
+
+Un hook Git est un script qui s'exécute automatiquement à certains moments de votre workflow Git. Lore utilise un **hook post-commit** — il s'exécute juste après `git commit`. Pas besoin de comprendre les hooks pour utiliser Lore ; il gère tout pour vous.
+
+### "Ça va casser mes hooks existants ?"
+
+Non. Lore utilise des marqueurs spéciaux (`# LORE-START` / `# LORE-END`) dans le fichier hook. Si vous avez déjà des hooks (comme Husky ou pre-commit), Lore ajoute sa section sans toucher les vôtres.
+
+### "Et si je ne suis pas dans un dépôt Git ?"
+
+```bash
+lore init
+# → Erreur : pas un dépôt Git
+# Correction : lancez "git init" d'abord, puis "lore init"
+```
+
+### "Puis-je annuler ?"
+
+Oui. Supprimez le dossier `.lore/` : `rm -rf .lore` — votre code et historique Git sont complètement intacts.
+
+## Que se passe-t-il ensuite ?
+
+Après `lore init`, la prochaine fois que vous lancez `git commit`, Lore posera automatiquement 3 questions :
+
+1. **Type** — Quel genre de changement ? (feature, bugfix, decision, refactor, note)
+2. **Quoi** — Pré-rempli depuis votre message de commit. Appuyez sur Entrée.
+3. **Pourquoi** — La question importante ! Pourquoi ce choix ?
+
+C'est tout — 90 secondes, et le "pourquoi" est capturé pour toujours.
+
+## Tips & Tricks
+
+- **Sûr de relancer :** `lore init` est idempotent — le lancer deux fois ne fait rien.
+- **Après un clone :** Les membres de l'équipe devraient lancer `lore init` après clonage pour installer leur hook local.
+- **Setup CI :** `lore init --no-demo --quiet` dans les pipelines.
+- **Monorepo :** Lancez à la racine du repo. Les documents capturent les chemins complets.
 
 ## Codes de sortie
 
@@ -80,6 +132,7 @@ lore init
 
 ## Voir aussi
 
-- [lore hook](hook.fr.md) — Gérer le hook séparément
-- [lore demo](demo.fr.md) — Essayer Lore sans initialiser
-- [lore doctor](doctor.fr.md) — Diagnostiquer les problèmes après l'initialisation
+- [lore demo](demo.md) — Essayer Lore sans initialiser (aperçu sûr)
+- [lore hook](hook.md) — Gérer le hook séparément
+- [Quickstart](../getting-started/quickstart.md) — Guide complet 5 minutes
+- [Configuration](../guides/configuration.md) — Personnaliser les paramètres

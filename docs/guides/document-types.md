@@ -83,6 +83,78 @@ The core rationale — the most important section.
 - **Related documents:** Link decisions to the features that implement them. Builds a knowledge graph.
 - **Archived, not deleted:** Prefer `status: archived` over deletion — keeps the historical record.
 
+## Choosing the Right Type (Flowchart)
+
+```mermaid
+flowchart TD
+    A[What did you just do?] --> B{Chose between options?}
+    B -->|Yes| C[decision]
+    B -->|No| D{Built something new?}
+    D -->|Yes| E[feature]
+    D -->|No| F{Fixed a bug?}
+    F -->|Yes| G[bugfix]
+    F -->|No| H{Restructured code?}
+    H -->|Yes| I[refactor]
+    H -->|No| J[note]
+```
+
+## Real Examples
+
+### Decision Document
+
+```markdown
+---
+type: decision
+date: 2026-02-10
+commit: c3d4e5f
+tags: [database, infrastructure]
+---
+# Database Selection: PostgreSQL over MongoDB
+
+## Why
+We need ACID transactions for the payment flow. PostgreSQL's
+pgx driver has excellent Go support.
+
+## Alternatives Considered
+- MongoDB: Flexible schema but we'd reimplement foreign keys
+- SQLite: Great for embedded, not for multi-user API
+
+## Impact
+All persistence through PostgreSQL. Migrations via golang-migrate.
+```
+
+### Feature Document
+
+```markdown
+---
+type: feature
+date: 2026-02-15
+commit: b2c3d4e
+tags: [auth, security]
+---
+# Add JWT Auth Middleware
+
+## Why
+The API was completely open. JWT gives us stateless auth
+that scales horizontally without session storage.
+```
+
+### Bugfix Document
+
+```markdown
+---
+type: bugfix
+date: 2026-03-01
+commit: d4e5f6a
+tags: [auth, concurrency]
+---
+# Fix Token Refresh Race Condition
+
+## Why
+Two concurrent requests could both trigger a token refresh,
+causing one to fail with 401. Added mutex around refresh logic.
+```
+
 ## See Also
 
 - [lore new](../commands/new.md) — Create documents

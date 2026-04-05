@@ -33,6 +33,13 @@ All Lore CLI commands at a glance.
 | [`lore angela polish`](angela-polish.md) | AI-assisted rewrite with diff review |
 | [`lore angela review`](angela-review.md) | Corpus-wide coherence analysis |
 
+## Updates
+
+| Command | Description |
+|---------|-------------|
+| [`lore check-update`](check-update.md) | Check if a newer version is available |
+| [`lore upgrade`](upgrade.md) | Upgrade lore to the latest version |
+
 ## Utilities
 
 | Command | Description |

@@ -14,6 +14,18 @@ lore show [keyword] [flags]
 
 > **Analogy:** If `.lore/docs/` is your project's diary, `lore show` is like flipping through it and finding the page where you wrote about "authentication".
 
+## Real World Scenario
+
+> Code review. The reviewer asks: "Why JWT instead of sessions?" Instead of digging through Slack, you search your corpus:
+>
+> ```bash
+> lore show "JWT"
+> ```
+>
+> 3 seconds later, the full reasoning is on screen — written the day the decision was made.
+
+<!-- GIF: assets/vhs/show-search.gif -->
+
 ## Arguments
 
 | Argument | Required | Description |
@@ -126,6 +138,14 @@ lore show "JWT auth" > auth-decision.md
 | `lore show` | **Search** for specific documents by keyword and display content |
 
 Think of it as: `lore list` = table of contents, `lore show` = reading a specific chapter.
+
+## Tips & Tricks
+
+- **Pipe-friendly:** `lore show "auth" --quiet | less` for paging through results.
+- **Export:** `lore show "JWT auth" > auth-decision.md` saves a document to a file.
+- **Combine with grep:** `lore show "api" --quiet | grep decision` — filter results.
+- **No results?** Try broader terms. Search is exact (not fuzzy yet — fuzzy coming in Circle 4).
+- **Type shorthands:** `--decision` is faster to type than `--type decision`.
 
 ## Exit Codes
 

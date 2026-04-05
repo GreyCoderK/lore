@@ -16,6 +16,16 @@ lore angela polish <filename> [flags]
 
 **Requires:** An AI provider configured (API key needed).
 
+## Real World Scenario
+
+> Your "decision-database" doc is a quick brain dump from 2 weeks ago. Before sharing it with the team, you want it polished:
+>
+> ```bash
+> lore angela polish decision-database-2026-02-10.md
+> ```
+>
+> The AI suggests 5 improvements. You accept 3, reject 2. The doc goes from "draft quality" to "publication quality" in 60 seconds.
+
 ## Arguments
 
 | Argument | Required | Description |

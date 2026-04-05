@@ -1,96 +1,153 @@
 # lore angela draft
 
-Analyse structurelle des documents sans appel API.
+Analyse structurelle zéro-API de vos documents — pas d'internet requis.
 
 ## Synopsis
 
 ```
-lore angela draft [filename] [flags]
+lore angela draft [fichier] [flags]
 ```
 
-## Description
+## Qu'est-ce que ça fait ?
 
-Analyse les documents localement — **aucun appel réseau, aucune clé API nécessaire**. Vérifie la qualité structurelle, la conformité au guide de style, la cohérence avec le corpus et génère des suggestions actionnables.
+`lore angela draft` c'est comme avoir un coach d'écriture qui relit votre document — sauf que ce coach travaille **entièrement hors ligne**. Il vérifie la structure, le style et la cohérence sans aucun appel réseau ni clé API.
+
+> **Analogie :** Imaginez un correcteur orthographique, mais au lieu de vérifier l'orthographe, il vérifie : "Avez-vous expliqué *pourquoi* ? Avez-vous mentionné les alternatives ? Est-ce cohérent avec vos autres documents ?" Tout localement, tout gratuit.
+
+## Scénario concret
+
+> Avant de pousser votre PR, vous voulez vérifier que les 3 nouveaux documents sont bien structurés — sans dépenser de crédits API :
+>
+> ```bash
+> lore angela draft --all
+> # 2 docs à revoir, 1 est excellent
+> ```
+>
+> Gratuit, hors ligne, instantané. Corrigez les problèmes, PUIS polissez avec l'IA.
 
 ## Arguments
 
 | Argument | Requis | Description |
 |----------|--------|-------------|
-| `filename` | Non | Document spécifique (par défaut : le plus récent) |
+| `fichier` | Non | Document spécifique à analyser (défaut : le plus récent) |
 
 ## Flags
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--all` | bool | `false` | Analyser l'ensemble du corpus |
+| `--all` | bool | `false` | Analyser chaque document du corpus |
 
-## Contenu de l'analyse
+## Ce qui est vérifié
 
-- **Notation par persona** — Chaque persona active note le document (score moyen /10)
-- **Structure** — Sections manquantes (Why, Alternatives, Impact)
-- **Guide de style** — Conformité avec les règles de style configurées dans `.lorerc`
-- **Cohérence** — Références croisées avec les autres documents du corpus
-- **Suggestions** — Améliorations actionnables avec sévérité (error, warning, info)
+| Catégorie | Ce que ça cherche | Exemple de finding |
+|-----------|-------------------|-------------------|
+| **Structure** | Sections manquantes (Why, Alternatives, Impact) | "Section 'Alternatives Considered' manquante" |
+| **Style** | Voix passive, langage vague, problèmes de ton | "Voix passive excessive dans la section Why" |
+| **Cohérence** | Contradictions ou connexions avec d'autres docs | "Lié : feature-add-auth-2026-02-15.md" |
+| **Complétude** | Sections vides ou trop courtes | "La section Why ne fait que 5 mots — enrichissez" |
+
+## Comprendre les sévérités
+
+| Sévérité | Signification | Action |
+|----------|---------------|--------|
+| **error** | Quelque chose d'important manque | Corrigez avant de considérer le doc "terminé" |
+| **warning** | Pourrait être mieux | Améliorez quand vous avez le temps |
+| **info** | Informatif — connexions et contexte | Bon à savoir, pas d'action nécessaire |
 
 ## Sortie (document unique)
 
+```bash
+lore angela draft decision-database-2026-02-10.md
 ```
-Analyzing  decision-auth-strategy-2026-03-07.md
-Score: 7.2/10 by Technical Writer + Architect
+
+```
+Analysing  decision-database-2026-02-10.md
+Score: 7.2/10 par Technical Writer + Architect
 
 SEVERITY   CATEGORY        MESSAGE
-error      structure       Missing "Alternatives Considered" section
-warning    tone            Passive voice overused in "Why" section
-info       cohérence       Related: feature-add-auth-2026-02-15.md
+error      structure       Section "Impact" manquante — les décisions doivent décrire les conséquences
+warning    tone            "On a juste pris PostgreSQL" — évitez "juste", ça affaiblit la décision
+info       coherence       Lié : feature-user-model-2026-02-12.md (mentionne le même schéma)
 
 3 suggestions
 ```
 
-## Sortie (corpus entier avec `--all`)
+## Sortie (corpus entier `--all`)
+
+```bash
+lore angela draft --all
+```
 
 ```
-Analyzing 12 documents in corpus...
+Analysing 12 documents in corpus...
 
 STATUS     FILENAME                          DETAILS
-review     decision-auth-2026-03-07.md       5 suggestions (avg 7.2/10)
-review     feature-rate-limit-2026-03-16.md  2 suggestions (avg 8.1/10)
+review     decision-database-2026-02-10.md   3 suggestions (avg 7.2/10)
+review     feature-rate-limit-2026-03-16.md  1 suggestion  (avg 8.1/10)
 ok         refactor-extract-auth-2026-03-01.md  (9.4/10)
 
-12 docs reviewed, 2 with issues, 7 suggestions total
+12 docs reviewed, 2 with issues, 4 suggestions total
 ```
 
-## Flux de processus
+## Flux
 
 ```mermaid
 graph TD
-    A[lore angela draft] --> B{--all?}
-    B -->|No| C[Load single document]
-    B -->|Yes| D[Load entire corpus]
-    C --> E[Parse front matter + content]
+    A[lore angela draft] --> B{--all ?}
+    B -->|Non| C[Charger un document]
+    B -->|Oui| D[Charger tout le corpus]
+    C --> E[Parser front matter + contenu]
     D --> E
-    E --> F[Style guide check]
-    F --> G[Structure analysis]
-    G --> H[Coherence check vs corpus]
-    H --> I[Persona scoring]
-    I --> J[Generate suggestions]
-    J --> K[Display report]
+    E --> F[Vérifier structure : sections présentes ?]
+    F --> G[Vérifier style : ton, clarté, longueur]
+    G --> H[Vérifier cohérence : références croisées]
+    H --> I[Scorer avec les personas]
+    I --> J[Générer suggestions]
+    J --> K[Afficher rapport]
 ```
+
+## Questions fréquentes
+
+### "Ai-je besoin d'une clé API ?"
+
+**Non.** `angela draft` est 100% local. Utilise des règles et heuristiques intégrées. C'est un linter sophistiqué pour la documentation.
+
+### "Différence entre `draft` et `polish` ?"
+
+| | `angela draft` | `angela polish` |
+|---|---|---|
+| **Réseau** | Aucun (hors ligne) | 1 appel API |
+| **Coût** | Gratuit | Utilise des crédits API |
+| **Ce qu'il fait** | Signale les problèmes | Réécrit le document |
+| **Sortie** | Liste de suggestions | Diff interactif |
+
+> **Bonne pratique :** Toujours `draft` d'abord (gratuit), corriger les problèmes faciles, puis `polish` (coûte des crédits).
+
+### "C'est quoi les 'personas' ?"
+
+Angela utilise des reviewers virtuels avec des perspectives différentes. Chaque persona note le document de son angle :
+- **Technical Writer** — C'est clair et bien structuré ?
+- **Architect** — Le contenu technique est exact ?
+- **New Developer** — Un nouveau comprendrait ?
+
+Le score final est la moyenne des personas actives.
 
 ## Tips & Tricks
 
-- Lancez `lore angela draft` avant `lore angela polish` — corrigez les problèmes structurels localement avant de dépenser des crédits API.
-- `--all` est parfait avant une release : scannez l'ensemble du corpus pour détecter les problèmes de qualité.
-- Le guide de style est configurable dans `.lorerc` sous `angela.style_guide`.
-- Aucune clé API requise — fonctionne entièrement hors ligne.
+- **Avant chaque PR :** `lore angela draft --all` pour attraper les problèmes de qualité.
+- **`draft` avant `polish` :** Corrigez les problèmes gratuits d'abord, puis dépensez les crédits.
+- **Le score est relatif :** 7/10 c'est bien, 9/10 c'est excellent. Ne visez pas 10/10 sur chaque doc.
+- **Personnalisez les règles :** Dans `.lorerc` sous `angela.style_guide`.
 
 ## Codes de sortie
 
 | Code | Signification |
 |------|---------------|
-| `0` | Succès (même si des suggestions ont été trouvées) |
-| `1` | Erreur (`.lore/` introuvable, fichier introuvable) |
+| `0` | Succès (même si suggestions trouvées) |
+| `1` | Erreur (`.lore/` non trouvé, fichier non trouvé) |
 
 ## Voir aussi
 
-- [lore angela polish](angela-polish.fr.md) — Réécriture assistée par IA
-- [lore angela review](angela-review.fr.md) — Revue IA de l'ensemble du corpus
+- [lore angela polish](angela-polish.md) — Réécriture assistée par IA (étape suivante)
+- [lore angela review](angela-review.md) — Revue de cohérence corpus
+- [Types de documents](../guides/document-types.md) — Quelles sections chaque type attend

@@ -22,6 +22,23 @@ lore new [type] ["what"] ["why"] [flags]
 
 > **Analogy:** If the post-commit hook is like a journalist following you in real-time, `lore new` is like sitting down with that journalist for a dedicated interview about something you did earlier.
 
+## Real World Scenario
+
+> Morning standup. The team decided to migrate from MongoDB to PostgreSQL. No code yet — just a decision. You want to capture it before the details fade:
+>
+> ```bash
+> lore new decision "switch to PostgreSQL" "relational integrity for ACID transactions"
+> ```
+>
+> Or later, you realize 3 commits from last week were never documented:
+>
+> ```bash
+> git log --oneline -5
+> lore new --commit abc1234
+> ```
+
+<!-- GIF: assets/vhs/new-retroactive.gif -->
+
 ## Arguments
 
 | Argument | Required | Description | Example |
@@ -167,6 +184,14 @@ lore new --commit nonexistent
 # → Error: commit not found
 # Lore validates the hash before proceeding.
 ```
+
+## Tips & Tricks
+
+- **One-liners for scripts:** `lore new feature "add auth" "stateless scales"` — no prompts.
+- **After meetings:** `lore new decision` to capture decisions while the context is fresh.
+- **Retroactive batch:** `git log --oneline -10` then `lore new --commit <hash>` for each.
+- **Pre-set type:** `--type refactor` skips the selector when you already know.
+- **Express mode:** Answer all 3 quickly (< 3 seconds) and Lore skips bonus questions.
 
 ## Exit Codes
 

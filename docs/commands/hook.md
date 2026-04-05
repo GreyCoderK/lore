@@ -1,6 +1,6 @@
 # lore hook
 
-Manage the Git post-commit hook.
+Manage the Git post-commit hook that triggers Lore's documentation flow.
 
 ## Synopsis
 
@@ -8,49 +8,146 @@ Manage the Git post-commit hook.
 lore hook <install|uninstall>
 ```
 
+## What Does This Do?
+
+The hook is the invisible engine of Lore. After every `git commit`, it runs automatically and triggers the question flow. `lore hook` lets you install or remove this hook manually.
+
+> **Analogy:** The hook is like a smoke detector. You install it once, forget about it, and it activates when needed. `lore hook install` mounts the detector. `lore hook uninstall` takes it down.
+
+Most users never need this command — `lore init` installs the hook automatically.
+
+## Real World Scenario
+
+> Your team uses Husky for pre-commit linting. You want to add Lore's post-commit hook without breaking the existing setup:
+>
+> ```bash
+> lore hook install
+> # Lore adds its section with markers — your Husky hooks stay untouched
+> ```
+
 ## Subcommands
 
-| Subcommand | Description |
-|------------|-------------|
-| `install` | Install the Lore post-commit hook |
-| `uninstall` | Remove the Lore post-commit hook |
+### `lore hook install`
 
-## Description
+Installs the post-commit hook in `.git/hooks/post-commit` (or the `core.hooksPath` location).
 
-Manages the post-commit hook that triggers the documentation flow after each commit. The hook is installed in `.git/hooks/post-commit` (or the `core.hooksPath` location).
+**What it does:**
 
-## Hook Markers
+1. Checks if `.git/hooks/post-commit` exists
+2. If it exists: adds Lore's section between `# LORE-START` and `# LORE-END` markers
+3. If it doesn't exist: creates the file with Lore's hook
+4. Makes the file executable (`chmod +x`)
 
-The hook uses markers for safe coexistence with other hooks:
+**Coexistence with other hooks:**
 
 ```bash
+#!/bin/bash
+# Your existing pre-existing hook code here
+npm run lint-staged
+
 # LORE-START
-/path/to/lore _hook-post-commit
+/usr/local/bin/lore _hook-post-commit
 # LORE-END
 ```
 
-If `core.hooksPath` is configured, Lore cannot auto-install. It provides the markers for manual insertion.
+The markers ensure Lore only touches its own section. Your other hooks are never modified.
+
+### `lore hook uninstall`
+
+Removes Lore's section from the hook file. If Lore was the only content, removes the file entirely.
+
+## Edge Cases
+
+### `core.hooksPath` configured
+
+If Git is configured to use a custom hooks directory (common in monorepos), Lore can't auto-install:
+
+```bash
+lore hook install
+# → Warning: core.hooksPath is set to /path/to/hooks
+# → Add these lines to your post-commit hook manually:
+# →   # LORE-START
+# →   /usr/local/bin/lore _hook-post-commit
+# →   # LORE-END
+```
+
+### Hook already installed
+
+```bash
+lore hook install
+# → Hook already installed (idempotent — safe to run multiple times)
+```
+
+## Common Questions
+
+### "What is `_hook-post-commit`?"
+
+It's a hidden internal command that Lore uses. The hook file calls `lore _hook-post-commit` which then runs the Decision Engine, contextual detection, and question flow. Never call it directly.
+
+### "The hook isn't triggering after my commits"
+
+Check these in order:
+
+1. Is the hook installed? `grep "LORE" .git/hooks/post-commit`
+2. Is the hook executable? `ls -la .git/hooks/post-commit` (should show `-rwx`)
+3. Is `lore` in your PATH? `which lore`
+4. Is `core.hooksPath` overriding? `git config core.hooksPath`
+
+### "Can I temporarily disable the hook?"
+
+Yes, three ways:
+
+```bash
+# 1. Skip one commit
+git commit -m "quick fix [doc-skip]"
+
+# 2. Uninstall and reinstall later
+lore hook uninstall
+# ... commits without Lore ...
+lore hook install
+
+# 3. Git's built-in skip (skips ALL hooks)
+git commit --no-verify -m "emergency fix"
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | Error (can't write to hooks directory) |
 
 ## Examples
 
 ```bash
-# Install
+# Install the hook
 lore hook install
+# → ✓ Post-commit hook installed
+
+# Verify installation
+cat .git/hooks/post-commit
+# → #!/bin/bash
+# → # LORE-START
+# → /usr/local/bin/lore _hook-post-commit
+# → # LORE-END
 
 # Uninstall
 lore hook uninstall
+# → ✓ Post-commit hook removed
 
-# Check if installed
-grep -q "LORE-START" .git/hooks/post-commit && echo "installed"
+# Check if installed (scripting)
+grep -q "LORE-START" .git/hooks/post-commit 2>/dev/null && echo "installed" || echo "not installed"
 ```
 
 ## Tips & Tricks
 
-- `lore init` installs the hook automatically — you rarely need `lore hook install` directly.
-- If you use Husky or pre-commit framework, add the Lore markers manually inside your existing hook.
-- The hook calls `lore _hook-post-commit` (hidden command) — never call this directly.
+- **You rarely need this:** `lore init` installs the hook automatically.
+- **Husky/pre-commit users:** Lore uses markers (`# LORE-START` / `# LORE-END`) and never touches other hooks.
+- **Temporary disable:** `lore hook uninstall` then `lore hook install` when ready. Or use `[doc-skip]` in commit messages.
+- **Monorepo tip:** If `core.hooksPath` is set, follow the manual instructions Lore provides.
 
 ## See Also
 
 - [lore init](init.md) — Installs the hook automatically
 - [Contextual Detection](../guides/contextual-detection.md) — How the hook decides what to do
+- [lore doctor](doctor.md) — Diagnose hook issues

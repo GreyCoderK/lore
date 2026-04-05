@@ -8,54 +8,142 @@ Gérer les identifiants API et consulter la configuration.
 lore config <set-key|delete-key|list-keys>
 ```
 
+## Qu'est-ce que ça fait ?
+
+`lore config` gère les clés API qui alimentent les fonctions IA d'Angela. Pensez-y comme un gestionnaire de mots de passe spécifiquement pour vos fournisseurs IA — il stocke les clés de façon sécurisée dans le trousseau de votre OS pour qu'elles ne finissent jamais dans un fichier qu'on pourrait committer par accident.
+
+> **Analogie :** C'est comme la page de paramètres d'une app. On ne l'utilise pas tous les jours, mais quand on doit connecter un nouveau service, c'est là qu'on va.
+
+## Scénario concret
+
+> Vous venez de recevoir votre clé API Anthropic. Il est temps de débloquer Angela :
+>
+> ```bash
+> lore config set-key anthropic
+> # Enter API key: [masqué]
+> # ✓ Clé stockée de façon sécurisée
+> ```
+>
+> Maintenant `lore angela polish` fonctionne. Votre clé est dans le trousseau OS — jamais dans un fichier en clair.
+
 ## Sous-commandes
 
 | Sous-commande | Description |
 |---------------|-------------|
-| `set-key <provider>` | Stocker une clé API de manière sécurisée |
-| `delete-key <provider>` | Supprimer une clé API enregistrée |
-| `list-keys` | Afficher l'état de tous les fournisseurs |
+| `set-key <fournisseur>` | Stocker une clé API de façon sécurisée |
+| `delete-key <fournisseur>` | Supprimer une clé stockée |
+| `list-keys` | Afficher le statut de tous les fournisseurs |
 
-**Fournisseurs reconnus :** `anthropic`, `openai`, `ollama`
+**Fournisseurs connus :** `anthropic`, `openai`, `ollama`
 
-## Description
+## Flags
 
-Gère les identifiants API pour les fonctionnalités Angela (IA). Les clés sont stockées dans le gestionnaire de credentials du système (Trousseau macOS, secret-service Linux, Gestionnaire d'identifiants Windows) ou dans `.lorerc.local` en solution de repli.
+Cette commande n'a pas de flags. Le fournisseur est spécifié en argument.
 
-## `lore config set-key`
+## Comment le stockage des clés fonctionne
+
+Lore essaie l'option la plus sécurisée d'abord, puis utilise un fallback :
+
+```mermaid
+graph TD
+    A[lore config set-key] --> B{Trousseau OS disponible ?}
+    B -->|Oui, macOS| C[Trousseau d'accès]
+    B -->|Oui, Linux| D[secret-service / libsecret]
+    B -->|Oui, Windows| E[Gestionnaire d'identifiants]
+    B -->|Non| F[Fallback .lorerc.local]
+    F --> G[Mode fichier 0600 — lecture propriétaire uniquement]
+```
+
+## Exemples
+
+### Configurer Anthropic (Claude)
 
 ```bash
 lore config set-key anthropic
-# → Enter API key: [hidden input]
-# → ✓ Key stored for anthropic
-```
+# → Enter API key: [masqué — pas d'écho]
+# → ✓ Clé stockée pour anthropic
 
-Lit la clé depuis stdin sans écho (saisie sécurisée).
-
-## `lore config delete-key`
-
-```bash
-lore config delete-key anthropic
-# → ✓ Key removed for anthropic
-```
-
-## `lore config list-keys`
-
-```bash
+# Vérifier
 lore config list-keys
 # anthropic     stored
 # openai        not set
 # ollama        stored
 ```
 
+### Configurer Ollama (Local — Pas de clé nécessaire)
+
+```yaml
+# .lorerc (pas de clé API nécessaire !)
+ai:
+  provider: "ollama"
+  model: "llama3"
+  endpoint: "http://localhost:11434"
+```
+
+### Supprimer une clé
+
+```bash
+lore config delete-key anthropic
+# → ✓ Clé supprimée pour anthropic
+```
+
+### CI/CD (Pas de trousseau)
+
+En CI, utilisez les variables d'environnement :
+
+```bash
+export LORE_AI_API_KEY="sk-ant-..."
+export LORE_AI_PROVIDER="anthropic"
+```
+
+## Questions fréquentes
+
+### "Où exactement est stockée ma clé ?"
+
+Lancez `lore config list-keys`. Si ça dit "stored", la clé est dans votre trousseau OS. Si vous utilisez le fallback, elle est dans `.lorerc.local` (gitignore et chmod 600).
+
+### "J'ai mis la clé mais Angela dit 'pas de fournisseur configuré'"
+
+Deux choses sont nécessaires :
+1. La **clé** (via `lore config set-key`)
+2. Le **nom du fournisseur** dans `.lorerc` :
+
+```yaml
+ai:
+  provider: "anthropic"   # Dit à Angela QUEL fournisseur utiliser
+  model: "claude-sonnet-4-20250514"
+```
+
+### "Puis-je avoir des clés différentes par projet ?"
+
+Oui. `.lorerc.local` est par projet (il vit dans la racine de votre projet, pas globalement).
+
+### "C'est sécurisé ?"
+
+- Trousseau OS : même sécurité que vos mots de passe sauvegardés
+- Fallback `.lorerc.local` : mode fichier `0600` (vous seul pouvez lire)
+- `.lorerc.local` est dans `.gitignore` — jamais committé
+- Les clés sont nettoyées des messages d'erreur
+
 ## Tips & Tricks
 
-- Stockez vos clés via `lore config set-key` plutôt qu'en éditant `.lorerc.local` manuellement — il utilise le trousseau du système quand c'est possible.
-- En CI, utilisez les variables d'environnement : `LORE_AI_API_KEY=sk-...` (pas besoin de trousseau).
-- Ollama n'a pas besoin de clé API (modèles locaux), mais vous pouvez configurer l'endpoint dans `.lorerc`.
+- **Toujours utiliser `lore config set-key`** plutôt que d'éditer `.lorerc.local` manuellement — le trousseau est plus sécurisé.
+- **CI/CD :** Utilisez `LORE_AI_API_KEY` en variable d'env.
+- **Ollama = gratuit :** Pas de clé API, pas de coût. Idéal pour expérimenter.
+- **Rotation des clés :** `delete-key` puis `set-key` pour remplacer une clé expirée.
+- **Valider après setup :** Lancez `lore angela draft` pour confirmer que le fournisseur fonctionne.
+
+## Codes de sortie
+
+| Code | Signification |
+|------|---------------|
+| `0` | Succès |
+| `1` | Erreur (fournisseur invalide, trousseau indisponible) |
+| `3` | Arguments invalides (nom de fournisseur inconnu) |
 
 ## Voir aussi
 
-- [Guide de configuration](../guides/configuration.md) — Référence complète de la configuration
-- [lore angela draft](angela-draft.fr.md) — Utilise le fournisseur configuré
-- [lore doctor --config](doctor.fr.md) — Valider la configuration
+- [Guide configuration](../guides/configuration.md) — Référence complète avec exemples `.lorerc`
+- [lore angela draft](angela-draft.md) — Tester votre setup (zéro-API, pas de clé)
+- [lore angela polish](angela-polish.md) — Utilise la clé configurée
+- [lore doctor --config](doctor.md) — Valider votre configuration

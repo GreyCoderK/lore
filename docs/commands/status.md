@@ -14,6 +14,18 @@ lore status [flags]
 
 > **Analogy:** If `git status` shows the health of your *code*, `lore status` shows the health of your *knowledge*.
 
+## Real World Scenario
+
+> Monday morning. First thing you do: check the health of your project documentation.
+>
+> ```bash
+> lore status
+> ```
+>
+> 12 documented, 2 pending, health good. You know exactly where you stand.
+
+<!-- GIF: assets/vhs/status-badge.gif -->
+
 ## Flags
 
 | Flag | Type | Default | Description |
@@ -138,6 +150,36 @@ graph LR
 |------|---------|
 | `0` | Success |
 | `1` | Error (`.lore/` not found) |
+
+## Examples
+
+```bash
+# Daily health check
+lore status
+# → Project: my-project | Hook: installed | Docs: 12, 2 pending | Health: ✓
+
+# Generate badge for README
+lore status --badge
+# → [![lore](https://img.shields.io/badge/lore-documented%2085%25-d4a)](...)
+
+# CI gate
+health=$(lore status --quiet | grep "health=" | cut -d= -f2)
+[ "$health" = "ok" ] || exit 1
+```
+
+## Common Questions
+
+### "What does 'Express 25%' mean?"
+
+25% of documents were created in express mode (quick, Type + What only), 75% in full mode (all 5 questions). Neither is better — it depends on your workflow.
+
+### "The badge shows gray — how do I improve?"
+
+Coverage = documented commits / total commits. To improve: `lore pending` to resolve pending commits, `lore new --commit` for old undocumented ones. Green at 50%, gold at 80%.
+
+### "Health shows a problem"
+
+Run `lore doctor` for details, then `lore doctor --fix` to auto-repair.
 
 ## See Also
 

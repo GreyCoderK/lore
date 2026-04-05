@@ -1,6 +1,6 @@
 # lore status
 
-Tableau de bord de la santé documentaire du dépôt.
+Tableau de bord de santé documentaire de votre dépôt.
 
 ## Synopsis
 
@@ -8,94 +8,145 @@ Tableau de bord de la santé documentaire du dépôt.
 lore status [flags]
 ```
 
-## Description
+## Qu'est-ce que ça fait ?
 
-Affiche un tableau de bord complet : couverture documentaire, commits en attente, état de l'analyse Angela, résultats de revue et santé globale. Trois modes de sortie disponibles.
+`lore status` vous donne une vue d'ensemble de la santé documentaire de votre projet. C'est comme un tracker de fitness pour le savoir de votre codebase.
+
+> **Analogie :** Si `git status` montre la santé de votre *code*, `lore status` montre la santé de votre *savoir*.
+
+## Scénario concret
+
+> Lundi matin. Première chose : vérifier la santé de la documentation.
+>
+> ```bash
+> lore status
+> ```
+>
+> 12 documentés, 2 en attente, santé bonne. Vous savez où vous en êtes.
 
 ## Flags
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--badge` | bool | `false` | Générer un badge Markdown shields.io avec le pourcentage de couverture |
-| `--quiet` | bool | `false` | Sortie machine : paires `key=value` vers stdout |
+| `--badge` | bool | `false` | Générer un badge shields.io avec le % de couverture |
+| `--quiet` | bool | `false` | Sortie machine : paires `clé=valeur` |
 
-## Sortie du tableau de bord
+## Sortie Dashboard
 
 ```
-Project     my-project
+Project     mon-projet
 Hook        installed
 Docs        12 documented, 2 pending
-Express     25% express (3 docs), 75% complète
+Express     25% express (3 docs), 75% complete
 Angela      draft [anthropic], 2 docs need review
 Review      3 findings, 2 days ago
 Health      ✓ all good
 ```
 
-## Sortie silencieuse (key=value)
+| Ligne | Signification |
+|-------|---------------|
+| **Project** | Nom du projet |
+| **Hook** | Hook post-commit installé ? |
+| **Docs** | Commits documentés vs en attente |
+| **Express** | % docs rapides vs détaillés |
+| **Angela** | Mode IA. "Need review" = docs pas encore analysés |
+| **Health** | ✓ = bon. ✗ = lancez `lore doctor` |
 
-```
-hook=installed
-docs=12
-pending=2
-health=ok
-angela=draft
-angela_review=3
-review_findings=3
-review_age=2026-03-28
-```
-
-## Sortie badge
-
-Génère un badge shields.io pour votre README :
+## Mode Badge
 
 ```bash
 lore status --badge
 # → [![lore](https://img.shields.io/badge/lore-documented%2085%25-d4a)](...)
 ```
 
-**Couleurs du badge :**
+| Couverture | Couleur |
+|------------|---------|
+| < 50% | Gris |
+| 50–79% | Vert |
+| 80%+ | Or |
+| 100% | Or + étoile |
 
-| Couverture | Couleur | Hex |
-|------------|---------|-----|
-| < 50% | Gris | `#999` |
-| 50–79% | Vert | `#4c1` |
-| 80%+ | Or | `#d4a` |
-| 100% | Or + étoile | `#d4a` |
+## Mode Quiet (`--quiet`)
 
-**Calcul de la couverture :** Commits documentés / total de commits (hors merges, rebases, documents de démo). `[doc-skip]` est compté comme couvert. Avertissement si le taux de skip dépasse 70%.
+Sortie machine pour CI/CD :
 
-**Localisé :** EN : `documented`, FR : `documenté` (selon la configuration `language`).
+```bash
+lore status --quiet
+# hook=installed
+# docs=12
+# pending=2
+# health=ok
+# angela=draft
+# review_findings=3
+```
 
-## Flux de processus
+## Flux
 
 ```mermaid
 graph LR
-    A[lore status] --> B{--badge?}
-    B -->|Yes| C[Calculate coverage]
-    C --> D[Generate shields.io URL]
-    D --> E[stdout: Markdown badge]
-    B -->|No| F{--quiet?}
-    F -->|Yes| G[stdout: key=value pairs]
-    F -->|No| H[Collect all metrics]
-    H --> I[Display dashboard]
+    A[lore status] --> B{Mode ?}
+    B -->|Défaut| C[Collecter toutes les métriques]
+    C --> D[Afficher dashboard]
+    B -->|--badge| E[Calculer couverture %]
+    E --> F[Générer URL shields.io]
+    F --> G[Sortie : badge Markdown]
+    B -->|--quiet| H[Sortie : paires clé=valeur]
 ```
+
+### Exemple CI
+
+```bash
+# Échouer le build si des docs sont en attente
+pending=$(lore status --quiet | grep "pending=" | cut -d= -f2)
+if [ "$pending" -gt 0 ]; then
+  echo "⚠ $pending commits ont besoin de documentation"
+  exit 1
+fi
+```
+
+## Exemples
+
+```bash
+# Vérification quotidienne
+lore status
+
+# Badge pour le README
+lore status --badge
+
+# Gate CI
+health=$(lore status --quiet | grep "health=" | cut -d= -f2)
+[ "$health" = "ok" ] || exit 1
+```
+
+## Questions fréquentes
+
+### "Que signifie 'Express 25%' ?"
+
+25% des docs créés en mode express (rapide), 75% en mode complet. Ni l'un ni l'autre n'est meilleur.
+
+### "Le badge est gris ?"
+
+Couverture = documentés / total. Pour améliorer : `lore pending` et `lore new --commit`. Vert à 50%, or à 80%.
+
+### "Health montre ✗"
+
+Lancez `lore doctor` puis `lore doctor --fix`.
 
 ## Tips & Tricks
 
-- Ajoutez la sortie de `lore status --badge` à votre README pour afficher la couverture en direct.
-- Utilisez `lore status --quiet` en CI pour vérifier `health=ok` et faire échouer le build si ce n'est pas le cas.
-- Lancez après `lore doctor --fix` pour confirmer que tous les problèmes ont été résolus.
-- Le ratio « Express » indique combien de documents ont été créés en mode express (rapide) par rapport au mode complet (détaillé).
+- **Badge README :** `lore status --badge` génère le Markdown prêt à coller.
+- **Vérification quotidienne :** Lancez en début de journée.
+- **Gate CI :** `--quiet` pour parser et échouer le build si nécessaire.
 
 ## Codes de sortie
 
 | Code | Signification |
 |------|---------------|
 | `0` | Succès |
-| `1` | Erreur (`.lore/` introuvable) |
+| `1` | Erreur (`.lore/` non trouvé) |
 
 ## Voir aussi
 
-- [lore doctor](doctor.fr.md) — Diagnostiquer et corriger les problèmes
-- [lore list](list.fr.md) — Liste complète des documents
-- [lore pending](pending.fr.md) — Gérer les commits non documentés
+- [lore doctor](doctor.md) — Corriger les problèmes
+- [lore list](list.md) — Voir tous les documents
+- [lore pending](pending.md) — Résoudre les commits en attente
