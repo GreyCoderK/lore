@@ -14,3 +14,4 @@ func main() {
 // mode-notify
 // mode-dialog
 // mode-terminal
+// mode-auto
