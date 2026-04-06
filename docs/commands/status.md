@@ -24,7 +24,8 @@ lore status [flags]
 >
 > 12 documented, 2 pending, health good. You know exactly where you stand.
 
-<!-- GIF: assets/vhs/status-badge.gif -->
+![lore status](../assets/vhs/status-badge.gif)
+<!-- Generate: vhs assets/vhs/status-badge.tape -->
 
 ## Flags
 

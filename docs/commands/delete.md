@@ -24,6 +24,9 @@ Removes a documentation file from `.lore/docs/`. Lore asks for confirmation befo
 >
 > Lore warns you that another document references it, asks for confirmation. You delete and run `lore doctor` to clean up.
 
+![lore delete](../assets/vhs/delete.gif)
+<!-- Generate: vhs assets/vhs/delete.tape -->
+
 ## Arguments
 
 | Argument | Required | Description |

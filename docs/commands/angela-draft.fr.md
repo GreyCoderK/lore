@@ -25,6 +25,9 @@ lore angela draft [fichier] [flags]
 >
 > Gratuit, hors ligne, instantané. Corrigez les problèmes, PUIS polissez avec l'IA.
 
+![lore angela draft](../assets/vhs/angela-draft-polish.gif)
+<!-- Generate: vhs assets/vhs/angela-draft-polish.tape -->
+
 ## Arguments
 
 | Argument | Requis | Description |

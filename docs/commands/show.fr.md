@@ -24,6 +24,9 @@ lore show [mot-clé] [flags]
 >
 > 3 secondes plus tard, le raisonnement complet est à l'écran — écrit le jour de la décision.
 
+![lore show](../assets/vhs/show-search.gif)
+<!-- Generate: vhs assets/vhs/show-search.tape -->
+
 ## Arguments
 
 | Argument | Requis | Description |

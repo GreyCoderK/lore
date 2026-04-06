@@ -26,6 +26,9 @@ lore config <set-key|delete-key|list-keys>
 >
 > Now `lore angela polish` works. Your key is in the OS keychain — never in a plaintext file.
 
+![lore config](../assets/vhs/config.gif)
+<!-- Generate: vhs assets/vhs/config.tape -->
+
 ## Subcommands
 
 | Subcommand | Description |

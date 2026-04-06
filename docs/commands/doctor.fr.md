@@ -27,6 +27,9 @@ lore doctor [flags]
 >
 > Comme lancer `npm audit` ou `go vet` — une habitude qui prévient les surprises.
 
+![lore doctor](../assets/vhs/doctor-fix.gif)
+<!-- Generate: vhs assets/vhs/doctor-fix.tape -->
+
 ## Flags
 
 | Flag | Type | Défaut | Description |

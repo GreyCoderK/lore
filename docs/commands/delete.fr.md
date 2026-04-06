@@ -24,6 +24,9 @@ Supprime un fichier de documentation de `.lore/docs/` avec confirmation interact
 >
 > Lore avertit qu'un autre document le référence, demande confirmation.
 
+![lore delete](../assets/vhs/delete.gif)
+<!-- Generate: vhs assets/vhs/delete.tape -->
+
 ## Arguments
 
 | Argument | Requis | Description |

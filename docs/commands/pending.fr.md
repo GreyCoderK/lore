@@ -30,6 +30,9 @@ Ces commits vont dans la **file d'attente pending**. `lore pending` aide à gér
 > # Reprend les questions pour chacun
 > ```
 
+![lore pending](../assets/vhs/pending-resolve.gif)
+<!-- Generate: vhs assets/vhs/pending-resolve.tape -->
+
 ## Sous-commandes
 
 ### `lore pending` — Voir ce qui attend

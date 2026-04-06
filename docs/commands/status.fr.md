@@ -24,6 +24,9 @@ lore status [flags]
 >
 > 12 documentés, 2 en attente, santé bonne. Vous savez où vous en êtes.
 
+![lore status](../assets/vhs/status-badge.gif)
+<!-- Generate: vhs assets/vhs/status-badge.tape -->
+
 ## Flags
 
 | Flag | Type | Défaut | Description |

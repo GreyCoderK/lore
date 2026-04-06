@@ -30,7 +30,8 @@ These commits go to the **pending queue**. `lore pending` helps you manage that 
 > # Resume questions for each
 > ```
 
-<!-- GIF: assets/vhs/pending-resolve.gif -->
+![lore pending](../assets/vhs/pending-resolve.gif)
+<!-- Generate: vhs assets/vhs/pending-resolve.tape -->
 
 ## Subcommands
 

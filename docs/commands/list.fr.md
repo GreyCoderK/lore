@@ -24,6 +24,9 @@ Affiche un tableau de **chaque document** dans votre dossier `.lore/docs/`, tri�
 >
 > 12 décisions, triées par date. Vous savez exactement ce qui a changé et pourquoi.
 
+![lore list](../assets/vhs/list.gif)
+<!-- Generate: vhs assets/vhs/list.tape -->
+
 ## Flags
 
 | Flag | Type | Défaut | Description |

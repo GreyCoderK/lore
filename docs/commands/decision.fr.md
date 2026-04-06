@@ -27,6 +27,9 @@ Lore ne vous demande pas de documenter chaque commit. Un fix de typo dans le REA
 >
 > Votre message commençait par `feat:` au lieu de `docs:`. Le Decision Engine l'a scoré haut. Corrigez le préfixe et Lore auto-skip la prochaine fois.
 
+![lore decision](../assets/vhs/decision.gif)
+<!-- Generate: vhs assets/vhs/decision.tape -->
+
 ## Flags
 
 | Flag | Type | Défaut | Description |

@@ -27,6 +27,9 @@ Lore doesn't ask you to document every single commit. A `README.md` typo fix doe
 >
 > Ah — your commit message started with `feat:` instead of `docs:`. The Decision Engine scored it high. Fix the commit type, and Lore will auto-skip next time.
 
+![lore decision](../assets/vhs/decision.gif)
+<!-- Generate: vhs assets/vhs/decision.tape -->
+
 ## Flags
 
 | Flag | Type | Default | Description |

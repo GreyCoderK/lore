@@ -24,6 +24,9 @@ Shows a table of **every document** in your `.lore/docs/` folder, sorted by date
 >
 > 12 decisions, sorted by date. You know exactly what changed and why.
 
+![lore list](../assets/vhs/list.gif)
+<!-- Generate: vhs assets/vhs/list.tape -->
+
 ## Flags
 
 | Flag | Type | Default | Description |

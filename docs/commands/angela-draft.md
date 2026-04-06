@@ -25,7 +25,8 @@ lore angela draft [filename] [flags]
 >
 > Free, offline, instant. Fix the issues, THEN polish with AI.
 
-<!-- GIF: assets/vhs/angela-draft-polish.gif -->
+![lore angela draft](../assets/vhs/angela-draft-polish.gif)
+<!-- Generate: vhs assets/vhs/angela-draft-polish.tape -->
 
 ## Arguments
 

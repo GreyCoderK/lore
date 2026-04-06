@@ -24,7 +24,8 @@ Think of `lore init` like setting up a journal for your project. Just like a dia
 >
 > From now on, every `git commit` triggers 3 questions. Your project has a memory.
 
-<!-- GIF: assets/vhs/init.gif (generate with: vhs assets/vhs/init.tape) -->
+![lore init](../assets/vhs/init.gif)
+<!-- Generate: vhs assets/vhs/init.tape -->
 
 ## Prerequisites
 

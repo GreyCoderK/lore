@@ -24,7 +24,8 @@ lore show [keyword] [flags]
 >
 > 3 seconds later, the full reasoning is on screen — written the day the decision was made.
 
-<!-- GIF: assets/vhs/show-search.gif -->
+![lore show](../assets/vhs/show-search.gif)
+<!-- Generate: vhs assets/vhs/show-search.tape -->
 
 ## Arguments
 

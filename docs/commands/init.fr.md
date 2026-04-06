@@ -46,6 +46,9 @@ Lore fait 5 choses :
 
 > **Analogie :** Pensez au hook Git comme un post-it sur votre écran qui dit "Pourquoi tu viens de faire ça ?" après chaque commit. C'est automatique — pas besoin de se rappeler de documenter.
 
+![lore init](../assets/vhs/init.gif)
+<!-- Generate: vhs assets/vhs/init.tape -->
+
 ## Flags
 
 | Flag | Type | Défaut | Description |

@@ -26,6 +26,9 @@ lore angela review [flags]
 >
 > Vous attrapez la contradiction avant qu'elle ne confonde un nouveau membre de l'équipe.
 
+![lore angela review](../assets/vhs/angela-review.gif)
+<!-- Generate: vhs assets/vhs/angela-review.tape -->
+
 **Nécessite** un fournisseur IA configuré (sauf avec `--local`).
 
 ## Flags

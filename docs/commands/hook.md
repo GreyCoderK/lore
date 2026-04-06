@@ -25,6 +25,9 @@ Most users never need this command — `lore init` installs the hook automatical
 > # Lore adds its section with markers — your Husky hooks stay untouched
 > ```
 
+![lore hook](../assets/vhs/hook.gif)
+<!-- Generate: vhs assets/vhs/hook.tape -->
+
 ## Subcommands
 
 ### `lore hook install`

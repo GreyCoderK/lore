@@ -33,6 +33,9 @@ Analyzes the entire documentation corpus for coherence: contradictions between d
 >
 > You catch the contradiction before it confuses a new team member.
 
+![lore angela review](../assets/vhs/angela-review.gif)
+<!-- Generate: vhs assets/vhs/angela-review.tape -->
+
 ## Flags
 
 | Flag | Type | Default | Description |

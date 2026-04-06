@@ -25,6 +25,9 @@ La plupart des utilisateurs n'ont jamais besoin de cette commande — `lore init
 > # Lore ajoute sa section avec des marqueurs — vos hooks Husky restent intacts
 > ```
 
+![lore hook](../assets/vhs/hook.gif)
+<!-- Generate: vhs assets/vhs/hook.tape -->
+
 ## Sous-commandes
 
 ### `lore hook install`

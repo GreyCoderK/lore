@@ -5,9 +5,8 @@ dist/
 /lore
 .lorerc.local
 
-# Generated assets (reproducible via VHS)
-assets/demo.gif
-assets/vhs/*.gif
+# VHS tape source files stay in assets/, generated GIFs go to docs/assets/
+# GIFs are committed (needed for GitHub Pages deployment)
 
 # MkDocs build output
 site/

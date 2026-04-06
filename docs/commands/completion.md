@@ -24,6 +24,9 @@ After setup, typing `lore ` and pressing Tab shows all available commands. Typin
 >
 > 15 seconds of setup, hours of saved keystrokes.
 
+![lore completion](../assets/vhs/completion.gif)
+<!-- Generate: vhs assets/vhs/completion.tape -->
+
 ## Supported Shells
 
 ### Bash

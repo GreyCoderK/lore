@@ -24,7 +24,8 @@ lore release [flags]
 >
 > 3 features, 2 bugfixes, 1 decision — all documented at commit time, now aggregated into professional release notes. 5 seconds instead of 30 minutes.
 
-<!-- GIF: assets/vhs/release.gif -->
+![lore release](../assets/vhs/release.gif)
+<!-- Generate: vhs assets/vhs/release.tape -->
 
 ## Flags
 

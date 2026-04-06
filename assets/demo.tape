@@ -1,75 +1,41 @@
-# Lore Demo — VHS Tape File
-# Generate GIF: vhs assets/demo.tape
-# Requires: VHS (go install github.com/charmbracelet/vhs@latest)
+# Lore Demo — Hero GIF
+# Generate: vhs assets/demo.tape
+# Requires: scripts/setup-demo-project.sh
+#
+# Shows the core workflow: commit → document → retrieve
 
-Output assets/demo.gif
+Output docs/assets/demo.gif
 
 Set Shell "bash"
-Set FontSize 16
-Set Width 1200
-Set Height 600
-Set Padding 20
+Set FontSize 15
+Set Width 1000
+Set Height 550
+Set Padding 16
 Set Theme "Dracula"
+Set TypingSpeed 60ms
+Set CursorBlink false
 
-# Show a commit
-Type "git commit -m 'Add rate limiting to API endpoints'"
-Sleep 500ms
+# Setup invisible — projet temoin deja pret
+Hide
+Type "cd /tmp/lore-demo && clear"
 Enter
 Sleep 1s
+Show
 
-# Lore hook triggers
-Type "# Lore post-commit hook triggers..."
-Sleep 1s
+# 1. Un vrai commit
+Type "echo '// graceful shutdown' >> main.go"
 Enter
-Sleep 500ms
-
-# Question 1: Type
-Type "? Document type: feature"
-Enter
-Sleep 800ms
-
-# Question 2: What
-Type "? What changed: Added rate limiting middleware to all public API endpoints"
-Enter
-Sleep 800ms
-
-# Question 3: Why
-Type "? Why was this done: Production API was getting hammered by a single client doing 10K req/min, causing latency spikes for everyone"
-Enter
-Sleep 1s
-
-# Doc generated
-Type "# ✓ Document saved: .lore/docs/2026-03-15-add-rate-limiting.md"
+Sleep 300ms
+Type "git add -A && git commit -m 'feat(server): add graceful shutdown'"
 Enter
 Sleep 1.5s
 
-# Show the doc
-Type "lore show"
+# 2. Documenter avec lore new (3 args positionnels)
+Type "lore new feature 'Add graceful shutdown' 'Clean shutdown prevents dropped connections during deploy'"
 Enter
-Sleep 500ms
-Type "---"
-Enter
-Type "type: feature"
-Enter
-Type "date: 2026-03-15T14:30:00Z"
-Enter
-Type "commit: e4f5a6b"
-Enter
-Type "---"
-Enter
-Type "# Add rate limiting to API endpoints"
-Enter
-Type ""
-Enter
-Type "## Why"
-Enter
-Type "Production API was getting hammered by a single client"
-Enter
-Type "doing 10K req/min, causing latency spikes for everyone."
-Enter
-Sleep 2s
+Sleep 3s
 
-# End
-Type "# 90 seconds. The 'why' is captured forever."
+# 3. Retrouver la decision
+Type "lore show 'graceful'"
 Enter
-Sleep 2s
+Sleep 3s

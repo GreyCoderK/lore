@@ -26,6 +26,9 @@ lore config <set-key|delete-key|list-keys>
 >
 > Maintenant `lore angela polish` fonctionne. Votre clé est dans le trousseau OS — jamais dans un fichier en clair.
 
+![lore config](../assets/vhs/config.gif)
+<!-- Generate: vhs assets/vhs/config.tape -->
+
 ## Sous-commandes
 
 | Sous-commande | Description |

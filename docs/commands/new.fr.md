@@ -37,6 +37,9 @@ lore new [type] ["what"] ["why"] [flags]
 > lore new --commit abc1234
 > ```
 
+![lore new --commit](../assets/vhs/new-retroactive.gif)
+<!-- Generate: vhs assets/vhs/new-retroactive.tape -->
+
 ## Arguments
 
 | Argument | Requis | Description | Exemple |

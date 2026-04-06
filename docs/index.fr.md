@@ -4,8 +4,8 @@
 
 <img src="../assets/logo.svg" alt="Lore" width="180">
 
-<!-- GIF démo — générer avec : vhs assets/demo.tape -->
-<!-- ![Demo](assets/demo.gif) -->
+![Demo](assets/demo.gif)
+<!-- Générer : vhs assets/demo.tape -->
 
 ---
 

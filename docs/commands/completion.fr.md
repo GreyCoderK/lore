@@ -24,6 +24,9 @@ Après configuration, taper `lore ` et appuyer sur Tab affiche toutes les comman
 >
 > 15 secondes de configuration, des heures de frappes économisées.
 
+![lore completion](../assets/vhs/completion.gif)
+<!-- Generate: vhs assets/vhs/completion.tape -->
+
 ## Flags
 
 Cette commande ne prend pas de flags. Le nom du shell est un argument positionnel requis.
