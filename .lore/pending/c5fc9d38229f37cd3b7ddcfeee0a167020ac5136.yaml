@@ -1,0 +1,8 @@
+commit: c5fc9d38229f37cd3b7ddcfeee0a167020ac5136
+date: "2026-04-06T22:02:33Z"
+message: 'test: tty detection'
+answers:
+    type: ""
+    what: ""
+status: deferred
+reason: non-tty
