@@ -8,10 +8,5 @@ import "github.com/greycoderk/lore/cmd"
 func main() {
 	cmd.Execute()
 }
-// real test
-// real test
-// real test
-// real test
-// silent test
-// silent test 2
-// silent test 3
+
+// silent test 4
