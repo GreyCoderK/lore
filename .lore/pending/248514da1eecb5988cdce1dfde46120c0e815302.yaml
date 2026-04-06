@@ -1,8 +1,0 @@
-commit: 248514da1eecb5988cdce1dfde46120c0e815302
-date: "2026-04-06T19:18:06Z"
-message: 'test: requirement for awesome'
-answers:
-    type: ""
-    what: ""
-status: deferred
-reason: non-tty

@@ -1,8 +1,0 @@
-commit: 77a2fe59271d29de1b2b1952df52e92f878025bb
-date: "2026-04-06T21:25:41Z"
-message: test
-answers:
-    type: ""
-    what: ""
-status: deferred
-reason: non-tty
