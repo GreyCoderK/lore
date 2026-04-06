@@ -14,3 +14,4 @@ func main() {
 // real test
 // silent test
 // silent test 2
+// silent test 3
