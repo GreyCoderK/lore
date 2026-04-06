@@ -8,12 +8,4 @@ import "github.com/greycoderk/lore/cmd"
 func main() {
 	cmd.Execute()
 }
-
-// silent test 4
-// mode-silent
-// mode-notify
-// mode-dialog
-// mode-terminal
-// mode-auto
-// real test
-// terminal-mode
+// docs-test
