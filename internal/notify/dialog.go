@@ -32,6 +32,10 @@ type DialogData struct {
 	LabelOK        string // "OK"
 	LabelError     string // "Lore error: "
 	LabelErrResolve string // "Failed to resolve pending"
+
+	// IconPath is the absolute path to the Lore logo (PNG) for dialog/notification icons.
+	// Resolved at call site; empty means no custom icon.
+	IconPath string
 }
 
 // branchScopeContext builds a display string like "\nBranch: main · Scope: auth"

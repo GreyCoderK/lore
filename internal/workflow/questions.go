@@ -15,6 +15,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
+	"golang.org/x/term"
 )
 
 const defaultExpressThreshold = 3 * time.Second
@@ -265,10 +266,42 @@ func (q *QuestionFlow) RunFlowWithMode(ctx context.Context, commit *domain.Commi
 	})
 }
 
-// AskType prompts for document type with a pre-filled default.
-// Enter confirms, any input replaces.
+// AskType prompts for document type using an interactive arrow-key selector (TTY)
+// or a text input with validation (non-TTY). Invalid types are rejected with a retry loop.
 func (q *QuestionFlow) AskType(ctx context.Context, defaultType string) (string, error) {
-	return q.askWithDefault(ctx, "Type", defaultType)
+	// TTY: use interactive arrow-key selector
+	if isRealTTY(q.streams) {
+		selected, err := selectType(q.streams, defaultType)
+		if err == nil {
+			if _, valid := validateType(selected); valid {
+				return selected, nil
+			}
+		}
+		// selectType failed — fall through to text input
+	}
+
+	// Non-TTY or fallback: text input with validation loop
+	for {
+		t, err := q.askWithDefault(ctx, "Type", defaultType)
+		if err != nil {
+			return "", fmt.Errorf("workflow: ask Type: %w", err)
+		}
+		normalized, valid := validateType(t)
+		if valid {
+			return normalized, nil
+		}
+		validNames := domain.DocTypeNames()
+		_, _ = fmt.Fprintf(q.streams.Err, "  \033[31m✗\033[0m Type invalide \"%s\". Valides : %s\n", t, strings.Join(validNames, ", "))
+	}
+}
+
+// isRealTTY reports whether streams.In is a real terminal file descriptor.
+func isRealTTY(streams domain.IOStreams) bool {
+	inFile, ok := streams.In.(*os.File)
+	if !ok {
+		return false
+	}
+	return term.IsTerminal(int(inFile.Fd()))
 }
 
 // AskWhat prompts for what was done, pre-filled from commit subject.

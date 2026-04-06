@@ -24,5 +24,9 @@ if ! command -v lore >/dev/null 2>&1; then
   fi
   exit 0
 fi
-exec lore _hook-post-commit < /dev/tty
+if (: < /dev/tty) 2>/dev/null; then
+  exec lore _hook-post-commit < /dev/tty
+else
+  exec lore _hook-post-commit
+fi
 # LORE-END

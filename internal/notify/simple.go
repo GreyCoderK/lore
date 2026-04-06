@@ -5,6 +5,8 @@ package notify
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -18,6 +20,15 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 
 	switch runtime.GOOS {
 	case "darwin":
+		// Prefer terminal-notifier if available (supports custom icons).
+		if tnPath, err := opts.LookPath("terminal-notifier"); err == nil {
+			return opts.StartCommand(tnPath, []string{
+				"-title", "Lore",
+				"-message", safe,
+				"-appIcon", findLogoPNG(),
+			}, nil)
+		}
+		// Fallback to osascript (no custom icon — uses Script Editor icon).
 		script := fmt.Sprintf(
 			`display notification "%s" with title "Lore"`,
 			escapeAppleScript(safe),
@@ -49,4 +60,23 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 	default:
 		return errUnsupportedOS
 	}
+}
+
+// findLogoPNG locates the Lore logo PNG by walking up from the current
+// working directory looking for a git repo with assets/logo.png.
+func findLogoPNG() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	candidates := []string{
+		filepath.Join(wd, "assets", "logo.png"),
+		filepath.Join(wd, "docs", "assets", "logo.png"),
+	}
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return ""
 }

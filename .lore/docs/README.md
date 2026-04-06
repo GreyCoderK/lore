@@ -4,7 +4,8 @@
 
 | Document | Type | Date | Status | Tags |
 |----------|------|------|--------|------|
+| [note-add-something-real-2026-04-06.md](note-add-something-real-2026-04-06.md) | note | 2026-04-06 | draft |  |
 | [note-amelioration-de-la-documentation-2026-04-05.md](note-amelioration-de-la-documentation-2026-04-05.md) | note | 2026-04-05 | draft |  |
 | [note-le-style-du-site-de-documentation-2026-04-05.md](note-le-style-du-site-de-documentation-2026-04-05.md) | note | 2026-04-05 | draft |  |
 
-*2 documents total*
+*3 documents total*
