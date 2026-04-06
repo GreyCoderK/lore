@@ -16,3 +16,4 @@ func main() {
 // mode-terminal
 // mode-auto
 // real test
+// terminal-mode
