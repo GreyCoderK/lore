@@ -107,6 +107,31 @@ func TestBuildAppleScript_BranchOnly(t *testing.T) {
 	assert.NotContains(t, script, "Scope:")
 }
 
+func TestDialogOpts_Defaults(t *testing.T) {
+	opts := DialogOpts{}
+	opts.defaults()
+
+	require.NotNil(t, opts.StartCommand)
+	require.NotNil(t, opts.LookPath)
+}
+
+func TestDialogOpts_Defaults_PreservesExisting(t *testing.T) {
+	called := false
+	opts := DialogOpts{
+		StartCommand: func(name string, args []string, env []string) error {
+			called = true
+			return nil
+		},
+	}
+	opts.defaults()
+
+	// StartCommand should be preserved
+	_ = opts.StartCommand("", nil, nil)
+	assert.True(t, called, "original StartCommand should be preserved")
+	// LookPath should be filled
+	require.NotNil(t, opts.LookPath)
+}
+
 func TestBranchScopeContext(t *testing.T) {
 	tests := []struct {
 		name   string

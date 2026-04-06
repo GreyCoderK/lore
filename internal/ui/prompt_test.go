@@ -62,6 +62,32 @@ func TestPrompt_WithUserInput(t *testing.T) {
 	}
 }
 
+func TestConfirm_EOF(t *testing.T) {
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &bytes.Buffer{},
+		In:  strings.NewReader(""), // empty → EOF
+	}
+
+	err := Confirm(streams, "Press Enter")
+	if err == nil {
+		t.Fatal("expected error on EOF")
+	}
+}
+
+func TestPrompt_EOF(t *testing.T) {
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &bytes.Buffer{},
+		In:  strings.NewReader(""), // empty → EOF
+	}
+
+	_, err := Prompt(streams, "Type", "feature")
+	if err == nil {
+		t.Fatal("expected error on EOF")
+	}
+}
+
 func TestPrompt_NoDefault(t *testing.T) {
 	var errBuf bytes.Buffer
 	streams := domain.IOStreams{

@@ -1,79 +1,54 @@
-// Force Mermaid readability after rendering
+// Force Mermaid to always render in dark theme (like code blocks)
 document.addEventListener('DOMContentLoaded', function() {
-  // Wait for mermaid to render
-  setTimeout(fixMermaid, 1500);
-  setTimeout(fixMermaid, 3000);
+  setTimeout(fixMermaid, 1000);
+  setTimeout(fixMermaid, 2000);
+  setTimeout(fixMermaid, 4000);
 
-  // Also observe for dynamic theme changes
-  const observer = new MutationObserver(function() {
+  new MutationObserver(function() {
     setTimeout(fixMermaid, 500);
-  });
-  observer.observe(document.documentElement, {
+  }).observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-md-color-scheme']
   });
 });
 
 function fixMermaid() {
-  const isDark = document.documentElement.getAttribute('data-md-color-scheme') === 'slate';
-  const textColor = isDark ? '#cdd6f4' : '#1a1a1a';
-  const nodeFill = isDark ? 'rgba(129,140,248,0.12)' : 'rgba(79,70,229,0.1)';
-  const nodeStroke = isDark ? '#818cf8' : '#4f46e5';
-  const edgeStroke = isDark ? '#818cf8' : '#4f46e5';
-  const bgColor = isDark ? '#1e1e2e' : '#ffffff';
+  var bg = '#1e1e2e';
+  var text = '#cdd6f4';
+  var nodeFill = 'rgba(129,140,248,0.12)';
+  var nodeStroke = '#818cf8';
 
-  document.querySelectorAll('.mermaid').forEach(function(diagram) {
-    diagram.style.background = bgColor;
-    diagram.style.padding = '1.5rem';
-    diagram.style.borderRadius = '8px';
+  document.querySelectorAll('.mermaid').forEach(function(d) {
+    d.style.cssText = 'background:#1e1e2e!important;padding:1.5rem;border-radius:8px;border:1px solid #313244!important';
 
-    // Fix all text elements
-    diagram.querySelectorAll('text, tspan').forEach(function(el) {
-      el.style.fill = textColor;
-      el.style.fontSize = '14px';
-      el.style.fontFamily = 'Instrument Sans, system-ui, sans-serif';
-      el.setAttribute('fill', textColor);
+    d.querySelectorAll('text, tspan').forEach(function(el) {
+      el.setAttribute('fill', text);
       el.setAttribute('font-size', '14');
+      el.style.cssText = 'fill:' + text + '!important;font-size:14px!important;font-family:Instrument Sans,system-ui,sans-serif!important';
     });
 
-    // Fix foreignObject content (nodeLabels)
-    diagram.querySelectorAll('foreignObject div, foreignObject span, foreignObject p, .nodeLabel, .label').forEach(function(el) {
-      el.style.color = textColor;
-      el.style.fontSize = '14px';
-      el.style.fontFamily = 'Instrument Sans, system-ui, sans-serif';
-      el.style.lineHeight = '1.4';
+    d.querySelectorAll('foreignObject div, foreignObject span, foreignObject p, .nodeLabel, .label, .edgeLabel span').forEach(function(el) {
+      el.style.cssText = 'color:' + text + '!important;font-size:14px!important;font-family:Instrument Sans,system-ui,sans-serif!important;line-height:1.4!important';
     });
 
-    // Fix edgeLabels
-    diagram.querySelectorAll('.edgeLabel, .edgeLabel rect, .edgeLabel span').forEach(function(el) {
-      el.style.color = textColor;
-      el.style.fill = textColor;
-      if (el.tagName === 'rect' || el.classList.contains('edgeLabel')) {
-        el.style.fill = bgColor;
-        el.setAttribute('fill', bgColor);
-      }
+    d.querySelectorAll('.edgeLabel, .edgeLabel rect').forEach(function(el) {
+      el.setAttribute('fill', bg);
+      el.style.fill = bg;
     });
 
-    // Fix node shapes
-    diagram.querySelectorAll('.node rect, .node circle, .node polygon, .node path, .basic.label-container').forEach(function(el) {
-      el.style.fill = nodeFill;
-      el.style.stroke = nodeStroke;
-      el.style.strokeWidth = '1.5px';
+    d.querySelectorAll('.node rect, .node circle, .node polygon, .node path, .basic.label-container, .flowchart-label rect').forEach(function(el) {
       el.setAttribute('fill', nodeFill);
       el.setAttribute('stroke', nodeStroke);
+      el.setAttribute('stroke-width', '1.5');
     });
 
-    // Fix edges/arrows
-    diagram.querySelectorAll('.edgePath path, .flowchart-link').forEach(function(el) {
-      el.style.stroke = edgeStroke;
-      el.style.strokeWidth = '1.5px';
-      el.setAttribute('stroke', edgeStroke);
+    d.querySelectorAll('.edgePath path, .flowchart-link').forEach(function(el) {
+      el.setAttribute('stroke', nodeStroke);
+      el.setAttribute('stroke-width', '1.5');
     });
 
-    // Fix arrowheads
-    diagram.querySelectorAll('marker path').forEach(function(el) {
-      el.style.fill = edgeStroke;
-      el.setAttribute('fill', edgeStroke);
+    d.querySelectorAll('marker path').forEach(function(el) {
+      el.setAttribute('fill', nodeStroke);
     });
   });
 }

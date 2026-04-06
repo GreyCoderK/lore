@@ -4,6 +4,7 @@
 package notify
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,4 +62,27 @@ func TestBashQuote(t *testing.T) {
 
 func TestShellQuote(t *testing.T) {
 	assert.Equal(t, "'/usr/local/bin/lore'", shellQuote("/usr/local/bin/lore"))
+}
+
+func TestCoalesce(t *testing.T) {
+	assert.Equal(t, "first", coalesce("first", "second"))
+	assert.Equal(t, "second", coalesce("", "second"))
+	assert.Equal(t, "third", coalesce("", "", "third"))
+	assert.Equal(t, "", coalesce("", "", ""))
+	assert.Equal(t, "", coalesce())
+}
+
+func TestSanitizeForShell_Truncation(t *testing.T) {
+	long := strings.Repeat("a", 600)
+	result := sanitizeForShell(long)
+	assert.Equal(t, maxSanitizedLen, len(result))
+}
+
+func TestEscapeForJSON_ControlChars(t *testing.T) {
+	// \b and \f escapes
+	assert.Equal(t, `\b`, escapeForJSON("\b"))
+	assert.Equal(t, `\f`, escapeForJSON("\f"))
+	// Other control chars (< 0x20) are stripped
+	assert.Equal(t, "", escapeForJSON("\x01"))
+	assert.Equal(t, "", escapeForJSON("\x1f"))
 }
