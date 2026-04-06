@@ -51,7 +51,7 @@ func newHookInstallCmd(_ *config.Config, streams domain.IOStreams) *cobra.Comman
 				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.HookInstallHooksPathW+"\n", result.HooksPathWarn)
 				_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.HookInstallCannotAuto)
 				_, _ = fmt.Fprintf(streams.Err, "%s\n\n", i18n.T().Cmd.HookInstallManualHint)
-				_, _ = fmt.Fprintf(streams.Err, "  # LORE-START\n  exec lore _hook-post-commit\n  # LORE-END\n")
+				_, _ = fmt.Fprintf(streams.Err, "  # LORE-START\n  exec lore _hook-post-commit < /dev/tty\n  # LORE-END\n")
 				return nil
 			}
 

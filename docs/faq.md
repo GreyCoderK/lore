@@ -32,34 +32,25 @@ Lore skips merge commits automatically — no documentation needed.
 
 Commits are deferred to pending silently. In VS Code terminals, Lore sends a notification. Use `lore pending resolve` later.
 
-### Why do I get a dialog instead of interactive questions in VS Code?
+### Why do I get a dialog instead of interactive questions?
 
-Lore detects VS Code (and forks like Cursor, Windsurf, Codium) via the `GIT_ASKPASS` environment variable that VS Code injects into its terminals. When detected, Lore sends a native macOS/Linux notification instead of asking questions in the terminal — even if the terminal is a real TTY.
+Git redirects stdin to `/dev/null` for hooks. The Lore hook reconnects stdin from the terminal via `< /dev/tty`. If you're seeing a dialog instead of interactive questions, your hook may be outdated (missing the `< /dev/tty` redirect).
 
-**To force interactive terminal mode in VS Code**, unset the detection variable before committing:
-
-```bash
-unset GIT_ASKPASS
-git commit -m "your message"
-```
-
-**To restore it** (re-enable VS Code's Git credential helper), open a new VS Code terminal — VS Code re-injects the variable automatically. Or restore it manually:
+**Fix:** Reinstall the hook:
 
 ```bash
-# Re-export the value VS Code normally sets
-export GIT_ASKPASS="$(which code) --wait --reuse-window"
+lore hook uninstall
+lore hook install
 ```
 
-For a **permanent** setup that only affects Lore, use an alias instead of unsetting globally:
+Verify the hook contains the redirect:
 
 ```bash
-# Add to ~/.zshrc or ~/.bashrc
-alias gc='GIT_ASKPASS= git commit'
+grep "dev/tty" .git/hooks/post-commit
+# Should show: exec lore _hook-post-commit < /dev/tty
 ```
 
-Then use `gc -m "your message"` for interactive Lore, and `git commit` for normal VS Code behavior.
-
-> **Note:** A permanent `unset GIT_ASKPASS` in your shell profile also disables VS Code's Git credential helper. If you use HTTPS remotes, configure credentials separately: `git config --global credential.helper osxkeychain`.
+> **Note:** In environments where `/dev/tty` is unavailable (CI, Docker, pipes), commits are always deferred to pending — this is by design. See [Contextual Detection](guides/contextual-detection.md) for details.
 
 ### Can I document old commits retroactively?
 

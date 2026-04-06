@@ -10,26 +10,31 @@ When the hook fires after a commit, Lore evaluates a chain of rules before askin
 
 ```mermaid
 flowchart TD
-    A[Post-commit hook fires] --> B{doc-skip in message?}
-    B -->|Yes| C[Skip silently ✓]
-    B -->|No| D{Non-TTY or TERM=dumb?}
-    D -->|Yes| E[Defer to pending 📋]
-    D -->|No| F{Rebase in progress?}
+    A["Post-commit hook fires"] --> A1["Reconnect stdin (< /dev/tty)"]
+    A1 --> B{"doc-skip in message?"}
+    B -->|Yes| C["Skip silently"]
+    B -->|No| D{"/dev/tty available?<br/>TERM != dumb?"}
+    D -->|No| E["Defer to pending"]
+    D -->|"No /dev/tty (CI, pipe)"| E
+    D -->|Yes| F{"Rebase in progress?"}
     F -->|Yes| E
-    F -->|No| G{Merge commit?}
-    G -->|Yes| H[Skip — 1-line message ✓]
-    G -->|No| I{Cherry-pick + doc exists?}
+    F -->|No| G{"Merge commit?"}
+    G -->|Yes| H["Skip — 1-line message"]
+    G -->|No| I{"Cherry-pick + doc exists?"}
     I -->|Yes| C
-    I -->|No| J{Amend + doc exists?}
-    J -->|Yes| K0[Question 0: Document this? Y/n]
+    I -->|No| J{"Amend + doc exists?"}
+    J -->|Yes| K0["Question 0: Document this? Y/n"]
     K0 -->|No| C
-    K0 -->|Yes| K[U-pdate / C-reate / S-kip ✏️]
-    J -->|No| L[Decision Engine scoring 🎯]
-    L --> M{Score?}
-    M -->|≥60| N[Ask full questions]
-    M -->|35-59| O[Ask reduced questions]
-    M -->|15-34| P[Suggest skip — confirm]
-    M -->|<15| Q[Auto-skip silently]
+    K0 -->|Yes| K["Update / Create / Skip"]
+    J -->|No| L["Decision Engine scoring"]
+    L --> M{"Score?"}
+    M -->|">=60"| N["Ask full questions"]
+    M -->|"35-59"| O["Ask reduced questions"]
+    M -->|"15-34"| P["Suggest skip — confirm"]
+    M -->|"<15"| Q["Auto-skip silently"]
+    E --> E1{"IDE detected?<br/>(GIT_ASKPASS)"}
+    E1 -->|Yes| E2["Notify via IDE/OS dialog"]
+    E1 -->|No| E3["Silent pending"]
 ```
 
 ## Detection Rules (Priority Order)
@@ -61,24 +66,39 @@ hooks:
   amend_prompt: true  # Set to false to skip Question 0
 ```
 
+## How stdin Works in Git Hooks
+
+Git redirects stdin to `/dev/null` for hooks — even when you commit from an interactive terminal. This means `isatty(stdin)` always returns `false` inside a hook.
+
+Lore's hook solves this by reconnecting stdin from the terminal:
+
+```sh
+exec lore _hook-post-commit < /dev/tty
+```
+
+This is why interactive questions work in terminal emulators (iTerm, Terminal.app, VS Code integrated terminal) but **not** in environments where `/dev/tty` is unavailable (CI, Docker, pipes).
+
 ## Non-TTY Detection
 
-When Lore runs in a non-interactive environment:
+After reconnecting stdin via `/dev/tty`, Lore checks whether stdin is a real TTY:
 
-| Environment | Detection | Behavior |
-|-------------|-----------|----------|
-| **CI/CD** (GitHub Actions, etc.) | `!isatty(stdin)` | Silent defer to pending |
-| **IDE terminal** (VS Code, JetBrains) | `isatty` but env detection | Normal questions OR notification |
-| **Pipe** (`git commit \| ...`) | `!isatty(stdin)` | Silent defer to pending |
-| **Cron/scripts** | `!isatty(stdin)` | Silent defer to pending |
+| Environment | `/dev/tty` | `isatty(stdin)` | Behavior |
+|-------------|-----------|-----------------|----------|
+| **Terminal** (iTerm, Terminal.app) | Available | `true` | Interactive questions |
+| **VS Code integrated terminal** | Available | `true` | Interactive questions |
+| **CI/CD** (GitHub Actions, Docker) | Not available | `false` | Silent defer to pending |
+| **Pipe** (`git commit \| ...`) | Not available | `false` | Silent defer to pending |
+| **Cron/scripts** | Not available | `false` | Silent defer to pending |
 
-VS Code terminals are detected via the `GIT_ASKPASS` environment variable that VS Code injects (containing "code" in the path). Forks are identified by their specific strings: "cursor", "windsurf", "codium". A secondary signal is `VSCODE_GIT_ASKPASS_NODE`.
+When stdin is not a TTY, the commit is deferred to pending. If an IDE is detected (via `GIT_ASKPASS`), Lore also sends a notification.
 
-> **Important:** This detection happens **before** the TTY check. Even if the integrated terminal is a real TTY, Lore identifies the environment as VS Code and switches to notification mode.
+### IDE Detection for Notifications
+
+After deferring, Lore detects the IDE environment to send a notification. VS Code and its forks are identified via the `GIT_ASKPASS` environment variable (containing "code", "cursor", "windsurf", or "codium" in the path). A secondary signal is `VSCODE_GIT_ASKPASS_NODE`.
 
 ## IDE Notifications
 
-When a commit happens in a detected IDE context, Lore sends a notification instead of asking interactive questions:
+When a commit is deferred and an IDE is detected, Lore sends a notification:
 
 1. **VS Code IPC** — Native extension notification (multi-instance aware)
 2. **OS Dialog** — `osascript` (macOS), `zenity`/`kdialog` (Linux), PowerShell (Windows)
