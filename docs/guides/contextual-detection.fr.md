@@ -127,32 +127,21 @@ Les commits avec ces types conventionnels sont scorés à 0 et ignorés silencie
 
 ## Dépannage
 
-### "Lore affiche un dialog au lieu des questions interactives dans VS Code"
+### "Lore affiche un dialog au lieu des questions interactives"
 
-Lore detecte VS Code via `GIT_ASKPASS` et passe en mode notification. Pour forcer le mode interactif terminal :
-
-```bash
-# Ponctuel
-unset GIT_ASKPASS
-git commit -m "votre message"
-```
-
-Pour **restaurer** `GIT_ASKPASS`, ouvrez un nouveau terminal VS Code (VS Code le reinjecte automatiquement), ou lancez :
+Votre hook est probablement ancien — il manque la redirection `< /dev/tty` qui reconnecte stdin depuis le terminal. Reinstallez :
 
 ```bash
-export GIT_ASKPASS="$(which code) --wait --reuse-window"
+lore hook uninstall
+lore hook install
 ```
 
-**Recommande : utilisez un alias** au lieu d'un unset global :
+Verifiez :
 
 ```bash
-# Ajouter a ~/.zshrc ou ~/.bashrc
-alias gc='GIT_ASKPASS= git commit'
+grep "dev/tty" .git/hooks/post-commit
+# Devrait afficher : exec lore _hook-post-commit < /dev/tty
 ```
-
-Ainsi `gc -m "message"` declenche Lore interactif, et `git commit` garde le comportement VS Code.
-
-> **Note :** Un `unset GIT_ASKPASS` permanent desactive aussi le credential helper Git de VS Code. Si vous utilisez des remotes HTTPS, configurez les credentials separement : `git config --global credential.helper osxkeychain`
 
 ### "Lore ne se déclenche pas après mon commit"
 

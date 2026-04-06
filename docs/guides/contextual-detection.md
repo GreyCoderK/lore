@@ -129,32 +129,21 @@ Commits with these conventional types are scored at 0 and skip silently.
 
 ## Troubleshooting
 
-### "Lore shows a dialog instead of terminal questions in VS Code"
+### "Lore shows a dialog instead of interactive questions"
 
-Lore detects VS Code via `GIT_ASKPASS` and switches to notification mode. To force interactive terminal mode:
-
-```bash
-# One-time
-unset GIT_ASKPASS
-git commit -m "your message"
-```
-
-To **restore** `GIT_ASKPASS`, open a new VS Code terminal (VS Code re-injects it automatically), or run:
+Your hook is probably outdated — it's missing the `< /dev/tty` redirect that reconnects stdin from the terminal. Reinstall:
 
 ```bash
-export GIT_ASKPASS="$(which code) --wait --reuse-window"
+lore hook uninstall
+lore hook install
 ```
 
-**Recommended: use an alias** instead of unsetting globally:
+Verify:
 
 ```bash
-# Add to ~/.zshrc or ~/.bashrc
-alias gc='GIT_ASKPASS= git commit'
+grep "dev/tty" .git/hooks/post-commit
+# Should show: exec lore _hook-post-commit < /dev/tty
 ```
-
-This way `gc -m "message"` triggers interactive Lore, while `git commit` keeps VS Code behavior.
-
-> **Note:** A permanent `unset GIT_ASKPASS` also disables VS Code's Git credential helper. If you use HTTPS remotes, configure credentials separately: `git config --global credential.helper osxkeychain`
 
 ### "Lore doesn't trigger after my commit"
 
