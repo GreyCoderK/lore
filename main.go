@@ -15,3 +15,4 @@ func main() {
 // mode-dialog
 // mode-terminal
 // mode-auto
+// real test
