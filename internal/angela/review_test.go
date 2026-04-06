@@ -80,7 +80,7 @@ func TestBuildReviewPrompt_IncludesSummaries(t *testing.T) {
 	if !strings.Contains(usr, "corpus:") {
 		t.Error("user content should contain TOON corpus: header")
 	}
-	if !strings.Contains(usr, "filename|type|date|tags|summary") {
+	if !strings.Contains(usr, "filename|type|date|tags|branch|scope|summary") {
 		t.Error("user content should contain TOON column headers")
 	}
 	if !strings.Contains(usr, "TOON (pipe-separated) format") {

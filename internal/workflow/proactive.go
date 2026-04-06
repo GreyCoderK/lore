@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
@@ -27,6 +26,8 @@ type ProactiveOpts struct {
 // When opts.Commit is non-nil, retroactive mode pre-fills Type/What from the commit
 // and sets generated_by to "retroactive" with the commit hash in front matter.
 func HandleProactive(ctx context.Context, workDir string, streams domain.IOStreams, opts ProactiveOpts) error {
+	var overwritePath string
+
 	// Pre-fill from commit info in retroactive mode (AC-1)
 	if opts.Commit != nil {
 		if opts.Type == "" && opts.Commit.Type != "" {
@@ -65,30 +66,37 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.CreateAnother)
-			// Read stdin byte-by-byte instead of bufio.NewReader to avoid
-			// buffering ahead: bufio would consume bytes meant for the
-			// subsequent question flow (AskType, AskWhat, etc.), causing
-			// missing/garbled prompts.
-			var answerBuf []byte
-			b := make([]byte, 1)
-			for {
-				n, readErr := streams.In.Read(b)
-				if n > 0 {
-					if b[0] == '\n' {
-						break
-					}
-					answerBuf = append(answerBuf, b[0])
-				}
-				if readErr != nil {
-					break
-				}
-			}
-			answer := strings.TrimSpace(strings.ToLower(string(answerBuf)))
-			if answer != "y" && answer != "yes" {
+			fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.AmendChoicePrompt)
+			choice, _ := readAmendAnswer(streams)
+			switch choice {
+			case "s", "skip", "i", "ignorer":
 				return nil
+			case "u", "update", "m":
+				// Pre-fill from existing doc and overwrite
+				if existing.Meta.Type != "" && opts.Type == "" {
+					opts.Type = string(existing.Meta.Type)
+				}
+				if opts.What == "" {
+					opts.What = existing.Title
+				}
+				if opts.Why == "" {
+					if content, readErr := storage.ReadDocContent(existing.Path); readErr == nil {
+						if why := extractWhy(content); why != "" {
+							opts.Why = why
+						}
+					}
+				}
+				// Will overwrite existing doc below
+				overwritePath = existing.Path
+			default:
+				// "c", "create", or Enter → create new doc (no overwrite)
 			}
 		}
+	}
+
+	// Pre-flight: verify pipeline can succeed before asking questions.
+	if err := PreflightCheck(workDir); err != nil {
+		return fmt.Errorf("workflow: proactive: %w", err)
 	}
 
 	renderer := NewRenderer(streams)
@@ -132,7 +140,7 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 		commit = opts.Commit
 	}
 
-	result, err := generateAndWrite(ctx, workDir, answers, commit, generatedBy, "")
+	result, err := generateAndWrite(ctx, workDir, answers, commit, generatedBy, overwritePath)
 	if err != nil {
 		return fmt.Errorf("workflow: proactive: %w", err)
 	}
@@ -142,7 +150,11 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 	if opts.IsTTY != nil {
 		tty = opts.IsTTY(streams)
 	}
-	displayCompletion(streams, result, "Captured", workDir, tty)
+	verb := "Captured"
+	if overwritePath != "" {
+		verb = "Updated"
+	}
+	displayCompletion(streams, result, verb, workDir, tty)
 
 	return nil
 }

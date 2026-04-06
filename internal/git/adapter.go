@@ -65,7 +65,13 @@ func (a *Adapter) HeadCommit() (*domain.CommitInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("git: head commit: %w", err)
 	}
-	return parseHeadCommitOutput(out)
+	info, err := parseHeadCommitOutput(out)
+	if err != nil {
+		return nil, err
+	}
+	branch, _ := a.CurrentBranch() // best-effort; "" on detached HEAD
+	info.Branch = branch
+	return info, nil
 }
 
 // parseHeadCommitOutput parses the output of git log -1 HEAD --format=%H%n%an%n%aI%n%P%n%B.
@@ -362,11 +368,31 @@ func (a *Adapter) LogAllWithLimit(maxCommits int) ([]domain.CommitInfo, error) {
 	return commits, nil
 }
 
+// DefaultBranch returns the repo's default branch name (e.g. "main", "master").
+// Reads from origin/HEAD. Returns "" if not determinable.
+func (a *Adapter) DefaultBranch() (string, error) {
+	// git symbolic-ref refs/remotes/origin/HEAD → refs/remotes/origin/main
+	out, err := a.run("symbolic-ref", "refs/remotes/origin/HEAD")
+	if err != nil {
+		return "", err
+	}
+	// Strip "refs/remotes/origin/" prefix
+	const prefix = "refs/remotes/origin/"
+	if strings.HasPrefix(out, prefix) {
+		return out[len(prefix):], nil
+	}
+	return out, nil
+}
+
 // CurrentBranch returns the current branch name.
+// Returns "" (no error) when HEAD is detached (rebase, CI, etc.).
 func (a *Adapter) CurrentBranch() (string, error) {
 	branch, err := a.run("rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return "", fmt.Errorf("git: current branch: %w", err)
+	}
+	if branch == "HEAD" {
+		return "", nil // detached HEAD returns literal "HEAD"
 	}
 	return branch, nil
 }

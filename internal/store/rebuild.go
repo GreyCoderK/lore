@@ -105,19 +105,21 @@ func (s *SQLiteStore) rebuildDocIndex(ctx context.Context, docsDir string) (int,
 		title := storage.ExtractTitle(body, entry.Name())
 
 		doc := domain.DocIndexEntry{
-			Filename:    entry.Name(),
-			Type:        meta.Type,
-			Date:        meta.Date,
-			CommitHash:  meta.Commit,
-			Status:      meta.Status,
-			Tags:        meta.Tags,
-			Related:     meta.Related,
-			GeneratedBy: meta.GeneratedBy,
-			AngelaMode:  meta.AngelaMode,
-			ContentHash: fmt.Sprintf("%x", hash),
+			Filename:       entry.Name(),
+			Type:           meta.Type,
+			Date:           meta.Date,
+			CommitHash:     meta.Commit,
+			Branch:         meta.Branch,
+			Scope:          meta.Scope,
+			Status:         meta.Status,
+			Tags:           meta.Tags,
+			Related:        meta.Related,
+			GeneratedBy:    meta.GeneratedBy,
+			AngelaMode:     meta.AngelaMode,
+			ContentHash:    fmt.Sprintf("%x", hash),
 			TitleExtracted: title,
-			WordCount:   len(strings.Fields(body)),
-			UpdatedAt:   time.Now(),
+			WordCount:      len(strings.Fields(body)),
+			UpdatedAt:      time.Now(),
 		}
 
 		if err := s.IndexDoc(doc); err != nil {
@@ -142,6 +144,7 @@ func (s *SQLiteStore) rebuildCommits(git domain.GitAdapter) (int, int, error) {
 		rec := domain.CommitRecord{
 			Hash:         ci.Hash,
 			Date:         ci.Date,
+			Branch:       ci.Branch,
 			Scope:        ci.Scope,
 			ConvType:     ci.Type,
 			Subject:      ci.Subject,

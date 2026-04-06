@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
@@ -175,5 +176,115 @@ func TestCollectStatus_ExpressRatio(t *testing.T) {
 	}
 	if info.ExpressCount != 1 {
 		t.Errorf("expected ExpressCount 1, got %d", info.ExpressCount)
+	}
+}
+
+func TestCountUniqueDocsInFindings(t *testing.T) {
+	findings := []angela.ReviewFinding{
+		{Documents: []string{"a.md", "b.md"}},
+		{Documents: []string{"b.md", "c.md"}},
+		{Documents: []string{}},
+	}
+	count := countUniqueDocsInFindings(findings)
+	if count != 3 {
+		t.Errorf("unique docs = %d, want 3", count)
+	}
+}
+
+func TestCountUniqueDocsInFindings_Empty(t *testing.T) {
+	count := countUniqueDocsInFindings(nil)
+	if count != 0 {
+		t.Errorf("unique docs = %d, want 0", count)
+	}
+}
+
+func TestDetectAIProvider_EnvVar(t *testing.T) {
+	t.Setenv("LORE_AI_API_KEY", "sk-test-env-key")
+
+	// With provider set in config, should return the provider name
+	cfg := &config.Config{AI: config.AIConfig{Provider: "anthropic"}}
+	got := detectAIProvider(cfg)
+	if got != "anthropic" {
+		t.Errorf("detectAIProvider with env + provider = %q, want 'anthropic'", got)
+	}
+
+	// Without provider in config, should return "configured"
+	cfg2 := &config.Config{}
+	got2 := detectAIProvider(cfg2)
+	if got2 != "configured" {
+		t.Errorf("detectAIProvider with env only = %q, want 'configured'", got2)
+	}
+}
+
+func TestDetectAIProvider_PlaintextKey(t *testing.T) {
+	// Ensure env var is not set
+	t.Setenv("LORE_AI_API_KEY", "")
+
+	// Plaintext key with provider
+	cfg := &config.Config{AI: config.AIConfig{Provider: "openai", APIKey: "sk-plaintext"}}
+	got := detectAIProvider(cfg)
+	if got != "openai" {
+		t.Errorf("detectAIProvider plaintext+provider = %q, want 'openai'", got)
+	}
+
+	// Plaintext key without provider
+	cfg2 := &config.Config{AI: config.AIConfig{APIKey: "sk-plaintext"}}
+	got2 := detectAIProvider(cfg2)
+	if got2 != "configured" {
+		t.Errorf("detectAIProvider plaintext only = %q, want 'configured'", got2)
+	}
+}
+
+func TestDetectAIProvider_KeychainMarker(t *testing.T) {
+	// @keychain marker should NOT count as plaintext key
+	t.Setenv("LORE_AI_API_KEY", "")
+	cfg := &config.Config{AI: config.AIConfig{Provider: "", APIKey: "@keychain"}}
+	got := detectAIProvider(cfg)
+	// Without provider, keychain path won't be checked; should return ""
+	if got != "" {
+		t.Errorf("detectAIProvider @keychain no provider = %q, want empty", got)
+	}
+}
+
+func TestDetectAIProvider_NoConfig(t *testing.T) {
+	t.Setenv("LORE_AI_API_KEY", "")
+	cfg := &config.Config{}
+	got := detectAIProvider(cfg)
+	if got != "" {
+		t.Errorf("detectAIProvider empty config = %q, want empty", got)
+	}
+}
+
+func TestCollectStatus_AngelaReviewCache(t *testing.T) {
+	dir := setupCollectorTest(t, nil)
+	os.WriteFile(filepath.Join(dir, ".lore", "docs", "README.md"), []byte("# Index\n"), 0o644)
+
+	// Create a review cache with findings
+	cacheDir := filepath.Join(dir, ".lore", "cache")
+	os.MkdirAll(cacheDir, 0o755)
+	cacheData := `{
+		"version": 1,
+		"last_review": "2026-03-15T10:00:00Z",
+		"doc_count": 3,
+		"total_docs": 5,
+		"findings": [
+			{"severity": "gap", "title": "Missing auth doc", "description": "No auth doc", "documents": ["a.md", "b.md"]},
+			{"severity": "style", "title": "Style issue", "description": "Bad style", "documents": ["b.md", "c.md"]}
+		]
+	}`
+	os.WriteFile(filepath.Join(cacheDir, "review.json"), []byte(cacheData), 0o644)
+
+	cfg := &config.Config{}
+	git := &mockGit{}
+
+	info, err := CollectStatus(cfg, git, filepath.Join(dir, ".lore"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if info.AngelaSuggestions != 2 {
+		t.Errorf("AngelaSuggestions = %d, want 2", info.AngelaSuggestions)
+	}
+	if info.AngelaDocsNeedReview != 3 {
+		t.Errorf("AngelaDocsNeedReview = %d, want 3", info.AngelaDocsNeedReview)
 	}
 }

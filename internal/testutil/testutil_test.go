@@ -108,3 +108,51 @@ func TestSetupLoreDirWithDocs(t *testing.T) {
 		t.Fatalf("doc body missing slug-based heading, got:\n%s", content)
 	}
 }
+
+func TestChdir(t *testing.T) {
+	origDir, _ := os.Getwd()
+	tmpDir := t.TempDir()
+
+	testutil.Chdir(t, tmpDir)
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	// Resolve symlinks for macOS /private/var vs /var
+	resolvedCwd, _ := filepath.EvalSymlinks(cwd)
+	resolvedTmp, _ := filepath.EvalSymlinks(tmpDir)
+	if resolvedCwd != resolvedTmp {
+		t.Errorf("expected cwd=%s, got %s", resolvedTmp, resolvedCwd)
+	}
+
+	// Cleanup should restore the original dir, but we can't test that here
+	// without running the cleanup manually. Just verify the original is different.
+	resolvedOrig, _ := filepath.EvalSymlinks(origDir)
+	if resolvedOrig == resolvedTmp {
+		t.Error("expected original dir to differ from tmpDir")
+	}
+}
+
+func TestTestConfig(t *testing.T) {
+	cfg := testutil.TestConfig()
+	if cfg == nil {
+		t.Fatal("TestConfig returned nil")
+	}
+	if cfg.AI.Provider != "anthropic" {
+		t.Errorf("expected provider 'anthropic', got %q", cfg.AI.Provider)
+	}
+	if cfg.Angela.Mode != "draft" {
+		t.Errorf("expected angela mode 'draft', got %q", cfg.Angela.Mode)
+	}
+}
+
+func TestTestStreams(t *testing.T) {
+	streams, out, errBuf := testutil.TestStreams()
+	if streams.Out == nil || streams.Err == nil || streams.In == nil {
+		t.Fatal("TestStreams returned nil streams")
+	}
+	if out == nil || errBuf == nil {
+		t.Fatal("TestStreams returned nil buffers")
+	}
+}

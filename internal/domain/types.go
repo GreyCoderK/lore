@@ -6,6 +6,7 @@ package domain
 import (
 	"io"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -35,8 +36,9 @@ type CommitInfo struct {
 	Type        string
 	Scope       string
 	Subject     string
-	IsMerge     bool // true when the commit has more than one parent
-	ParentCount int  // number of parent commits (0 for root, 1 for normal, 2+ for merge)
+	Branch      string // current branch at commit time; "" if detached HEAD
+	IsMerge     bool   // true when the commit has more than one parent
+	ParentCount int    // number of parent commits (0 for root, 1 for normal, 2+ for merge)
 }
 
 // InstallResult describes the outcome of a hook install operation.
@@ -65,6 +67,7 @@ const (
 	DocTypeRefactor DocType = "refactor"
 	DocTypeRelease  DocType = "release"
 	DocTypeNote     DocType = "note"
+	DocTypeSummary  DocType = "summary"
 )
 
 // Decision represents the outcome of the documentation decision engine.
@@ -88,6 +91,7 @@ var validDocTypes = map[string]bool{
 	DocTypeRefactor: true,
 	DocTypeRelease:  true,
 	DocTypeNote:     true,
+	DocTypeSummary:  true,
 }
 
 // ValidDocType reports whether t is a recognized document type.
@@ -96,10 +100,22 @@ func ValidDocType(t string) bool {
 	return validDocTypes[t]
 }
 
+// DocTypeNames returns sorted list of valid document type names.
+func DocTypeNames() []string {
+	names := make([]string, 0, len(validDocTypes))
+	for k := range validDocTypes {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	return names
+}
+
 type DocMeta struct {
 	Type        string   `yaml:"type"`
 	Date        string   `yaml:"date"`
 	Commit      string   `yaml:"commit,omitempty"`
+	Branch      string   `yaml:"branch,omitempty"`
+	Scope       string   `yaml:"scope,omitempty"`
 	Status      string   `yaml:"status"`
 	Tags        []string `yaml:"tags,omitempty"`
 	Related     []string `yaml:"related,omitempty"`
@@ -116,6 +132,8 @@ type DocFilter struct {
 	Tags   []string
 	Status string
 	Text   string // case-insensitive search in body and filename
+	Branch string // filter by branch name
+	Scope  string // filter by scope
 }
 
 type Option func(*CallOptions)

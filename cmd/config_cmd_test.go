@@ -112,6 +112,39 @@ func TestConfigDeleteKey_OK(t *testing.T) {
 	}
 }
 
+func TestConfigDeleteKey_UnknownProvider(t *testing.T) {
+	store := newMockCredStore()
+	_, _, err := runConfigCmd(t, store, "", "delete-key", "gemini")
+	if err == nil {
+		t.Fatal("expected error for unknown provider")
+	}
+	if !strings.Contains(err.Error(), "unknown provider") {
+		t.Errorf("error = %q, want 'unknown provider'", err)
+	}
+}
+
+func TestConfigSetKey_EmptyInput(t *testing.T) {
+	store := newMockCredStore()
+	_, _, err := runConfigCmd(t, store, "\n", "anthropic")
+	if err == nil {
+		t.Fatal("expected error for empty key")
+	}
+	if !strings.Contains(err.Error(), "empty key") {
+		t.Errorf("error = %q, want 'empty key'", err)
+	}
+}
+
+func TestConfigSetKey_NoInput(t *testing.T) {
+	store := newMockCredStore()
+	_, _, err := runConfigCmd(t, store, "", "anthropic")
+	if err == nil {
+		t.Fatal("expected error for no input")
+	}
+	if !strings.Contains(err.Error(), "no input") {
+		t.Errorf("error = %q, want 'no input'", err)
+	}
+}
+
 func TestConfigListKeys_Masked(t *testing.T) {
 	store := newMockCredStore()
 	_ = store.Set("anthropic", []byte("secret"))

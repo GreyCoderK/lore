@@ -9,9 +9,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"os"
+
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/generator"
+	"github.com/greycoderk/lore/internal/git"
 	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
 	loretemplate "github.com/greycoderk/lore/internal/template"
@@ -92,8 +95,10 @@ func runDemo(ctx context.Context, _ *config.Config, streams domain.IOStreams) er
 		Alternatives: demoAnswers["alternatives"],
 		Impact:       demoAnswers["impact"],
 		CommitInfo: &domain.CommitInfo{
-			Hash: demoCommitHash,
-			Date: now,
+			Hash:   demoCommitHash,
+			Date:   now,
+			Branch: demoBranch(),
+			Scope:  "auth",
 		},
 		GeneratedBy: "lore-demo",
 	}
@@ -140,6 +145,31 @@ func runDemo(ctx context.Context, _ *config.Config, streams domain.IOStreams) er
 	_, _ = fmt.Fprintf(streams.Err, "%s\n\n", ui.Bold(i18n.T().Cmd.DemoTagline))
 
 	return nil
+}
+
+// demoBranch returns the current git branch if available,
+// falling back to the repo's default branch (main, master, trunk, etc.).
+func demoBranch() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "main"
+	}
+	adapter := git.NewAdapter(wd)
+	branch, err := adapter.CurrentBranch()
+	if err != nil || branch == "" {
+		return defaultBranch(adapter)
+	}
+	return branch
+}
+
+// defaultBranch detects the repo's default branch name.
+// Tries origin/HEAD first, then checks if common names exist.
+func defaultBranch(adapter *git.Adapter) string {
+	// git symbolic-ref refs/remotes/origin/HEAD → refs/remotes/origin/main
+	if ref, err := adapter.DefaultBranch(); err == nil && ref != "" {
+		return ref
+	}
+	return "main"
 }
 
 func demoPause(ctx context.Context) {

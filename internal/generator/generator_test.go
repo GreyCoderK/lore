@@ -141,3 +141,37 @@ func TestGenerate_AllInputFields(t *testing.T) {
 		t.Errorf("Meta.Status = %q, want %q", result.Meta.Status, "draft")
 	}
 }
+
+func TestGenerate_RenderError(t *testing.T) {
+	engine, err := loretemplate.New("", "")
+	if err != nil {
+		t.Fatalf("template: new: %v", err)
+	}
+
+	input := GenerateInput{
+		DocType: "nonexistent_type_xyz",
+		What:    "test",
+		Why:     "test",
+	}
+
+	_, err = Generate(context.Background(), engine, input)
+	if err == nil {
+		t.Error("expected error for unknown template type")
+	}
+}
+
+func TestGenerate_ContextCancelled(t *testing.T) {
+	engine, err := loretemplate.New("", "")
+	if err != nil {
+		t.Fatalf("template: new: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	input := GenerateInput{DocType: "feature", What: "test", Why: "test"}
+	_, err = Generate(ctx, engine, input)
+	if err == nil {
+		t.Error("expected error for cancelled context")
+	}
+}

@@ -17,10 +17,21 @@ func Dispatch(ctx context.Context, workDir string, streams domain.IOStreams, git
 	return DispatchWithNotifyConfig(ctx, workDir, streams, gitAdapter, engine, store, nil)
 }
 
+// DispatchConfig holds optional configuration for the post-commit dispatch.
+type DispatchConfig struct {
+	NotifyConfig *notify.NotifyConfig
+	AmendPrompt  *bool // nil = default (true); set to false to skip Question 0
+}
+
 // DispatchWithNotifyConfig is Dispatch with explicit notification configuration (ADR-023).
 // notifyCfg may be nil (defaults to DefaultNotifyConfig).
 func DispatchWithNotifyConfig(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, engine *decision.Engine, store domain.LoreStore, notifyCfg *notify.NotifyConfig) error {
-	opts := DetectOpts{Store: store, NotifyConfig: notifyCfg}
+	return DispatchFull(ctx, workDir, streams, gitAdapter, engine, store, DispatchConfig{NotifyConfig: notifyCfg})
+}
+
+// DispatchFull is the full dispatch with all configuration options.
+func DispatchFull(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, engine *decision.Engine, store domain.LoreStore, cfg DispatchConfig) error {
+	opts := DetectOpts{Store: store, NotifyConfig: cfg.NotifyConfig, AmendPrompt: cfg.AmendPrompt}
 	if engine != nil {
 		opts.Engine = engine
 	}

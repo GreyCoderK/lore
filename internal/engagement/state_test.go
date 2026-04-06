@@ -6,11 +6,22 @@ package engagement
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestStatePath(t *testing.T) {
+	got := StatePath("/home/user/project")
+	if got == "" {
+		t.Fatal("StatePath returned empty")
+	}
+	if !strings.Contains(got, ".lore") || !strings.Contains(got, "state.json") {
+		t.Errorf("StatePath = %q, expected .lore/state.json", got)
+	}
+}
 
 func TestLoadState_Missing(t *testing.T) {
 	state := LoadState("/nonexistent/state.json")

@@ -149,6 +149,12 @@ func matchesFilter(meta domain.DocMeta, filename string, body string, filter dom
 			}
 		}
 	}
+	if filter.Branch != "" && meta.Branch != filter.Branch {
+		return false
+	}
+	if filter.Scope != "" && meta.Scope != filter.Scope {
+		return false
+	}
 	if filter.Text != "" {
 		search := strings.ToLower(filter.Text)
 		if !strings.Contains(strings.ToLower(body), search) &&

@@ -24,20 +24,23 @@ func SerializeTOON(summaries []DocSummary, signals *CorpusSignals) string {
 
 	// Corpus section
 	sb.WriteString("corpus:\n")
-	sb.WriteString("filename|type|date|tags|summary\n")
+	sb.WriteString("filename|type|date|tags|branch|scope|summary\n")
 	for _, doc := range summaries {
 		tags := strings.Join(doc.Tags, ",")
-		fmt.Fprintf(&sb, "%s|%s|%s|%s|%s\n",
+		fmt.Fprintf(&sb, "%s|%s|%s|%s|%s|%s|%s\n",
 			escapeTOON(sanitizePromptContent(doc.Filename)),
 			escapeTOON(sanitizePromptContent(doc.Type)),
 			escapeTOON(sanitizePromptContent(doc.Date)),
 			escapeTOON(sanitizePromptContent(tags)),
+			escapeTOON(sanitizePromptContent(doc.Branch)),
+			escapeTOON(sanitizePromptContent(doc.Scope)),
 			escapeTOON(sanitizePromptContent(doc.Summary)),
 		)
 	}
 
 	// Signals section
-	if signals != nil && (len(signals.PotentialPairs) > 0 || len(signals.IsolatedDocs) > 0) {
+	hasSignals := signals != nil && (len(signals.PotentialPairs) > 0 || len(signals.IsolatedDocs) > 0 || len(signals.UnconsolidatedScopes) > 0)
+	if hasSignals {
 		sb.WriteString("signals:\n")
 		sb.WriteString("signal_type|docs|detail\n")
 		for _, p := range signals.PotentialPairs {
@@ -48,6 +51,11 @@ func SerializeTOON(summaries []DocSummary, signals *CorpusSignals) string {
 		}
 		for _, doc := range signals.IsolatedDocs {
 			fmt.Fprintf(&sb, "isolated|%s|no shared tags\n", escapeTOON(doc))
+		}
+		for _, sg := range signals.UnconsolidatedScopes {
+			scopeDocs := strings.Join(signals.ScopeClusters[sg.Scope], ",")
+			fmt.Fprintf(&sb, "unconsolidated|%s|scope:%s, %d docs, no summary\n",
+				escapeTOON(scopeDocs), escapeTOON(sg.Scope), sg.DocCount)
 		}
 	}
 

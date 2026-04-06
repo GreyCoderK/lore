@@ -187,6 +187,30 @@ func TestOpenAIProvider_Complete_WithoutSystemPrompt(t *testing.T) {
 	}
 }
 
+func TestOpenAIProvider_Complete_EmptyChoices(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"choices":[]}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "gpt-4o",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err == nil {
+		t.Fatal("Complete: expected error for empty choices")
+	}
+	if !strings.Contains(err.Error(), "empty response choices") {
+		t.Errorf("error = %q, want 'empty response choices'", err)
+	}
+}
+
 func TestOpenAIProvider_DefaultModel(t *testing.T) {
 	cfg := &config.Config{AI: config.AIConfig{Provider: "openai", APIKey: "sk-test"}}
 	p := newOpenAIProvider(cfg)

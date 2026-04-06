@@ -22,6 +22,8 @@ type DocSummary struct {
 	Type     string
 	Date     string
 	Tags     []string
+	Branch   string // branch at capture time; "" for legacy docs
+	Scope    string // scope from conventional commit; "" if none
 	Summary  string // adaptive: top sections by content length (max 450 runes total)
 }
 
@@ -83,6 +85,9 @@ func BuildReviewPrompt(docs []DocSummary, styleGuide string, signals *CorpusSign
 	sys.WriteString("- Return your analysis as a JSON object with a \"findings\" array\n")
 	sys.WriteString("- Each finding must have: severity, title, description, documents (array of filenames)\n")
 	sys.WriteString("- Valid severities: \"contradiction\", \"gap\", \"obsolete\", \"style\"\n")
+	sys.WriteString("- Documents with the same `scope` belong to the same feature/effort — contradictions within a scope are higher severity\n")
+	sys.WriteString("- Documents on the same `branch` were created during the same development phase\n")
+	sys.WriteString("- A scope with 2+ docs but no 'summary' type may need consolidation\n")
 	sys.WriteString("- If no issues found, return: {\"findings\": []}\n")
 	sys.WriteString("- Return ONLY the JSON object. No explanations, no wrapping.\n")
 
@@ -255,6 +260,8 @@ func PrepareDocSummaries(reader domain.CorpusReader) ([]DocSummary, int, error) 
 			Type:     meta.Type,
 			Date:     meta.Date,
 			Tags:     meta.Tags,
+			Branch:   meta.Branch,
+			Scope:    meta.Scope,
 			Summary:  summary,
 		})
 	}

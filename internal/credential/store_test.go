@@ -96,6 +96,41 @@ func TestMockStore_List_WithEntries(t *testing.T) {
 	}
 }
 
+func TestIsKnownProvider(t *testing.T) {
+	for _, p := range KnownProviders {
+		if !IsKnownProvider(p) {
+			t.Errorf("IsKnownProvider(%q) = false, want true", p)
+		}
+	}
+	for _, p := range []string{"", "unknown", "ANTHROPIC", "Claude"} {
+		if IsKnownProvider(p) {
+			t.Errorf("IsKnownProvider(%q) = true, want false", p)
+		}
+	}
+}
+
+func TestValidateProvider(t *testing.T) {
+	valid := []string{"anthropic", "openai", "ollama", "my-provider", "test_123"}
+	for _, p := range valid {
+		if err := ValidateProvider(p); err != nil {
+			t.Errorf("ValidateProvider(%q) error: %v", p, err)
+		}
+	}
+	invalid := []string{"", "my provider", "test;rm", "a/b", "$(cmd)"}
+	for _, p := range invalid {
+		if err := ValidateProvider(p); err == nil {
+			t.Errorf("ValidateProvider(%q) should fail", p)
+		}
+	}
+}
+
+func TestNewStore_ReturnsNonNil(t *testing.T) {
+	s := NewStore()
+	if s == nil {
+		t.Fatal("NewStore returned nil")
+	}
+}
+
 func TestErrKeychainNotAvailable_Is(t *testing.T) {
 	if !errors.Is(ErrKeychainNotAvailable, ErrKeychainNotAvailable) {
 		t.Error("ErrKeychainNotAvailable should match itself")

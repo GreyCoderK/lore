@@ -5,7 +5,58 @@ All notable changes to Lore are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Pre-MVP Hardening
+## [Unreleased] — Branch Awareness & Amend Workflow
+
+### Added
+
+- **Branch Awareness** — `Branch` and `Scope` fields propagated through the full
+  pipeline: `CommitInfo` → `GenerateInput` → `TemplateContext` → `DocMeta` → Store.
+  Documents now record which branch and scope they were captured on. 22 files modified.
+  (`internal/domain/types.go`, `internal/git/adapter.go`, `internal/workflow/`)
+
+- **Amend Workflow Improvements** — Question 0 ("Document this change? [Y/n]")
+  before amend flow, [U]pdate/[C]reate/[S]kip choice when existing doc found,
+  pre-fill from existing document (Type, Title, Why section). Configurable via
+  `hooks.amend_prompt` in `.lorerc`. (`internal/workflow/reactive.go`, `proactive.go`)
+
+- **Notification Branch Impact** — OS dialogs (macOS AppleScript, Linux zenity/kdialog,
+  Windows WPF) now display branch and scope context. Zero API change to `NotifyNonTTY`
+  via `I18nLabels` callback injection. (`internal/notify/dialog*.go`)
+
+- **Preflight Check** — Validates `.lore/` exists, `docs/` is writable, and template
+  engine initializes BEFORE asking questions. Saves to pending on failure.
+  (`internal/workflow/preflight.go`)
+
+- **Demo Branch Detection** — `demoBranch()` uses `CurrentBranch()` → `DefaultBranch()`
+  (reads `origin/HEAD`) → fallback "main". No longer hardcodes "main".
+  (`cmd/demo.go`)
+
+- **Config fields** — `hooks.amend_prompt` (bool), `notification.mode/disabled_envs/amend`,
+  `decision.*` thresholds/always_ask/always_skip/learning. (`internal/config/defaults.go`)
+
+### Fixed
+
+- **`CurrentBranch()` error swallowing** (HIGH) — Was returning `"", nil` for all
+  errors. Now propagates real git errors, returns `"", nil` only for detached HEAD.
+  (`internal/git/adapter.go`)
+
+- **`ValidateMeta` hardcoded type list** (HIGH) — Replaced with dynamic
+  `DocTypeNames()` to prevent desync when new doc types are added.
+  (`internal/storage/frontmatter.go`, `internal/domain/types.go`)
+
+- **Summary detection via filename prefix** (MEDIUM) — Replaced
+  `strings.HasPrefix(f, "summary-")` with `signals.ScopeTypes[f] == "summary"`.
+  (`internal/angela/corpus_signals.go`)
+
+### Changed
+
+- **Test coverage** — 74.2% → 82.0% global. 4 packages at 100%, 16 packages at 85%+.
+  Added ~120 tests across 25 packages. Key technique: `httptest` + `redirectTransport`
+  for upgrade/ (43.5% → 82.6%).
+
+---
+
+## [Pre-MVP Hardening]
 
 ### Summary
 

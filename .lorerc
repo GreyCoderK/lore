@@ -1,5 +1,5 @@
 # Lore configuration — shared with team (commit this file)
-# See: https://github.com/greycoderk/lore/docs/configuration
+# See: https://github.com/GreyCoderK/lore/blob/main/docs/guides/configuration.md
 language: "fr"
 
 ai:
@@ -15,7 +15,24 @@ templates:
 
 hooks:
   post_commit: true
+  star_prompt: true
+  star_prompt_after: 5
+  amend_prompt: true     # Ask "Document this change?" on git commit --amend
+
+notification:
+  mode: auto             # auto, terminal, dialog, notify, silent
+  disabled_envs: []
+  amend: true            # Enable notifications for amend commits
 
 output:
   format: markdown
   dir: .lore/docs
+
+decision:
+  threshold_full: 60
+  threshold_reduced: 35
+  threshold_suggest: 15
+  always_ask: [feat, breaking]
+  always_skip: [docs, style, ci, build]
+  learning: true
+  learning_min_commits: 20

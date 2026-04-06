@@ -39,8 +39,25 @@ flowchart TD
 | 3 | Rebase en cours | Différer vers pending | Éviter les prompts pendant le replay |
 | 4 | Commit de merge (2+ parents) | Ignorer (1 ligne msg) | Commits d'infrastructure |
 | 5 | Cherry-pick + doc source existe | Ignorer silencieusement | Déjà documenté |
-| 6 | Amend + doc existant | Proposer modification | L'utilisateur édite du travail précédent |
+| 6 | Amend + doc existant | Question 0 + [M]/[C]/[I] | L'utilisateur édite du travail précédent |
 | 7 | Score Decision Engine | Action basée sur le score | Analyse multi-signaux |
+
+## Workflow Amend
+
+Quand `git commit --amend` est détecté et qu'un document existe pour le commit pré-amend :
+
+1. **Question 0** : "Amend détecté. Documenter ce changement ? [O/n]" — ignorer pour les corrections de typo
+2. **Choix** : "[M]ettre à jour / [C]réer nouveau / [I]gnorer ?"
+   - **Mettre à jour** : Pré-remplit Type, What et Why depuis le document existant, puis l'écrase
+   - **Créer** : Crée un nouveau document (l'original reste)
+   - **Ignorer** : Ne rien faire
+
+Configurer via `.lorerc` :
+
+```yaml
+hooks:
+  amend_prompt: true  # Mettre à false pour ignorer la Question 0
+```
 
 ## Détection Non-TTY
 

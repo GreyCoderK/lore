@@ -33,6 +33,23 @@ func buildPowerShellScript(data DialogData) string {
 	labelSave := escapeXML(coalesce(data.LabelSave, "Save"))
 	title := escapePowerShell(coalesce(data.LabelTitle, "Lore"))
 
+	// Branch Awareness: optional context line in WPF dialog.
+	branchXAML := ""
+	if data.Branch != "" || data.Scope != "" {
+		ctx := ""
+		if data.Branch != "" {
+			ctx = "Branch: " + data.Branch
+		}
+		if data.Scope != "" {
+			if ctx != "" {
+				ctx += " · "
+			}
+			ctx += "Scope: " + data.Scope
+		}
+		branchXAML = fmt.Sprintf(`
+    <TextBlock Text="%s" Foreground="Gray" Margin="0,5,0,0"/>`, escapeXML(sanitizeForShell(ctx)))
+	}
+
 	return fmt.Sprintf(`
 Add-Type -AssemblyName PresentationFramework
 [xml]$xaml = @"
@@ -40,7 +57,7 @@ Add-Type -AssemblyName PresentationFramework
         Title="%s — Document commit" Height="420" Width="520"
         WindowStartupLocation="CenterScreen">
   <StackPanel Margin="20">
-    <TextBlock Text="Commit: %s" FontWeight="Bold" TextWrapping="Wrap"/>
+    <TextBlock Text="Commit: %s" FontWeight="Bold" TextWrapping="Wrap"/>%s
     <TextBlock Text="%s" Margin="0,15,0,5"/>
     <ComboBox Name="DocType" SelectedIndex="1">
       <ComboBoxItem>feature</ComboBoxItem>
@@ -74,6 +91,7 @@ if ($window.ShowDialog()) {
 }
 `,
 		escapeXML(title), commitMsg,
+		branchXAML,
 		escapeXML(coalesce(data.LabelType, "Type:")),
 		labelWhat, prefillWhat,
 		labelWhy, prefillWhy,

@@ -4,9 +4,12 @@
 package store
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/greycoderk/lore/internal/domain"
 )
@@ -106,6 +109,252 @@ func TestReservedTables_ExistButEmpty(t *testing.T) {
 		if count != 0 {
 			t.Errorf("table %q should be empty, has %d rows", table, count)
 		}
+	}
+}
+
+func TestRecordCommit_Upsert(t *testing.T) {
+	s, _ := tempDB(t)
+
+	rec := domain.CommitRecord{
+		Hash:         "upsert-test",
+		Date:         time.Now(),
+		Branch:       "main",
+		Scope:        "auth",
+		ConvType:     "feat",
+		Subject:      "original subject",
+		Message:      "feat(auth): original",
+		FilesChanged: 1,
+		Decision:     "pending",
+		QuestionMode: "full",
+	}
+	if err := s.RecordCommit(rec); err != nil {
+		t.Fatalf("RecordCommit (insert): %v", err)
+	}
+
+	// Update same hash with new decision
+	rec.Decision = "documented"
+	rec.Subject = "updated subject"
+	rec.DocID = "decision-auth.md"
+	if err := s.RecordCommit(rec); err != nil {
+		t.Fatalf("RecordCommit (upsert): %v", err)
+	}
+
+	got, err := s.GetCommit("upsert-test")
+	if err != nil {
+		t.Fatalf("GetCommit: %v", err)
+	}
+	if got == nil {
+		t.Fatal("GetCommit returned nil after upsert")
+	}
+	if got.Decision != "documented" {
+		t.Errorf("Decision = %q, want 'documented' after upsert", got.Decision)
+	}
+	if got.Subject != "updated subject" {
+		t.Errorf("Subject = %q, want 'updated subject' after upsert", got.Subject)
+	}
+	if got.DocID != "decision-auth.md" {
+		t.Errorf("DocID = %q, want 'decision-auth.md' after upsert", got.DocID)
+	}
+}
+
+func TestCommitsByScope_OldCommitsExcluded(t *testing.T) {
+	s, _ := tempDB(t)
+
+	// Insert a commit from 60 days ago
+	old := domain.CommitRecord{
+		Hash: "old-commit", Date: time.Now().AddDate(0, 0, -60),
+		Branch: "main", Scope: "auth", ConvType: "feat", Subject: "old",
+		Message: "old commit", Decision: "documented", QuestionMode: "full",
+	}
+	if err := s.RecordCommit(old); err != nil {
+		t.Fatalf("RecordCommit (old): %v", err)
+	}
+
+	// Insert a recent commit
+	recent := domain.CommitRecord{
+		Hash: "recent-commit", Date: time.Now().Add(-1 * time.Hour),
+		Branch: "main", Scope: "auth", ConvType: "feat", Subject: "recent",
+		Message: "recent commit", Decision: "documented", QuestionMode: "full",
+	}
+	if err := s.RecordCommit(recent); err != nil {
+		t.Fatalf("RecordCommit (recent): %v", err)
+	}
+
+	// Query with 30-day window should exclude old commit
+	results, err := s.CommitsByScope("auth", 30)
+	if err != nil {
+		t.Fatalf("CommitsByScope: %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("commits within 30 days = %d, want 1", len(results))
+	}
+	if len(results) > 0 && results[0].Hash != "recent-commit" {
+		t.Errorf("got hash %q, want 'recent-commit'", results[0].Hash)
+	}
+}
+
+func TestCommitCountByDecision_Empty(t *testing.T) {
+	s, _ := tempDB(t)
+
+	counts, err := s.CommitCountByDecision()
+	if err != nil {
+		t.Fatalf("CommitCountByDecision: %v", err)
+	}
+	if len(counts) != 0 {
+		t.Errorf("expected empty map, got %v", counts)
+	}
+}
+
+func TestScopeStats_NarrowWindow(t *testing.T) {
+	s, _ := tempDB(t)
+
+	// Insert commits spread across time
+	for i, d := range []string{"documented", "skipped", "pending"} {
+		rec := domain.CommitRecord{
+			Hash: fmt.Sprintf("narrow-%d", i), Date: time.Now().Add(-time.Duration(i*10) * 24 * time.Hour),
+			Branch: "main", Scope: "db", ConvType: "fix", Subject: "fix",
+			Message: "fix(db): something", Decision: d, QuestionMode: "full",
+		}
+		if err := s.RecordCommit(rec); err != nil {
+			t.Fatalf("RecordCommit: %v", err)
+		}
+	}
+
+	// 5-day window should only include the most recent commit
+	stats, err := s.ScopeStats("db", 5)
+	if err != nil {
+		t.Fatalf("ScopeStats: %v", err)
+	}
+	if stats.TotalCommits != 1 {
+		t.Errorf("TotalCommits (5d window) = %d, want 1", stats.TotalCommits)
+	}
+	if stats.DocumentedCount != 1 {
+		t.Errorf("DocumentedCount (5d window) = %d, want 1", stats.DocumentedCount)
+	}
+}
+
+func TestOpen_InvalidPath(t *testing.T) {
+	// Opening a DB at an invalid path should return an error during migration/pragma
+	_, err := Open("/nonexistent/dir/db.sqlite")
+	if err == nil {
+		t.Error("expected error opening DB at invalid path")
+	}
+}
+
+func TestRecordCommit_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	rec := domain.CommitRecord{
+		Hash: "closed-db", Date: time.Now(), Branch: "main",
+		Decision: "documented", QuestionMode: "full", Message: "msg",
+	}
+	err := s.RecordCommit(rec)
+	if err == nil {
+		t.Error("expected error recording commit on closed DB")
+	}
+}
+
+func TestCommitsByScope_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.CommitsByScope("auth", 30)
+	if err == nil {
+		t.Error("expected error querying closed DB")
+	}
+}
+
+func TestCommitCountByDecision_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.CommitCountByDecision()
+	if err == nil {
+		t.Error("expected error querying closed DB")
+	}
+}
+
+func TestScopeStats_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.ScopeStats("auth", 30)
+	if err == nil {
+		t.Error("expected error querying closed DB")
+	}
+}
+
+func TestIndexDoc_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	err := s.IndexDoc(domain.DocIndexEntry{
+		Filename: "test.md", Type: "decision", Date: "2026-03-15",
+		Status: "draft", ContentHash: "abc", UpdatedAt: time.Now(),
+	})
+	if err == nil {
+		t.Error("expected error indexing doc on closed DB")
+	}
+}
+
+func TestRemoveDoc_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	err := s.RemoveDoc("test.md")
+	if err == nil {
+		t.Error("expected error removing doc on closed DB")
+	}
+}
+
+func TestDocCount_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.DocCount()
+	if err == nil {
+		t.Error("expected error from DocCount on closed DB")
+	}
+}
+
+func TestCommitsByBranch_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.CommitsByBranch("main")
+	if err == nil {
+		t.Error("expected error querying closed DB")
+	}
+}
+
+func TestCommitsSince_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.CommitsSince(time.Now().Add(-24 * time.Hour))
+	if err == nil {
+		t.Error("expected error querying closed DB")
+	}
+}
+
+func TestUndocumentedCommits_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.UndocumentedCommits()
+	if err == nil {
+		t.Error("expected error querying closed DB")
+	}
+}
+
+func TestSearchDocs_ClosedDB(t *testing.T) {
+	s, _ := tempDB(t)
+	_ = s.Close()
+
+	_, err := s.SearchDocs(context.Background(), "test")
+	if err == nil {
+		t.Error("expected error from SearchDocs on closed DB")
 	}
 }
 

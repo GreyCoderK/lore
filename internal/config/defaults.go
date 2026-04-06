@@ -43,6 +43,7 @@ type HooksConfig struct {
 	PostCommit      bool `yaml:"post_commit" mapstructure:"post_commit"`
 	StarPrompt      bool `yaml:"star_prompt" mapstructure:"star_prompt"`
 	StarPromptAfter int  `yaml:"star_prompt_after" mapstructure:"star_prompt_after"`
+	AmendPrompt     bool `yaml:"amend_prompt" mapstructure:"amend_prompt"`
 }
 
 type OutputConfig struct {
@@ -53,6 +54,7 @@ type OutputConfig struct {
 type NotificationConfig struct {
 	Mode         string   `yaml:"mode" mapstructure:"mode"`
 	DisabledEnvs []string `yaml:"disabled_envs" mapstructure:"disabled_envs"`
+	Amend        bool     `yaml:"amend" mapstructure:"amend"`
 }
 
 func setDefaults(v *viper.Viper) {
@@ -72,12 +74,14 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("hooks.post_commit", true)
 	v.SetDefault("hooks.star_prompt", true)
 	v.SetDefault("hooks.star_prompt_after", 5)
+	v.SetDefault("hooks.amend_prompt", true)
 
 	v.SetDefault("output.format", "markdown")
 	v.SetDefault("output.dir", filepath.Join(domain.LoreDir, domain.DocsDir))
 
 	v.SetDefault("notification.mode", "auto")
 	v.SetDefault("notification.disabled_envs", []string{})
+	v.SetDefault("notification.amend", true)
 
 	v.SetDefault("decision.threshold_full", defaultThresholdFull)
 	v.SetDefault("decision.threshold_reduced", defaultThresholdReduced)

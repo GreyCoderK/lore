@@ -380,6 +380,91 @@ func TestAngelaReview_QuietFlag(t *testing.T) {
 	}
 }
 
+// --- angela draft additional tests ---
+
+// No filename and no --all
+func TestAngelaDraft_NoFilename(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaDraft(t, nil)
+	if err == nil {
+		t.Fatal("expected error for no filename and no --all")
+	}
+}
+
+// Invalid filename validation
+func TestAngelaDraft_InvalidFilename(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaDraft(t, nil, "../etc/passwd")
+	if err == nil {
+		t.Fatal("expected error for path traversal filename")
+	}
+	if !strings.Contains(err.Error(), "angela: draft:") {
+		t.Errorf("error = %q, want 'angela: draft:' prefix", err)
+	}
+}
+
+// --- angela polish validation tests (no AI provider needed) ---
+
+// AC-8: Filename validation — path traversal rejected
+func TestAngelaPolish_InvalidFilename_PathTraversal(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", "../etc/passwd")
+	if err == nil {
+		t.Fatal("expected error for path traversal filename")
+	}
+	if !strings.Contains(err.Error(), "angela: polish:") {
+		t.Errorf("error = %q, want 'angela: polish:' prefix", err)
+	}
+}
+
+// AC-8: Filename validation — absolute path rejected
+func TestAngelaPolish_InvalidFilename_AbsolutePath(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", "/tmp/test.md")
+	if err == nil {
+		t.Fatal("expected error for absolute filename")
+	}
+	if !strings.Contains(err.Error(), "angela: polish:") {
+		t.Errorf("error = %q, want 'angela: polish:' prefix", err)
+	}
+}
+
+// AC-8: Filename validation — path separator rejected
+func TestAngelaPolish_InvalidFilename_PathSeparator(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", "subdir/test.md")
+	if err == nil {
+		t.Fatal("expected error for filename with path separator")
+	}
+	if !strings.Contains(err.Error(), "angela: polish:") {
+		t.Errorf("error = %q, want 'angela: polish:' prefix", err)
+	}
+}
+
+// AC-8: Reserved filename rejected
+func TestAngelaPolish_ReservedFilename(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", "README.md")
+	if err == nil {
+		t.Fatal("expected error for reserved filename")
+	}
+	if !strings.Contains(err.Error(), "angela: polish:") {
+		t.Errorf("error = %q, want 'angela: polish:' prefix", err)
+	}
+}
+
 // AC-8: --quiet + extra args rejected (cobra.NoArgs)
 func TestAngelaReview_RejectsArgs(t *testing.T) {
 	if testing.Short() {

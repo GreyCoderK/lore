@@ -352,8 +352,9 @@ func TestHandleProactive_GenerateFails_SavesPending(t *testing.T) {
 	}
 }
 
-// N2: WriteDoc failure must save partial answers as pending.
-// Trigger: .lore/docs exists as a file — os.MkdirAll inside WriteDoc fails.
+// N2: When .lore/docs is a file (not a dir), PreflightCheck catches it
+// before any questions are asked — returning an error immediately.
+// This is better UX than the old behavior (questions asked, then WriteDoc fails).
 func TestHandleProactive_WriteDocFails_SavesPending(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -364,7 +365,7 @@ func TestHandleProactive_WriteDocFails_SavesPending(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(workDir, ".lore", "templates"), 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
-	// .lore/docs as a regular FILE — WriteDoc's os.MkdirAll will fail.
+	// .lore/docs as a regular FILE — PreflightCheck will catch this.
 	if err := os.WriteFile(filepath.Join(workDir, ".lore", "docs"), []byte("not-a-dir"), 0o644); err != nil {
 		t.Fatalf("setup: %v", err)
 	}
@@ -380,15 +381,8 @@ func TestHandleProactive_WriteDocFails_SavesPending(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when docs dir is a file")
 	}
-
-	// N2: pending file must be saved even on WriteDoc failure.
-	pendingDir := filepath.Join(workDir, ".lore", "pending")
-	entries, readErr := os.ReadDir(pendingDir)
-	if readErr != nil {
-		t.Fatalf("ReadDir pending: %v", readErr)
-	}
-	if len(entries) == 0 {
-		t.Error("expected pending file saved on WriteDoc failure, got none")
+	if !strings.Contains(err.Error(), "preflight") {
+		t.Errorf("error should mention preflight, got: %v", err)
 	}
 }
 
@@ -677,7 +671,7 @@ func TestHandleProactive_AlreadyDocumented_Decline(t *testing.T) {
 		Subject: "initial setup",
 	}
 
-	input := "n\n"
+	input := "s\n" // [S]kip
 	stderr := &bytes.Buffer{}
 	streams := domain.IOStreams{
 		In:  strings.NewReader(input),
@@ -690,7 +684,7 @@ func TestHandleProactive_AlreadyDocumented_Decline(t *testing.T) {
 		IsTTY:  func(_ domain.IOStreams) bool { return true },
 	})
 	if err != nil {
-		t.Fatalf("HandleProactive already documented (n): %v", err)
+		t.Fatalf("HandleProactive already documented (skip): %v", err)
 	}
 
 	// Only original doc should exist

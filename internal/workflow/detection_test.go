@@ -334,3 +334,34 @@ func TestDetect_DocSkipPriority(t *testing.T) {
 	}
 }
 
+// --- hasDocForCommit unit tests ---
+
+func TestHasDocForCommit_NilStoreAndCorpus(t *testing.T) {
+	if hasDocForCommit(nil, nil, "abc123") {
+		t.Error("expected false with nil store and corpus")
+	}
+}
+
+func TestHasDocForCommit_CorpusFallback_Found(t *testing.T) {
+	corpus := &mockCorpus{
+		docs: []domain.DocMeta{
+			{Commit: "abc123", Type: "feature"},
+			{Commit: "def456", Type: "bugfix"},
+		},
+	}
+	if !hasDocForCommit(nil, corpus, "abc123") {
+		t.Error("expected true when corpus has matching commit")
+	}
+}
+
+func TestHasDocForCommit_CorpusFallback_NotFound(t *testing.T) {
+	corpus := &mockCorpus{
+		docs: []domain.DocMeta{
+			{Commit: "def456", Type: "bugfix"},
+		},
+	}
+	if hasDocForCommit(nil, corpus, "abc123") {
+		t.Error("expected false when corpus has no matching commit")
+	}
+}
+

@@ -338,6 +338,128 @@ func TestFix_TmpTooRecent_Skipped(t *testing.T) {
 	}
 }
 
+func TestFix_StaleCache(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	// Create a stale cache file
+	cachePath := filepath.Join(docsDir, "metadata.json")
+	if err := os.WriteFile(cachePath, []byte(`{"stale": true}`), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	report := &DiagnosticReport{
+		Issues: []Issue{
+			{Category: "stale-cache", File: "metadata.json", AutoFix: true},
+		},
+	}
+
+	fixReport, err := Fix(docsDir, report)
+	if err != nil {
+		t.Fatalf("Fix: %v", err)
+	}
+	if fixReport.Fixed != 1 {
+		t.Errorf("Fixed = %d, want 1", fixReport.Fixed)
+	}
+
+	// Verify file removed
+	if _, statErr := os.Stat(cachePath); !os.IsNotExist(statErr) {
+		t.Error("expected stale-cache file to be removed")
+	}
+}
+
+func TestFix_StaleCacheAlreadyGone(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	report := &DiagnosticReport{
+		Issues: []Issue{
+			{Category: "stale-cache", File: "metadata.json", AutoFix: true},
+		},
+	}
+
+	fixReport, err := Fix(docsDir, report)
+	if err != nil {
+		t.Fatalf("Fix: %v", err)
+	}
+	// File doesn't exist → validateResolvedPath fails → error
+	if fixReport.Errors != 1 {
+		t.Errorf("Errors = %d, want 1 (path validation fails for missing file)", fixReport.Errors)
+	}
+}
+
+func TestFix_StaleCacheInvalidFilename(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	report := &DiagnosticReport{
+		Issues: []Issue{
+			{Category: "stale-cache", File: "../evil.json", AutoFix: true},
+		},
+	}
+
+	fixReport, err := Fix(docsDir, report)
+	if err != nil {
+		t.Fatalf("Fix: %v", err)
+	}
+	if fixReport.Errors != 1 {
+		t.Errorf("Errors = %d, want 1 (invalid filename rejected)", fixReport.Errors)
+	}
+}
+
+func TestFix_MultipleMixed(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	writeDoc(t, docsDir, "note-test-2026-03-07.md", "note", "2026-03-07", nil)
+
+	// Orphan tmp (old enough)
+	tmpPath := filepath.Join(docsDir, "old.md.tmp")
+	os.WriteFile(tmpPath, []byte("x"), 0o644)
+	_ = os.Chtimes(tmpPath, time.Now().Add(-10*time.Second), time.Now().Add(-10*time.Second))
+
+	report := &DiagnosticReport{
+		Issues: []Issue{
+			{Category: "orphan-tmp", File: "old.md.tmp", AutoFix: true},
+			{Category: "stale-index", File: "README.md", AutoFix: true},
+			{Category: "broken-ref", File: "note-test-2026-03-07.md", AutoFix: false},
+		},
+	}
+
+	fixReport, err := Fix(docsDir, report)
+	if err != nil {
+		t.Fatalf("Fix: %v", err)
+	}
+	if fixReport.Fixed != 2 {
+		t.Errorf("Fixed = %d, want 2", fixReport.Fixed)
+	}
+	if fixReport.Remaining != 1 {
+		t.Errorf("Remaining = %d, want 1", fixReport.Remaining)
+	}
+}
+
+func TestDiagnose_StaleCache(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	writeDoc(t, docsDir, "note-test-2026-03-07.md", "note", "2026-03-07", nil)
+	_ = RegenerateIndex(docsDir)
+
+	// Create metadata.json
+	os.WriteFile(filepath.Join(docsDir, "metadata.json"), []byte("{}"), 0o644)
+
+	report, err := Diagnose(docsDir)
+	if err != nil {
+		t.Fatalf("Diagnose: %v", err)
+	}
+
+	found := false
+	for _, issue := range report.Issues {
+		if issue.Category == "stale-cache" {
+			found = true
+			if !issue.AutoFix {
+				t.Error("stale-cache should be auto-fixable")
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected stale-cache issue, got: %+v", report.Issues)
+	}
+}
+
 func TestDiagnose_ValidRelatedReference(t *testing.T) {
 	docsDir := newDoctorDir(t)
 	// Doc A references Doc B — both exist

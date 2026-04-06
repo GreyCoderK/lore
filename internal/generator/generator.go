@@ -23,6 +23,8 @@ type GenerateInput struct {
 	Impact       string // empty if express mode
 	CommitInfo   *domain.CommitInfo
 	GeneratedBy  string // "hook" or "manual"
+	Branch       string // current branch at capture time
+	Scope        string // scope from conventional commit
 }
 
 // Date returns the commit date formatted as YYYY-MM-DD, or today if CommitInfo is nil.
@@ -70,6 +72,8 @@ func Generate(ctx context.Context, engine *loretemplate.Engine, input GenerateIn
 		Date:         date,
 		Commit:       commit,
 		Author:       author,
+		Branch:       input.Branch,
+		Scope:        input.Scope,
 		Why:          input.Why,
 		Impact:       input.Impact,
 		Alternatives: input.Alternatives,
@@ -86,6 +90,8 @@ func Generate(ctx context.Context, engine *loretemplate.Engine, input GenerateIn
 		Type:        input.DocType,
 		Date:        date,
 		Commit:      commit,
+		Branch:      input.Branch,
+		Scope:       input.Scope,
 		Status:      "draft",
 		GeneratedBy: input.GeneratedBy,
 	}

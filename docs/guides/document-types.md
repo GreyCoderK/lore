@@ -50,6 +50,8 @@ Every document starts with YAML front matter:
 type: feature                         # REQUIRED: decision|feature|bugfix|refactor|release|note
 date: 2026-03-16                      # REQUIRED: creation date (YYYY-MM-DD)
 status: draft                         # REQUIRED: draft|published|archived|demo
+branch: feature/auth                  # Optional: git branch at capture time (omitempty)
+scope: auth                           # Optional: conventional commit scope (omitempty)
 commit: abc1234567890abcdef           # Optional: associated git commit hash
 tags: [auth, security, jwt]           # Optional: free-form tags for search
 related: [decision-auth-2026-03-07.md] # Optional: related documents

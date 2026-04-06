@@ -140,6 +140,15 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		minTags = guide.MinTags
 	}
 
+	// Scope check — if document has a commit but no scope, suggest adding one.
+	if meta.Commit != "" && meta.Scope == "" {
+		suggestions = append(suggestions, Suggestion{
+			Category: "completeness",
+			Severity: "info",
+			Message:  "Consider adding scope for discoverability and consolidation",
+		})
+	}
+
 	// Tags check
 	if len(meta.Tags) < minTags || len(meta.Tags) == 0 {
 		suggestions = append(suggestions, Suggestion{

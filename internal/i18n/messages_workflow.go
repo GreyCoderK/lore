@@ -16,8 +16,10 @@ type WorkflowMessages struct {
 	AutoSkipMsg        string // args: score, subject
 
 	// proactive.go
-	AlreadyDocumented string
-	CreateAnother     string // "Create another document? [y/N] "
+	AlreadyDocumented    string
+	CreateAnother        string // "Create another document? [y/N] "
+	AmendChoicePrompt    string // "[U]pdate existing / [C]reate new / [S]kip? "
+	AmendQuestion0       string // "Amend detected. Document this change? [Y/n] "
 
 	// common.go
 	IndexWarning string // arg: error
@@ -51,6 +53,10 @@ type WorkflowMessages struct {
 	RelativeAgeWeeks   string // arg: count
 	RelativeAge1Month  string
 	RelativeAgeMonths  string // arg: count
+
+	// preflight.go
+	PreflightFailed      string // arg: error
+	PreflightPendingSaved string
 
 	// line_renderer.go
 	LineRendererConfirm    string // args: label, value

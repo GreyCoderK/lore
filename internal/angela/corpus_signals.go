@@ -20,11 +20,27 @@ type CorpusSignals struct {
 	// TagClusters groups docs by tag for thematic analysis.
 	TagClusters map[string][]string // tag → filenames
 
+	// ScopeClusters groups docs by scope for consolidation analysis.
+	// Value is a slice of filenames; use ScopeTypes for type lookup.
+	ScopeClusters map[string][]string // scope → filenames
+
+	// ScopeTypes maps filename → doc type for scope-cluster members.
+	ScopeTypes map[string]string
+
 	// IsolatedDocs are docs with no shared tags with any other doc.
 	IsolatedDocs []string
 
 	// TypeDistribution counts docs per type.
 	TypeDistribution map[string]int
+
+	// UnconsolidatedScopes are scopes with 2+ docs but no summary doc.
+	UnconsolidatedScopes []ScopeGroup
+}
+
+// ScopeGroup describes a scope that may need consolidation.
+type ScopeGroup struct {
+	Scope    string
+	DocCount int
 }
 
 // DocPair represents two documents that may contradict each other.
@@ -41,6 +57,8 @@ type DocPair struct {
 func AnalyzeCorpusSignals(docs []DocSummary) *CorpusSignals {
 	signals := &CorpusSignals{
 		TagClusters:      make(map[string][]string),
+		ScopeClusters:    make(map[string][]string),
+		ScopeTypes:       make(map[string]string),
 		TypeDistribution: make(map[string]int),
 	}
 
@@ -48,10 +66,14 @@ func AnalyzeCorpusSignals(docs []DocSummary) *CorpusSignals {
 		return signals
 	}
 
-	// Build tag clusters and type distribution
+	// Build tag clusters, scope clusters, and type distribution
 	tagSeen := make(map[string]map[string]bool) // tag → set of filenames
 	for _, doc := range docs {
 		signals.TypeDistribution[doc.Type]++
+		if doc.Scope != "" {
+			signals.ScopeClusters[doc.Scope] = append(signals.ScopeClusters[doc.Scope], doc.Filename)
+			signals.ScopeTypes[doc.Filename] = doc.Type
+		}
 		for _, tag := range doc.Tags {
 			if tagSeen[tag] == nil {
 				tagSeen[tag] = make(map[string]bool)
@@ -89,17 +111,29 @@ func AnalyzeCorpusSignals(docs []DocSummary) *CorpusSignals {
 				continue
 			}
 			shared := sharedTagList(docs[i].Tags, docs[j].Tags)
-			if len(shared) == 0 {
+			sameScope := docs[i].Scope != "" && docs[i].Scope == docs[j].Scope
+
+			if len(shared) == 0 && !sameScope {
 				continue
 			}
 
 			daysDiff := approxDaysDiff(docs[i].Date, docs[j].Date)
-			if daysDiff >= 14 { // 2+ weeks apart = worth flagging
+			// Intra-scope: lower threshold (7d) because same scope = stronger signal.
+			// Inter-scope: standard threshold (14d).
+			threshold := 14
+			if sameScope {
+				threshold = 7
+			}
+			if daysDiff >= threshold {
+				tagsLabel := strings.Join(shared, ", ")
+				if sameScope && tagsLabel == "" {
+					tagsLabel = "scope:" + docs[i].Scope
+				}
 				signals.PotentialPairs = append(signals.PotentialPairs, DocPair{
 					DocA:     docs[i].Filename,
 					DocB:     docs[j].Filename,
 					Type:     docs[i].Type,
-					Tags:     strings.Join(shared, ", "),
+					Tags:     tagsLabel,
 					DaysDiff: daysDiff,
 				})
 			}
@@ -119,6 +153,26 @@ func AnalyzeCorpusSignals(docs []DocSummary) *CorpusSignals {
 	// Limit to top 10 pairs to keep prompt manageable
 	if len(signals.PotentialPairs) > 10 {
 		signals.PotentialPairs = signals.PotentialPairs[:10]
+	}
+
+	// Detect unconsolidated scopes: 2+ docs, no summary-type doc.
+	for scope, files := range signals.ScopeClusters {
+		if len(files) < 2 {
+			continue
+		}
+		hasSummary := false
+		for _, f := range files {
+			if signals.ScopeTypes[f] == "summary" {
+				hasSummary = true
+				break
+			}
+		}
+		if !hasSummary {
+			signals.UnconsolidatedScopes = append(signals.UnconsolidatedScopes, ScopeGroup{
+				Scope:    scope,
+				DocCount: len(files),
+			})
+		}
 	}
 
 	return signals

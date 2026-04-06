@@ -5,9 +5,6 @@
 
 package notify
 
-import (
-	"fmt"
-)
 
 // NotifyOSDialog launches a macOS AppleScript dialog for Lore documentation.
 // Runs as a detached process — does not block the hook.
@@ -41,33 +38,40 @@ func buildAppleScript(data DialogData) string {
 	btnNext := coalesce(data.LabelNext, "Next")
 	btnSave := coalesce(data.LabelSave, "Save")
 
-	return fmt.Sprintf(`
-set commitMsg to "%s"
-set diffStat to "%s"
+	// Branch Awareness: build context line for dialog prompt.
+	branchCtx := ""
+	if data.Branch != "" {
+		branchCtx += "Branch: " + escapeAppleScript(sanitizeForShell(data.Branch))
+	}
+	if data.Scope != "" {
+		if branchCtx != "" {
+			branchCtx += " · "
+		}
+		branchCtx += "Scope: " + escapeAppleScript(sanitizeForShell(data.Scope))
+	}
 
-set docType to choose from list {"feature", "bugfix", "decision", "refactor", "release", "note"} with title "%s" with prompt "Commit: " & commitMsg & return & "Diff: " & diffStat & return & return & "%s" default items {"%s"}
+	// Build the prompt prefix: commit + diff + optional branch/scope line.
+	promptPrefix := `"Commit: " & commitMsg & return & "Diff: " & diffStat`
+	if branchCtx != "" {
+		promptPrefix += ` & return & "` + branchCtx + `"`
+	}
+
+	return `
+set commitMsg to "` + commitMsg + `"
+set diffStat to "` + diffStat + `"
+
+set docType to choose from list {"feature", "bugfix", "decision", "refactor", "release", "note"} with title "` + escapeAppleScript(title) + `" with prompt ` + promptPrefix + ` & return & return & "` + escapeAppleScript(labelType) + `" default items {"` + defaultType + `"}
 if docType is false then return
 
-set whatAnswer to text returned of (display dialog "%s" default answer "%s" with title "%s" buttons {"%s", "%s"} default button "%s")
+set whatAnswer to text returned of (display dialog "` + escapeAppleScript(labelWhat) + `" default answer "` + prefillWhat + `" with title "` + escapeAppleScript(titleWhat) + `" buttons {"` + escapeAppleScript(btnCancel) + `", "` + escapeAppleScript(btnNext) + `"} default button "` + escapeAppleScript(btnNext) + `")
 
-set whyAnswer to text returned of (display dialog "%s" default answer "%s" with title "%s" buttons {"%s", "%s"} default button "%s")
+set whyAnswer to text returned of (display dialog "` + escapeAppleScript(labelWhy) + `" default answer "` + prefillWhy + `" with title "` + escapeAppleScript(titleWhy) + `" buttons {"` + escapeAppleScript(btnCancel) + `", "` + escapeAppleScript(btnSave) + `"} default button "` + escapeAppleScript(btnSave) + `")
 
 try
-	do shell script "cd " & quoted form of "%s" & " && " & quoted form of "%s" & " pending resolve --commit %s --type " & quoted form of (docType as text) & " --what " & quoted form of whatAnswer & " --why " & quoted form of whyAnswer
+	do shell script "cd " & quoted form of "` + escapeAppleScript(sanitizeForShell(data.RepoRoot)) + `" & " && " & quoted form of "` + escapeAppleScript(sanitizeForShell(data.LorePath)) + `" & " pending resolve --commit ` + hash + ` --type " & quoted form of (docType as text) & " --what " & quoted form of whatAnswer & " --why " & quoted form of whyAnswer
 on error errMsg
-	display dialog "%s" & errMsg with title "%s" buttons {"%s"} default button "%s"
+	display dialog "` + escapeAppleScript(coalesce(data.LabelError, "Lore error: ")) + `" & errMsg with title "` + escapeAppleScript(coalesce(data.LabelTitle, "Lore")) + `" buttons {"` + escapeAppleScript(coalesce(data.LabelOK, "OK")) + `"} default button "` + escapeAppleScript(coalesce(data.LabelOK, "OK")) + `"
 end try
-`,
-		commitMsg, diffStat,
-		escapeAppleScript(title), escapeAppleScript(labelType), defaultType,
-		escapeAppleScript(labelWhat), prefillWhat, escapeAppleScript(titleWhat), escapeAppleScript(btnCancel), escapeAppleScript(btnNext), escapeAppleScript(btnNext),
-		escapeAppleScript(labelWhy), prefillWhy, escapeAppleScript(titleWhy), escapeAppleScript(btnCancel), escapeAppleScript(btnSave), escapeAppleScript(btnSave),
-		escapeAppleScript(sanitizeForShell(data.RepoRoot)),
-		escapeAppleScript(sanitizeForShell(data.LorePath)), hash,
-		escapeAppleScript(coalesce(data.LabelError, "Lore error: ")),
-		escapeAppleScript(coalesce(data.LabelTitle, "Lore")),
-		escapeAppleScript(coalesce(data.LabelOK, "OK")),
-		escapeAppleScript(coalesce(data.LabelOK, "OK")),
-	)
+`
 }
 

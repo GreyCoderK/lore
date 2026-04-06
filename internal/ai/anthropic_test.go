@@ -240,6 +240,54 @@ func TestAnthropicRequest_CacheControl_JSONSerialization(t *testing.T) {
 	}
 }
 
+func TestAnthropicProvider_Complete_ServerError500(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"error":{"message":"internal server error"}}`))
+	}))
+	defer srv.Close()
+
+	p := &anthropicProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "test-model",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err == nil {
+		t.Fatal("Complete: expected error for HTTP 500")
+	}
+	if !strings.Contains(err.Error(), "HTTP 500") {
+		t.Errorf("error = %q, want HTTP 500", err)
+	}
+}
+
+func TestAnthropicProvider_Complete_EmptyContent(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"content":[]}`))
+	}))
+	defer srv.Close()
+
+	p := &anthropicProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "test-model",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err == nil {
+		t.Fatal("Complete: expected error for empty content")
+	}
+	if !strings.Contains(err.Error(), "empty response content") {
+		t.Errorf("error = %q, want 'empty response content'", err)
+	}
+}
+
 func TestAnthropicProvider_DefaultModel(t *testing.T) {
 	cfg := &config.Config{AI: config.AIConfig{Provider: "anthropic", APIKey: "sk-test"}}
 	p := newAnthropicProvider(cfg)

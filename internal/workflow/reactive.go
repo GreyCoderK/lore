@@ -82,7 +82,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 		return fmt.Errorf("workflow: reactive: detect: %w", err)
 	}
 
-	return handleDetectionResult(ctx, workDir, streams, gitAdapter, store, commit, detection, tty, detectOpts.NotifyConfig)
+	return handleDetectionResult(ctx, workDir, streams, gitAdapter, store, commit, detection, tty, detectOpts.NotifyConfig, detectOpts.AmendPrompt)
 }
 
 // resolveHeadCommit gets HEAD commit info in a single git call via HeadCommit().
@@ -130,7 +130,7 @@ func buildSignalContext(commit *domain.CommitInfo, diffContent string) *decision
 
 // handleDetectionResult processes the detection action (skip, defer, amend, etc.)
 // and either terminates the flow or continues to the documentation flow.
-func handleDetectionResult(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, store domain.LoreStore, commit *domain.CommitInfo, detection DetectionResult, tty bool, notifyCfg *notify.NotifyConfig) error {
+func handleDetectionResult(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, store domain.LoreStore, commit *domain.CommitInfo, detection DetectionResult, tty bool, notifyCfg *notify.NotifyConfig, amendPrompt *bool) error {
 	switch detection.Action {
 	case "skip":
 		if detection.Message != "" {
@@ -157,7 +157,7 @@ func handleDetectionResult(ctx context.Context, workDir string, streams domain.I
 		}
 		return nil
 	case "amend":
-		err := handleAmend(ctx, workDir, streams, gitAdapter, commit, tty)
+		err := handleAmend(ctx, workDir, streams, gitAdapter, commit, tty, amendPrompt)
 		if err == nil {
 			recordDecision(store, commit, detection, "documented")
 		}
@@ -192,6 +192,16 @@ func handleDetectionResult(ctx context.Context, workDir string, streams domain.I
 		_, _ = fmt.Fprintf(streams.Err, "Warning: unknown detection action %q, proceeding with documentation flow\n", detection.Action)
 	}
 
+	// Pre-flight: verify pipeline can succeed before asking questions.
+	if err := PreflightCheck(workDir); err != nil {
+		hash, msg := commitFields(commit)
+		record := BuildPendingRecord(Answers{}, hash, msg, "preflight-error", "deferred")
+		_ = SavePending(workDir, record)
+		_, _ = fmt.Fprintf(streams.Err, "%s: %v\n", i18n.T().Workflow.PreflightFailed, err)
+		_, _ = fmt.Fprintln(streams.Err, i18n.T().Workflow.PreflightPendingSaved)
+		return nil // don't block the git commit
+	}
+
 	// --- 2-5. Question flow + generate + persist ---
 	result, err := runDocumentationFlow(ctx, workDir, streams, commit, "", detection)
 	if err != nil {
@@ -212,6 +222,7 @@ func recordDecision(store domain.LoreStore, commit *domain.CommitInfo, detection
 	rec := domain.CommitRecord{
 		Hash:         commit.Hash,
 		Date:         commit.Date,
+		Branch:       commit.Branch,
 		Scope:        commit.Scope,
 		ConvType:     commit.Type,
 		Subject:      commit.Subject,
@@ -267,32 +278,57 @@ func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IO
 //  2. Scan .lore/docs/ for a document whose front-matter commit field matches.
 //  3. If found: run the question flow and overwrite that document.
 //  4. If not found: run the normal flow (create a new document).
-func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, commit *domain.CommitInfo, tty bool) error {
+func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, commit *domain.CommitInfo, tty bool, amendPrompt *bool) error {
 	docsDir := domain.DocsPath(workDir)
+
+	// Question 0: ask "Document this change?" before the amend flow.
+	// Default: true (prompt). Set hooks.amend_prompt=false to skip.
+	shouldPrompt := amendPrompt == nil || *amendPrompt
+	if shouldPrompt && tty {
+		_, _ = fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.AmendQuestion0)
+		answer, readErr := readAmendAnswer(streams)
+		if readErr != nil || answer == "n" || answer == "no" || answer == "non" {
+			return nil // skip silently
+		}
+	}
 
 	// Locate pre-amend hash via ORIG_HEAD.
 	origHash := readORIGHEAD(gitAdapter)
 
 	// Search for an existing doc with the pre-amend hash.
+	var existingDoc *domain.DocMeta
 	var existingFilename string
 	if origHash != "" {
-		store := &storage.CorpusStore{Dir: docsDir}
-		// Best-effort scan: parse errors on individual files are acceptable —
-		// a corrupted doc should not prevent amend detection on well-formed ones.
-		docs, _ := store.ListDocs(domain.DocFilter{})
-		for _, doc := range docs {
+		corpusStore := &storage.CorpusStore{Dir: docsDir}
+		docs, _ := corpusStore.ListDocs(domain.DocFilter{})
+		for i, doc := range docs {
 			if doc.Commit == origHash {
 				existingFilename = doc.Filename
+				existingDoc = &docs[i]
 				break
 			}
 		}
 	}
 
-	if existingFilename != "" {
+	if existingFilename != "" && tty {
+		// [U]pdate / [C]reate / [S]kip choice
+		_, _ = fmt.Fprintf(streams.Err, i18n.T().Workflow.AmendUpdatingExisting+"\n", existingFilename)
+		_, _ = fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.AmendChoicePrompt)
+		choice, readErr := readAmendAnswer(streams)
+		if readErr != nil {
+			return nil
+		}
+		switch choice {
+		case "s", "skip", "i", "ignorer":
+			return nil
+		case "c", "create":
+			existingDoc = nil
+			existingFilename = ""
+		// "u", "update", "m" (mettre à jour), or default → update
+		}
+	} else if existingFilename != "" {
 		_, _ = fmt.Fprintf(streams.Err, i18n.T().Workflow.AmendUpdatingExisting+"\n", existingFilename)
 	} else if origHash != "" {
-		// L10 fix: inform the user when amend detection fired but no existing document
-		// was found — the silent fallback to creating a new doc was confusing.
 		shortHash := origHash
 		if len(shortHash) > 7 {
 			shortHash = shortHash[:7]
@@ -305,7 +341,20 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	if existingFilename != "" {
 		overwritePath = filepath.Join(docsDir, existingFilename)
 	}
-	result, err := runDocumentationFlow(ctx, workDir, streams, commit, overwritePath)
+
+	// Pre-fill from existing doc when updating.
+	var detection DetectionResult
+	if existingDoc != nil {
+		detection.PrefilledWhat = storage.ExtractSlug(existingDoc.Filename)
+		// Read body to extract existing Why section for pre-fill.
+		if content, readErr := storage.ReadDocContent(filepath.Join(docsDir, existingFilename)); readErr == nil {
+			if why := extractWhy(content); why != "" {
+				detection.PrefilledWhy = why
+			}
+		}
+	}
+
+	result, err := runDocumentationFlow(ctx, workDir, streams, commit, overwritePath, detection)
 	if err != nil {
 		return fmt.Errorf("workflow: amend: %w", err)
 	}
@@ -317,6 +366,45 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	displayCompletion(streams, result, verb, workDir, tty)
 
 	return nil
+}
+
+// readAmendAnswer reads a single line from stdin for amend prompt responses.
+func readAmendAnswer(streams domain.IOStreams) (string, error) {
+	var buf []byte
+	b := make([]byte, 1)
+	for {
+		n, err := streams.In.Read(b)
+		if n > 0 {
+			if b[0] == '\n' {
+				break
+			}
+			buf = append(buf, b[0])
+		}
+		if err != nil {
+			return strings.TrimSpace(strings.ToLower(string(buf))), err
+		}
+	}
+	return strings.TrimSpace(strings.ToLower(string(buf))), nil
+}
+
+// extractWhy extracts the "Why" section content from a doc body.
+func extractWhy(content string) string {
+	lines := strings.Split(content, "\n")
+	inWhy := false
+	var whyLines []string
+	for _, line := range lines {
+		if strings.HasPrefix(line, "## Why") {
+			inWhy = true
+			continue
+		}
+		if inWhy && strings.HasPrefix(line, "## ") {
+			break
+		}
+		if inWhy {
+			whyLines = append(whyLines, line)
+		}
+	}
+	return strings.TrimSpace(strings.Join(whyLines, "\n"))
 }
 
 // readORIGHEAD reads the pre-amend commit hash from .git/ORIG_HEAD.
@@ -408,6 +496,11 @@ func notifyAfterDefer(hash, commitMsg string, commit *domain.CommitInfo, detecti
 				data.LabelOK = n.ButtonOK
 				data.LabelError = n.ErrorPrefix
 				data.LabelErrResolve = n.ErrorResolve
+				// Branch Awareness: propagate branch/scope to dialog context.
+				if commit != nil {
+					data.Branch = commit.Branch
+					data.Scope = commit.Scope
+				}
 			},
 		},
 	)

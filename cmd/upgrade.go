@@ -128,15 +128,15 @@ func runUpgrade(cmd *cobra.Command, streams domain.IOStreams, targetVersion stri
 		fmt.Fprintf(streams.Err, t.UpgradePermissionErr+"\n", execPath)
 		return &cli.ExitCodeError{Code: cli.ExitError}
 	}
-	tmpCheck.Close()
-	os.Remove(tmpCheck.Name())
+	_ = tmpCheck.Close()
+	_ = os.Remove(tmpCheck.Name())
 
 	// Download to temp directory
 	tmpDir, err := os.MkdirTemp("", "lore-upgrade-*")
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	fmt.Fprintf(streams.Err, t.UpgradeDownloading+"\n", release.TagName)
 	archivePath, err := upgrade.DownloadAsset(ctx, client, assetURL, tmpDir)

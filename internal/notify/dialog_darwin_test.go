@@ -58,3 +58,79 @@ func TestNotifyOSDialog_Darwin_Detached(t *testing.T) {
 	assert.Equal(t, "-e", captured.args[0])
 	assert.Contains(t, captured.args[1], "choose from list") // script content
 }
+
+func TestBuildAppleScript_BranchAndScope(t *testing.T) {
+	data := DialogData{
+		CommitHash:  "abc1234",
+		CommitMsg:   "feat(auth): add login",
+		LorePath:    "/usr/local/bin/lore",
+		RepoRoot:    "/tmp/project",
+		PrefillType: "feature",
+		Branch:      "feature/auth",
+		Scope:       "auth",
+	}
+
+	script := buildAppleScript(data)
+
+	assert.Contains(t, script, "Branch: feature/auth")
+	assert.Contains(t, script, "Scope: auth")
+}
+
+func TestBuildAppleScript_NoBranchOrScope(t *testing.T) {
+	data := DialogData{
+		CommitHash:  "abc1234",
+		CommitMsg:   "update readme",
+		LorePath:    "/usr/local/bin/lore",
+		RepoRoot:    "/tmp/project",
+		PrefillType: "note",
+	}
+
+	script := buildAppleScript(data)
+
+	assert.NotContains(t, script, "Branch:")
+	assert.NotContains(t, script, "Scope:")
+}
+
+func TestBuildAppleScript_BranchOnly(t *testing.T) {
+	data := DialogData{
+		CommitHash:  "abc1234",
+		CommitMsg:   "fix typo",
+		LorePath:    "/usr/local/bin/lore",
+		RepoRoot:    "/tmp/project",
+		PrefillType: "bugfix",
+		Branch:      "hotfix/typo",
+	}
+
+	script := buildAppleScript(data)
+
+	assert.Contains(t, script, "Branch: hotfix/typo")
+	assert.NotContains(t, script, "Scope:")
+}
+
+func TestBranchScopeContext(t *testing.T) {
+	tests := []struct {
+		name   string
+		data   DialogData
+		want   string
+		absent string
+	}{
+		{"both", DialogData{Branch: "main", Scope: "auth"}, "Branch: main", ""},
+		{"both_scope", DialogData{Branch: "main", Scope: "auth"}, "Scope: auth", ""},
+		{"branch_only", DialogData{Branch: "develop"}, "Branch: develop", "Scope:"},
+		{"scope_only", DialogData{Scope: "db"}, "Scope: db", "Branch:"},
+		{"empty", DialogData{}, "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := branchScopeContext(tt.data)
+			if tt.want == "" {
+				assert.Empty(t, got)
+			} else {
+				assert.Contains(t, got, tt.want)
+			}
+			if tt.absent != "" {
+				assert.NotContains(t, got, tt.absent)
+			}
+		})
+	}
+}

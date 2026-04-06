@@ -172,6 +172,57 @@ func TestScopeStats(t *testing.T) {
 	}
 }
 
+func TestCommitsByBranch(t *testing.T) {
+	s, _ := tempDB(t)
+
+	for i, branch := range []string{"main", "feat/auth", "feat/auth", "main"} {
+		rec := testCommit(fmt.Sprintf("hash-branch-%d", i), "auth", "documented")
+		rec.Branch = branch
+		rec.Date = time.Now().Add(-time.Duration(i) * time.Hour)
+		if err := s.RecordCommit(rec); err != nil {
+			t.Fatalf("RecordCommit: %v", err)
+		}
+	}
+
+	results, err := s.CommitsByBranch("feat/auth")
+	if err != nil {
+		t.Fatalf("CommitsByBranch: %v", err)
+	}
+	if len(results) != 2 {
+		t.Errorf("feat/auth commits = %d, want 2", len(results))
+	}
+
+	empty, err := s.CommitsByBranch("nonexistent")
+	if err != nil {
+		t.Fatalf("CommitsByBranch empty: %v", err)
+	}
+	if len(empty) != 0 {
+		t.Errorf("nonexistent branch commits = %d, want 0", len(empty))
+	}
+}
+
+func TestCommitsSince(t *testing.T) {
+	s, _ := tempDB(t)
+
+	now := time.Now()
+	for i := 0; i < 5; i++ {
+		rec := testCommit(fmt.Sprintf("hash-since-%d", i), "auth", "documented")
+		rec.Date = now.Add(-time.Duration(i*24) * time.Hour) // 0, 1, 2, 3, 4 days ago
+		if err := s.RecordCommit(rec); err != nil {
+			t.Fatalf("RecordCommit: %v", err)
+		}
+	}
+
+	// Since 2 days ago should return 3 commits (0, 1, 2 days ago)
+	results, err := s.CommitsSince(now.Add(-2*24*time.Hour - time.Hour))
+	if err != nil {
+		t.Fatalf("CommitsSince: %v", err)
+	}
+	if len(results) != 3 {
+		t.Errorf("commits since 2 days ago = %d, want 3", len(results))
+	}
+}
+
 func TestCommitCountByDecision(t *testing.T) {
 	s, _ := tempDB(t)
 

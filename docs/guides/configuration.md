@@ -29,7 +29,23 @@ angela:
 
 hooks:
   post_commit: true          # Enable post-commit hook
+  star_prompt: true          # Show star prompt
   star_prompt_after: 5       # Show star prompt after N documented commits (0 = disabled)
+  amend_prompt: true         # Ask "Document this change?" on git commit --amend
+
+notification:
+  mode: auto                 # auto, terminal, dialog, notify, silent
+  disabled_envs: []          # Environments to skip notification (e.g. ["vim"])
+  amend: true                # Enable notifications for amend commits
+
+decision:
+  threshold_full: 60         # Score >= 60: full question flow
+  threshold_reduced: 35      # Score 35-59: reduced questions
+  threshold_suggest: 15      # Score 15-34: suggest skip (confirm)
+  always_ask: [feat, breaking]  # Always ask for these commit types
+  always_skip: [docs, style, ci, build]  # Auto-skip these commit types
+  learning: true             # Enable LKS learning from past decisions
+  learning_min_commits: 20   # Minimum commits before learning kicks in
 
 templates:
   dir: .lore/templates       # Custom templates directory

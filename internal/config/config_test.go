@@ -369,3 +369,57 @@ func TestLoadFromDir_LanguageEnvOverridesLorerc(t *testing.T) {
 		t.Errorf("Language = %q, want 'es' (env overrides .lorerc)", cfg.Language)
 	}
 }
+
+// --- ReadLanguageOnly ---
+
+func TestReadLanguageOnly_FromLorerc(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("language: fr\n"), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	lang := ReadLanguageOnly(dir)
+	if lang != "fr" {
+		t.Errorf("ReadLanguageOnly = %q, want 'fr'", lang)
+	}
+}
+
+func TestReadLanguageOnly_FromLorercYaml(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc.yaml"), []byte("language: de\n"), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	lang := ReadLanguageOnly(dir)
+	if lang != "de" {
+		t.Errorf("ReadLanguageOnly = %q, want 'de'", lang)
+	}
+}
+
+func TestReadLanguageOnly_NoFile(t *testing.T) {
+	dir := t.TempDir()
+	lang := ReadLanguageOnly(dir)
+	if lang != "" {
+		t.Errorf("ReadLanguageOnly = %q, want empty string when no .lorerc", lang)
+	}
+}
+
+func TestReadLanguageOnly_NoLanguageField(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: anthropic\n"), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	lang := ReadLanguageOnly(dir)
+	if lang != "" {
+		t.Errorf("ReadLanguageOnly = %q, want empty string when no language field", lang)
+	}
+}
+
+func TestReadLanguageOnly_MalformedYAML(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("invalid: [broken\n"), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	lang := ReadLanguageOnly(dir)
+	if lang != "" {
+		t.Errorf("ReadLanguageOnly = %q, want empty string for malformed YAML", lang)
+	}
+}

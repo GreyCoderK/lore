@@ -1,0 +1,8 @@
+commit: ecb354b12abcd698c84a811e7084c5bf24d54076
+date: "2026-04-06T17:10:33Z"
+message: 'bugfix: complete coverage for awesome and update update workflow to prevent doublon for amend'
+answers:
+    type: ""
+    what: ""
+status: deferred
+reason: non-tty

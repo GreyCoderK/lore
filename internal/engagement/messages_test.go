@@ -69,6 +69,17 @@ func TestGetMilestoneMessage_FibonacciBeyond55_NoMessage(t *testing.T) {
 	}
 }
 
+func TestGetMilestoneMessage_LookupReturnsEmpty(t *testing.T) {
+	emptyLookup := func(count int) string { return "" }
+	msg, ok := GetMilestoneMessage(3, emptyLookup)
+	if ok {
+		t.Errorf("expected false when lookup returns empty, got msg=%q", msg)
+	}
+	if msg != "" {
+		t.Errorf("expected empty msg, got %q", msg)
+	}
+}
+
 func TestIsFibonacciMilestone(t *testing.T) {
 	// Fibonacci numbers in range [3, 250]: 3, 5, 8, 13, 21, 34, 55, 89, 144, 233
 	fibs := map[int]bool{

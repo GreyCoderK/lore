@@ -475,3 +475,64 @@ func TestResolvePending_CommitGone(t *testing.T) {
 		t.Error("expected document to be created even with missing commit")
 	}
 }
+
+// --- isValidDocType unit tests ---
+
+func TestIsValidDocType(t *testing.T) {
+	valid := []string{"feature", "bugfix", "decision", "refactor", "release", "note"}
+	for _, dt := range valid {
+		if !isValidDocType(dt) {
+			t.Errorf("isValidDocType(%q) = false, want true", dt)
+		}
+	}
+
+	invalid := []string{"", "feat", "bug", "unknown", "Feature"}
+	for _, dt := range invalid {
+		if isValidDocType(dt) {
+			t.Errorf("isValidDocType(%q) = true, want false", dt)
+		}
+	}
+}
+
+// --- deletePendingFile unit tests ---
+
+func TestDeletePendingFile_PathTraversal(t *testing.T) {
+	pendingDir := filepath.Join(t.TempDir(), "pending")
+	if err := os.MkdirAll(pendingDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	err := deletePendingFile(pendingDir, "../../../etc/passwd")
+	if err == nil {
+		t.Fatal("expected error for path traversal")
+	}
+}
+
+func TestDeletePendingFile_NonExistent(t *testing.T) {
+	pendingDir := filepath.Join(t.TempDir(), "pending")
+	if err := os.MkdirAll(pendingDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	err := deletePendingFile(pendingDir, "nonexistent.yaml")
+	if err == nil {
+		t.Fatal("expected error for non-existent file")
+	}
+}
+
+func TestDeletePendingFile_Success(t *testing.T) {
+	pendingDir := filepath.Join(t.TempDir(), "pending")
+	if err := os.MkdirAll(pendingDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Create a file to delete
+	path := filepath.Join(pendingDir, "test.yaml")
+	if err := os.WriteFile(path, []byte("test"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	err := deletePendingFile(pendingDir, "test.yaml")
+	if err != nil {
+		t.Fatalf("deletePendingFile: %v", err)
+	}
+	if _, statErr := os.Stat(path); !os.IsNotExist(statErr) {
+		t.Error("file should have been deleted")
+	}
+}

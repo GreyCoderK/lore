@@ -270,6 +270,82 @@ func TestShowCmd_All(t *testing.T) {
 	}
 }
 
+// displayResults: zero results with keyword shows keyword-specific message
+func TestDisplayResults_ZeroWithKeyword(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	err := displayResults(streams, nil, "foobar", false)
+	if err == nil {
+		t.Fatal("expected error for zero results")
+	}
+	if cli.ExitCodeFrom(err) != cli.ExitSkip {
+		t.Errorf("expected exit code %d, got %d", cli.ExitSkip, cli.ExitCodeFrom(err))
+	}
+
+	errOutput := errBuf.String()
+	if !strings.Contains(errOutput, "foobar") {
+		t.Errorf("expected keyword 'foobar' in message, got %q", errOutput)
+	}
+	if !strings.Contains(errOutput, "lore show --all") {
+		t.Errorf("expected --all suggestion, got %q", errOutput)
+	}
+	if out.Len() != 0 {
+		t.Errorf("expected no stdout, got %q", out.String())
+	}
+}
+
+// displayResults: zero results without keyword shows generic message
+func TestDisplayResults_ZeroNoKeyword(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	err := displayResults(streams, nil, "", false)
+	if err == nil {
+		t.Fatal("expected error for zero results")
+	}
+	if cli.ExitCodeFrom(err) != cli.ExitSkip {
+		t.Errorf("expected exit code %d, got %d", cli.ExitSkip, cli.ExitCodeFrom(err))
+	}
+
+	errOutput := errBuf.String()
+	if !strings.Contains(errOutput, "No documents") {
+		t.Errorf("expected 'No documents' generic message, got %q", errOutput)
+	}
+	if out.Len() != 0 {
+		t.Errorf("expected no stdout, got %q", out.String())
+	}
+}
+
+// displayResults: zero results quiet mode — no stderr
+func TestDisplayResults_ZeroQuiet(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	err := displayResults(streams, nil, "anything", true)
+	if err == nil {
+		t.Fatal("expected error for zero results")
+	}
+	if cli.ExitCodeFrom(err) != cli.ExitSkip {
+		t.Errorf("expected exit code %d, got %d", cli.ExitSkip, cli.ExitCodeFrom(err))
+	}
+	if errBuf.Len() != 0 {
+		t.Errorf("expected no stderr in quiet mode, got %q", errBuf.String())
+	}
+}
+
 // No keyword and no --all → usage error
 func TestShowCmd_NoKeywordNoAll(t *testing.T) {
 	dir := testutil.SetupLoreDir(t)

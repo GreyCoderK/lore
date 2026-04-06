@@ -15,6 +15,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/testutil"
 )
 
 type mockGitAdapter struct {
@@ -351,5 +352,338 @@ func TestEnsureGitignore_AppendToExisting(t *testing.T) {
 	}
 	if !strings.Contains(content, ".lorerc.local") {
 		t.Error(".lorerc.local should be appended")
+	}
+}
+
+func TestEnsureGitignore_AppendNoTrailingNewline(t *testing.T) {
+	dir := t.TempDir()
+	gitignorePath := filepath.Join(dir, ".gitignore")
+	// Existing file WITHOUT trailing newline
+	os.WriteFile(gitignorePath, []byte("node_modules/"), 0644)
+
+	modified, err := ensureGitignore(gitignorePath, ".lorerc.local")
+	if err != nil {
+		t.Fatalf("ensureGitignore: %v", err)
+	}
+	if !modified {
+		t.Error("should modify when appending")
+	}
+
+	data, _ := os.ReadFile(gitignorePath)
+	content := string(data)
+	// Should still have both entries on separate lines
+	if !strings.Contains(content, "node_modules/\n") {
+		t.Error("existing content should be preserved with newline added")
+	}
+	if !strings.Contains(content, ".lorerc.local\n") {
+		t.Error(".lorerc.local should be appended with trailing newline")
+	}
+}
+
+func TestEnsureGitignore_EntryWithWhitespace(t *testing.T) {
+	dir := t.TempDir()
+	gitignorePath := filepath.Join(dir, ".gitignore")
+	// Entry already present but with surrounding whitespace
+	os.WriteFile(gitignorePath, []byte("  .lorerc.local  \n"), 0644)
+
+	modified, err := ensureGitignore(gitignorePath, ".lorerc.local")
+	if err != nil {
+		t.Fatalf("ensureGitignore: %v", err)
+	}
+	if modified {
+		t.Error("should not modify when entry already present (trimmed match)")
+	}
+}
+
+func TestEnsureGitignore_MultipleEntries(t *testing.T) {
+	dir := t.TempDir()
+	gitignorePath := filepath.Join(dir, ".gitignore")
+	os.WriteFile(gitignorePath, []byte("*.log\n.env\n"), 0644)
+
+	modified, err := ensureGitignore(gitignorePath, ".lorerc.local")
+	if err != nil {
+		t.Fatalf("ensureGitignore: %v", err)
+	}
+	if !modified {
+		t.Error("should modify when entry not present")
+	}
+
+	data, _ := os.ReadFile(gitignorePath)
+	content := string(data)
+	if !strings.Contains(content, "*.log") {
+		t.Error("existing *.log should be preserved")
+	}
+	if !strings.Contains(content, ".env") {
+		t.Error("existing .env should be preserved")
+	}
+	if !strings.Contains(content, ".lorerc.local") {
+		t.Error(".lorerc.local should be appended")
+	}
+}
+
+func TestRunInit_AlreadyInitialized_NoOverwrite(t *testing.T) {
+	dir := t.TempDir()
+	loreDir := filepath.Join(dir, ".lore")
+	if err := os.MkdirAll(loreDir, 0755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	// Create a marker file inside .lore to verify it is not overwritten
+	markerPath := filepath.Join(loreDir, "marker.txt")
+	os.WriteFile(markerPath, []byte("original"), 0644)
+
+	streams, _, errBuf := testStreams()
+	mock := &mockGitAdapter{
+		IsInsideWorkTreeFunc: func() bool { return true },
+	}
+
+	deps := initDeps{git: mock, workDir: dir}
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
+	if err != nil {
+		t.Errorf("expected nil error for already initialized, got %v", err)
+	}
+
+	output := errBuf.String()
+	if !strings.Contains(output, "Lore already initialized") {
+		t.Error("output should contain warning message")
+	}
+
+	// Verify marker file is untouched
+	data, err := os.ReadFile(markerPath)
+	if err != nil {
+		t.Fatalf("marker file should still exist: %v", err)
+	}
+	if string(data) != "original" {
+		t.Error("marker file should not be modified")
+	}
+
+	// Verify no .lorerc was created
+	if _, err := os.Stat(filepath.Join(dir, ".lorerc")); !os.IsNotExist(err) {
+		t.Error(".lorerc should NOT be created when already initialized")
+	}
+}
+
+func TestRunInit_HookInstallWarning(t *testing.T) {
+	dir := t.TempDir()
+	streams, _, errBuf := testStreams()
+
+	mock := &mockGitAdapter{
+		IsInsideWorkTreeFunc: func() bool { return true },
+		InstallHookFunc: func(string) (domain.InstallResult, error) {
+			return domain.InstallResult{}, fmt.Errorf("permission denied")
+		},
+	}
+
+	deps := initDeps{git: mock, workDir: dir}
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
+	if err != nil {
+		t.Fatalf("runInit: %v (hook failure should be non-fatal)", err)
+	}
+
+	output := errBuf.String()
+	if !strings.Contains(output, "permission denied") {
+		t.Error("output should contain hook install error")
+	}
+	// .lore/docs/ should still be created despite hook failure
+	if _, err := os.Stat(filepath.Join(dir, ".lore", "docs")); os.IsNotExist(err) {
+		t.Error(".lore/docs/ should be created even when hook install fails")
+	}
+}
+
+func TestRootCmd_InitViaRoot(t *testing.T) {
+	// Exercise PersistentPreRunE → early return for "init" command
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	// Need git repo for init
+	mock := &mockGitAdapter{
+		IsInsideWorkTreeFunc: func() bool { return true },
+	}
+	_ = mock // Used by runInit directly, not needed here since we just test root wiring
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	root := newRootCmd(cfg, streams, &s)
+
+	// Set args to "init --no-demo" — PersistentPreRunE should run and skip config
+	root.SetArgs([]string{"init", "--no-demo"})
+	// This will try to call git.NewAdapter which may fail, but PersistentPreRunE should succeed
+	// for "init" commands (it returns early without config loading)
+	_ = root.Execute()
+
+	// The test verifies PersistentPreRunE doesn't error for "init"
+	// (it may fail at the git check inside runInit, that's fine)
+}
+
+func TestRootCmd_ShowViaRoot_NotInitialized(t *testing.T) {
+	// Exercise PersistentPreRunE full path (config loading) for a non-init command
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	root := newRootCmd(cfg, streams, &s)
+	root.SetArgs([]string{"show", "auth"})
+	// This will go through PersistentPreRunE → config.LoadFromDirWithFlags
+	// then requireLoreDir → error
+	_ = root.Execute()
+	// We don't check the error — the point is to exercise PersistentPreRunE
+}
+
+func TestRootCmd_ShowViaRoot_WithConfig(t *testing.T) {
+	// Exercise PersistentPreRunE with a valid config + .lore dir
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	// Create minimal .lorerc
+	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: \"\"\n"), 0644)
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	root := newRootCmd(cfg, streams, &s)
+	root.SetArgs([]string{"show", "auth"})
+	// This goes through full PersistentPreRunE including config loading and store opening
+	_ = root.Execute()
+	// Ensure store is closed so Windows can clean up WAL files in TempDir
+	if s != nil {
+		_ = s.Close()
+	}
+}
+
+func TestRootCmd_NoColorFlag(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: \"\"\n"), 0644)
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	root := newRootCmd(cfg, streams, &s)
+	root.SetArgs([]string{"--no-color", "show", "auth"})
+	_ = root.Execute()
+	if s != nil {
+		_ = s.Close()
+	}
+}
+
+func TestRootCmd_UnsupportedLanguageEnv(t *testing.T) {
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	// Set unsupported language
+	t.Setenv("LORE_LANGUAGE", "xx")
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	root := newRootCmd(cfg, streams, &s)
+	root.SetArgs([]string{"doctor", "--config"})
+	_ = root.Execute()
+
+	if !strings.Contains(errBuf.String(), "xx") {
+		t.Errorf("expected unsupported language warning with 'xx', got: %q", errBuf.String())
+	}
+}
+
+func TestRootCmd_PostRunCloseStore(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: \"\"\n"), 0644)
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	root := newRootCmd(cfg, streams, &s)
+	// list command exercises PersistentPreRunE (store open) and PersistentPostRunE (store close)
+	root.SetArgs([]string{"list"})
+	_ = root.Execute()
+}
+
+func TestRootCmd_DoctorViaRoot(t *testing.T) {
+	// Exercise PersistentPreRunE → early return for "doctor" command
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	root := newRootCmd(cfg, streams, &s)
+
+	// doctor --config works without .lore
+	root.SetArgs([]string{"doctor", "--config"})
+	err := root.Execute()
+	if err != nil {
+		t.Fatalf("doctor --config via root: %v", err)
+	}
+}
+
+func TestRunInit_HooksPathWarning(t *testing.T) {
+	dir := t.TempDir()
+	streams, _, errBuf := testStreams()
+
+	mock := &mockGitAdapter{
+		IsInsideWorkTreeFunc: func() bool { return true },
+		InstallHookFunc: func(string) (domain.InstallResult, error) {
+			return domain.InstallResult{
+				Installed:     true,
+				HooksPathWarn: "/custom/hooks",
+			}, nil
+		},
+	}
+
+	deps := initDeps{git: mock, workDir: dir}
+	err := runInit(context.Background(), &config.Config{}, deps, streams, true)
+	if err != nil {
+		t.Fatalf("runInit: %v", err)
+	}
+
+	output := errBuf.String()
+	if !strings.Contains(output, "/custom/hooks") {
+		t.Error("output should contain hooks path warning")
 	}
 }

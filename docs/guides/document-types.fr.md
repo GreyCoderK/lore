@@ -65,6 +65,8 @@ Chaque document commence par du YAML front matter :
 type: feature                         # REQUIS : decision|feature|bugfix|refactor|release|note
 date: 2026-03-16                      # REQUIS : date de création (YYYY-MM-DD)
 status: draft                         # REQUIS : draft|published|archived|demo
+branch: feature/auth                  # Optionnel : branche git au moment de la capture (omitempty)
+scope: auth                           # Optionnel : scope du commit conventionnel (omitempty)
 commit: abc1234567890abcdef           # Optionnel : hash du commit git associé
 tags: [auth, security, jwt]           # Optionnel : tags pour la recherche
 related: [decision-auth-2026-03-07.md] # Optionnel : documents liés

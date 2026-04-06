@@ -50,6 +50,30 @@ func CheckCoherence(doc string, meta domain.DocMeta, corpus []domain.DocMeta) []
 		}
 	}
 
+	// Scope-based coherence: same scope = stronger signal than shared tags.
+	if meta.Scope != "" {
+		for _, other := range corpus {
+			if other.Filename == meta.Filename {
+				continue
+			}
+			if other.Scope == meta.Scope {
+				if other.Type == meta.Type {
+					suggestions = append(suggestions, Suggestion{
+						Category: "coherence",
+						Severity: "warning",
+						Message:  fmt.Sprintf("Same scope %q and type: %s — potential overlap, consider consolidating", meta.Scope, other.Filename),
+					})
+				} else if !isAlreadyRelated(meta.Related, other.Filename) {
+					suggestions = append(suggestions, Suggestion{
+						Category: "coherence",
+						Severity: "info",
+						Message:  fmt.Sprintf("Same scope %q: %s [%s] — consider adding to related", meta.Scope, other.Filename, other.Type),
+					})
+				}
+			}
+		}
+	}
+
 	// Detect corpus doc titles mentioned in body
 	body := stripFrontMatter(doc)
 	bodyLower := strings.ToLower(body)

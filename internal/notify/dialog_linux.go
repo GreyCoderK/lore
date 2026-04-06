@@ -52,13 +52,15 @@ func buildZenityScript(data DialogData) string {
 	labelWhat := coalesce(data.LabelWhat, "What did you change?")
 	labelWhy := coalesce(data.LabelWhy, "Why did you make this change?")
 
+	branchCtx := branchScopeContext(data)
+
 	return fmt.Sprintf(`#!/bin/bash
 COMMIT_MSG=%s
 DIFF_STAT=%s
 PREFILL_WHAT=%s
 PREFILL_WHY=%s
 
-DOC_TYPE=$(zenity --list --title=%s --text="Commit: $COMMIT_MSG\nDiff: $DIFF_STAT\n\n%s" --column="Type" feature bugfix decision refactor release note 2>/dev/null)
+DOC_TYPE=$(zenity --list --title=%s --text="Commit: $COMMIT_MSG\nDiff: $DIFF_STAT%s\n\n%s" --column="Type" feature bugfix decision refactor release note 2>/dev/null)
 [ -z "$DOC_TYPE" ] && exit 0
 
 WHAT=$(zenity --entry --title=%s --text=%s --entry-text="$PREFILL_WHAT" 2>/dev/null)
@@ -73,7 +75,7 @@ cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --wh
 		bashQuote(sanitizeForShell(data.DiffStat)),
 		bashQuote(sanitizeForShell(data.PrefillWhat)),
 		bashQuote(sanitizeForShell(data.PrefillWhy)),
-		bashQuote(title), labelType,
+		bashQuote(title), branchCtx, labelType,
 		bashQuote(titleWhat), bashQuote(labelWhat),
 		bashQuote(titleWhy), bashQuote(labelWhy),
 		bashQuote(sanitizeForShell(data.RepoRoot)),
@@ -90,12 +92,13 @@ func buildKDialogScript(data DialogData) string {
 	titleWhy := coalesce(data.LabelTitleWhy, "Lore — Why")
 	labelWhat := coalesce(data.LabelWhat, "What did you change?")
 	labelWhy := coalesce(data.LabelWhy, "Why did you make this change?")
+	branchCtx := branchScopeContext(data)
 
 	return fmt.Sprintf(`#!/bin/bash
 COMMIT_MSG=%s
 DIFF_STAT=%s
 
-DOC_TYPE=$(kdialog --combobox "Commit: $COMMIT_MSG\nDiff: $DIFF_STAT" feature bugfix decision refactor release note --default bugfix --title %s)
+DOC_TYPE=$(kdialog --combobox "Commit: $COMMIT_MSG\nDiff: $DIFF_STAT%s" feature bugfix decision refactor release note --default bugfix --title %s)
 [ -z "$DOC_TYPE" ] && exit 0
 
 WHAT=$(kdialog --inputbox %s %s --title %s)
@@ -108,7 +111,7 @@ cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --wh
 `,
 		bashQuote(sanitizeForShell(data.CommitMsg)),
 		bashQuote(sanitizeForShell(data.DiffStat)),
-		bashQuote(title),
+		branchCtx, bashQuote(title),
 		bashQuote(labelWhat), bashQuote(sanitizeForShell(data.PrefillWhat)), bashQuote(titleWhat),
 		bashQuote(labelWhy), bashQuote(sanitizeForShell(data.PrefillWhy)), bashQuote(titleWhy),
 		bashQuote(sanitizeForShell(data.RepoRoot)),

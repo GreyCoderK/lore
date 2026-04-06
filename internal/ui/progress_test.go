@@ -51,3 +51,63 @@ func TestProgress_Complete(t *testing.T) {
 		t.Error("expected no unfilled portion")
 	}
 }
+
+func TestProgress_NegativeCurrent(t *testing.T) {
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	Progress(streams, -1, 5, "Neg")
+	output := errBuf.String()
+	if !strings.Contains(output, "0/5") {
+		t.Errorf("expected 0/5 for negative current, got %q", output)
+	}
+}
+
+func TestProgress_CurrentExceedsTotal(t *testing.T) {
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	Progress(streams, 10, 5, "Over")
+	output := errBuf.String()
+	if !strings.Contains(output, "5/5") {
+		t.Errorf("expected 5/5 for current > total, got %q", output)
+	}
+}
+
+func TestProgress_ZeroTotal(t *testing.T) {
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	Progress(streams, 0, 0, "Empty")
+	output := errBuf.String()
+	if !strings.Contains(output, "0/0") {
+		t.Errorf("expected 0/0, got %q", output)
+	}
+}
+
+func TestProgress_NegativeTotal(t *testing.T) {
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	Progress(streams, 1, -3, "NegTotal")
+	output := errBuf.String()
+	if !strings.Contains(output, "0/0") {
+		t.Errorf("expected 0/0 for negative total, got %q", output)
+	}
+}

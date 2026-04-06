@@ -71,8 +71,18 @@ func BuildCorpusSummary(corpus []domain.DocMeta) string {
 	for i := 0; i < limit; i++ {
 		meta := corpus[i]
 		fmt.Fprintf(&sb, "- [%s] %s", meta.Type, meta.Filename)
+		var parts []string
+		if meta.Scope != "" {
+			parts = append(parts, "scope: "+meta.Scope)
+		}
+		if meta.Branch != "" && meta.Branch != "main" {
+			parts = append(parts, "branch: "+meta.Branch)
+		}
 		if len(meta.Tags) > 0 {
-			fmt.Fprintf(&sb, " (tags: %s)", strings.Join(meta.Tags, ", "))
+			parts = append(parts, "tags: "+strings.Join(meta.Tags, ", "))
+		}
+		if len(parts) > 0 {
+			fmt.Fprintf(&sb, " (%s)", strings.Join(parts, ", "))
 		}
 		sb.WriteString("\n")
 	}

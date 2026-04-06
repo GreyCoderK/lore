@@ -22,6 +22,11 @@ type Answers struct {
 // generatedBy distinguishes hook-triggered ("hook") from manual ("manual") flows so that
 // the front-matter field is correct for both reactive.go and proactive.go.
 func (a Answers) ToGenerateInput(commit *domain.CommitInfo, generatedBy string) generator.GenerateInput {
+	var branch, scope string
+	if commit != nil {
+		branch = commit.Branch
+		scope = commit.Scope
+	}
 	return generator.GenerateInput{
 		DocType:      a.Type,
 		What:         a.What,
@@ -30,5 +35,7 @@ func (a Answers) ToGenerateInput(commit *domain.CommitInfo, generatedBy string) 
 		Impact:       a.Impact,
 		CommitInfo:   commit,
 		GeneratedBy:  generatedBy,
+		Branch:       branch,
+		Scope:        scope,
 	}
 }

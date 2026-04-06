@@ -5,11 +5,13 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/testutil"
@@ -263,5 +265,174 @@ func TestRelease_NotInitialized(t *testing.T) {
 	}
 	if !strings.Contains(errBuf.String(), "lore init") {
 		t.Errorf("expected actionable error with 'lore init', got: %s", errBuf.String())
+	}
+}
+
+func TestRelease_NotInitialized_Quiet(t *testing.T) {
+	ui.SetColorEnabled(false)
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	streams, _, errBuf := testStreams()
+	mock := &mockGitAdapter{}
+
+	err := runRelease(streams, mock, "", "", "v1.0.0", true)
+	if err == nil {
+		t.Fatal("expected error for not initialized")
+	}
+	// In quiet mode, no actionable error should be printed
+	if errBuf.Len() != 0 {
+		t.Errorf("expected no stderr in quiet mode, got: %s", errBuf.String())
+	}
+}
+
+func TestRelease_NoTagsError(t *testing.T) {
+	ui.SetColorEnabled(false)
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	streams, _, errBuf := testStreams()
+
+	mock := &mockGitAdapter{
+		LatestTagFunc: func() (string, error) {
+			return "", fmt.Errorf("no tags found")
+		},
+	}
+
+	// from="" triggers latestTag() call which will fail
+	err := runRelease(streams, mock, "", "HEAD", "v1.0.0", false)
+	if err == nil {
+		t.Fatal("expected error when no tags found")
+	}
+
+	errOutput := errBuf.String()
+	if !strings.Contains(errOutput, "Error:") {
+		t.Errorf("expected 'Error:' in stderr, got: %s", errOutput)
+	}
+}
+
+func TestRelease_NoTagsError_Quiet(t *testing.T) {
+	ui.SetColorEnabled(false)
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	streams, _, errBuf := testStreams()
+
+	mock := &mockGitAdapter{
+		LatestTagFunc: func() (string, error) {
+			return "", fmt.Errorf("no tags found")
+		},
+	}
+
+	err := runRelease(streams, mock, "", "HEAD", "v1.0.0", true)
+	if err == nil {
+		t.Fatal("expected error when no tags found")
+	}
+
+	// In quiet mode, no error messages on stderr
+	if errBuf.Len() != 0 {
+		t.Errorf("expected no stderr in quiet mode, got: %s", errBuf.String())
+	}
+}
+
+func TestReleaseCmd_Flags(t *testing.T) {
+	ui.SetColorEnabled(false)
+	streams, _, _ := testStreams()
+	cfg := &config.Config{}
+	cmd := newReleaseCmd(cfg, streams)
+
+	if cmd.Use != "release" {
+		t.Errorf("Use = %q, want 'release'", cmd.Use)
+	}
+
+	for _, flag := range []string{"from", "to", "version", "quiet"} {
+		if cmd.Flag(flag) == nil {
+			t.Errorf("expected --%s flag", flag)
+		}
+	}
+}
+
+func TestRelease_CommitRangeError(t *testing.T) {
+	ui.SetColorEnabled(false)
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	streams, _, _ := testStreams()
+
+	mock := &mockGitAdapter{
+		LatestTagFunc: func() (string, error) {
+			return "v1.0.0", nil
+		},
+		CommitRangeFunc: func(from, to string) ([]string, error) {
+			return nil, fmt.Errorf("git: bad revision range")
+		},
+	}
+
+	err := runRelease(streams, mock, "v0.9.0", "v1.0.0", "v1.0.0", false)
+	if err == nil {
+		t.Fatal("expected error when commit range fails")
+	}
+	if !strings.Contains(err.Error(), "bad revision range") {
+		t.Errorf("expected commit range error, got: %v", err)
+	}
+}
+
+func TestRelease_DefaultVersionFromLatestTag(t *testing.T) {
+	ui.SetColorEnabled(false)
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	docsDir := filepath.Join(dir, ".lore", "docs")
+
+	commitA := "aaaa1111222233334444555566667777aaaabbbb"
+	writeDocWithCommit(t, docsDir, "feature", "auth", "2026-03-05", commitA)
+
+	streams, _, errBuf := testStreams()
+
+	mock := &mockGitAdapter{
+		CommitRangeFunc: func(from, to string) ([]string, error) {
+			return []string{commitA}, nil
+		},
+		LatestTagFunc: func() (string, error) {
+			return "v2.0.0", nil
+		},
+	}
+
+	// from="" and version="" → both resolved from latestTag
+	err := runRelease(streams, mock, "", "HEAD", "", false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(errBuf.String(), "release-v2.0.0") {
+		t.Errorf("expected version from latestTag, got: %s", errBuf.String())
+	}
+}
+
+func TestRelease_DefaultVersion_FromToFlag(t *testing.T) {
+	ui.SetColorEnabled(false)
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	docsDir := filepath.Join(dir, ".lore", "docs")
+
+	commitA := "aaaa1111222233334444555566667777aaaabbbb"
+	writeDocWithCommit(t, docsDir, "feature", "auth", "2026-03-05", commitA)
+
+	streams, _, errBuf := testStreams()
+
+	mock := &mockGitAdapter{
+		CommitRangeFunc: func(from, to string) ([]string, error) {
+			return []string{commitA}, nil
+		},
+		LatestTagFunc: func() (string, error) {
+			return "v1.0.0", nil
+		},
+	}
+
+	// version="" with to="v1.1.0" should use to as version
+	err := runRelease(streams, mock, "v1.0.0", "v1.1.0", "", false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(errBuf.String(), "release-v1.1.0") {
+		t.Errorf("expected version from to flag, got: %s", errBuf.String())
 	}
 }

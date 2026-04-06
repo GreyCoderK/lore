@@ -696,7 +696,7 @@ func TestValidateFilename(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateFilename(tt.input)
+			err := ValidateFilename(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateFilename(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
 			}

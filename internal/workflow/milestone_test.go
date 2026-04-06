@@ -167,6 +167,51 @@ func TestShowMilestone_PassedThreshold(t *testing.T) {
 	}
 }
 
+// TestMilestoneI18N verifies all threshold cases.
+func TestMilestoneI18N_AllCases(t *testing.T) {
+	tests := []struct {
+		count int
+		empty bool
+	}{
+		{3, false},
+		{8, false},
+		{21, false},
+		{55, false},
+		{1, true},
+		{10, true},
+		{100, true},
+	}
+	for _, tt := range tests {
+		msg := milestoneI18N(tt.count)
+		if tt.empty && msg != "" {
+			t.Errorf("milestoneI18N(%d) = %q, want empty", tt.count, msg)
+		}
+		if !tt.empty && msg == "" {
+			t.Errorf("milestoneI18N(%d) = empty, want non-empty", tt.count)
+		}
+	}
+}
+
+// TestShowStarPrompt_NonTTY verifies star prompt is suppressed for non-TTY.
+func TestShowStarPrompt_NonTTY(t *testing.T) {
+	workDir := t.TempDir()
+	docsDir := filepath.Join(workDir, ".lore", "docs")
+	os.MkdirAll(docsDir, 0o755)
+
+	stderr := &bytes.Buffer{}
+	streams := domain.IOStreams{
+		In:  strings.NewReader(""),
+		Out: &bytes.Buffer{},
+		Err: stderr,
+	}
+
+	showStarPrompt(streams, workDir, docsDir, false)
+
+	if stderr.Len() != 0 {
+		t.Errorf("expected no star prompt for non-TTY, got: %q", stderr.String())
+	}
+}
+
 // N9 fix: verify showMilestone is a no-op when docsDir does not exist.
 func TestShowMilestone_MissingDocsDir(t *testing.T) {
 	docsDir := filepath.Join(t.TempDir(), "nonexistent", "docs")

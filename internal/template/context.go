@@ -12,6 +12,8 @@ type TemplateContext struct {
 	Date         string // YYYY-MM-DD
 	Commit       string
 	Author       string
+	Branch       string // current branch at capture time
+	Scope        string // scope from conventional commit
 	Tags         []string
 	Why          string
 	Impact       string

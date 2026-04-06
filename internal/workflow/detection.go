@@ -85,6 +85,11 @@ type DetectOpts struct {
 	// Used by handleDetectionResult to configure non-TTY notifications (ADR-023).
 	// When nil, DefaultNotifyConfig() is used.
 	NotifyConfig *notify.NotifyConfig
+
+	// AmendPrompt controls whether to ask "Document this change?" (Question 0)
+	// before the amend flow in TTY mode. Defaults to true.
+	// Set to false via hooks.amend_prompt=false in .lorerc to skip the prompt.
+	AmendPrompt *bool
 }
 
 // Detect determines the appropriate action for the current commit context.

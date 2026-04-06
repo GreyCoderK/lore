@@ -426,3 +426,105 @@ func TestAnswers_ToGenerateInput_NilCommit(t *testing.T) {
 		t.Errorf("GeneratedBy = %q, want %q", input.GeneratedBy, "hook")
 	}
 }
+
+// --- RunFlowWithMode ---
+
+func TestRunFlowWithMode_NilDetection_FullFlow(t *testing.T) {
+	input := "\n\nBecause reasons\n\n\n"
+	streams, _ := testStreams(input)
+	commit := &domain.CommitInfo{Type: "feat", Subject: "add auth"}
+
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+	answers, err := flow.RunFlowWithMode(context.Background(), commit, nil)
+	if err != nil {
+		t.Fatalf("RunFlowWithMode nil detection: %v", err)
+	}
+	if answers.Type != "feature" {
+		t.Errorf("Type = %q, want feature", answers.Type)
+	}
+}
+
+func TestRunFlowWithMode_FullMode(t *testing.T) {
+	input := "\n\nBecause testing\n\n\n"
+	streams, _ := testStreams(input)
+	commit := &domain.CommitInfo{Type: "fix", Subject: "fix bug"}
+
+	detection := &DetectionResult{QuestionMode: "full"}
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+	answers, err := flow.RunFlowWithMode(context.Background(), commit, detection)
+	if err != nil {
+		t.Fatalf("RunFlowWithMode full: %v", err)
+	}
+	if answers.Type != "bugfix" {
+		t.Errorf("Type = %q, want bugfix", answers.Type)
+	}
+}
+
+func TestRunFlowWithMode_ReducedMode(t *testing.T) {
+	// In reduced mode: Type and What are pre-filled, only Why is asked
+	input := "Because optimization\n"
+	streams, _ := testStreams(input)
+	commit := &domain.CommitInfo{Type: "refactor", Subject: "extract helper"}
+
+	detection := &DetectionResult{
+		QuestionMode:   "reduced",
+		PrefilledWhat:  "extract utility function",
+	}
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+	answers, err := flow.RunFlowWithMode(context.Background(), commit, detection)
+	if err != nil {
+		t.Fatalf("RunFlowWithMode reduced: %v", err)
+	}
+	if answers.Type != "refactor" {
+		t.Errorf("Type = %q, want refactor", answers.Type)
+	}
+	if answers.What != "extract utility function" {
+		t.Errorf("What = %q, want 'extract utility function'", answers.What)
+	}
+	if answers.Why != "Because optimization" {
+		t.Errorf("Why = %q, want 'Because optimization'", answers.Why)
+	}
+}
+
+func TestRunFlowWithMode_ReducedWithPrefillWhy(t *testing.T) {
+	// Pre-filled Why with high confidence → confirms with Enter
+	input := "\n"
+	streams, _ := testStreams(input)
+	commit := &domain.CommitInfo{Type: "feat", Subject: "add cache"}
+
+	detection := &DetectionResult{
+		QuestionMode:           "reduced",
+		PrefilledWhat:          "add caching layer",
+		PrefilledWhy:           "Improve response latency",
+		PrefilledWhyConfidence: 0.8,
+	}
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+	answers, err := flow.RunFlowWithMode(context.Background(), commit, detection)
+	if err != nil {
+		t.Fatalf("RunFlowWithMode with why: %v", err)
+	}
+	if answers.Why != "Improve response latency" {
+		t.Errorf("Why = %q, want 'Improve response latency'", answers.Why)
+	}
+}
+
+func TestRunFlowWithMode_LowConfidenceWhy_NotPrefilled(t *testing.T) {
+	input := "Manual reason\n"
+	streams, _ := testStreams(input)
+	commit := &domain.CommitInfo{Type: "feat", Subject: "add cache"}
+
+	detection := &DetectionResult{
+		QuestionMode:           "reduced",
+		PrefilledWhat:          "add cache",
+		PrefilledWhy:           "Should not be used",
+		PrefilledWhyConfidence: 0.3, // below 0.6 threshold
+	}
+	flow := NewQuestionFlow(streams, lineRenderer(streams), WithExpressThreshold(0))
+	answers, err := flow.RunFlowWithMode(context.Background(), commit, detection)
+	if err != nil {
+		t.Fatalf("RunFlowWithMode low confidence: %v", err)
+	}
+	if answers.Why != "Manual reason" {
+		t.Errorf("Why = %q, want 'Manual reason' (low confidence should not prefill)", answers.Why)
+	}
+}

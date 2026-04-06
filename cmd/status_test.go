@@ -10,9 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/status"
 	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/testutil"
 	"github.com/greycoderk/lore/internal/ui"
@@ -276,3 +278,279 @@ func TestStatusCmd_Tagline(t *testing.T) {
 		t.Errorf("expected tagline, got %q", errBuf.String())
 	}
 }
+
+func TestFormatReviewAge(t *testing.T) {
+	tests := []struct {
+		name string
+		when time.Time
+	}{
+		{"just now", time.Now()},
+		{"hours ago", time.Now().Add(-3 * time.Hour)},
+		{"days ago", time.Now().Add(-3 * 24 * time.Hour)},
+		{"old", time.Now().Add(-30 * 24 * time.Hour)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatReviewAge(tt.when)
+			if result == "" {
+				t.Error("formatReviewAge returned empty string")
+			}
+		})
+	}
+}
+
+func TestRenderBadge(t *testing.T) {
+	dir, streams, out, _ := setupStatusTest(t, nil)
+
+	// Add a doc to have some coverage
+	content := "---\ntype: decision\ndate: 2026-03-01\nstatus: draft\ncommit: abc123\n---\n# Test\n\n## Why\nBecause.\n"
+	os.WriteFile(filepath.Join(dir, ".lore", "docs", "decision-test-2026-03-01.md"), []byte(content), 0o644)
+
+	adapter := &mockGitAdapterForStatus{}
+	err := renderBadge(streams, adapter)
+	if err != nil {
+		t.Fatalf("renderBadge: %v", err)
+	}
+	stdout := out.String()
+	if !strings.Contains(stdout, "shields.io") {
+		t.Errorf("badge should contain shields.io link, got: %s", stdout)
+	}
+}
+
+func TestRenderDashboard_ExpressRatio(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	info := &status.StatusInfo{
+		ProjectName:   "test-project",
+		HookInstalled: true,
+		DocCount:      5,
+		PendingCount:  0,
+		ExpressCount:  3,
+		CompleteCount: 2,
+		AngelaMode:    "polish",
+		AIProvider:    "anthropic",
+		HealthIssues:  0,
+	}
+
+	err := renderDashboard(streams, info)
+	if err != nil {
+		t.Fatalf("renderDashboard: %v", err)
+	}
+
+	stderr := errBuf.String()
+	if !strings.Contains(stderr, "Express:") || !strings.Contains(stderr, "60%") {
+		t.Errorf("expected Express ratio with 60%%, got %q", stderr)
+	}
+	if !strings.Contains(stderr, "anthropic") {
+		t.Errorf("expected AI provider 'anthropic', got %q", stderr)
+	}
+}
+
+func TestRenderDashboard_ReadErrors(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	info := &status.StatusInfo{
+		ProjectName:   "test-project",
+		HookInstalled: false,
+		DocCount:      0,
+		ExpressCount:  0,
+		CompleteCount: 0,
+		ReadErrors:    2,
+		AngelaMode:    "draft",
+		HealthIssues:  1,
+	}
+
+	err := renderDashboard(streams, info)
+	if err != nil {
+		t.Fatalf("renderDashboard: %v", err)
+	}
+
+	stderr := errBuf.String()
+	if !strings.Contains(stderr, "2") {
+		t.Errorf("expected read errors count, got %q", stderr)
+	}
+}
+
+func TestRenderDashboard_AngelaDocsNeedReview(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	info := &status.StatusInfo{
+		ProjectName:         "test-project",
+		HookInstalled:       true,
+		DocCount:            5,
+		AngelaMode:          "draft",
+		AngelaDocsNeedReview: 3,
+		HealthIssues:        0,
+	}
+
+	err := renderDashboard(streams, info)
+	if err != nil {
+		t.Fatalf("renderDashboard: %v", err)
+	}
+
+	stderr := errBuf.String()
+	if !strings.Contains(stderr, "3") {
+		t.Errorf("expected '3' docs need review, got %q", stderr)
+	}
+}
+
+func TestRenderDashboard_AllClean(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	info := &status.StatusInfo{
+		ProjectName:         "test-project",
+		HookInstalled:       true,
+		DocCount:            5,
+		AngelaMode:          "polish",
+		AIProvider:          "openai",
+		AngelaDocsNeedReview: 0,
+		HealthIssues:        0,
+	}
+
+	err := renderDashboard(streams, info)
+	if err != nil {
+		t.Fatalf("renderDashboard: %v", err)
+	}
+
+	stderr := errBuf.String()
+	if !strings.Contains(stderr, "clean") || !strings.Contains(stderr, "all") {
+		t.Errorf("expected 'all clean' message, got %q", stderr)
+	}
+}
+
+func TestRenderQuiet_WithReadErrors(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	info := &status.StatusInfo{
+		HookInstalled:         true,
+		DocCount:              3,
+		PendingCount:          1,
+		ReadErrors:            2,
+		AngelaMode:            "polish",
+		AngelaDocsNeedReview:  1,
+		AngelaSuggestions:     5,
+		HealthIssues:          0,
+	}
+
+	err := renderQuiet(streams, info)
+	if err != nil {
+		t.Fatalf("renderQuiet: %v", err)
+	}
+
+	stdout := out.String()
+	if !strings.Contains(stdout, "read_errors=2") {
+		t.Errorf("expected 'read_errors=2', got %q", stdout)
+	}
+	if !strings.Contains(stdout, "angela_review=1") {
+		t.Errorf("expected 'angela_review=1', got %q", stdout)
+	}
+	if !strings.Contains(stdout, "angela_suggestions=5") {
+		t.Errorf("expected 'angela_suggestions=5', got %q", stdout)
+	}
+}
+
+func TestRenderBadge_NoEligible(t *testing.T) {
+	_, streams, out, errBuf := setupStatusTest(t, nil)
+
+	// No docs, no commits → 0 eligible
+	adapter := &mockGitAdapterForStatusEmpty{}
+	err := renderBadge(streams, adapter)
+	if err != nil {
+		t.Fatalf("renderBadge: %v", err)
+	}
+	if out.Len() != 0 {
+		t.Errorf("expected no stdout for 0 eligible, got: %s", out.String())
+	}
+	if !strings.Contains(errBuf.String(), "eligible") || !strings.Contains(errBuf.String(), "No") {
+		// The message may vary — just check there's something on stderr
+		if errBuf.Len() == 0 {
+			t.Errorf("expected message on stderr for 0 eligible, got nothing")
+		}
+	}
+}
+
+type mockGitAdapterForStatusEmpty struct{}
+
+func (m *mockGitAdapterForStatusEmpty) LogAll() ([]domain.CommitInfo, error) {
+	return nil, nil
+}
+func (m *mockGitAdapterForStatusEmpty) Diff(string) (string, error)                    { return "", nil }
+func (m *mockGitAdapterForStatusEmpty) Log(string) (*domain.CommitInfo, error)          { return nil, nil }
+func (m *mockGitAdapterForStatusEmpty) CommitExists(string) (bool, error)               { return true, nil }
+func (m *mockGitAdapterForStatusEmpty) IsMergeCommit(string) (bool, error)              { return false, nil }
+func (m *mockGitAdapterForStatusEmpty) IsInsideWorkTree() bool                          { return true }
+func (m *mockGitAdapterForStatusEmpty) HeadRef() (string, error)                        { return "", nil }
+func (m *mockGitAdapterForStatusEmpty) HeadCommit() (*domain.CommitInfo, error)         { return nil, nil }
+func (m *mockGitAdapterForStatusEmpty) IsRebaseInProgress() (bool, error)               { return false, nil }
+func (m *mockGitAdapterForStatusEmpty) CommitMessageContains(_, _ string) (bool, error) { return false, nil }
+func (m *mockGitAdapterForStatusEmpty) GitDir() (string, error)                         { return "", nil }
+func (m *mockGitAdapterForStatusEmpty) InstallHook(string) (domain.InstallResult, error) {
+	return domain.InstallResult{}, nil
+}
+func (m *mockGitAdapterForStatusEmpty) UninstallHook(string) error               { return nil }
+func (m *mockGitAdapterForStatusEmpty) HookExists(string) (bool, error)          { return false, nil }
+func (m *mockGitAdapterForStatusEmpty) CommitRange(_, _ string) ([]string, error) { return nil, nil }
+func (m *mockGitAdapterForStatusEmpty) LatestTag() (string, error)               { return "", nil }
+func (m *mockGitAdapterForStatusEmpty) CurrentBranch() (string, error)           { return "main", nil }
+
+type mockGitAdapterForStatus struct{}
+
+func (m *mockGitAdapterForStatus) LogAll() ([]domain.CommitInfo, error) {
+	return []domain.CommitInfo{
+		{Hash: "abc123", Message: "feat: test"},
+		{Hash: "def456", Message: "fix: bug"},
+	}, nil
+}
+func (m *mockGitAdapterForStatus) Diff(string) (string, error)                         { return "", nil }
+func (m *mockGitAdapterForStatus) Log(string) (*domain.CommitInfo, error)               { return nil, nil }
+func (m *mockGitAdapterForStatus) CommitExists(string) (bool, error)                    { return true, nil }
+func (m *mockGitAdapterForStatus) IsMergeCommit(string) (bool, error)                   { return false, nil }
+func (m *mockGitAdapterForStatus) IsInsideWorkTree() bool                               { return true }
+func (m *mockGitAdapterForStatus) HeadRef() (string, error)                             { return "", nil }
+func (m *mockGitAdapterForStatus) HeadCommit() (*domain.CommitInfo, error)              { return nil, nil }
+func (m *mockGitAdapterForStatus) IsRebaseInProgress() (bool, error)                    { return false, nil }
+func (m *mockGitAdapterForStatus) CommitMessageContains(_, _ string) (bool, error)      { return false, nil }
+func (m *mockGitAdapterForStatus) GitDir() (string, error)                              { return "", nil }
+func (m *mockGitAdapterForStatus) InstallHook(string) (domain.InstallResult, error)     { return domain.InstallResult{}, nil }
+func (m *mockGitAdapterForStatus) UninstallHook(string) error                           { return nil }
+func (m *mockGitAdapterForStatus) HookExists(string) (bool, error)                      { return false, nil }
+func (m *mockGitAdapterForStatus) CommitRange(_, _ string) ([]string, error)            { return nil, nil }
+func (m *mockGitAdapterForStatus) LatestTag() (string, error)                           { return "", nil }
+func (m *mockGitAdapterForStatus) CurrentBranch() (string, error)                       { return "main", nil }

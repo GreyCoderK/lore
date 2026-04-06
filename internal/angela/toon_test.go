@@ -20,13 +20,13 @@ func TestSerializeTOON_BasicCorpus(t *testing.T) {
 	if !strings.HasPrefix(result, "corpus:\n") {
 		t.Error("should start with corpus: section")
 	}
-	if !strings.Contains(result, "filename|type|date|tags|summary\n") {
+	if !strings.Contains(result, "filename|type|date|tags|branch|scope|summary\n") {
 		t.Error("should contain header row")
 	}
-	if !strings.Contains(result, "decision-auth.md|decision|2026-03-15|auth,api|JWT chosen for stateless\n") {
+	if !strings.Contains(result, "decision-auth.md|decision|2026-03-15|auth,api|||JWT chosen for stateless\n") {
 		t.Error("should contain first doc row")
 	}
-	if !strings.Contains(result, "bugfix-login.md|bugfix|2026-03-17||Fixed timeout\n") {
+	if !strings.Contains(result, "bugfix-login.md|bugfix|2026-03-17||||Fixed timeout\n") {
 		t.Error("should contain doc with empty tags")
 	}
 	// No signals section when nil
@@ -119,7 +119,7 @@ func TestSerializeTOON_EmptyCorpus(t *testing.T) {
 	if !strings.HasPrefix(result, "corpus:\n") {
 		t.Error("empty corpus should still have corpus header")
 	}
-	if !strings.Contains(result, "filename|type|date|tags|summary\n") {
+	if !strings.Contains(result, "filename|type|date|tags|branch|scope|summary\n") {
 		t.Error("empty corpus should still have column headers")
 	}
 	// Should be just the header, no data rows

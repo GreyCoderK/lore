@@ -2,7 +2,7 @@
 
 > **L'or de vos décisions techniques.**
 
-<img src="assets/logo.svg" alt="Lore" width="128">
+<img src="../assets/logo.svg" alt="Lore" width="180">
 
 <!-- GIF démo — générer avec : vhs assets/demo.tape -->
 <!-- ![Demo](assets/demo.gif) -->

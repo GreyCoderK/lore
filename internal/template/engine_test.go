@@ -10,6 +10,19 @@ import (
 	"testing"
 )
 
+func TestGlobalDir(t *testing.T) {
+	dir := GlobalDir()
+	if dir == "" {
+		t.Skip("cannot determine home directory")
+	}
+	if !strings.Contains(dir, "lore") {
+		t.Errorf("expected 'lore' in GlobalDir path, got %q", dir)
+	}
+	if !strings.Contains(dir, "templates") {
+		t.Errorf("expected 'templates' in GlobalDir path, got %q", dir)
+	}
+}
+
 func TestEngine_RenderDecisionTemplate(t *testing.T) {
 	engine, err := New("", "")
 	if err != nil {

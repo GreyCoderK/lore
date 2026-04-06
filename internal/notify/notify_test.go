@@ -154,6 +154,53 @@ func TestAcquireLock_StaleLock(t *testing.T) {
 	releaseLock(lockPath)
 }
 
+func TestDefaultNotifyConfig(t *testing.T) {
+	cfg := DefaultNotifyConfig()
+	assert.Equal(t, ModeAuto, cfg.Mode)
+	assert.Nil(t, cfg.DisabledEnvs)
+}
+
+func TestNotifyNonTTY_TerminalMode(t *testing.T) {
+	var vscodeCalled bool
+	opts := mockOpts(t)
+	opts.Config.Mode = ModeTerminal
+	opts.VSCodeOpts.RunCommand = func(_ string, args []string, _ []string) error {
+		vscodeCalled = true
+		return nil
+	}
+
+	// Non-VSCode env → terminal mode silent
+	NotifyNonTTY("abc", EnvUnknown, "msg", "+1-0", "bugfix", "what", "why", opts)
+	assert.False(t, vscodeCalled, "terminal mode with non-vscode env should be silent")
+}
+
+func TestNotifyNonTTY_DialogMode(t *testing.T) {
+	var dialogCalled bool
+	opts := mockOpts(t)
+	opts.Config.Mode = ModeDialog
+	opts.DialogOpts.StartCommand = func(name string, _ []string, _ []string) error {
+		dialogCalled = true
+		return nil
+	}
+
+	NotifyNonTTY("abc", EnvUnknown, "msg", "+1-0", "bugfix", "what", "why", opts)
+	assert.True(t, dialogCalled, "dialog mode should launch dialog")
+}
+
+func TestNotifyNonTTY_NotifyMode(t *testing.T) {
+	var simpleCalled bool
+	opts := mockOpts(t)
+	opts.Config.Mode = ModeNotify
+	opts.DialogOpts.StartCommand = func(name string, args []string, _ []string) error {
+		simpleCalled = true
+		return nil
+	}
+
+	NotifyNonTTY("abc", EnvUnknown, "msg", "+1-0", "bugfix", "what", "why", opts)
+	// ModeNotify should try simple notification path
+	assert.True(t, simpleCalled, "notify mode should try OS notification")
+}
+
 // mockConn implements net.Conn for testing socket aliveness.
 type mockConn struct{}
 

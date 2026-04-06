@@ -233,6 +233,328 @@ func TestPendingNotInitialized(t *testing.T) {
 	}
 }
 
+// --- pending resolve tests ---
+
+func TestPendingResolve_NoPending(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"resolve"})
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("expected nil error for no pending, got: %v", err)
+	}
+
+	if !strings.Contains(errBuf.String(), "No pending") {
+		t.Errorf("expected 'No pending' message, got: %q", errBuf.String())
+	}
+}
+
+func TestPendingResolve_InvalidSelectionNumber(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	writePending(t, dir, workflow.PendingRecord{
+		Commit:  "abc1234deadbeef",
+		Date:    time.Now().UTC().Format(time.RFC3339),
+		Message: "feat(auth): add JWT",
+		Status:  "partial",
+		Reason:  "interrupted",
+	})
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"resolve", "99"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for invalid selection number")
+	}
+
+	if !strings.Contains(errBuf.String(), "99") {
+		t.Errorf("expected invalid selection '99' echoed in error, got: %q", errBuf.String())
+	}
+}
+
+func TestPendingResolve_InvalidSelectionZero(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	writePending(t, dir, workflow.PendingRecord{
+		Commit:  "def5678deadbeef",
+		Date:    time.Now().UTC().Format(time.RFC3339),
+		Message: "fix: something",
+		Status:  "partial",
+		Reason:  "interrupted",
+	})
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"resolve", "0"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for selection 0")
+	}
+
+	if !strings.Contains(errBuf.String(), "0") {
+		t.Errorf("expected '0' in error message, got: %q", errBuf.String())
+	}
+}
+
+func TestPendingResolve_InvalidSelectionNonNumeric(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	writePending(t, dir, workflow.PendingRecord{
+		Commit:  "ghi9012deadbeef",
+		Date:    time.Now().UTC().Format(time.RFC3339),
+		Message: "chore: cleanup",
+		Status:  "partial",
+		Reason:  "interrupted",
+	})
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"resolve", "abc"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for non-numeric selection")
+	}
+}
+
+func TestPendingResolve_NotInitialized(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"resolve"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for uninitialized repo")
+	}
+
+	if !strings.Contains(errBuf.String(), "Lore not initialized") {
+		t.Errorf("expected init error, got: %q", errBuf.String())
+	}
+}
+
+func TestPendingResolve_CommitFilterNoMatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	writePending(t, dir, workflow.PendingRecord{
+		Commit:  "abc1234deadbeef",
+		Date:    time.Now().UTC().Format(time.RFC3339),
+		Message: "feat: something",
+		Status:  "partial",
+		Reason:  "interrupted",
+	})
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"resolve", "--commit", "zzz9999"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for no matching commit")
+	}
+
+	if !strings.Contains(errBuf.String(), "zzz9999") {
+		t.Errorf("expected commit filter in error message, got: %q", errBuf.String())
+	}
+}
+
+func TestPendingSkip_NotInitialized(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"skip", "abc123"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for uninitialized repo")
+	}
+	if !strings.Contains(errBuf.String(), "Lore not initialized") {
+		t.Errorf("expected init error, got: %q", errBuf.String())
+	}
+}
+
+func TestPendingSkip_NoMatchingHash(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"skip", "nonexistent"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for non-matching hash")
+	}
+}
+
+func TestPendingListQuiet_NotInitialized(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"list", "--quiet"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for uninitialized repo")
+	}
+	if !strings.Contains(errBuf.String(), "Lore not initialized") {
+		t.Errorf("expected init error, got: %q", errBuf.String())
+	}
+}
+
+func TestPendingListQuiet_Empty(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	var outBuf, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &outBuf,
+		Err: &errBuf,
+		In:  &bytes.Buffer{},
+	}
+
+	cmd := newPendingCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"list", "--quiet"})
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("pending list --quiet empty: %v", err)
+	}
+
+	// No items → no output
+	if outBuf.Len() != 0 {
+		t.Errorf("expected no stdout for empty list, got: %q", outBuf.String())
+	}
+	if errBuf.Len() != 0 {
+		t.Errorf("expected no stderr in quiet mode, got: %q", errBuf.String())
+	}
+}
+
 func TestShortHash(t *testing.T) {
 	if got := shortHash("abc1234deadbeef"); got != "abc1234" {
 		t.Errorf("shortHash = %q, want abc1234", got)
@@ -249,5 +571,21 @@ func TestTruncate(t *testing.T) {
 	long := strings.Repeat("a", 50)
 	if got := truncate(long, 40); len(got) != 40 || !strings.HasSuffix(got, "...") {
 		t.Errorf("truncate = %q (len %d)", got, len(got))
+	}
+}
+
+func TestTruncate_VeryShortMax(t *testing.T) {
+	// maxLen <= 3: no room for "...", just truncate
+	if got := truncate("abcdef", 2); got != "ab" {
+		t.Errorf("truncate(2) = %q, want %q", got, "ab")
+	}
+	if got := truncate("abcdef", 3); got != "abc" {
+		t.Errorf("truncate(3) = %q, want %q", got, "abc")
+	}
+}
+
+func TestTruncate_ExactLength(t *testing.T) {
+	if got := truncate("abcd", 4); got != "abcd" {
+		t.Errorf("truncate exact = %q, want %q", got, "abcd")
 	}
 }

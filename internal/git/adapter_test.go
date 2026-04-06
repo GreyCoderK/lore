@@ -651,6 +651,277 @@ func TestParseHeadCommitOutput_BadFormat(t *testing.T) {
 	}
 }
 
+// --- LogAll / LogAllWithLimit integration tests ---
+
+func TestLogAll_MultipleCommits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "feat(api): add endpoint")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "fix: correct typo")
+	a := NewAdapter(dir)
+
+	commits, err := a.LogAll()
+	if err != nil {
+		t.Fatalf("LogAll: %v", err)
+	}
+	if len(commits) != 3 {
+		t.Fatalf("expected 3 commits, got %d", len(commits))
+	}
+	// Most recent first
+	if commits[0].Type != "fix" {
+		t.Errorf("first commit type = %q, want fix", commits[0].Type)
+	}
+	if commits[1].Type != "feat" {
+		t.Errorf("second commit type = %q, want feat", commits[1].Type)
+	}
+}
+
+func TestLogAll_EmptyRepo(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepo(t) // no commits
+	a := NewAdapter(dir)
+
+	// LogAll on a repo with no commits: git log --all exits 0 with empty output
+	commits, err := a.LogAll()
+	if err != nil {
+		// Some git versions error, that's also acceptable
+		return
+	}
+	if len(commits) != 0 {
+		t.Errorf("expected 0 commits for empty repo, got %d", len(commits))
+	}
+}
+
+func TestLogAllWithLimit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "second")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "third")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "fourth")
+	a := NewAdapter(dir)
+
+	commits, err := a.LogAllWithLimit(2)
+	if err != nil {
+		t.Fatalf("LogAllWithLimit: %v", err)
+	}
+	if len(commits) != 2 {
+		t.Fatalf("expected 2 commits, got %d", len(commits))
+	}
+}
+
+func TestLogAllWithLimit_Zero(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "second")
+	a := NewAdapter(dir)
+
+	commits, err := a.LogAllWithLimit(0)
+	if err != nil {
+		t.Fatalf("LogAllWithLimit(0): %v", err)
+	}
+	if len(commits) != 2 {
+		t.Fatalf("expected 2 commits (no limit), got %d", len(commits))
+	}
+}
+
+// --- CurrentBranch / DefaultBranch tests ---
+
+func TestCurrentBranch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	a := NewAdapter(dir)
+
+	branch, err := a.CurrentBranch()
+	if err != nil {
+		t.Fatalf("CurrentBranch: %v", err)
+	}
+	// Default branch is either "main" or "master" depending on git config
+	if branch == "" {
+		t.Error("expected non-empty branch name")
+	}
+}
+
+func TestCurrentBranch_FeatureBranch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "checkout", "-b", "feature/test-branch")
+	a := NewAdapter(dir)
+
+	branch, err := a.CurrentBranch()
+	if err != nil {
+		t.Fatalf("CurrentBranch: %v", err)
+	}
+	if branch != "feature/test-branch" {
+		t.Errorf("expected 'feature/test-branch', got %q", branch)
+	}
+}
+
+func TestCurrentBranch_DetachedHEAD(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "second")
+	// Detach HEAD
+	run(t, dir, "git", "checkout", "HEAD~1")
+	a := NewAdapter(dir)
+
+	branch, err := a.CurrentBranch()
+	if err != nil {
+		t.Fatalf("CurrentBranch: %v", err)
+	}
+	if branch != "" {
+		t.Errorf("expected empty string for detached HEAD, got %q", branch)
+	}
+}
+
+func TestDefaultBranch_NoRemote(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	a := NewAdapter(dir)
+
+	// No remote set up, should return error
+	_, err := a.DefaultBranch()
+	if err == nil {
+		t.Error("expected error when no remote is configured")
+	}
+}
+
+func TestIsRebaseInProgress_ViaEnv(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	a := New(dir)
+	// Inject GIT_SEQUENCE_EDITOR via getenv
+	a.getenv = func(key string) string {
+		if key == "GIT_SEQUENCE_EDITOR" {
+			return "/usr/bin/editor"
+		}
+		return ""
+	}
+
+	inRebase, err := a.IsRebaseInProgress()
+	if err != nil {
+		t.Fatalf("IsRebaseInProgress: %v", err)
+	}
+	if !inRebase {
+		t.Error("expected IsRebaseInProgress = true when GIT_SEQUENCE_EDITOR is set")
+	}
+}
+
+func TestIsRebaseInProgress_RebaseApply(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	rebaseApply := filepath.Join(dir, ".git", "rebase-apply")
+	if err := os.MkdirAll(rebaseApply, 0755); err != nil {
+		t.Fatalf("create rebase-apply: %v", err)
+	}
+
+	a := NewAdapter(dir)
+	inRebase, err := a.IsRebaseInProgress()
+	if err != nil {
+		t.Fatalf("IsRebaseInProgress: %v", err)
+	}
+	if !inRebase {
+		t.Error("expected IsRebaseInProgress = true for rebase-apply")
+	}
+}
+
+func TestGitDir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	a := NewAdapter(dir)
+
+	gitDir, err := a.GitDir()
+	if err != nil {
+		t.Fatalf("GitDir: %v", err)
+	}
+	if !strings.HasSuffix(gitDir, ".git") {
+		t.Errorf("expected .git suffix, got %q", gitDir)
+	}
+}
+
+func TestParseHeadCommitOutput_BadDate(t *testing.T) {
+	out := "abc123\nAlice\nnot-a-date\nparent1\nfeat: test\n"
+	_, err := parseHeadCommitOutput(out)
+	if err == nil {
+		t.Error("expected error for invalid date")
+	}
+}
+
+func TestParseLogOutput_BadDate(t *testing.T) {
+	out := "abc123\nAlice\nnot-a-date\nfeat: test\n"
+	_, err := parseLogOutput(out)
+	if err == nil {
+		t.Error("expected error for invalid date")
+	}
+}
+
+func TestParseLogOutput_BadFormat(t *testing.T) {
+	_, err := parseLogOutput("too\nfew")
+	if err == nil {
+		t.Error("expected error for malformed output")
+	}
+}
+
+func TestParseConventionalCommit_LongSubject(t *testing.T) {
+	longMsg := "feat: " + strings.Repeat("x", 250)
+	_, _, subject := ParseConventionalCommit(longMsg)
+	if len(subject) > 200 {
+		t.Errorf("subject should be truncated to 200 chars, got %d", len(subject))
+	}
+}
+
+func TestCommitRange_AutoFrom(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	dir := initGitRepoWithCommit(t)
+	run(t, dir, "git", "tag", "v0.1.0")
+	run(t, dir, "git", "commit", "--allow-empty", "-m", "after tag")
+	a := NewAdapter(dir)
+
+	// Empty from should use LatestTag
+	commits, err := a.CommitRange("", "HEAD")
+	if err != nil {
+		t.Fatalf("CommitRange: %v", err)
+	}
+	if len(commits) != 1 {
+		t.Fatalf("expected 1 commit, got %d", len(commits))
+	}
+}
+
 // --- Embedded hook script test ---
 
 func TestPostCommitScript_NonEmpty(t *testing.T) {

@@ -21,7 +21,9 @@ flowchart TD
     G -->|No| I{Cherry-pick + doc exists?}
     I -->|Yes| C
     I -->|No| J{Amend + doc exists?}
-    J -->|Yes| K[Propose edit of existing doc ✏️]
+    J -->|Yes| K0[Question 0: Document this? Y/n]
+    K0 -->|No| C
+    K0 -->|Yes| K[U-pdate / C-reate / S-kip ✏️]
     J -->|No| L[Decision Engine scoring 🎯]
     L --> M{Score?}
     M -->|≥60| N[Ask full questions]
@@ -39,8 +41,25 @@ flowchart TD
 | 3 | Rebase in progress | Defer to pending | Avoid prompts during replay |
 | 4 | Merge commit (2+ parents) | Skip (1-line msg) | Infrastructure commits |
 | 5 | Cherry-pick + source doc exists | Skip silently | Already documented |
-| 6 | Amend + existing doc | Propose modification | User editing prior work |
+| 6 | Amend + existing doc | Question 0 + [U]/[C]/[S] | User editing prior work |
 | 7 | Decision Engine score | Score-based action | Multi-signal analysis |
+
+## Amend Workflow
+
+When `git commit --amend` is detected and a document exists for the pre-amend commit:
+
+1. **Question 0**: "Amend detected. Document this change? [Y/n]" — skip for trivial typo fixes
+2. **Choice**: "[U]pdate existing / [C]reate new / [S]kip?"
+   - **Update**: Pre-fills Type, What, and Why from the existing document, then overwrites it
+   - **Create**: Creates a new document (the original remains)
+   - **Skip**: Does nothing
+
+Configure via `.lorerc`:
+
+```yaml
+hooks:
+  amend_prompt: true  # Set to false to skip Question 0
+```
 
 ## Non-TTY Detection
 

@@ -98,7 +98,7 @@ func ValidateMeta(meta domain.DocMeta) error {
 		return fmt.Errorf("storage: validate meta: type required")
 	}
 	if !domain.ValidDocType(meta.Type) {
-		return fmt.Errorf("storage: validate meta: unknown type %q (must be one of: decision, feature, bugfix, refactor, release, note)", meta.Type)
+		return fmt.Errorf("storage: validate meta: unknown type %q (must be one of: %s)", meta.Type, strings.Join(domain.DocTypeNames(), ", "))
 	}
 	if meta.Date == "" {
 		return fmt.Errorf("storage: validate meta: date required")

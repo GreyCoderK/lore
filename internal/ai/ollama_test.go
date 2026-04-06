@@ -128,6 +128,29 @@ func TestOllamaProvider_Complete_WithoutSystemPrompt(t *testing.T) {
 	}
 }
 
+func TestOllamaProvider_Complete_EmptyResponse(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"response":""}`))
+	}))
+	defer srv.Close()
+
+	p := &ollamaProvider{
+		client:   srv.Client(),
+		model:    "llama3",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err == nil {
+		t.Fatal("Complete: expected error for empty response")
+	}
+	if !strings.Contains(err.Error(), "empty response") {
+		t.Errorf("error = %q, want 'empty response'", err)
+	}
+}
+
 func TestOllamaProvider_DefaultModel(t *testing.T) {
 	cfg := &config.Config{AI: config.AIConfig{Provider: "ollama"}}
 	p := newOllamaProvider(cfg)

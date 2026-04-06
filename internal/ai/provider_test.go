@@ -246,3 +246,19 @@ func TestResolveAPIKey_NilStore_EmptyKey(t *testing.T) {
 		t.Errorf("key = %q, want empty with nil store", key)
 	}
 }
+
+func TestNewProvider_InvalidEndpoint_UnparseableURL(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{AI: config.AIConfig{
+		Provider: "anthropic",
+		APIKey:   "sk-test",
+		Endpoint: "://missing-scheme",
+	}}
+	_, err := NewProvider(cfg, noopStore(), io.Discard)
+	if err == nil {
+		t.Fatal("expected error for unparseable endpoint URL")
+	}
+	if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of 'endpoint'", err)
+	}
+}

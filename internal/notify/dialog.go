@@ -15,6 +15,8 @@ type DialogData struct {
 	PrefillType string // pre-selected doc type (e.g. "bugfix")
 	PrefillWhat string // pre-filled What answer
 	PrefillWhy  string // pre-filled Why answer (if confidence >= 0.6)
+	Branch      string // current branch at commit time (e.g. "feature/auth")
+	Scope       string // conventional commit scope (e.g. "auth")
 
 	// I18n labels — populated from i18n.T().Notify by the caller.
 	LabelTitle     string // "Lore"
@@ -30,6 +32,25 @@ type DialogData struct {
 	LabelOK        string // "OK"
 	LabelError     string // "Lore error: "
 	LabelErrResolve string // "Failed to resolve pending"
+}
+
+// branchScopeContext builds a display string like "\nBranch: main · Scope: auth"
+// for use in dialog prompts. Returns "" if both fields are empty.
+func branchScopeContext(data DialogData) string {
+	ctx := ""
+	if data.Branch != "" {
+		ctx = "Branch: " + data.Branch
+	}
+	if data.Scope != "" {
+		if ctx != "" {
+			ctx += " · "
+		}
+		ctx += "Scope: " + data.Scope
+	}
+	if ctx == "" {
+		return ""
+	}
+	return "\\n" + sanitizeForShell(ctx)
 }
 
 // DialogOpts holds injectable dependencies for OS dialog notification.

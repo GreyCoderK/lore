@@ -168,6 +168,105 @@ func TestDocCount(t *testing.T) {
 	}
 }
 
+func TestDocsByBranch(t *testing.T) {
+	s, _ := tempDB(t)
+
+	d1 := testDoc("a.md", "decision", "auth")
+	d1.Branch = "feat/auth"
+	s.IndexDoc(d1)
+
+	d2 := testDoc("b.md", "feature", "auth")
+	d2.Branch = "feat/auth"
+	s.IndexDoc(d2)
+
+	d3 := testDoc("c.md", "note", "")
+	d3.Branch = "main"
+	s.IndexDoc(d3)
+
+	results, err := s.DocsByBranch("feat/auth")
+	if err != nil {
+		t.Fatalf("DocsByBranch: %v", err)
+	}
+	if len(results) != 2 {
+		t.Errorf("feat/auth docs = %d, want 2", len(results))
+	}
+
+	empty, _ := s.DocsByBranch("nonexistent")
+	if len(empty) != 0 {
+		t.Errorf("nonexistent docs = %d, want 0", len(empty))
+	}
+}
+
+func TestUnconsolidatedDocs(t *testing.T) {
+	s, _ := tempDB(t)
+
+	d1 := testDoc("a.md", "decision", "auth")
+	d1.ConsolidatedInto = ""
+	s.IndexDoc(d1)
+
+	d2 := testDoc("b.md", "feature", "auth")
+	d2.ConsolidatedInto = "summary-auth.md"
+	s.IndexDoc(d2)
+
+	d3 := testDoc("c.md", "bugfix", "auth")
+	d3.ConsolidatedInto = ""
+	s.IndexDoc(d3)
+
+	results, err := s.UnconsolidatedDocs("auth")
+	if err != nil {
+		t.Fatalf("UnconsolidatedDocs: %v", err)
+	}
+	if len(results) != 2 {
+		t.Errorf("unconsolidated auth = %d, want 2", len(results))
+	}
+}
+
+func TestAllDocSummaries(t *testing.T) {
+	s, _ := tempDB(t)
+
+	for i := 0; i < 5; i++ {
+		d := testDoc("doc-"+string(rune('a'+i))+".md", "decision", "auth")
+		d.Date = "2026-03-" + string(rune('0'+1+i)) + "0"
+		s.IndexDoc(d)
+	}
+
+	results, err := s.AllDocSummaries(3)
+	if err != nil {
+		t.Fatalf("AllDocSummaries: %v", err)
+	}
+	if len(results) != 3 {
+		t.Errorf("summaries = %d, want 3 (limited)", len(results))
+	}
+}
+
+func TestDocsByCommitHash(t *testing.T) {
+	s, _ := tempDB(t)
+
+	d1 := testDoc("a.md", "decision", "auth")
+	d1.CommitHash = "abc123"
+	s.IndexDoc(d1)
+
+	d2 := testDoc("b.md", "feature", "api")
+	d2.CommitHash = "def456"
+	s.IndexDoc(d2)
+
+	results, err := s.DocsByCommitHash("abc123")
+	if err != nil {
+		t.Fatalf("DocsByCommitHash: %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("docs for abc123 = %d, want 1", len(results))
+	}
+	if len(results) > 0 && results[0].Filename != "a.md" {
+		t.Errorf("filename = %q, want a.md", results[0].Filename)
+	}
+
+	empty, _ := s.DocsByCommitHash("nonexistent")
+	if len(empty) != 0 {
+		t.Errorf("nonexistent docs = %d, want 0", len(empty))
+	}
+}
+
 func TestDocEmptyTags(t *testing.T) {
 	s, _ := tempDB(t)
 

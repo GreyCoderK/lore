@@ -311,6 +311,87 @@ func TestDoctor_ConfigQuietMode(t *testing.T) {
 	}
 }
 
+func TestDoctor_RebuildStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	// Need a real git repo for rebuild-store
+	dir := testutil.SetupGitRepo(t)
+	testutil.Chdir(t, dir)
+
+	// Create .lore/docs/ structure
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	for _, sub := range []string{docsDir, filepath.Join(dir, ".lore", "templates"), filepath.Join(dir, ".lore", "pending")} {
+		if err := os.MkdirAll(sub, 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+	}
+
+	// Write a valid document
+	_, _ = storage.WriteDoc(docsDir, domain.DocMeta{
+		Type:   "decision",
+		Date:   "2026-03-07",
+		Status: "published",
+	}, "test doc", "# Test\n\nBody.\n")
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		In:  strings.NewReader(""),
+		Out: &out,
+		Err: &errBuf,
+	}
+	cfg := &config.Config{}
+	cmd := newDoctorCmd(cfg, streams)
+	cmd.SetArgs([]string{"--rebuild-store"})
+	err := cmd.Execute()
+	if err != nil {
+		t.Fatalf("rebuild-store: %v\nstderr: %s", err, errBuf.String())
+	}
+
+	stderr := errBuf.String()
+	if !strings.Contains(stderr, "1") {
+		t.Errorf("expected doc count in output, got: %q", stderr)
+	}
+
+	// Verify store.db was created
+	if _, statErr := os.Stat(filepath.Join(dir, ".lore", "store.db")); os.IsNotExist(statErr) {
+		t.Error("store.db should be created after rebuild")
+	}
+}
+
+func TestDoctor_RebuildStore_NotInitialized(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		In:  strings.NewReader(""),
+		Out: &out,
+		Err: &errBuf,
+	}
+	cfg := &config.Config{}
+	cmd := newDoctorCmd(cfg, streams)
+	cmd.SetArgs([]string{"--rebuild-store"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for uninitialized repo")
+	}
+	if !strings.Contains(errBuf.String(), "Lore not initialized") {
+		t.Errorf("expected 'Lore not initialized' in stderr, got: %q", errBuf.String())
+	}
+}
+
 func TestDoctor_ExitCode1_WithIssues(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
