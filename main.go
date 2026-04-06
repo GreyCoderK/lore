@@ -13,3 +13,4 @@ func main() {
 // mode-silent
 // mode-notify
 // mode-dialog
+// mode-terminal
