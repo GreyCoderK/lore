@@ -11,3 +11,4 @@ func main() {
 
 // silent test 4
 // mode-silent
+// mode-notify
