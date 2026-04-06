@@ -32,6 +32,35 @@ Lore skips merge commits automatically — no documentation needed.
 
 Commits are deferred to pending silently. In VS Code terminals, Lore sends a notification. Use `lore pending resolve` later.
 
+### Why do I get a dialog instead of interactive questions in VS Code?
+
+Lore detects VS Code (and forks like Cursor, Windsurf, Codium) via the `GIT_ASKPASS` environment variable that VS Code injects into its terminals. When detected, Lore sends a native macOS/Linux notification instead of asking questions in the terminal — even if the terminal is a real TTY.
+
+**To force interactive terminal mode in VS Code**, unset the detection variable before committing:
+
+```bash
+unset GIT_ASKPASS
+git commit -m "your message"
+```
+
+**To restore it** (re-enable VS Code's Git credential helper), open a new VS Code terminal — VS Code re-injects the variable automatically. Or restore it manually:
+
+```bash
+# Re-export the value VS Code normally sets
+export GIT_ASKPASS="$(which code) --wait --reuse-window"
+```
+
+For a **permanent** setup that only affects Lore, use an alias instead of unsetting globally:
+
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+alias gc='GIT_ASKPASS= git commit'
+```
+
+Then use `gc -m "your message"` for interactive Lore, and `git commit` for normal VS Code behavior.
+
+> **Note:** A permanent `unset GIT_ASKPASS` in your shell profile also disables VS Code's Git credential helper. If you use HTTPS remotes, configure credentials separately: `git config --global credential.helper osxkeychain`.
+
 ### Can I document old commits retroactively?
 
 Yes: `lore new --commit abc1234`

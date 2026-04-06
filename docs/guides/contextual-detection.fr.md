@@ -70,11 +70,13 @@ Quand Lore s'exécute dans un environnement non-interactif :
 | **Pipe** (`git commit \| ...`) | `!isatty(stdin)` | Différé silencieusement |
 | **Cron/scripts** | `!isatty(stdin)` | Différé silencieusement |
 
-Les terminaux VS Code sont détectés via `TERM_PROGRAM=vscode` et supportent les notifications natives via IPC.
+Les terminaux VS Code sont detectes via la variable d'environnement `GIT_ASKPASS` que VS Code injecte (contenant "code" dans le chemin). Les forks sont identifies par leurs chaines specifiques : "cursor", "windsurf", "codium". Un signal secondaire est `VSCODE_GIT_ASKPASS_NODE`.
+
+> **Important :** Cette detection a lieu **avant** la verification TTY. Meme si le terminal integre est un vrai TTY, Lore identifie l'environnement comme VS Code et passe en mode notification.
 
 ## Notifications IDE
 
-Quand un commit est différé dans un contexte IDE non-TTY, Lore envoie une notification :
+Quand un commit a lieu dans un contexte IDE detecte, Lore envoie une notification au lieu de poser des questions interactives :
 
 1. **VS Code IPC** — Notification native de l'extension (multi-instance)
 2. **Dialog OS** — `osascript` (macOS), `zenity`/`kdialog` (Linux), PowerShell (Windows)
@@ -104,6 +106,33 @@ decision:
 Les commits avec ces types conventionnels sont scorés à 0 et ignorés silencieusement.
 
 ## Dépannage
+
+### "Lore affiche un dialog au lieu des questions interactives dans VS Code"
+
+Lore detecte VS Code via `GIT_ASKPASS` et passe en mode notification. Pour forcer le mode interactif terminal :
+
+```bash
+# Ponctuel
+unset GIT_ASKPASS
+git commit -m "votre message"
+```
+
+Pour **restaurer** `GIT_ASKPASS`, ouvrez un nouveau terminal VS Code (VS Code le reinjecte automatiquement), ou lancez :
+
+```bash
+export GIT_ASKPASS="$(which code) --wait --reuse-window"
+```
+
+**Recommande : utilisez un alias** au lieu d'un unset global :
+
+```bash
+# Ajouter a ~/.zshrc ou ~/.bashrc
+alias gc='GIT_ASKPASS= git commit'
+```
+
+Ainsi `gc -m "message"` declenche Lore interactif, et `git commit` garde le comportement VS Code.
+
+> **Note :** Un `unset GIT_ASKPASS` permanent desactive aussi le credential helper Git de VS Code. Si vous utilisez des remotes HTTPS, configurez les credentials separement : `git config --global credential.helper osxkeychain`
 
 ### "Lore ne se déclenche pas après mon commit"
 

@@ -32,6 +32,35 @@ Lore les ignore automatiquement — pas de documentation nécessaire.
 
 Les commits sont différés silencieusement dans pending. Dans les terminaux VS Code, Lore envoie une notification. Utilisez `lore pending resolve` plus tard.
 
+### Pourquoi un dialog s'affiche au lieu des questions interactives dans VS Code ?
+
+Lore detecte VS Code (et ses forks : Cursor, Windsurf, Codium) via la variable d'environnement `GIT_ASKPASS` que VS Code injecte dans ses terminaux. Quand il la detecte, Lore envoie une notification native macOS/Linux au lieu de poser les questions dans le terminal — meme si le terminal est un vrai TTY.
+
+**Pour forcer le mode interactif terminal dans VS Code**, desactivez la variable avant de committer :
+
+```bash
+unset GIT_ASKPASS
+git commit -m "votre message"
+```
+
+**Pour la restaurer** (reactiver le credential helper Git de VS Code), ouvrez un nouveau terminal VS Code — VS Code reinjecte la variable automatiquement. Ou restaurez-la manuellement :
+
+```bash
+# Re-exporter la valeur que VS Code definit normalement
+export GIT_ASKPASS="$(which code) --wait --reuse-window"
+```
+
+Pour une configuration **permanente** qui n'affecte que Lore, utilisez un alias au lieu d'un unset global :
+
+```bash
+# Ajouter a ~/.zshrc ou ~/.bashrc
+alias gc='GIT_ASKPASS= git commit'
+```
+
+Puis utilisez `gc -m "votre message"` pour Lore interactif, et `git commit` pour le comportement VS Code normal.
+
+> **Note :** Un `unset GIT_ASKPASS` permanent dans votre profil shell desactive aussi le credential helper Git de VS Code. Si vous utilisez des remotes HTTPS, configurez les credentials separement : `git config --global credential.helper osxkeychain`.
+
 ### Puis-je documenter d'anciens commits rétroactivement ?
 
 Oui : `lore new --commit abc1234`

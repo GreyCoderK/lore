@@ -72,11 +72,13 @@ When Lore runs in a non-interactive environment:
 | **Pipe** (`git commit \| ...`) | `!isatty(stdin)` | Silent defer to pending |
 | **Cron/scripts** | `!isatty(stdin)` | Silent defer to pending |
 
-VS Code terminals are detected via `TERM_PROGRAM=vscode` and support native notifications via IPC.
+VS Code terminals are detected via the `GIT_ASKPASS` environment variable that VS Code injects (containing "code" in the path). Forks are identified by their specific strings: "cursor", "windsurf", "codium". A secondary signal is `VSCODE_GIT_ASKPASS_NODE`.
+
+> **Important:** This detection happens **before** the TTY check. Even if the integrated terminal is a real TTY, Lore identifies the environment as VS Code and switches to notification mode.
 
 ## IDE Notifications
 
-When a commit is deferred in a non-TTY IDE context, Lore sends a notification:
+When a commit happens in a detected IDE context, Lore sends a notification instead of asking interactive questions:
 
 1. **VS Code IPC** — Native extension notification (multi-instance aware)
 2. **OS Dialog** — `osascript` (macOS), `zenity`/`kdialog` (Linux), PowerShell (Windows)
@@ -104,6 +106,57 @@ decision:
 ```
 
 Commits with these conventional types are scored at 0 and skip silently.
+
+## Troubleshooting
+
+### "Lore shows a dialog instead of terminal questions in VS Code"
+
+Lore detects VS Code via `GIT_ASKPASS` and switches to notification mode. To force interactive terminal mode:
+
+```bash
+# One-time
+unset GIT_ASKPASS
+git commit -m "your message"
+```
+
+To **restore** `GIT_ASKPASS`, open a new VS Code terminal (VS Code re-injects it automatically), or run:
+
+```bash
+export GIT_ASKPASS="$(which code) --wait --reuse-window"
+```
+
+**Recommended: use an alias** instead of unsetting globally:
+
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+alias gc='GIT_ASKPASS= git commit'
+```
+
+This way `gc -m "message"` triggers interactive Lore, while `git commit` keeps VS Code behavior.
+
+> **Note:** A permanent `unset GIT_ASKPASS` also disables VS Code's Git credential helper. If you use HTTPS remotes, configure credentials separately: `git config --global credential.helper osxkeychain`
+
+### "Lore doesn't trigger after my commit"
+
+Check in this order:
+
+1. **Hook installed?** `grep "LORE" .git/hooks/post-commit`
+2. **Hook executable?** `ls -la .git/hooks/post-commit` (should show `-rwx`)
+3. **`lore` in PATH?** `which lore`
+4. **Score too low?** `lore decision --explain HEAD` — might be auto-skipped
+5. **Non-TTY?** Check `lore pending` — the commit may have been deferred
+
+### "Lore asks too many questions for trivial commits"
+
+Add overrides in `.lorerc`:
+
+```yaml
+decision:
+  always_skip: [docs, style, ci, build, chore]
+  threshold_full: 70    # Higher = fewer full questions
+```
+
+Or use `[doc-skip]` in your commit messages for one-off cases.
 
 ## Tips & Tricks
 
