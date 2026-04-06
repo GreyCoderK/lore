@@ -1,0 +1,194 @@
+# FAQ
+
+## General
+
+### What is Lore?
+
+A CLI tool that captures the *why* behind your code changes at commit-time. Three questions, ninety seconds, a Markdown document forever.
+
+### Does Lore require an internet connection?
+
+No. Everything works offline by default. AI features (Angela) are opt-in and require an API key.
+
+### What languages does Lore support?
+
+The CLI interface is bilingual: English and French. Set `language: "fr"` in `.lorerc` for French.
+
+### Does Lore work with any Git hosting?
+
+Yes. Lore operates locally via Git hooks. It works with GitHub, GitLab, Bitbucket, or any Git host.
+
+## Usage
+
+### Can I skip documentation for a commit?
+
+Yes. Press Ctrl+C during the questions — partial answers are saved to pending. Or add `[doc-skip]` to your commit message.
+
+### What happens during merge commits?
+
+Lore skips merge commits automatically — no documentation needed.
+
+### What happens in CI or non-TTY environments?
+
+Commits are deferred to pending silently. In VS Code terminals, Lore sends a notification. Use `lore pending resolve` later.
+
+### Why do I get a dialog instead of interactive questions in VS Code?
+
+Lore detects VS Code (and forks like Cursor, Windsurf, Codium) via the `GIT_ASKPASS` environment variable that VS Code injects into its terminals. When detected, Lore sends a native macOS/Linux notification instead of asking questions in the terminal — even if the terminal is a real TTY.
+
+**To force interactive terminal mode in VS Code**, unset the detection variable before committing:
+
+```bash
+unset GIT_ASKPASS
+git commit -m "your message"
+```
+
+**To restore it** (re-enable VS Code's Git credential helper), open a new VS Code terminal — VS Code re-injects the variable automatically. Or restore it manually:
+
+```bash
+# Re-export the value VS Code normally sets
+export GIT_ASKPASS="$(which code) --wait --reuse-window"
+```
+
+For a **permanent** setup that only affects Lore, use an alias instead of unsetting globally:
+
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+alias gc='GIT_ASKPASS= git commit'
+```
+
+Then use `gc -m "your message"` for interactive Lore, and `git commit` for normal VS Code behavior.
+
+> **Note:** A permanent `unset GIT_ASKPASS` in your shell profile also disables VS Code's Git credential helper. If you use HTTPS remotes, configure credentials separately: `git config --global credential.helper osxkeychain`.
+
+### Can I document old commits retroactively?
+
+Yes: `lore new --commit abc1234`
+
+### How do I undo a documented commit?
+
+`lore delete <filename>` with confirmation.
+
+## AI (Angela)
+
+### Is AI required?
+
+No. Lore works fully without AI. Angela is opt-in.
+
+### What AI providers are supported?
+
+Anthropic (Claude), OpenAI (GPT), and Ollama (local models).
+
+### What does Angela Draft do without an API?
+
+Local structural analysis: missing sections, style guide compliance, related documents, coherence checks. Zero network calls.
+
+### What does Angela Polish do?
+
+Sends your document to the AI provider for rewriting. Shows an interactive diff — accept or reject each change individually.
+
+## Data & Privacy
+
+### Where is my data stored?
+
+All data lives in `.lore/` inside your repository. Nothing is sent anywhere unless you explicitly use Angela Polish with an AI provider.
+
+### Can I delete all Lore data?
+
+`rm -rf .lore/` removes everything. Your Git history and code are untouched.
+
+### What license is Lore under?
+
+AGPL-3.0. A commercial license is available for proprietary use.
+
+## Power User
+
+### How do I tune the Decision Engine?
+
+Edit `.lorerc`:
+
+```yaml
+decision:
+  threshold_full: 50      # Lower = more full questions (default: 60)
+  always_ask: [feat, breaking, security]
+  always_skip: [docs, style, ci, build, chore]
+```
+
+Run `lore decision --explain HEAD` to see the scoring for any commit.
+
+### Can I use Lore in a monorepo?
+
+Yes. `lore init` at the repo root. Documents capture the full path of changed files. Use `lore show --type decision` + keyword search to find decisions per service.
+
+### Can I use a custom AI model with Ollama?
+
+```yaml
+# .lorerc
+ai:
+  provider: "ollama"
+  model: "llama3"          # Any model available in your Ollama instance
+  endpoint: "http://localhost:11434"
+```
+
+No API key needed. The model runs entirely on your machine.
+
+### How do I write a custom style guide for Angela?
+
+Add a `style_guide` section in `.lorerc`:
+
+```yaml
+angela:
+  style_guide:
+    tone: "technical but approachable"
+    max_length: 500
+    required_sections: ["Why", "Alternatives Considered"]
+    avoid: ["passive voice", "jargon without explanation"]
+```
+
+Angela Draft and Polish will check against these rules.
+
+### Can I export my corpus?
+
+Your corpus IS the export — it's Markdown files in `.lore/docs/`. Copy them anywhere. They're self-contained with YAML front matter. No proprietary format, no lock-in.
+
+### How do I migrate from ADRs to Lore?
+
+You don't — they're complementary. Keep your ADRs for big architectural decisions. Use Lore for the daily "why" behind every commit. Over time, your ADRs become the summaries and your Lore corpus becomes the detailed history.
+
+### Can I use Lore in CI/CD?
+
+```bash
+# Fail build if pending docs exist
+[ $(lore pending --quiet | wc -l) -eq 0 ] || exit 1
+
+# Fail build if corpus is unhealthy
+[ $(lore doctor --quiet) -eq 0 ] || exit 1
+
+# Generate coverage badge
+lore status --badge >> $GITHUB_STEP_SUMMARY
+```
+
+### How do I handle merge conflicts in `.lore/docs/`?
+
+Rare — each commit creates a unique filename. If it happens, resolve like any Markdown conflict. Then `lore doctor --fix` to rebuild the index.
+
+### What's the performance impact of the post-commit hook?
+
+Negligible. The Decision Engine scores in ~0.4ms. The entire hook (including question rendering) adds < 100ms to a commit when auto-skipped. When you answer questions, the time is your typing speed.
+
+### How do I disable Lore temporarily?
+
+```bash
+# Skip one commit
+git commit -m "chore: deps [doc-skip]"
+
+# Disable the hook entirely
+lore hook uninstall
+
+# Re-enable later
+lore hook install
+```
+
+---
+
+**Question not listed?** [Ask on GitHub Discussions Q&A](https://github.com/greycoderk/lore/discussions/categories/q-a)
