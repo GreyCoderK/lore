@@ -167,6 +167,15 @@ Un appel API par document. Coût typique :
 - **GPT-4o :** ~$0.01–0.05 par document
 - **Ollama :** Gratuit (tourne localement)
 
+### "Le résultat de l'IA est de mauvaise qualité / contenu inventé"
+
+La qualité de `polish` dépend de **deux choses** :
+
+1. **Le modèle IA utilisé.** Les petits modèles locaux (llama3.2, phi3) peuvent halluciner du contenu, inventer des sections sans rapport avec votre document, ou ignorer les instructions. Les modèles plus grands (Claude Sonnet, GPT-4o, llama3.1:70b) suivent beaucoup mieux le prompt de polish.
+2. **Ce que vous avez écrit au départ.** Un document d'une ligne "just testing" ne donne rien à l'IA — elle remplira le vide avec du contenu inventé. Plus vous fournissez de contexte (un vrai "Why", des détails concrets, des compromis réels), meilleur sera le résultat.
+
+> **Règle d'or :** poubelle en entrée, poubelle en sortie. Écrivez un premier brouillon solide (même brut), puis polissez. N'attendez pas que l'IA crée du contenu à partir de rien.
+
 ### "Et si l'IA fait de mauvaises suggestions ?"
 
 C'est pour ça qu'il y a la revue interactive. Rejetez ce qui ne va pas. L'IA est un assistant, pas le patron.

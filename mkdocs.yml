@@ -28,9 +28,6 @@ theme:
     - search.highlight
     - content.code.copy
 
-exclude_docs: |
-  lore-corpus/
-
 plugins:
   - i18n:
       languages:

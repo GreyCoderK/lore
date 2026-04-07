@@ -218,12 +218,12 @@ var catalogFR = &Messages{
 		AngelaDraftCorpusWarn:    "Attention : chargement du corpus : %s",
 		AngelaDraftNoSuggestions: "Angela : Document impeccable. Aucune suggestion.",
 		AngelaDraftHeader:        "lore angela draft — %s",
-		AngelaDraftScoreLine:     "Score Angela : %.1f  (%s)",
+		AngelaDraftScoreLine:     "Revu par : %s  (pertinence : %.0f)",
 		AngelaDraftSuggCount:     "%d suggestions. Appliquez-les manuellement à votre document.",
 		AngelaDraftAllNoDocs:     "Angela : Aucun document trouvé dans .lore/docs/",
 		AngelaDraftAllHeader:     "lore angela draft --all — %d documents",
-		AngelaDraftAllSugg:       "%d suggestions (score : %.0f)",
-		AngelaDraftAllSuggWarn:   "%d suggestions (%d avertissements, score : %.0f)",
+		AngelaDraftAllSugg:       "%d suggestions",
+		AngelaDraftAllSuggWarn:   "%d suggestions (%d avertissements)",
 		AngelaDraftAllSummary:    "%d/%d documents nécessitent une attention. %d suggestions au total.",
 
 		// angela_polish.go

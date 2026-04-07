@@ -44,10 +44,26 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			if flagAll {
 				return runDraftAll(cfg, streams)
 			}
+			var filename string
 			if len(args) == 0 {
-				return fmt.Errorf("%s", i18n.T().Cmd.AngelaDraftNoFile)
+				// No argument: analyze the most recent document.
+				store := &storage.CorpusStore{Dir: filepath.Join(".lore", "docs")}
+				docs, err := store.ListDocs(domain.DocFilter{})
+				if err != nil || len(docs) == 0 {
+					return fmt.Errorf("%s", i18n.T().Cmd.AngelaDraftNoFile)
+				}
+				// ListDocs returns alphabetical order; pick latest by date.
+				latest := docs[0]
+				for _, d := range docs[1:] {
+					if d.Date > latest.Date {
+						latest = d
+					}
+				}
+				filename = latest.Filename
+				_, _ = fmt.Fprintf(streams.Err, "→ %s\n\n", filename)
+			} else {
+				filename = args[0]
 			}
-			filename := args[0]
 
 			// AC-7: Check .lore/ exists
 			if err := requireLoreDir(streams); err != nil {
@@ -122,7 +138,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 
 			// Format output
 			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaDraftHeader+"\n", filename)
-			_, _ = fmt.Fprintf(streams.Err, "  "+i18n.T().Cmd.AngelaDraftScoreLine+"\n\n", avg, strings.Join(activeNames, " + "))
+			_, _ = fmt.Fprintf(streams.Err, "  "+i18n.T().Cmd.AngelaDraftScoreLine+"\n\n", strings.Join(activeNames, " + "), avg)
 			for _, s := range suggestions {
 				_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s\n",
 					s.Severity, s.Category, s.Message)
@@ -187,10 +203,9 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 					warnings++
 				}
 			}
-			avg := angela.AverageScore(scored)
-			label := fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSugg, len(suggestions), avg)
+			label := fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSugg, len(suggestions))
 			if warnings > 0 {
-				label = fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSuggWarn, len(suggestions), warnings, avg)
+				label = fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSuggWarn, len(suggestions), warnings)
 			}
 			_, _ = fmt.Fprintf(streams.Err, "  %-8s %-40s %s\n", "review", meta.Filename, label)
 		} else {
