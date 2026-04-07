@@ -20,7 +20,7 @@ Sleep 1s
 Show
 
 # Delete a doc (with confirmation)
-Type "lore delete feature-add-health-endpoint-2026-04-06.md --force"
+Type "lore delete feature-add-health-endpoint-2026-04-07.md --force"
 Enter
 Sleep 2s
 

@@ -14,7 +14,7 @@ flowchart TD
     A1 --> B{"doc-skip dans le message ?"}
     B -->|Oui| C["Ignorer silencieusement"]
     B -->|Non| D{"/dev/tty disponible ?<br/>TERM != dumb ?"}
-    D -->|Non| E["Differer vers pending"]
+    D -->|Non| E["Différer vers pending"]
     D -->|"Pas de /dev/tty (CI, pipe)"| E
     D -->|Oui| F{"Rebase en cours ?"}
     F -->|Oui| E
@@ -23,14 +23,14 @@ flowchart TD
     G -->|Non| I{"Cherry-pick + doc existe ?"}
     I -->|Oui| C
     I -->|Non| J{"Amend + doc existe ?"}
-    J -->|Oui| K["Proposer edition du doc existant"]
+    J -->|Oui| K["Proposer édition du doc existant"]
     J -->|Non| L["Scoring Decision Engine"]
     L --> M{"Score ?"}
-    M -->|">=60"| N["Questions completes"]
-    M -->|"35-59"| O["Questions reduites"]
-    M -->|"15-34"| P["Suggerer d'ignorer — confirmer"]
+    M -->|">=60"| N["Questions complètes"]
+    M -->|"35-59"| O["Questions réduites"]
+    M -->|"15-34"| P["Suggérer d'ignorer — confirmer"]
     M -->|"<15"| Q["Auto-ignorer silencieusement"]
-    E --> E1{"IDE detecte ?<br/>(GIT_ASKPASS)"}
+    E --> E1{"IDE détecté ?<br/>(GIT_ASKPASS)"}
     E1 -->|Oui| E2["Notifier via IDE/dialog OS"]
     E1 -->|Non| E3["Pending silencieux"]
 ```
@@ -66,37 +66,39 @@ hooks:
 
 ## Comment stdin fonctionne dans les hooks Git
 
-Git redirige stdin vers `/dev/null` pour les hooks — meme quand on commit depuis un terminal interactif. Cela signifie que `isatty(stdin)` retourne toujours `false` a l'interieur d'un hook.
+Git redirige stdin vers `/dev/null` pour les hooks — même quand on commit depuis un terminal interactif. Cela signifie que `isatty(stdin)` retourne toujours `false` à l'intérieur d'un hook.
 
-Le hook de Lore resout cela en reconnectant stdin depuis le terminal :
+Le hook de Lore résout cela en reconnectant stdin depuis le terminal :
 
 ```sh
 exec lore _hook-post-commit < /dev/tty
 ```
 
-C'est pourquoi les questions interactives fonctionnent dans les terminaux (iTerm, Terminal.app, terminal integre VS Code) mais **pas** dans les environnements ou `/dev/tty` n'est pas disponible (CI, Docker, pipes).
+C'est pourquoi les questions interactives fonctionnent dans les terminaux (iTerm, Terminal.app, terminal intégré VS Code) mais **pas** dans les environnements où `/dev/tty` n'est pas disponible (CI, Docker, pipes).
 
-## Detection Non-TTY
+> **Windows :** Git utilise Git Bash (MSYS2) pour les hooks, qui fournit `/dev/tty`. Les questions interactives fonctionnent dans Git Bash, Windows Terminal et le terminal intégré VS Code. PowerShell et CMD sans Git Bash différent vers pending.
 
-Apres reconnexion de stdin via `/dev/tty`, Lore verifie si stdin est un vrai TTY :
+## Détection Non-TTY
+
+Après reconnexion de stdin via `/dev/tty`, Lore vérifie si stdin est un vrai TTY :
 
 | Environnement | `/dev/tty` | `isatty(stdin)` | Comportement |
 |---------------|-----------|-----------------|-------------|
 | **Terminal** (iTerm, Terminal.app) | Disponible | `true` | Questions interactives |
-| **Terminal integre VS Code** | Disponible | `true` | Questions interactives |
-| **CI/CD** (GitHub Actions, Docker) | Indisponible | `false` | Differe silencieusement |
-| **Pipe** (`git commit \| ...`) | Indisponible | `false` | Differe silencieusement |
-| **Cron/scripts** | Indisponible | `false` | Differe silencieusement |
+| **Terminal intégré VS Code** | Disponible | `true` | Questions interactives |
+| **CI/CD** (GitHub Actions, Docker) | Indisponible | `false` | Différé silencieusement |
+| **Pipe** (`git commit \| ...`) | Indisponible | `false` | Différé silencieusement |
+| **Cron/scripts** | Indisponible | `false` | Différé silencieusement |
 
-Quand stdin n'est pas un TTY, le commit est differe vers pending. Si un IDE est detecte (via `GIT_ASKPASS`), Lore envoie aussi une notification.
+Quand stdin n'est pas un TTY, le commit est différé vers pending. Si un IDE est détecté (via `GIT_ASKPASS`), Lore envoie aussi une notification.
 
-### Detection IDE pour les notifications
+### Détection IDE pour les notifications
 
-Apres le report, Lore detecte l'environnement IDE pour envoyer une notification. VS Code et ses forks sont identifies via la variable `GIT_ASKPASS` (contenant "code", "cursor", "windsurf" ou "codium" dans le chemin). Un signal secondaire est `VSCODE_GIT_ASKPASS_NODE`.
+Après le report, Lore détecte l'environnement IDE pour envoyer une notification. VS Code et ses forks sont identifiés via la variable `GIT_ASKPASS` (contenant "code", "cursor", "windsurf" ou "codium" dans le chemin). Un signal secondaire est `VSCODE_GIT_ASKPASS_NODE`.
 
 ## Notifications IDE
 
-Quand un commit est differe et qu'un IDE est detecte, Lore envoie une notification :
+Quand un commit est différé et qu'un IDE est détecté, Lore envoie une notification :
 
 1. **VS Code IPC** — Notification native de l'extension (multi-instance)
 2. **Dialog OS** — `osascript` (macOS), `zenity`/`kdialog` (Linux), PowerShell (Windows)
@@ -129,14 +131,14 @@ Les commits avec ces types conventionnels sont scorés à 0 et ignorés silencie
 
 ### "Lore affiche un dialog au lieu des questions interactives"
 
-Votre hook est probablement ancien — il manque la redirection `< /dev/tty` qui reconnecte stdin depuis le terminal. Reinstallez :
+Votre hook est probablement ancien — il manque la redirection `< /dev/tty` qui reconnecte stdin depuis le terminal. Réinstallez :
 
 ```bash
 lore hook uninstall
 lore hook install
 ```
 
-Verifiez :
+Vérifiez :
 
 ```bash
 grep "dev/tty" .git/hooks/post-commit

@@ -146,6 +146,119 @@ hooks:
 
 Tous les messages UI, prompts, badges et messages de renforcement passent en français. "Lore" devient "L'or."
 
+## Configuration du fournisseur IA
+
+Les commandes `polish` et `review` d'Angela nécessitent un fournisseur IA. Trois fournisseurs sont supportés, chacun avec des compromis différents.
+
+### Anthropic (Claude)
+
+Meilleure qualité pour la documentation technique. Nécessite des crédits API achetés séparément d'un abonnement chat Claude.ai.
+
+```yaml
+# .lorerc
+ai:
+  provider: "anthropic"
+  model: "claude-sonnet-4-20250514"  # ou claude-haiku-4-5-20251001 (moins cher)
+```
+
+```bash
+# Stocker la clé API dans le trousseau OS
+lore config set-key anthropic
+```
+
+> **Important :** Un abonnement chat Claude.ai (Pro, Team) n'inclut PAS de crédits API. L'API est facturée séparément sur [console.anthropic.com](https://console.anthropic.com) → Plans & Billing. Minimum $5 de crédits.
+
+| Élément | Détail |
+|---------|--------|
+| **Obtenir une clé** | [console.anthropic.com](https://console.anthropic.com) → API Keys |
+| **Coût par appel** | ~$0.01–0.05 (Sonnet), ~$0.001 (Haiku) |
+| **Endpoint** | `https://api.anthropic.com/v1/messages` (défaut, automatique) |
+| **Format** | Spécifique Anthropic (non compatible OpenAI) |
+
+### OpenAI (GPT)
+
+```yaml
+# .lorerc
+ai:
+  provider: "openai"
+  model: "gpt-4o-mini"  # le moins cher, ou gpt-4o pour la meilleure qualité
+```
+
+```bash
+lore config set-key openai
+```
+
+| Élément | Détail |
+|---------|--------|
+| **Obtenir une clé** | [platform.openai.com](https://platform.openai.com) → API Keys |
+| **Coût par appel** | ~$0.001 (gpt-4o-mini), ~$0.01 (gpt-4o) |
+| **Endpoint** | `https://api.openai.com/v1/chat/completions` (défaut) |
+| **Endpoint custom** | Définir `ai.endpoint` pour APIs compatibles (ex : Ollama en mode OpenAI, Azure OpenAI — non testé, contributions bienvenues) |
+
+### Ollama (Local — Gratuit)
+
+Tourne entièrement sur votre machine. Pas de clé API, pas de coût, aucune donnée envoyée.
+
+```yaml
+# .lorerc
+ai:
+  provider: "ollama"
+  model: "llama3.2"  # ou tout modèle : mistral, codellama, gemma2, etc.
+```
+
+```bash
+# Installer et démarrer Ollama
+brew install ollama    # macOS
+ollama serve &         # démarrer le serveur
+ollama pull llama3.2   # télécharger un modèle
+```
+
+Pas besoin de `lore config set-key` — Ollama n'a pas d'authentification.
+
+| Élément | Détail |
+|---------|--------|
+| **Installer** | [ollama.com](https://ollama.com) ou `brew install ollama` |
+| **Coût** | Gratuit (tourne sur votre matériel) |
+| **Endpoint** | `http://localhost:11434` (défaut, automatique) |
+| **Modèles** | Tout modèle Ollama — `ollama list` pour voir les installés |
+
+### Tester le provider OpenAI sans crédits OpenAI
+
+Ollama expose une API compatible OpenAI. Vous pouvez valider le provider `openai` contre Ollama :
+
+```yaml
+# .lorerc
+ai:
+  provider: "openai"
+  model: "llama3.2"
+  endpoint: "http://localhost:11434/v1/chat/completions"
+```
+
+```yaml
+# .lorerc.local
+ai:
+  api_key: "any-value"  # Ollama ignore les clés API
+```
+
+> **Note :** Cela fonctionne uniquement pour le provider `openai`. Le provider `anthropic` utilise un format de requête différent qu'Ollama ne supporte pas.
+
+### Comparaison des providers
+
+| | **Anthropic** | **OpenAI** | **Ollama** |
+|---|---|---|---|
+| **Qualité** | Meilleure pour les docs techniques | Très bonne | Dépend du modèle |
+| **Coût** | ~$0.01–0.05/appel | ~$0.001–0.01/appel | Gratuit |
+| **Vie privée** | Données envoyées à l'API | Données envoyées à l'API | 100% local |
+| **Setup** | Clé API + crédits | Clé API + crédits | Installer + pull modèle |
+| **Hors ligne** | Non | Non | Oui |
+| **Vitesse** | Rapide | Rapide | Dépend du matériel |
+
+### Pas d'IA ? Pas de problème
+
+`lore angela draft` et `lore angela draft --all` fonctionnent **100% hors ligne** sans aucune configuration. Ils analysent la structure des documents, les sections manquantes, la cohérence de style et les références croisées — tout localement.
+
+Pour polish/review sans crédits API, voir le [workflow manuel via le chat Claude.ai](../faq.fr.md#jai-un-abonnement-claudeai-mais-pas-de-crédits-api-puis-je-utiliser-angela) dans la FAQ.
+
 ## Dépannage
 
 ### "Mon changement de config n'a aucun effet"

@@ -29,6 +29,9 @@ Le hook Lore se déclenche automatiquement :
 
 Trois questions. Quatre-vingt-dix secondes. C'est fait.
 
+![lore interactif](../assets/vhs/interactive.gif)
+<!-- Generate: vhs assets/vhs/interactive.tape -->
+
 ## 3. Consulter votre document
 
 ```bash

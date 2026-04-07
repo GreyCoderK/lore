@@ -1,30 +1,36 @@
-# lore angela draft — VHS Tape
+# lore angela draft + polish — VHS Tape
 # Generate: vhs assets/vhs/angela-draft-polish.tape
-# Requires: scripts/setup-demo-project.sh
+# Requires: scripts/setup-demo-project.sh (Ollama configured + running)
+#
+# Shows: draft (local) → polish stops at first hunk prompt
 
 Output docs/assets/vhs/angela-draft-polish.gif
 
 Set Shell "bash"
-Set FontSize 15
-Set Width 1000
-Set Height 550
+Set FontSize 14
+Set Width 1100
+Set Height 700
 Set Padding 16
 Set Theme "Dracula"
-Set TypingSpeed 60ms
+Set TypingSpeed 50ms
 Set CursorBlink false
 
+# Setup
 Hide
 Type "cd /tmp/lore-demo && clear"
 Enter
 Sleep 1s
 Show
 
-# List decisions to pick one
-Type "lore list --type decision"
+# 1. Draft — free local analysis
+Type "lore angela draft decision-session-based-auth-over-jwt-2026-04-07.md"
 Enter
-Sleep 2s
+Sleep 5s
 
-# Run draft analysis (zero API — local only)
-Type "lore angela draft .lore/docs/decision-jwt-over-sessions-2026-04-06.md"
+# 2. Polish — interactive hunk review
+Type "lore angela polish decision-session-based-auth-over-jwt-2026-04-07.md"
 Enter
-Sleep 3.5s
+Sleep 30s
+
+# First hunk prompt visible — pause to show the interactive review
+Sleep 5s

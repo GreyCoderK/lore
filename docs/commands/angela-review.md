@@ -36,11 +36,12 @@ Analyzes the entire documentation corpus for coherence: contradictions between d
 ![lore angela review](../assets/vhs/angela-review.gif)
 <!-- Generate: vhs assets/vhs/angela-review.tape -->
 
+**Requires** an AI provider configured (`ai.provider` in `.lorerc`). For offline corpus analysis without an API, use `lore angela draft --all` instead.
+
 ## Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--local` | bool | `false` | Local signals only (no AI call) |
 | `--quiet` | bool | `false` | Suppress header and summary on stderr |
 
 ## Output
@@ -62,9 +63,7 @@ info      Coverage gap                      —                            No de
 graph TD
     A[lore angela review] --> B[Load all documents]
     B --> C[Local pre-analysis: signals]
-    C --> D{--local?}
-    D -->|Yes| E[Display local findings]
-    D -->|No| F[Prepare summaries for AI]
+    C --> F[Prepare summaries for AI]
     F --> G[Single API call with corpus context]
     G --> H[Parse AI findings]
     H --> I[Merge local + AI findings]
@@ -82,20 +81,20 @@ Pre-analysis without API calls:
 ## Examples
 
 ```bash
-# Full review (local + AI)
+# Full review (local signals + AI analysis)
 lore angela review
-
-# Local signals only (free, no API)
-lore angela review --local
 
 # Quiet (for integration with lore status)
 lore angela review --quiet
+
+# Offline alternative: analyze all docs locally (no API needed)
+lore angela draft --all
 ```
 
 ## Tips & Tricks
 
 - Run before every release: `lore angela review` catches contradictions that would confuse readers.
-- `--local` is free and fast — use it as a daily check.
+- **No API?** Use `lore angela draft --all` for free local analysis of every document.
 - Results are cached: `lore status` shows review findings without re-running.
 - Large corpus (> 50 docs): Lore warns about token usage before the API call.
 
@@ -113,7 +112,7 @@ lore angela review --quiet
 | | `angela draft` | `angela review` |
 |---|---|---|
 | **Scope** | One document | Entire corpus |
-| **Cost** | Free (zero-API) | 1 API call (or free with --local) |
+| **Cost** | Free (zero-API) | 1 API call |
 | **Finds** | Missing sections, style issues | Contradictions, isolated docs, coverage gaps |
 
 ### "How often should I run this?"

@@ -29,6 +29,9 @@ Lore's hook triggers automatically:
 
 Three questions. Ninety seconds. Done.
 
+![lore interactive](../assets/vhs/interactive.gif)
+<!-- Generate: vhs assets/vhs/interactive.tape -->
+
 > **What just happened?** Lore's post-commit hook detected your commit, asked 3 questions, and saved your answers as a Markdown file in `.lore/docs/`. The file contains YAML front matter (type, date, commit hash) and your "why" — permanently linked to this commit.
 
 ## 3. View your document

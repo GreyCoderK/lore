@@ -185,12 +185,26 @@ That's what the interactive review is for. Reject what you don't like. The AI is
 
 **Yes.** `lore angela draft` is free and catches structural issues. Fix those first, then `polish` for style improvements. You'll save API credits and get better results.
 
+### "Can I polish the same document multiple times?"
+
+Yes. You can re-polish as many times as you want. Each call sends the **current** version (including previous polish improvements) to the AI. Common workflow:
+
+1. `lore angela polish doc.md --yes` — first pass, auto-accept
+2. Edit the doc manually (add alternatives, impact, new context)
+3. `lore angela polish doc.md --yes` — second pass, improves your additions too
+
+![Re-polish workflow](../assets/vhs/angela-repolish.gif)
+<!-- Generate: vhs assets/vhs/angela-repolish.tape -->
+
+Each re-polish is one API call. The AI sees the improved version, not the original.
+
 ## Tips & Tricks
 
 - **`draft` then `polish`:** Always run the free analysis first, fix easy issues, then polish.
 - **`--dry-run` first time:** Preview the AI's suggestions before committing to the review.
 - **Ollama for experimentation:** Use a local model to test without spending credits.
 - **One API call per doc:** Budget accordingly. A corpus of 50 docs = 50 calls.
+- **Re-polish is safe:** Each call reads the current file. No risk of overwriting your edits.
 - **After polishing:** The front matter gets `angela_mode: "polish"` added automatically.
 
 ## Exit Codes

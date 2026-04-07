@@ -22,7 +22,7 @@ func newConfigCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		Use:           "config",
 		Short:         i18n.T().Cmd.ConfigShort,
 		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceErrors: false,
 	}
 
 	store := credential.NewStore()
@@ -42,7 +42,7 @@ func newSetKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *c
 		Short:         i18n.T().Cmd.SetKeyShort,
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceErrors: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
 			if !credential.IsKnownProvider(provider) {
@@ -76,7 +76,7 @@ func newDeleteKeyCmd(store credential.CredentialStore, streams domain.IOStreams)
 		Short:         i18n.T().Cmd.DeleteKeyShort,
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceErrors: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
 			if !credential.IsKnownProvider(provider) {
@@ -98,7 +98,7 @@ func newListKeysCmd(store credential.CredentialStore, streams domain.IOStreams) 
 		Use:           "list-keys",
 		Short:         i18n.T().Cmd.ListKeysShort,
 		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceErrors: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			stored, err := store.List()
 			if err != nil {

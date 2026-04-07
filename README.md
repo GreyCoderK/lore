@@ -18,8 +18,10 @@
   <a href="https://github.com/sponsors/GreyCoderK"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github-sponsors" alt="Sponsor"></a>
 </p>
 
-<!-- GIF demo — generate with: vhs assets/demo.tape -->
-<!-- ![Demo](assets/demo.gif) -->
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Lore Demo" width="800">
+</p>
+<!-- Generate: vhs assets/demo.tape -->
 
 ---
 
@@ -90,6 +92,15 @@ lore status
 # Bonus: document a past commit retroactively
 lore new --commit abc1234
 ```
+
+### Interactive Mode
+
+Use `lore new` for standalone documentation with the interactive type selector:
+
+<p align="center">
+  <img src="docs/assets/vhs/interactive.gif" alt="Lore Interactive" width="800">
+</p>
+<!-- Generate: vhs assets/vhs/interactive.tape -->
 
 ## How Lore Compares
 

@@ -28,8 +28,7 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 		Use:           "polish <filename>",
 		Short:         i18n.T().Cmd.AngelaPolishShort,
 		Args:          cobra.ExactArgs(1),
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filename := args[0]
 

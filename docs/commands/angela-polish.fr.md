@@ -175,12 +175,26 @@ C'est pour ça qu'il y a la revue interactive. Rejetez ce qui ne va pas. L'IA es
 
 **Oui.** `lore angela draft` est gratuit et attrape les problèmes structurels. Corrigez ceux-là d'abord, puis `polish` pour le style. Vous économiserez des crédits et obtiendrez de meilleurs résultats.
 
+### "Peut-on polish le même document plusieurs fois ?"
+
+Oui. Vous pouvez re-polish autant de fois que vous voulez. Chaque appel envoie la version **actuelle** (avec les améliorations précédentes) à l'IA. Workflow typique :
+
+1. `lore angela polish doc.md --yes` — premier passage, auto-accept
+2. Éditez le doc manuellement (ajoutez alternatives, impact, nouveau contexte)
+3. `lore angela polish doc.md --yes` — second passage, améliore aussi vos ajouts
+
+![Workflow re-polish](../assets/vhs/angela-repolish.gif)
+<!-- Generate: vhs assets/vhs/angela-repolish.tape -->
+
+Chaque re-polish est un appel API. L'IA voit la version améliorée, pas l'originale.
+
 ## Tips & Tricks
 
 - **`draft` puis `polish` :** Toujours l'analyse gratuite d'abord.
 - **`--dry-run` la première fois :** Prévisualisez avant de vous engager.
 - **Ollama pour expérimenter :** Modèle local pour tester sans dépenser.
 - **Un appel API par doc :** Budgétez en conséquence.
+- **Re-polish est sûr :** Chaque appel relit le fichier actuel. Aucun risque d'écraser vos éditions.
 - **Après polish :** Le front matter reçoit `angela_mode: "polish"` automatiquement.
 
 ## Codes de sortie

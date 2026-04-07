@@ -44,13 +44,14 @@ func (d *darwinStore) Set(provider string, secret []byte) error {
 		fmt.Fprintf(os.Stderr, "credential: keychain: pre-delete %s: %v\n", provider, err)
 	}
 
+	// Pass secret as -w argument. While visible in /proc on Linux, macOS
+	// security(1) is the only reliable way — stdin piping with -w (no arg)
+	// stores empty values on some macOS versions.
 	cmd := exec.Command("security", "add-generic-password",
 		"-s", d.serviceName(provider),
 		"-a", d.account,
-		"-w",
+		"-w", string(secret),
 	)
-	// Pipe secret via stdin — not visible in process args
-	cmd.Stdin = bytes.NewReader(append(secret, '\n'))
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -80,7 +81,11 @@ func (d *darwinStore) Get(provider string) ([]byte, error) {
 		return nil, fmt.Errorf("credential: keychain: get %s failed", provider)
 	}
 
-	return bytes.TrimSpace(stdout.Bytes()), nil
+	val := bytes.TrimSpace(stdout.Bytes())
+	if len(val) == 0 {
+		return nil, ErrNotFound
+	}
+	return val, nil
 }
 
 func (d *darwinStore) Delete(provider string) error {

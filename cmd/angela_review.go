@@ -25,8 +25,7 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 		Use:           "review",
 		Short:         i18n.T().Cmd.AngelaReviewShort,
 		Args:          cobra.NoArgs,
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// AC-9: Check .lore/ exists
 			if err := requireLoreDir(streams); err != nil {

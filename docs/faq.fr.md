@@ -34,23 +34,54 @@ Les commits sont différés silencieusement dans pending. Dans les terminaux VS 
 
 ### Pourquoi un dialog s'affiche au lieu des questions interactives ?
 
-Git redirige stdin vers `/dev/null` pour les hooks. Le hook de Lore reconnecte stdin depuis le terminal via `< /dev/tty`. Si vous voyez un dialog au lieu des questions interactives, votre hook est probablement ancien (il manque la redirection `< /dev/tty`).
+Git redirige stdin vers `/dev/null` pour les hooks. Le hook de Lore reconnecte stdin depuis le terminal pour poser les questions de façon interactive.
 
-**Fix :** Reinstallez le hook :
+**Fix :** Réinstallez le hook :
 
 ```bash
 lore hook uninstall
 lore hook install
 ```
 
-Verifiez que le hook contient la redirection :
+Vérifiez que le hook contient la redirection stdin :
 
-```bash
-grep "dev/tty" .git/hooks/post-commit
-# Devrait afficher : exec lore _hook-post-commit < /dev/tty
-```
+=== "macOS / Linux"
 
-> **Note :** Dans les environnements ou `/dev/tty` n'est pas disponible (CI, Docker, pipes), les commits sont toujours differes vers pending — c'est voulu. Voir [Detection Contextuelle](guides/contextual-detection.md) pour les details.
+    ```bash
+    grep "dev/tty" .git/hooks/post-commit
+    # Devrait afficher : exec lore _hook-post-commit < /dev/tty
+    ```
+
+    Le hook utilise `< /dev/tty` pour reconnecter stdin depuis le terminal. Dans les environnements où `/dev/tty` n'est pas disponible (CI, Docker, pipes), les commits sont différés silencieusement.
+
+=== "Windows (Git Bash)"
+
+    ```bash
+    grep "dev/tty" .git/hooks/post-commit
+    # Même mécanisme — Git Bash (MSYS2) fournit /dev/tty
+    ```
+
+    Windows utilise Git Bash pour les hooks, qui fournit `/dev/tty` comme les systèmes Unix. Si vous utilisez PowerShell ou CMD directement, les commits seront différés vers pending.
+
+> **Note :** Dans les environnements où le terminal n'est pas disponible (CI, Docker, pipes), les commits sont toujours différés vers pending — c'est voulu. Voir [Détection Contextuelle](guides/contextual-detection.md) pour les détails.
+
+### Comment Lore gère les notifications sur les différentes plateformes ?
+
+Quand un commit est différé (non-TTY), Lore peut envoyer une notification selon `notification.mode` dans `.lorerc` :
+
+| Plateforme | Mode `dialog` | Mode `notify` |
+|------------|--------------|---------------|
+| **macOS** | Dialog AppleScript (`osascript`) | `terminal-notifier` (si installé) ou `display notification` |
+| **Linux** | `zenity`, `kdialog` ou `yad` (le premier disponible) | `notify-send` |
+| **Windows** | PowerShell `System.Windows.Forms` balloon | Notification PowerShell balloon |
+
+Le stockage des clés API varie aussi par plateforme :
+
+| Plateforme | Backend keychain |
+|------------|-----------------|
+| **macOS** | Trousseau système (`security` CLI) |
+| **Linux** | `secret-tool` (GNOME Keyring / KWallet) |
+| **Windows** | Windows Credential Manager (fallback sur config) |
 
 ### Puis-je documenter d'anciens commits rétroactivement ?
 
@@ -77,6 +108,40 @@ Analyse structurelle locale : sections manquantes, conformité au guide de style
 ### Que fait Angela Polish ?
 
 Envoie votre document au fournisseur IA pour réécriture. Affiche un diff interactif — acceptez ou rejetez chaque changement individuellement. Un seul appel API par document.
+
+### J'ai un abonnement Claude.ai mais pas de crédits API. Puis-je utiliser Angela ?
+
+`angela draft` fonctionne **100% hors ligne** — pas besoin d'API. Pour les fonctions polish/review, deux options gratuites :
+
+**Option 1 : Ollama (local, gratuit)**
+
+```bash
+brew install ollama
+ollama pull llama3.2
+```
+
+```yaml
+# .lorerc
+ai:
+  provider: "ollama"
+  model: "llama3.2"
+```
+
+**Option 2 : Polish manuel via le chat Claude.ai**
+
+1. Lancez `lore angela draft <fichier>` pour les suggestions structurelles
+2. Copiez le contenu de votre document dans Claude.ai avec ce prompt :
+
+```
+Améliore ce document de décision technique. Garde le format Markdown
+avec les sections : What, Why, Alternatives, Impact. Sois concis et technique :
+
+[coller le contenu du document]
+```
+
+3. Collez la version améliorée dans votre fichier
+
+> **Note :** Claude.ai (abonnement chat) et l'API Anthropic sont deux produits séparés avec une facturation séparée. L'API nécessite des crédits achetés sur [console.anthropic.com](https://console.anthropic.com).
 
 ## Données et vie privée
 

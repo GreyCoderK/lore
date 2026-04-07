@@ -78,6 +78,8 @@ exec lore _hook-post-commit < /dev/tty
 
 This is why interactive questions work in terminal emulators (iTerm, Terminal.app, VS Code integrated terminal) but **not** in environments where `/dev/tty` is unavailable (CI, Docker, pipes).
 
+> **Windows:** Git uses Git Bash (MSYS2) for hooks, which provides `/dev/tty`. Interactive questions work in Git Bash, Windows Terminal, and VS Code integrated terminal. PowerShell and CMD without Git Bash defer to pending.
+
 ## Non-TTY Detection
 
 After reconnecting stdin via `/dev/tty`, Lore checks whether stdin is a real TTY:

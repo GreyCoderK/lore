@@ -73,15 +73,20 @@ If you don't provide arguments, Lore asks interactively.
 
 When you run `lore new` interactively, here's what happens:
 
+![lore new interactive](../assets/vhs/interactive.gif)
+<!-- Generate: vhs assets/vhs/interactive.tape -->
+
 ```
 $ lore new
 
 ? Type: [Use arrows to select]
-  > decision
-    feature
+  > feature
     bugfix
+    decision
     refactor
     note
+    release
+    summary
 
 ? What changed: Add JWT auth middleware
   (Pre-filled from context if available. Edit or press Enter.)

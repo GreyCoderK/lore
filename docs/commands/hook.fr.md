@@ -49,9 +49,15 @@ Installe le hook post-commit dans `.git/hooks/post-commit` (ou à l'emplacement 
 npm run lint-staged
 
 # LORE-START
-/usr/local/bin/lore _hook-post-commit
+if (: < /dev/tty) 2>/dev/null; then
+  exec lore _hook-post-commit < /dev/tty
+else
+  exec lore _hook-post-commit
+fi
 # LORE-END
 ```
+
+La redirection `< /dev/tty` reconnecte stdin depuis le terminal (Git ferme stdin pour les hooks). Le fallback assure un fonctionnement silencieux en CI/Docker où `/dev/tty` n'est pas disponible.
 
 Les marqueurs garantissent que Lore ne touche qu'à sa propre section.
 

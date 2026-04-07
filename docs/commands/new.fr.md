@@ -73,15 +73,20 @@ Sans arguments, Lore pose les questions interactivement.
 
 En mode interactif :
 
+![lore new interactif](../assets/vhs/interactive.gif)
+<!-- Generate: vhs assets/vhs/interactive.tape -->
+
 ```
 $ lore new
 
 ? Type : [Utilisez les flèches]
-  > decision
-    feature
+  > feature
     bugfix
+    decision
     refactor
     note
+    release
+    summary
 
 ? What changed : Add JWT auth middleware
   (Pré-rempli depuis le contexte. Éditez ou appuyez sur Entrée.)

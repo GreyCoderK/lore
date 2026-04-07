@@ -34,7 +34,7 @@ Commits are deferred to pending silently. In VS Code terminals, Lore sends a not
 
 ### Why do I get a dialog instead of interactive questions?
 
-Git redirects stdin to `/dev/null` for hooks. The Lore hook reconnects stdin from the terminal via `< /dev/tty`. If you're seeing a dialog instead of interactive questions, your hook may be outdated (missing the `< /dev/tty` redirect).
+Git redirects stdin to `/dev/null` for hooks. The Lore hook reconnects stdin from the terminal so the questions can be asked interactively.
 
 **Fix:** Reinstall the hook:
 
@@ -43,14 +43,45 @@ lore hook uninstall
 lore hook install
 ```
 
-Verify the hook contains the redirect:
+Verify the hook contains the stdin redirect:
 
-```bash
-grep "dev/tty" .git/hooks/post-commit
-# Should show: exec lore _hook-post-commit < /dev/tty
-```
+=== "macOS / Linux"
 
-> **Note:** In environments where `/dev/tty` is unavailable (CI, Docker, pipes), commits are always deferred to pending — this is by design. See [Contextual Detection](guides/contextual-detection.md) for details.
+    ```bash
+    grep "dev/tty" .git/hooks/post-commit
+    # Should show: exec lore _hook-post-commit < /dev/tty
+    ```
+
+    The hook uses `< /dev/tty` to reconnect stdin from the terminal. In environments where `/dev/tty` is unavailable (CI, Docker, pipes), commits are silently deferred to pending.
+
+=== "Windows (Git Bash)"
+
+    ```bash
+    grep "dev/tty" .git/hooks/post-commit
+    # Same mechanism — Git Bash (MSYS2) provides /dev/tty
+    ```
+
+    Windows uses Git Bash for hooks, which provides `/dev/tty` like Unix systems. If you use PowerShell or CMD directly, commits will be deferred to pending.
+
+> **Note:** In environments where the terminal is unavailable (CI, Docker, pipes), commits are always deferred to pending — this is by design. See [Contextual Detection](guides/contextual-detection.md) for details.
+
+### How does Lore handle notifications on different platforms?
+
+When a commit is deferred (non-TTY), Lore can send a notification depending on `notification.mode` in `.lorerc`:
+
+| Platform | `dialog` mode | `notify` mode |
+|----------|--------------|---------------|
+| **macOS** | AppleScript dialog (`osascript`) | `terminal-notifier` (if installed) or `display notification` |
+| **Linux** | `zenity`, `kdialog`, or `yad` (whichever is available) | `notify-send` |
+| **Windows** | PowerShell `System.Windows.Forms` balloon | PowerShell balloon notification |
+
+API key storage also varies by platform:
+
+| Platform | Keychain backend |
+|----------|-----------------|
+| **macOS** | System Keychain (`security` CLI) |
+| **Linux** | `secret-tool` (GNOME Keyring / KWallet) |
+| **Windows** | Windows Credential Manager (fallback to config) |
 
 ### Can I document old commits retroactively?
 
@@ -77,6 +108,40 @@ Local structural analysis: missing sections, style guide compliance, related doc
 ### What does Angela Polish do?
 
 Sends your document to the AI provider for rewriting. Shows an interactive diff — accept or reject each change individually.
+
+### I have a Claude.ai subscription but no API credits. Can I use Angela?
+
+`angela draft` works **100% offline** — no API needed. For the polish/review features, you have two free options:
+
+**Option 1: Ollama (local, free)**
+
+```bash
+brew install ollama
+ollama pull llama3.2
+```
+
+```yaml
+# .lorerc
+ai:
+  provider: "ollama"
+  model: "llama3.2"
+```
+
+**Option 2: Manual polish via Claude.ai chat**
+
+1. Run `lore angela draft <filename>` to get structural suggestions
+2. Copy your document content into Claude.ai with this prompt:
+
+```
+Improve this technical decision document. Keep the Markdown format
+with sections: What, Why, Alternatives, Impact. Be concise and technical:
+
+[paste document content]
+```
+
+3. Paste the improved version back into your file
+
+> **Note:** Claude.ai (chat subscription) and the Anthropic API are separate products with separate billing. The API requires credits purchased at [console.anthropic.com](https://console.anthropic.com).
 
 ## Data & Privacy
 

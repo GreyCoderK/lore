@@ -133,6 +133,14 @@ export LORE_AI_PROVIDER="anthropic"
 
 Run `lore config list-keys`. If it says "stored," the key is in your OS keychain. If you're using the fallback, it's in `.lorerc.local` (which is gitignored and chmod 600).
 
+Keychain backend by platform:
+
+| Platform | Backend | Tool used |
+|----------|---------|-----------|
+| **macOS** | System Keychain | `security add-generic-password` / `find-generic-password` |
+| **Linux** | GNOME Keyring / KWallet | `secret-tool store` / `secret-tool lookup` |
+| **Windows** | Credential Manager | Fallback to `.lorerc.local` (native keychain planned) |
+
 ### "I set the key but Angela still says 'no provider configured'"
 
 Two things are needed:

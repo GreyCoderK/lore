@@ -19,10 +19,9 @@ import (
 
 func newAngelaCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           "angela",
-		Short:         i18n.T().Cmd.AngelaShort,
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		Use:          "angela",
+		Short:        i18n.T().Cmd.AngelaShort,
+		SilenceUsage: true,
 	}
 
 	cmd.AddCommand(newAngelaDraftCmd(cfg, streams))
@@ -39,8 +38,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 		Use:           "draft [filename]",
 		Short:         i18n.T().Cmd.AngelaDraftShort,
 		Args:          cobra.MaximumNArgs(1),
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// --all mode: analyze entire corpus
 			if flagAll {

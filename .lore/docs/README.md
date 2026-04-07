@@ -4,8 +4,10 @@
 
 | Document | Type | Date | Status | Tags |
 |----------|------|------|--------|------|
-| [note-add-something-real-2026-04-06.md](note-add-something-real-2026-04-06.md) | note | 2026-04-06 | draft |  |
-| [note-amelioration-de-la-documentation-2026-04-05.md](note-amelioration-de-la-documentation-2026-04-05.md) | note | 2026-04-05 | draft |  |
-| [note-le-style-du-site-de-documentation-2026-04-05.md](note-le-style-du-site-de-documentation-2026-04-05.md) | note | 2026-04-05 | draft |  |
+| [bugfix-silenceerrors-removed-from-angela-commands-2026-04-07.md](bugfix-silenceerrors-removed-from-angela-commands-2026-04-07.md) | bugfix | 2026-04-07 | draft |  |
+| [decision-arrow-key-type-selector-over-free-text-2026-04-07.md](decision-arrow-key-type-selector-over-free-text-2026-04-07.md) | decision | 2026-04-07 | draft |  |
+| [feature-keychain-fix-for-macos-2026-04-07.md](feature-keychain-fix-for-macos-2026-04-07.md) | feature | 2026-04-07 | draft |  |
+| [feature-post-commit-hook-tty-fix-2026-04-07.md](feature-post-commit-hook-tty-fix-2026-04-07.md) | feature | 2026-04-07 | draft |  |
+| [note-type-selector-feature-2026-04-07.md](note-type-selector-feature-2026-04-07.md) | note | 2026-04-07 | draft |  |
 
-*3 documents total*
+*5 documents total*

@@ -19,8 +19,8 @@ internal/
   ui/          Interface terminal — couleurs, progression, listes
   engagement/  Messages milestones, prompt star
   fileutil/    Opérations fichiers atomiques
-  notify/      Notification IDE (detection non-TTY)
-  status/      Collecteur de sante du dépôt
+  notify/      Notification IDE (détection non-TTY)
+  status/      Collecteur de santé du dépôt
   template/    Moteur de templates Go
 .lore/
   docs/        Corpus de documentation (Markdown + YAML front matter)

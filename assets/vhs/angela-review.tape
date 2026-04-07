@@ -1,25 +1,33 @@
 # lore angela review — VHS Tape
 # Generate: vhs assets/vhs/angela-review.tape
-# Requires: scripts/setup-demo-project.sh (5+ docs)
+# Requires: scripts/setup-demo-project.sh (Ollama configured + running)
+#
+# Shows: list corpus → full AI review with real findings
 
 Output docs/assets/vhs/angela-review.gif
 
 Set Shell "bash"
-Set FontSize 15
-Set Width 1000
-Set Height 550
+Set FontSize 14
+Set Width 1100
+Set Height 700
 Set Padding 16
 Set Theme "Dracula"
-Set TypingSpeed 60ms
+Set TypingSpeed 50ms
 Set CursorBlink false
 
+# Setup
 Hide
 Type "cd /tmp/lore-demo && clear"
 Enter
 Sleep 1s
 Show
 
-# Corpus-wide review (local signals, no API needed)
+# 1. Show corpus size
+Type "lore list"
+Enter
+Sleep 3s
+
+# 2. Full corpus review (local signals + AI via Ollama)
 Type "lore angela review"
 Enter
-Sleep 4s
+Sleep 25s

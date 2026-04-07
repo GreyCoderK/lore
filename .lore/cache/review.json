@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "last_review": "2026-04-07T01:12:51.212071Z",
+  "doc_count": 5,
+  "total_docs": 5,
+  "findings": [
+    {
+      "severity": "contradiction",
+      "title": "What and Why contradictions",
+      "description": "What section in arrow-key-type-selector-over-free-text.md states \"Arrow-key type selector over free text\", but why section mentions \"Free text allowed invalid types causing generate-error\"",
+      "documents": [
+        "arrow-key-type-selector-over-free-text.md"
+      ]
+    },
+    {
+      "severity": "gap",
+      "title": "Lack of summary for feature-post-commit-hook-tty-fix.md",
+      "description": "",
+      "documents": [
+        "feature-post-commit-hook-tty-fix.md"
+      ]
+    },
+    {
+      "severity": "style",
+      "title": "Inconsistent terminology",
+      "description": "Terminology variation: \"generate-error\" vs. \"errors were hidden\"",
+      "documents": [
+        "bugfix-silenceerrors-removed-from-angela-commands.md",
+        "arrow-key-type-selector-over-free-text.md"
+      ]
+    },
+    {
+      "severity": "style",
+      "title": "Inconsistent terminology",
+      "description": "Terminology variation: \"security add-generic-password -w\" vs. \"Keychain fix for macOS\"",
+      "documents": [
+        "feature-keychain-fix-for-macos.md",
+        "bugfix-silenceerrors-removed-from-angela-commands.md"
+      ]
+    },
+    {
+      "severity": "style",
+      "title": "Inconsistent terminology",
+      "description": "Terminology variation: \"connectivity issues\" vs. \"reconnect the terminal after closing stdin\"",
+      "documents": [
+        "feature-post-commit-hook-tty-fix.md",
+        "arrow-key-type-selector-over-free-text.md"
+      ]
+    }
+  ]
+}

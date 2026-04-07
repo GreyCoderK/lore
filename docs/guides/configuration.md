@@ -146,6 +146,119 @@ hooks:
 
 All UI messages, prompts, badges, and reinforcement messages switch to French. "Lore" becomes "L'or."
 
+## AI Provider Setup
+
+Angela's `polish` and `review` commands require an AI provider. Three providers are supported, each with different trade-offs.
+
+### Anthropic (Claude)
+
+Best quality for technical documentation. Requires API credits purchased separately from a Claude.ai chat subscription.
+
+```yaml
+# .lorerc
+ai:
+  provider: "anthropic"
+  model: "claude-sonnet-4-20250514"  # or claude-haiku-4-5-20251001 (cheaper)
+```
+
+```bash
+# Store API key securely in OS keychain
+lore config set-key anthropic
+```
+
+> **Important:** A Claude.ai chat subscription (Pro, Team) does NOT include API credits. The API is billed separately at [console.anthropic.com](https://console.anthropic.com) → Plans & Billing. Minimum $5 credits.
+
+| Item | Detail |
+|------|--------|
+| **Get a key** | [console.anthropic.com](https://console.anthropic.com) → API Keys |
+| **Cost per call** | ~$0.01–0.05 (Sonnet), ~$0.001 (Haiku) |
+| **Endpoint** | `https://api.anthropic.com/v1/messages` (default, automatic) |
+| **Format** | Anthropic-specific (not OpenAI-compatible) |
+
+### OpenAI (GPT)
+
+```yaml
+# .lorerc
+ai:
+  provider: "openai"
+  model: "gpt-4o-mini"  # cheapest, or gpt-4o for best quality
+```
+
+```bash
+lore config set-key openai
+```
+
+| Item | Detail |
+|------|--------|
+| **Get a key** | [platform.openai.com](https://platform.openai.com) → API Keys |
+| **Cost per call** | ~$0.001 (gpt-4o-mini), ~$0.01 (gpt-4o) |
+| **Endpoint** | `https://api.openai.com/v1/chat/completions` (default) |
+| **Custom endpoint** | Set `ai.endpoint` for compatible APIs (e.g., Ollama in OpenAI mode, Azure OpenAI — untested, contributions welcome) |
+
+### Ollama (Local — Free)
+
+Runs entirely on your machine. No API key, no cost, no data sent anywhere.
+
+```yaml
+# .lorerc
+ai:
+  provider: "ollama"
+  model: "llama3.2"  # or any model: mistral, codellama, gemma2, etc.
+```
+
+```bash
+# Install and start Ollama
+brew install ollama    # macOS
+ollama serve &         # start the server
+ollama pull llama3.2   # download a model
+```
+
+No `lore config set-key` needed — Ollama has no authentication.
+
+| Item | Detail |
+|------|--------|
+| **Install** | [ollama.com](https://ollama.com) or `brew install ollama` |
+| **Cost** | Free (runs on your hardware) |
+| **Endpoint** | `http://localhost:11434` (default, automatic) |
+| **Models** | Any Ollama model — `ollama list` to see installed |
+
+### Testing OpenAI provider without OpenAI credits
+
+Ollama exposes an OpenAI-compatible API. You can validate the `openai` provider against Ollama:
+
+```yaml
+# .lorerc
+ai:
+  provider: "openai"
+  model: "llama3.2"
+  endpoint: "http://localhost:11434/v1/chat/completions"
+```
+
+```yaml
+# .lorerc.local
+ai:
+  api_key: "any-value"  # Ollama ignores API keys
+```
+
+> **Note:** This only works for `openai` provider. The `anthropic` provider uses a different request format that Ollama does not support.
+
+### Provider comparison
+
+| | **Anthropic** | **OpenAI** | **Ollama** |
+|---|---|---|---|
+| **Quality** | Best for technical docs | Very good | Depends on model |
+| **Cost** | ~$0.01–0.05/call | ~$0.001–0.01/call | Free |
+| **Privacy** | Data sent to API | Data sent to API | 100% local |
+| **Setup** | API key + credits | API key + credits | Install + pull model |
+| **Offline** | No | No | Yes |
+| **Speed** | Fast | Fast | Depends on hardware |
+
+### No AI? No problem
+
+`lore angela draft` and `lore angela draft --all` work **100% offline** with zero configuration. They analyze document structure, missing sections, style consistency, and cross-references — all locally.
+
+For polish/review without API credits, see the [manual workflow via Claude.ai chat](../faq.md#i-have-a-claudeai-subscription-but-no-api-credits-can-i-use-angela) in the FAQ.
+
 ## Troubleshooting
 
 ### "My config change has no effect"

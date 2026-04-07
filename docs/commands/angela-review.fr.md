@@ -29,13 +29,12 @@ lore angela review [flags]
 ![lore angela review](../assets/vhs/angela-review.gif)
 <!-- Generate: vhs assets/vhs/angela-review.tape -->
 
-**Nécessite** un fournisseur IA configuré (sauf avec `--local`).
+**Nécessite** un fournisseur IA configuré (`ai.provider` dans `.lorerc`). Pour une analyse locale du corpus sans API, utilisez `lore angela draft --all` à la place.
 
 ## Flags
 
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
-| `--local` | bool | `false` | Signaux locaux uniquement (gratuit, aucun appel IA) |
 | `--quiet` | bool | `false` | Supprimer l'en-tête et le résumé sur stderr |
 
 ## Sortie
@@ -57,9 +56,7 @@ info      Lacune de couverture             —                            Aucune
 graph TD
     A[lore angela review] --> B[Charger tous les documents]
     B --> C[Pré-analyse locale : signaux]
-    C --> D{--local ?}
-    D -->|Oui| E[Afficher les résultats locaux]
-    D -->|Non| F[Préparer les résumés pour l'IA]
+    C --> F[Préparer les résumés pour l'IA]
     F --> G[Un seul appel API avec contexte corpus]
     G --> H[Parser les résultats IA]
     H --> I[Fusionner local + IA]
@@ -77,14 +74,14 @@ Pré-analyse sans appel API :
 ## Exemples
 
 ```bash
-# Revue complète (locale + IA)
+# Revue complète (signaux locaux + analyse IA)
 lore angela review
-
-# Signaux locaux uniquement (gratuit, sans API)
-lore angela review --local
 
 # Silencieux (pour intégration avec lore status)
 lore angela review --quiet
+
+# Alternative hors ligne : analyser tous les docs localement (pas d'API)
+lore angela draft --all
 ```
 
 ## Questions fréquentes
@@ -94,7 +91,7 @@ lore angela review --quiet
 | | `angela draft` | `angela review` |
 |---|---|---|
 | **Portée** | Un document | Corpus entier |
-| **Coût** | Gratuit (zéro-API) | 1 appel API (ou gratuit avec `--local`) |
+| **Coût** | Gratuit (zéro-API) | 1 appel API |
 | **Trouve** | Sections manquantes, style | Contradictions, docs isolés, lacunes |
 
 ### "À quelle fréquence lancer ?"
@@ -108,7 +105,7 @@ Un seul appel API quelle que soit la taille du corpus. Lore compresse les résum
 ## Tips & Tricks
 
 - **Avant chaque release :** `lore angela review` attrape les contradictions qui dérouteraient les lecteurs.
-- **`--local` est gratuit et rapide** — utilisez-le comme vérification quotidienne.
+- **Pas d'API ?** Utilisez `lore angela draft --all` pour une analyse locale gratuite de chaque document.
 - **Résultats en cache :** `lore status` affiche les findings sans relancer l'analyse.
 - **Gros corpus (> 50 docs) :** Lore avertit de la consommation de tokens avant l'appel.
 
