@@ -20,7 +20,7 @@ hooks:
   amend_prompt: true     # Ask "Document this change?" on git commit --amend
 
 notification:
-  mode: terminal           # auto, terminal, dialog, notify, silent
+  mode: silent           # auto, terminal, dialog, notify, silent
   disabled_envs: []
   amend: true            # Enable notifications for amend commits
 
