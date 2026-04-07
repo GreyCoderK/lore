@@ -51,7 +51,7 @@ func selectType(streams domain.IOStreams, defaultType string) (string, error) {
 	if err != nil {
 		return defaultType, nil
 	}
-	defer term.Restore(fd, oldState)
+	defer func() { _ = term.Restore(fd, oldState) }()
 
 	renderSelect(streams, cursor, -1)
 
@@ -59,7 +59,7 @@ func selectType(streams domain.IOStreams, defaultType string) (string, error) {
 		b := make([]byte, 3)
 		n, err := inFile.Read(b)
 		if err != nil || n == 0 {
-			term.Restore(fd, oldState)
+			_ = term.Restore(fd, oldState)
 			return defaultType, nil
 		}
 
@@ -67,12 +67,12 @@ func selectType(streams domain.IOStreams, defaultType string) (string, error) {
 		case n == 1 && (b[0] == '\r' || b[0] == '\n'):
 			// Enter — confirm selection
 			clearSelectLines(streams, len(typeSelectOptions))
-			term.Restore(fd, oldState)
+			_ = term.Restore(fd, oldState)
 			return typeSelectOptions[cursor], nil
 
 		case n == 1 && (b[0] == 'q' || b[0] == 3): // q or Ctrl+C
 			clearSelectLines(streams, len(typeSelectOptions))
-			term.Restore(fd, oldState)
+			_ = term.Restore(fd, oldState)
 			return defaultType, nil
 
 		case n == 3 && b[0] == 27 && b[1] == 91: // ESC [ sequence

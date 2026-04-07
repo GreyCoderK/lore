@@ -4,6 +4,8 @@
 package notify
 
 import (
+	"fmt"
+	"os/exec"
 	"runtime"
 	"testing"
 
@@ -22,6 +24,13 @@ func TestNotifyOSSimple_Detached(t *testing.T) {
 			captured.name = name
 			captured.args = args
 			return nil
+		},
+		// Force osascript path on darwin by hiding terminal-notifier.
+		LookPath: func(file string) (string, error) {
+			if file == "terminal-notifier" {
+				return "", fmt.Errorf("not found")
+			}
+			return exec.LookPath(file)
 		},
 	})
 
