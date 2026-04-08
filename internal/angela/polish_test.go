@@ -37,8 +37,8 @@ func TestBuildPolishPrompt_IncludesDocAndStyleGuide(t *testing.T) {
 	if !strings.Contains(sys, "You are Angela") {
 		t.Error("system prompt should contain Angela preamble")
 	}
-	if !strings.Contains(sys, "RULES:") {
-		t.Error("system prompt should contain RULES block")
+	if !strings.Contains(sys, "HARD RULES") {
+		t.Error("system prompt should contain HARD RULES block")
 	}
 }
 

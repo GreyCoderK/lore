@@ -77,7 +77,12 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: "STORYTELLING LENS (Affoue):\n- The Why is the protagonist — make it compelling\n- Move from abstract to concrete with examples\n- Use analogies to anchor understanding\n- Lists are scaffolding, not the final form",
+		PromptDirective: `STORYTELLING LENS (Affoue):
+- The ## Why section is the story's climax — it must answer "why THIS choice?" not just "what we did"
+- Replace vague motivations with a concrete narrative: what was the pain? what broke? what did users experience?
+- Convert bullet-list-only sections into 2-3 sentence narratives that flow. Lists are scaffolding, not the story
+- Add a "before this change" vs "after this change" framing when relevant
+- Use one concrete analogy if it genuinely clarifies (avoid forced analogies)`,
 		DocTypes:        []string{"decision", "note"},
 		ContentSignals:  signalsStoryteller,
 	},
@@ -120,7 +125,12 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: "TECHNICAL WRITING LENS (Sialou):\n- Every word must serve a purpose — cut filler\n- Prefer bullets over long paragraphs\n- Use diagrams or code blocks when they communicate better than prose",
+		PromptDirective: `TECHNICAL WRITING LENS (Sialou):
+- Cut every sentence that doesn't add information. Target: 30-50% fewer words than the original
+- Replace paragraphs > 4 lines with bullet lists or tables
+- Add a mermaid diagram if the doc describes any process, flow, or architecture — this is mandatory, not optional
+- Add code blocks with language tags for commands, config, or API examples
+- Structure: scannable headers → key info in first sentence of each section → details after`,
 		DocTypes:        []string{"feature", "refactor", "release"},
 		ContentSignals:  signalsTechWriter,
 	},
@@ -159,7 +169,11 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: "QA LENS (Kouame):\n- Every claim needs testable validation criteria\n- Make edge cases and failure modes explicit\n- Consider the shelf life of this documentation",
+		PromptDirective: `QA LENS (Kouame):
+- Add a "## How to Verify" section with concrete steps (commands to run, expected output)
+- List edge cases and failure modes explicitly — what happens when X fails? what about Y?
+- If the doc claims something works, specify how to test it: exact command, expected result
+- Flag any undocumented assumptions (e.g., "requires Redis" but Redis setup isn't mentioned)`,
 		DocTypes:        []string{"bugfix", "feature"},
 		ContentSignals:  signalsQAReviewer,
 	},
@@ -202,7 +216,11 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: "ARCHITECTURE LENS (Doumbia):\n- Make trade-offs explicit — what was considered and rejected?\n- Prioritize user value over technical elegance\n- Boring technology is a feature, not a compromise",
+		PromptDirective: `ARCHITECTURE LENS (Doumbia):
+- Add or improve ## Alternatives Considered with a comparison table: Option | Pros | Cons | Verdict
+- Make trade-offs explicit: what did we gain? what did we sacrifice? why is that acceptable?
+- Add a mermaid architecture diagram showing component relationships or data flow
+- Quantify impact when possible: latency, throughput, resource usage, complexity cost`,
 		DocTypes:        []string{"decision", "refactor"},
 		ContentSignals:  signalsArchitect,
 	},
@@ -243,7 +261,11 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: "UX LENS (Gougou):\n- Start from user empathy — who is affected and how?\n- Respect the user's mental model\n- Accessibility is not optional",
+		PromptDirective: `UX LENS (Gougou):
+- Add "## User Impact" if missing: who is affected? what changes in their workflow?
+- Describe the before/after user experience concretely: "Before: user sees X. After: user sees Y"
+- Flag accessibility concerns: does this work on all platforms? in CI? in non-TTY?
+- If there's a UI change, describe exactly what the user sees (terminal output, dialog, etc.)`,
 		DocTypes:        []string{"feature"},
 		ContentSignals:  signalsUXDesigner,
 	},
@@ -291,7 +313,11 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: "BUSINESS LENS (Beda):\n- Requirements must be traceable to business goals\n- Make business value explicit — not assumed\n- Ensure stakeholder alignment is addressed",
+		PromptDirective: `BUSINESS LENS (Beda):
+- Link the change to a concrete business outcome: what user problem does this solve?
+- Quantify value when possible: time saved, errors prevented, users impacted
+- If this was driven by a requirement, name it (compliance, SLA, customer request)
+- Add ## Impact section if missing: who benefits and how?`,
 		DocTypes:        []string{"feature", "release"},
 		ContentSignals:  signalsBusinessAnalyst,
 	},

@@ -828,6 +828,84 @@ func TestHandleDetectionResult_UnknownAction(t *testing.T) {
 	}
 }
 
+// mockCommitStore records RecordCommit calls for verification.
+type mockCommitStore struct {
+	domain.LoreStore
+	recorded []domain.CommitRecord
+}
+
+func (m *mockCommitStore) RecordCommit(rec domain.CommitRecord) error {
+	m.recorded = append(m.recorded, rec)
+	return nil
+}
+
+func TestRecordDecision_ValidRecord(t *testing.T) {
+	store := &mockCommitStore{}
+	commit := &domain.CommitInfo{
+		Hash:    "abc123def456",
+		Date:    time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC),
+		Branch:  "main",
+		Scope:   "api",
+		Type:    "feat",
+		Subject: "add endpoint",
+		Message: "feat(api): add endpoint",
+	}
+	detection := DetectionResult{
+		Action:       "ask-full",
+		Score:        75,
+		QuestionMode: "full",
+		Reason:       "",
+	}
+	recordDecision(store, commit, detection, "documented")
+
+	if len(store.recorded) != 1 {
+		t.Fatalf("expected 1 recorded commit, got %d", len(store.recorded))
+	}
+	rec := store.recorded[0]
+	if rec.Hash != "abc123def456" {
+		t.Errorf("Hash = %q, want %q", rec.Hash, "abc123def456")
+	}
+	if rec.Decision != "documented" {
+		t.Errorf("Decision = %q, want %q", rec.Decision, "documented")
+	}
+	if rec.DecisionScore != 75 {
+		t.Errorf("DecisionScore = %d, want 75", rec.DecisionScore)
+	}
+	if rec.QuestionMode != "full" {
+		t.Errorf("QuestionMode = %q, want %q", rec.QuestionMode, "full")
+	}
+	if rec.ConvType != "feat" {
+		t.Errorf("ConvType = %q, want %q", rec.ConvType, "feat")
+	}
+}
+
+func TestRecordDecision_SkipWithReason(t *testing.T) {
+	store := &mockCommitStore{}
+	commit := &domain.CommitInfo{Hash: "aaa111", Subject: "merge branch"}
+	detection := DetectionResult{
+		Action: "skip",
+		Reason: "merge",
+		Score:  10,
+	}
+	recordDecision(store, commit, detection, "merge-skipped")
+
+	if len(store.recorded) != 1 {
+		t.Fatalf("expected 1 recorded commit, got %d", len(store.recorded))
+	}
+	rec := store.recorded[0]
+	if rec.Decision != "merge-skipped" {
+		t.Errorf("Decision = %q, want %q", rec.Decision, "merge-skipped")
+	}
+	if rec.SkipReason != "merge" {
+		t.Errorf("SkipReason = %q, want %q", rec.SkipReason, "merge")
+	}
+}
+
+func TestRecordDecision_BothNil(t *testing.T) {
+	// Should not panic when both store and commit are nil
+	recordDecision(nil, nil, DetectionResult{}, "skipped")
+}
+
 func TestReadORIGHEAD_WithFile(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "ORIG_HEAD"), []byte("abc123def\n"), 0o644); err != nil {

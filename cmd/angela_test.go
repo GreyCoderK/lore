@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/testutil"
@@ -479,5 +480,202 @@ func TestAngelaReview_RejectsArgs(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "unknown command") {
 		t.Errorf("error = %q, want 'unknown command'", err)
+	}
+}
+
+// --- additional angela polish tests ---
+
+// Provider configured but API call fails (covers provider creation + service call error path)
+func TestAngelaPolish_ProviderCallFails(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	doc := "---\ntype: decision\nstatus: published\ndate: \"2026-03-20\"\n---\n## Why\nSome reason here."
+	if err := os.WriteFile(filepath.Join(docsDir, "test-doc.md"), []byte(doc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Use ollama provider with a bad endpoint — provider gets created but API call fails
+	cfg := &config.Config{}
+	cfg.AI.Provider = "ollama"
+	cfg.AI.Endpoint = "http://127.0.0.1:1" // port 1 — connection refused
+	cfg.AI.Model = "test"
+
+	_, _, err := runAngelaPolish(t, cfg, "", "test-doc.md")
+	if err == nil {
+		t.Fatal("expected error from failed API call")
+	}
+	// Error should come from the polish service call, not from "no provider" check
+	if strings.Contains(err.Error(), "no AI provider configured") {
+		t.Errorf("provider should have been created, got: %q", err)
+	}
+}
+
+// Provider configured but API call fails for review (covers provider creation path)
+func TestAngelaReview_ProviderCallFails(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	createNDocs(t, dir, 5)
+
+	cfg := &config.Config{}
+	cfg.AI.Provider = "ollama"
+	cfg.AI.Endpoint = "http://127.0.0.1:1"
+	cfg.AI.Model = "test"
+
+	_, _, err := runAngelaReview(t, cfg)
+	if err == nil {
+		t.Fatal("expected error from failed API call")
+	}
+	if strings.Contains(err.Error(), "no AI provider configured") {
+		t.Errorf("provider should have been created, got: %q", err)
+	}
+}
+
+// cobra.ExactArgs(1): no arguments provided
+func TestAngelaPolish_NoArgs(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "")
+	if err == nil {
+		t.Fatal("expected error for no arguments")
+	}
+}
+
+// cobra.ExactArgs(1): too many arguments
+func TestAngelaPolish_TooManyArgs(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", "file1.md", "file2.md")
+	if err == nil {
+		t.Fatal("expected error for too many arguments")
+	}
+}
+
+// Empty filename rejected
+func TestAngelaPolish_EmptyFilename(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", "")
+	if err == nil {
+		t.Fatal("expected error for empty filename")
+	}
+}
+
+// Dot-dot filename rejected (path traversal variant)
+func TestAngelaPolish_DotDotFilename(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", "..%2f..%2fetc%2fpasswd")
+	if err == nil {
+		t.Fatal("expected error for encoded path traversal")
+	}
+}
+
+// Hidden file — not found (passes validation but file doesn't exist)
+func TestAngelaPolish_HiddenFile(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaPolish(t, nil, "", ".hidden.md")
+	if err == nil {
+		t.Fatal("expected error for hidden filename")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error = %q, want 'not found'", err)
+	}
+}
+
+// --- additional angela review tests ---
+
+// Review with exactly 0 docs
+func TestAngelaReview_ZeroDocs(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaReview(t, nil)
+	if err == nil {
+		t.Fatal("expected error for 0 docs")
+	}
+	if !strings.Contains(err.Error(), "at least 5 documents required") {
+		t.Errorf("error = %q, want 'at least 5 documents required'", err)
+	}
+}
+
+// Review with exactly 4 docs (boundary)
+func TestAngelaReview_FourDocs(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	createNDocs(t, dir, 4)
+
+	_, _, err := runAngelaReview(t, nil)
+	if err == nil {
+		t.Fatal("expected error for 4 docs (< 5 required)")
+	}
+	if !strings.Contains(err.Error(), "at least 5 documents required") {
+		t.Errorf("error = %q, want 'at least 5 documents required'", err)
+	}
+}
+
+// Review with exactly 1 doc
+func TestAngelaReview_OneDoc(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	createNDocs(t, dir, 1)
+
+	_, _, err := runAngelaReview(t, nil)
+	if err == nil {
+		t.Fatal("expected error for 1 doc")
+	}
+	if !strings.Contains(err.Error(), "at least 5 documents required") {
+		t.Errorf("error = %q, want 'at least 5 documents required'", err)
+	}
+}
+
+// formatReviewReport: partial corpus path (totalCorpus > DocCount)
+func TestFormatReviewReport_PartialCorpus(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{In: strings.NewReader(""), Out: &out, Err: &errBuf}
+
+	report := &angela.ReviewReport{
+		Findings: nil,
+		DocCount: 50,
+	}
+	// totalCorpus > DocCount triggers partial header
+	formatReviewReport(streams, report, 60, false)
+
+	if errBuf.Len() == 0 {
+		t.Error("expected stderr output for partial corpus header")
+	}
+}
+
+// countSeverities with all four known severities
+func TestCountSeverities_AllKnown(t *testing.T) {
+	findings := []angela.ReviewFinding{
+		{Severity: "contradiction"},
+		{Severity: "gap"},
+		{Severity: "gap"},
+		{Severity: "style"},
+		{Severity: "obsolete"},
+	}
+	result := countSeverities(findings)
+	if !strings.Contains(result, "1 contradiction") {
+		t.Errorf("result = %q, want '1 contradiction'", result)
+	}
+	if !strings.Contains(result, "2 gap") {
+		t.Errorf("result = %q, want '2 gap'", result)
+	}
+	if !strings.Contains(result, "1 style") {
+		t.Errorf("result = %q, want '1 style'", result)
+	}
+	if !strings.Contains(result, "1 obsolete") {
+		t.Errorf("result = %q, want '1 obsolete'", result)
 	}
 }
