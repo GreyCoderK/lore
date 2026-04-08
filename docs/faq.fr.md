@@ -99,7 +99,13 @@ Non. Lore fonctionne entièrement sans IA. Angela est optionnelle.
 
 ### Quels fournisseurs IA sont supportés ?
 
-Anthropic (Claude), OpenAI (GPT), et Ollama (modèles locaux).
+| Fournisseur | Setup | Coût | Idéal pour |
+|-------------|-------|------|------------|
+| **Anthropic** (Claude) | [console.anthropic.com](https://console.anthropic.com) → Clé API + $5 credits | ~$0.01–0.05/appel | Meilleure qualité docs techniques |
+| **OpenAI** (GPT) | [platform.openai.com](https://platform.openai.com) → Clé API + $5 credits | ~$0.001–0.01/appel | Bonne qualité, option cloud la moins chère |
+| **Ollama** (local) | [ollama.com/download](https://ollama.com/download) + `ollama pull llama3.2` | Gratuit | Vie privée, hors ligne, pas de compte |
+
+Voir le [guide de configuration des fournisseurs IA](guides/configuration.fr.md#configuration-du-fournisseur-ia) pour les instructions étape par étape avec liens de téléchargement.
 
 ### Que fait Angela Draft sans API ?
 
@@ -107,7 +113,9 @@ Analyse structurelle locale : sections manquantes, conformité au guide de style
 
 ### Que fait Angela Polish ?
 
-Envoie votre document au fournisseur IA pour réécriture. Affiche un diff interactif — acceptez ou rejetez chaque changement individuellement. Un seul appel API par document.
+Envoie votre document au fournisseur IA pour réécriture. Affiche un diff interactif — acceptez ou rejetez chaque changement individuellement. Un seul appel API par document. Produit des diagrammes mermaid, des tables et des détails concrets.
+
+> **La qualité dépend du modèle.** Les petits modèles locaux (llama3.2) peuvent produire du texte générique. Les modèles plus grands (Claude Sonnet, GPT-4o, llama3.1:70b) produisent de bien meilleurs résultats avec diagrammes et tables. Voir l'[avertissement qualité](commands/angela-polish.fr.md#le-résultat-de-lia-est-de-mauvaise-qualité--contenu-inventé) dans la doc polish.
 
 ### J'ai un abonnement Claude.ai mais pas de crédits API. Puis-je utiliser Angela ?
 

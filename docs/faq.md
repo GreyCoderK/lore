@@ -99,7 +99,13 @@ No. Lore works fully without AI. Angela is opt-in.
 
 ### What AI providers are supported?
 
-Anthropic (Claude), OpenAI (GPT), and Ollama (local models).
+| Provider | Setup | Cost | Best for |
+|----------|-------|------|----------|
+| **Anthropic** (Claude) | [console.anthropic.com](https://console.anthropic.com) → API Key + $5 credits | ~$0.01–0.05/call | Best quality technical docs |
+| **OpenAI** (GPT) | [platform.openai.com](https://platform.openai.com) → API Key + $5 credits | ~$0.001–0.01/call | Good quality, cheapest cloud option |
+| **Ollama** (local) | [ollama.com/download](https://ollama.com/download) + `ollama pull llama3.2` | Free | Privacy, offline, no account needed |
+
+See the [AI Provider Setup guide](guides/configuration.md#ai-provider-setup) for step-by-step instructions with download links.
 
 ### What does Angela Draft do without an API?
 
@@ -107,7 +113,9 @@ Local structural analysis: missing sections, style guide compliance, related doc
 
 ### What does Angela Polish do?
 
-Sends your document to the AI provider for rewriting. Shows an interactive diff — accept or reject each change individually.
+Sends your document to the AI provider for rewriting. Shows an interactive diff — accept or reject each change individually. Expects mermaid diagrams, tables, and concrete details in the output.
+
+> **Quality depends on your model.** Small local models (llama3.2) may produce generic text. Larger models (Claude Sonnet, GPT-4o, llama3.1:70b) produce much better results with diagrams and tables. See the [quality warning](commands/angela-polish.md#the-ai-output-is-low-quality--hallucinated-content) in the polish docs.
 
 ### I have a Claude.ai subscription but no API credits. Can I use Angela?
 

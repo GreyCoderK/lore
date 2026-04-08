@@ -154,6 +154,17 @@ Les commandes `polish` et `review` d'Angela nécessitent un fournisseur IA. Troi
 
 Meilleure qualité pour la documentation technique. Nécessite des crédits API achetés séparément d'un abonnement chat Claude.ai.
 
+**Étape 1 — Obtenir une clé API :**
+
+1. Allez sur [console.anthropic.com](https://console.anthropic.com) et inscrivez-vous (ou connectez-vous)
+2. Naviguez vers **Settings → API Keys → Create Key**
+3. Copiez la clé (commence par `sk-ant-...`)
+4. Ajoutez des crédits : **Settings → Plans & Billing → Add Credits** (minimum $5)
+
+> **Important :** Un abonnement chat Claude.ai (Pro, Team) n'inclut PAS de crédits API. L'API est un produit séparé facturé sur [console.anthropic.com](https://console.anthropic.com). Vous avez besoin de crédits même si vous payez pour Claude.ai.
+
+**Étape 2 — Configurer Lore :**
+
 ```yaml
 # .lorerc
 ai:
@@ -164,18 +175,38 @@ ai:
 ```bash
 # Stocker la clé API dans le trousseau OS
 lore config set-key anthropic
+# → Entrez la clé API : sk-ant-...
 ```
 
-> **Important :** Un abonnement chat Claude.ai (Pro, Team) n'inclut PAS de crédits API. L'API est facturée séparément sur [console.anthropic.com](https://console.anthropic.com) → Plans & Billing. Minimum $5 de crédits.
+**Étape 3 — Tester :**
+
+```bash
+lore angela draft --all                                  # gratuit, pas d'API
+lore angela polish <votre-doc>.md --dry-run              # 1 appel API, aperçu seulement
+lore angela review                                       # 1 appel API, analyse du corpus
+```
 
 | Élément | Détail |
 |---------|--------|
-| **Obtenir une clé** | [console.anthropic.com](https://console.anthropic.com) → API Keys |
-| **Coût par appel** | ~$0.01–0.05 (Sonnet), ~$0.001 (Haiku) |
-| **Endpoint** | `https://api.anthropic.com/v1/messages` (défaut, automatique) |
-| **Format** | Spécifique Anthropic (non compatible OpenAI) |
+| **Inscription** | [console.anthropic.com](https://console.anthropic.com) |
+| **Clés API** | Settings → API Keys → Create Key |
+| **Ajouter des crédits** | Settings → Plans & Billing → Add Credits ($5 minimum) |
+| **Coût par polish** | ~$0.01–0.05 (Sonnet), ~$0.001 (Haiku) |
+| **Endpoint** | `https://api.anthropic.com/v1/messages` (automatique) |
+| **Modèles** | `claude-sonnet-4-20250514` (recommandé), `claude-haiku-4-5-20251001` (le moins cher) |
 
 ### OpenAI (GPT)
+
+**Étape 1 — Obtenir une clé API :**
+
+1. Allez sur [platform.openai.com/api-keys](https://platform.openai.com/api-keys) et inscrivez-vous (ou connectez-vous)
+2. Cliquez **Create new secret key**, nommez-la (ex : "lore")
+3. Copiez la clé (commence par `sk-...`)
+4. Ajoutez des crédits : **Settings → Billing → Add payment method** puis **Add credits** ($5 minimum)
+
+> **Note :** Un compte API OpenAI est séparé d'un abonnement ChatGPT. L'API utilise des crédits prépayés — pas de facturation récurrente sauf si vous activez l'auto-recharge.
+
+**Étape 2 — Configurer Lore :**
 
 ```yaml
 # .lorerc
@@ -185,59 +216,116 @@ ai:
 ```
 
 ```bash
+# Stocker la clé API dans le trousseau OS
 lore config set-key openai
+# → Entrez la clé API : sk-...
+```
+
+**Étape 3 — Tester :**
+
+```bash
+lore angela polish <votre-doc>.md --dry-run              # aperçu des changements
+lore angela review                                       # analyse du corpus
 ```
 
 | Élément | Détail |
 |---------|--------|
-| **Obtenir une clé** | [platform.openai.com](https://platform.openai.com) → API Keys |
-| **Coût par appel** | ~$0.001 (gpt-4o-mini), ~$0.01 (gpt-4o) |
-| **Endpoint** | `https://api.openai.com/v1/chat/completions` (défaut) |
-| **Endpoint custom** | Définir `ai.endpoint` pour APIs compatibles (ex : Ollama en mode OpenAI, Azure OpenAI — non testé, contributions bienvenues) |
+| **Inscription** | [platform.openai.com](https://platform.openai.com) |
+| **Clés API** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| **Ajouter des crédits** | Settings → Billing → Add credits ($5 minimum) |
+| **Coût par polish** | ~$0.001 (gpt-4o-mini), ~$0.01–0.05 (gpt-4o) |
+| **Endpoint** | `https://api.openai.com/v1/chat/completions` (automatique) |
+| **Endpoint custom** | Définir `ai.endpoint` pour APIs compatibles (Azure OpenAI, Ollama — voir ci-dessous) |
+| **Modèles** | `gpt-4o-mini` (le moins cher), `gpt-4o` (meilleure qualité), `gpt-4.1-mini`, `gpt-4.1` |
 
 ### Ollama (Local — Gratuit)
 
 Tourne entièrement sur votre machine. Pas de clé API, pas de coût, aucune donnée envoyée.
 
+**Étape 1 — Installer Ollama :**
+
+=== "macOS"
+
+    ```bash
+    brew install ollama
+    ```
+
+=== "Linux"
+
+    ```bash
+    curl -fsSL https://ollama.com/install.sh | sh
+    ```
+
+=== "Windows"
+
+    Téléchargez l'installateur depuis [ollama.com/download](https://ollama.com/download)
+
+**Étape 2 — Télécharger un modèle et démarrer :**
+
+```bash
+ollama serve &            # démarrer le serveur (port 11434)
+ollama pull llama3.2      # télécharger un modèle (~2Go)
+```
+
+Autres modèles recommandés :
+
+| Modèle | Taille | Qualité | Vitesse |
+|--------|--------|---------|---------|
+| `llama3.2` | 2Go | Bon pour les docs courtes | Rapide |
+| `llama3.1:8b` | 4.7Go | Meilleure qualité | Moyen |
+| `llama3.1:70b` | 40Go | Proche de GPT-4o | Lent (nécessite 64Go RAM) |
+| `mistral` | 4.1Go | Bon polyvalent | Rapide |
+| `codellama` | 3.8Go | Meilleur pour les docs avec code | Rapide |
+| `gemma2` | 5.4Go | Bon pour l'écriture technique | Moyen |
+
+**Étape 3 — Configurer Lore :**
+
 ```yaml
 # .lorerc
 ai:
   provider: "ollama"
-  model: "llama3.2"  # ou tout modèle : mistral, codellama, gemma2, etc.
-```
-
-```bash
-# Installer et démarrer Ollama
-brew install ollama    # macOS
-ollama serve &         # démarrer le serveur
-ollama pull llama3.2   # télécharger un modèle
+  model: "llama3.2"       # ou tout modèle de `ollama list`
 ```
 
 Pas besoin de `lore config set-key` — Ollama n'a pas d'authentification.
 
+**Étape 4 — Tester :**
+
+```bash
+ollama list                                               # vérifier que le modèle est installé
+lore doctor --config                                     # vérifier que le provider est détecté
+lore angela polish <votre-doc>.md --dry-run              # tester polish
+lore angela review                                       # tester review
+```
+
 | Élément | Détail |
 |---------|--------|
-| **Installer** | [ollama.com](https://ollama.com) ou `brew install ollama` |
+| **Télécharger** | [ollama.com/download](https://ollama.com/download) ou `brew install ollama` |
 | **Coût** | Gratuit (tourne sur votre matériel) |
-| **Endpoint** | `http://localhost:11434` (défaut, automatique) |
-| **Modèles** | Tout modèle Ollama — `ollama list` pour voir les installés |
+| **Endpoint** | `http://localhost:11434` (automatique) |
+| **Parcourir les modèles** | [ollama.com/library](https://ollama.com/library) |
+| **Lister les installés** | `ollama list` |
+| **Télécharger un modèle** | `ollama pull <nom-du-modèle>` |
 
-### Tester le provider OpenAI sans crédits OpenAI
+> **Conseil qualité :** Les petits modèles (llama3.2, phi3) peuvent halluciner ou produire du texte générique. Pour de meilleurs résultats, utilisez un modèle d'au moins 8B paramètres (llama3.1:8b, mistral) et écrivez des premiers brouillons détaillés avant de polir.
 
-Ollama expose une API compatible OpenAI. Vous pouvez valider le provider `openai` contre Ollama :
+### Tester le code path OpenAI via Ollama (gratuit)
 
-```yaml
-# .lorerc
-ai:
-  provider: "openai"
-  model: "llama3.2"
-  endpoint: "http://localhost:11434/v1/chat/completions"
-```
+Ollama expose une API compatible OpenAI sur `/v1/chat/completions`. Cela permet de tester le provider `openai` sans payer de crédits OpenAI :
 
 ```yaml
 # .lorerc.local
 ai:
-  api_key: "any-value"  # Ollama ignore les clés API
+  provider: "openai"
+  model: "llama3.2"
+  endpoint: "http://localhost:11434/v1/chat/completions"
+  api_key: "unused"       # Ollama ignore les clés API, mais le champ doit être non-vide
+```
+
+```bash
+# Vérifier que ça marche
+ollama serve &
+lore angela polish <votre-doc>.md --dry-run
 ```
 
 > **Note :** Cela fonctionne uniquement pour le provider `openai`. Le provider `anthropic` utilise un format de requête différent qu'Ollama ne supporte pas.
@@ -246,18 +334,19 @@ ai:
 
 | | **Anthropic** | **OpenAI** | **Ollama** |
 |---|---|---|---|
-| **Qualité** | Meilleure pour les docs techniques | Très bonne | Dépend du modèle |
+| **Qualité** | Meilleure pour les docs techniques | Très bonne | Dépend de la taille du modèle |
 | **Coût** | ~$0.01–0.05/appel | ~$0.001–0.01/appel | Gratuit |
 | **Vie privée** | Données envoyées à l'API | Données envoyées à l'API | 100% local |
-| **Setup** | Clé API + crédits | Clé API + crédits | Installer + pull modèle |
+| **Temps de setup** | 5 min (inscription + crédits) | 5 min (inscription + crédits) | 2 min (installer + pull) |
 | **Hors ligne** | Non | Non | Oui |
-| **Vitesse** | Rapide | Rapide | Dépend du matériel |
+| **Vitesse** | Rapide (~3s) | Rapide (~3s) | Dépend du matériel (5-30s) |
+| **Inscription** | [console.anthropic.com](https://console.anthropic.com) | [platform.openai.com](https://platform.openai.com) | Pas de compte nécessaire |
 
 ### Pas d'IA ? Pas de problème
 
 `lore angela draft` et `lore angela draft --all` fonctionnent **100% hors ligne** sans aucune configuration. Ils analysent la structure des documents, les sections manquantes, la cohérence de style et les références croisées — tout localement.
 
-Pour polish/review sans crédits API, voir le [workflow manuel via le chat Claude.ai](../faq.fr.md#jai-un-abonnement-claudeai-mais-pas-de-crédits-api-puis-je-utiliser-angela) dans la FAQ.
+Pour polish/review sans credits API, voir le [workflow manuel via le chat Claude.ai](../faq.fr.md#jai-un-abonnement-claudeai-mais-pas-de-crédits-api-puis-je-utiliser-angela) dans la FAQ.
 
 ## Dépannage
 

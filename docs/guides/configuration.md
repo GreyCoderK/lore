@@ -154,6 +154,17 @@ Angela's `polish` and `review` commands require an AI provider. Three providers 
 
 Best quality for technical documentation. Requires API credits purchased separately from a Claude.ai chat subscription.
 
+**Step 1 — Get an API key:**
+
+1. Go to [console.anthropic.com](https://console.anthropic.com) and sign up (or log in)
+2. Navigate to **Settings → API Keys → Create Key**
+3. Copy the key (starts with `sk-ant-...`)
+4. Add billing credits: **Settings → Plans & Billing → Add Credits** (minimum $5)
+
+> **Important:** A Claude.ai chat subscription (Pro, Team) does NOT include API credits. The API is a separate product billed at [console.anthropic.com](https://console.anthropic.com). You need credits even if you pay for Claude.ai.
+
+**Step 2 — Configure Lore:**
+
 ```yaml
 # .lorerc
 ai:
@@ -164,18 +175,38 @@ ai:
 ```bash
 # Store API key securely in OS keychain
 lore config set-key anthropic
+# → Enter API key: sk-ant-...
 ```
 
-> **Important:** A Claude.ai chat subscription (Pro, Team) does NOT include API credits. The API is billed separately at [console.anthropic.com](https://console.anthropic.com) → Plans & Billing. Minimum $5 credits.
+**Step 3 — Test:**
+
+```bash
+lore angela draft --all                                  # free, no API
+lore angela polish <your-doc>.md --dry-run               # 1 API call, preview only
+lore angela review                                       # 1 API call, corpus analysis
+```
 
 | Item | Detail |
 |------|--------|
-| **Get a key** | [console.anthropic.com](https://console.anthropic.com) → API Keys |
-| **Cost per call** | ~$0.01–0.05 (Sonnet), ~$0.001 (Haiku) |
-| **Endpoint** | `https://api.anthropic.com/v1/messages` (default, automatic) |
-| **Format** | Anthropic-specific (not OpenAI-compatible) |
+| **Sign up** | [console.anthropic.com](https://console.anthropic.com) |
+| **API keys** | Settings → API Keys → Create Key |
+| **Add credits** | Settings → Plans & Billing → Add Credits ($5 minimum) |
+| **Cost per polish** | ~$0.01–0.05 (Sonnet), ~$0.001 (Haiku) |
+| **Endpoint** | `https://api.anthropic.com/v1/messages` (automatic) |
+| **Models** | `claude-sonnet-4-20250514` (recommended), `claude-haiku-4-5-20251001` (cheapest) |
 
 ### OpenAI (GPT)
+
+**Step 1 — Get an API key:**
+
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys) and sign up (or log in)
+2. Click **Create new secret key**, name it (e.g., "lore")
+3. Copy the key (starts with `sk-...`)
+4. Add billing credits: **Settings → Billing → Add payment method** then **Add credits** ($5 minimum)
+
+> **Note:** An OpenAI API account is separate from a ChatGPT subscription. The API uses prepaid credits — no recurring billing unless you enable auto-recharge.
+
+**Step 2 — Configure Lore:**
 
 ```yaml
 # .lorerc
@@ -185,73 +216,131 @@ ai:
 ```
 
 ```bash
+# Store API key securely in OS keychain
 lore config set-key openai
+# → Enter API key: sk-...
+```
+
+**Step 3 — Test:**
+
+```bash
+lore angela polish <your-doc>.md --dry-run               # preview changes
+lore angela review                                       # corpus analysis
 ```
 
 | Item | Detail |
 |------|--------|
-| **Get a key** | [platform.openai.com](https://platform.openai.com) → API Keys |
-| **Cost per call** | ~$0.001 (gpt-4o-mini), ~$0.01 (gpt-4o) |
-| **Endpoint** | `https://api.openai.com/v1/chat/completions` (default) |
-| **Custom endpoint** | Set `ai.endpoint` for compatible APIs (e.g., Ollama in OpenAI mode, Azure OpenAI — untested, contributions welcome) |
+| **Sign up** | [platform.openai.com](https://platform.openai.com) |
+| **API keys** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| **Add credits** | Settings → Billing → Add credits ($5 minimum) |
+| **Cost per polish** | ~$0.001 (gpt-4o-mini), ~$0.01–0.05 (gpt-4o) |
+| **Endpoint** | `https://api.openai.com/v1/chat/completions` (automatic) |
+| **Custom endpoint** | Set `ai.endpoint` for compatible APIs (Azure OpenAI, Ollama — see below) |
+| **Models** | `gpt-4o-mini` (cheapest), `gpt-4o` (best quality), `gpt-4.1-mini`, `gpt-4.1` |
 
 ### Ollama (Local — Free)
 
 Runs entirely on your machine. No API key, no cost, no data sent anywhere.
 
+**Step 1 — Install Ollama:**
+
+=== "macOS"
+
+    ```bash
+    brew install ollama
+    ```
+
+=== "Linux"
+
+    ```bash
+    curl -fsSL https://ollama.com/install.sh | sh
+    ```
+
+=== "Windows"
+
+    Download the installer from [ollama.com/download](https://ollama.com/download)
+
+**Step 2 — Download a model and start:**
+
+```bash
+ollama serve &            # start the server (runs on port 11434)
+ollama pull llama3.2      # download a model (~2GB)
+```
+
+Other recommended models:
+
+| Model | Size | Quality | Speed |
+|-------|------|---------|-------|
+| `llama3.2` | 2GB | Good for short docs | Fast |
+| `llama3.1:8b` | 4.7GB | Better quality | Medium |
+| `llama3.1:70b` | 40GB | Near GPT-4o quality | Slow (needs 64GB RAM) |
+| `mistral` | 4.1GB | Good all-around | Fast |
+| `codellama` | 3.8GB | Best for code-heavy docs | Fast |
+| `gemma2` | 5.4GB | Good for technical writing | Medium |
+
+**Step 3 — Configure Lore:**
+
 ```yaml
 # .lorerc
 ai:
   provider: "ollama"
-  model: "llama3.2"  # or any model: mistral, codellama, gemma2, etc.
-```
-
-```bash
-# Install and start Ollama
-brew install ollama    # macOS
-ollama serve &         # start the server
-ollama pull llama3.2   # download a model
+  model: "llama3.2"       # or any model from `ollama list`
 ```
 
 No `lore config set-key` needed — Ollama has no authentication.
 
+**Step 4 — Test:**
+
+```bash
+ollama list                                               # verify model is installed
+lore doctor --config                                     # verify provider detected
+lore angela polish <your-doc>.md --dry-run               # test polish
+lore angela review                                       # test review
+```
+
 | Item | Detail |
 |------|--------|
-| **Install** | [ollama.com](https://ollama.com) or `brew install ollama` |
+| **Download** | [ollama.com/download](https://ollama.com/download) or `brew install ollama` |
 | **Cost** | Free (runs on your hardware) |
-| **Endpoint** | `http://localhost:11434` (default, automatic) |
-| **Models** | Any Ollama model — `ollama list` to see installed |
+| **Endpoint** | `http://localhost:11434` (automatic) |
+| **Browse models** | [ollama.com/library](https://ollama.com/library) |
+| **List installed** | `ollama list` |
+| **Pull new model** | `ollama pull <model-name>` |
 
-### Testing OpenAI provider without OpenAI credits
+> **Quality tip:** Small models (llama3.2, phi3) may hallucinate or produce generic filler text. For best results, use a model with at least 8B parameters (llama3.1:8b, mistral) and write detailed first drafts before polishing.
 
-Ollama exposes an OpenAI-compatible API. You can validate the `openai` provider against Ollama:
+### Testing OpenAI code path via Ollama (free)
 
-```yaml
-# .lorerc
-ai:
-  provider: "openai"
-  model: "llama3.2"
-  endpoint: "http://localhost:11434/v1/chat/completions"
-```
+Ollama exposes an OpenAI-compatible API at `/v1/chat/completions`. This lets you test the `openai` provider without paying for OpenAI credits:
 
 ```yaml
 # .lorerc.local
 ai:
-  api_key: "any-value"  # Ollama ignores API keys
+  provider: "openai"
+  model: "llama3.2"
+  endpoint: "http://localhost:11434/v1/chat/completions"
+  api_key: "unused"       # Ollama ignores API keys, but the field must be non-empty
 ```
 
-> **Note:** This only works for `openai` provider. The `anthropic` provider uses a different request format that Ollama does not support.
+```bash
+# Verify it works
+ollama serve &
+lore angela polish <your-doc>.md --dry-run
+```
+
+> **Note:** This only works for the `openai` provider. The `anthropic` provider uses a different request format that Ollama does not support.
 
 ### Provider comparison
 
 | | **Anthropic** | **OpenAI** | **Ollama** |
 |---|---|---|---|
-| **Quality** | Best for technical docs | Very good | Depends on model |
+| **Quality** | Best for technical docs | Very good | Depends on model size |
 | **Cost** | ~$0.01–0.05/call | ~$0.001–0.01/call | Free |
 | **Privacy** | Data sent to API | Data sent to API | 100% local |
-| **Setup** | API key + credits | API key + credits | Install + pull model |
+| **Setup time** | 5 min (sign up + credits) | 5 min (sign up + credits) | 2 min (install + pull) |
 | **Offline** | No | No | Yes |
-| **Speed** | Fast | Fast | Depends on hardware |
+| **Speed** | Fast (~3s) | Fast (~3s) | Depends on hardware (5-30s) |
+| **Sign up** | [console.anthropic.com](https://console.anthropic.com) | [platform.openai.com](https://platform.openai.com) | No account needed |
 
 ### No AI? No problem
 
