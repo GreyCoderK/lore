@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"fmt"
+
 	"github.com/greycoderk/lore/internal/credential"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/ui"
@@ -142,6 +144,84 @@ func TestConfigSetKey_NoInput(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "no input") {
 		t.Errorf("error = %q, want 'no input'", err)
+	}
+}
+
+// errCredStore returns an error from List() to cover the warning path.
+type errCredStore struct {
+	mockCredStore
+}
+
+func (e *errCredStore) List() ([]string, error) {
+	return nil, credential.ErrNotFound
+}
+
+func TestConfigListKeys_ListError(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	store := &errCredStore{mockCredStore: mockCredStore{data: make(map[string][]byte)}}
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{In: strings.NewReader(""), Out: &out, Err: &errBuf}
+	cmd := newListKeysCmd(store, streams)
+	cmd.SetArgs(nil)
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("list-keys with error: %v", err)
+	}
+
+	// Should show warning on stderr but still list all providers as "(not set)"
+	if !strings.Contains(errBuf.String(), "Warning") {
+		t.Errorf("expected 'Warning' in stderr, got: %q", errBuf.String())
+	}
+	stdout := out.String()
+	if !strings.Contains(stdout, "(not set)") {
+		t.Errorf("expected '(not set)' for all providers, got: %q", stdout)
+	}
+}
+
+// errSetStore fails on Set to cover the store.Set error path.
+type errSetStore struct {
+	mockCredStore
+}
+
+func (e *errSetStore) Set(provider string, secret []byte) error {
+	return fmt.Errorf("simulated store error")
+}
+
+func TestConfigSetKey_StoreError(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	store := &errSetStore{mockCredStore: mockCredStore{data: make(map[string][]byte)}}
+	_, _, err := runConfigCmd(t, store, "my-secret-key\n", "anthropic")
+	if err == nil {
+		t.Fatal("expected error when store.Set fails")
+	}
+	if !strings.Contains(err.Error(), "simulated store error") {
+		t.Errorf("error = %q, want 'simulated store error'", err)
+	}
+}
+
+// errDeleteStore fails on Delete to cover the store.Delete error path.
+type errDeleteStore struct {
+	mockCredStore
+}
+
+func (e *errDeleteStore) Delete(provider string) error {
+	return fmt.Errorf("simulated delete error")
+}
+
+func TestConfigDeleteKey_StoreError(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	store := &errDeleteStore{mockCredStore: mockCredStore{data: make(map[string][]byte)}}
+	_, _, err := runConfigCmd(t, store, "", "delete-key", "anthropic")
+	if err == nil {
+		t.Fatal("expected error when store.Delete fails")
+	}
+	if !strings.Contains(err.Error(), "simulated delete error") {
+		t.Errorf("error = %q, want 'simulated delete error'", err)
 	}
 }
 

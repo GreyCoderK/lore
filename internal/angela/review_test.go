@@ -384,6 +384,42 @@ func TestPrepareDocSummaries_MoreThan50Docs(t *testing.T) {
 	}
 }
 
+// --- severityRank unit tests ---
+
+func TestSeverityRank_KnownSeverities(t *testing.T) {
+	tests := []struct {
+		sev  string
+		want int
+	}{
+		{"contradiction", 0},
+		{"gap", 1},
+		{"obsolete", 2},
+		{"style", 3},
+	}
+	for _, tt := range tests {
+		got := severityRank(tt.sev)
+		if got != tt.want {
+			t.Errorf("severityRank(%q) = %d, want %d", tt.sev, got, tt.want)
+		}
+	}
+}
+
+func TestSeverityRank_UnknownReturnsHighValue(t *testing.T) {
+	// Unknown severities should return len(severityOrder) to sort last.
+	unknowns := []string{"info", "critical", "unknown", ""}
+	expected := len(severityOrder)
+	for _, sev := range unknowns {
+		got := severityRank(sev)
+		if got != expected {
+			t.Errorf("severityRank(%q) = %d, want %d (high value for unknown)", sev, got, expected)
+		}
+		// Must be greater than any known severity rank
+		if got <= severityRank("style") {
+			t.Errorf("severityRank(%q) = %d, should be > severityRank(style)=%d", sev, got, severityRank("style"))
+		}
+	}
+}
+
 func TestTruncateRunes_Unicode(t *testing.T) {
 	s := strings.Repeat("é", 250)
 	result := truncateRunes(s, 200)

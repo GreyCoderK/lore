@@ -363,6 +363,62 @@ func TestDeleteCmd_ReferencedDocWarning(t *testing.T) {
 	}
 }
 
+// Delete a document with invalid front matter → parse error
+func TestDeleteCmd_InvalidFrontMatter(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+	docsDir := filepath.Join(dir, ".lore", "docs")
+
+	// Write a file with broken YAML front matter
+	badDoc := "---\n{{invalid yaml\n---\n# Bad\n"
+	if err := os.WriteFile(filepath.Join(docsDir, "bad-doc.md"), []byte(badDoc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cmd := newDeleteCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"bad-doc.md", "--force"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for invalid front matter")
+	}
+	if !strings.Contains(err.Error(), "parse") {
+		t.Errorf("error = %q, want 'parse'", err)
+	}
+}
+
+// Delete a document with filename that fails validation
+func TestDeleteCmd_InvalidFilename(t *testing.T) {
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	cmd := newDeleteCmd(&config.Config{}, streams)
+	cmd.SetArgs([]string{"../etc/passwd"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for invalid filename")
+	}
+}
+
 func TestDeleteCmd_Registered(t *testing.T) {
 	streams := domain.IOStreams{
 		Out: &bytes.Buffer{},

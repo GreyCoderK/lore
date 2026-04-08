@@ -178,3 +178,98 @@ func TestStripCodeFence(t *testing.T) {
 		t.Errorf("stripCodeFence should preserve content, got: %q", result)
 	}
 }
+
+func TestStripCodeFence_SingleLineBackticks(t *testing.T) {
+	// A single line starting with ``` but no newline — should not strip.
+	input := "```just backticks"
+	result := stripCodeFence(input)
+	if result != input {
+		t.Errorf("stripCodeFence should return input unchanged for single line ```, got %q", result)
+	}
+}
+
+func TestStripCodeFence_NoClosingFence(t *testing.T) {
+	// Opening fence on first line but no closing ``` on its own line.
+	input := "```markdown\nSome content here\nNo closing fence"
+	result := stripCodeFence(input)
+	if result != input {
+		t.Errorf("stripCodeFence should return input unchanged when no closing fence, got %q", result)
+	}
+}
+
+func TestStripCodeFence_WithLanguageTag(t *testing.T) {
+	input := "```yaml\nkey: value\nother: data\n```"
+	result := stripCodeFence(input)
+	if strings.Contains(result, "```") {
+		t.Errorf("stripCodeFence should remove fences with language tag, got %q", result)
+	}
+	if !strings.Contains(result, "key: value") {
+		t.Errorf("stripCodeFence should preserve inner content, got %q", result)
+	}
+}
+
+func TestStripCodeFence_AlreadyCleanText(t *testing.T) {
+	input := "This is already clean text\nwith no code fences."
+	result := stripCodeFence(input)
+	if result != strings.TrimSpace(input) {
+		t.Errorf("stripCodeFence should return clean text unchanged, got %q", result)
+	}
+}
+
+// --- BuildCorpusSummary unit tests ---
+
+func TestBuildCorpusSummary_EmptyCorpus(t *testing.T) {
+	result := BuildCorpusSummary(nil)
+	if result != "" {
+		t.Errorf("BuildCorpusSummary(nil) = %q, want empty string", result)
+	}
+
+	result = BuildCorpusSummary([]domain.DocMeta{})
+	if result != "" {
+		t.Errorf("BuildCorpusSummary([]) = %q, want empty string", result)
+	}
+}
+
+func TestBuildCorpusSummary_WithBranchScopeTags(t *testing.T) {
+	corpus := []domain.DocMeta{
+		{Type: "decision", Filename: "auth.md", Scope: "auth", Branch: "feat/auth", Tags: []string{"security", "api"}},
+		{Type: "feature", Filename: "api.md", Branch: "main"},
+	}
+	result := BuildCorpusSummary(corpus)
+
+	if !strings.Contains(result, "scope: auth") {
+		t.Error("expected scope in summary")
+	}
+	if !strings.Contains(result, "branch: feat/auth") {
+		t.Error("expected branch in summary")
+	}
+	if !strings.Contains(result, "tags: security, api") {
+		t.Error("expected tags in summary")
+	}
+	// Branch "main" should be excluded
+	if strings.Contains(result, "branch: main") {
+		t.Error("branch 'main' should be excluded from summary")
+	}
+}
+
+func TestBuildCorpusSummary_TruncationOver20(t *testing.T) {
+	corpus := make([]domain.DocMeta, 25)
+	for i := range corpus {
+		corpus[i] = domain.DocMeta{Type: "decision", Filename: fmt.Sprintf("doc-%02d.md", i)}
+	}
+
+	result := BuildCorpusSummary(corpus)
+
+	// Should include first 20
+	if !strings.Contains(result, "doc-19.md") {
+		t.Error("should include 20th doc (doc-19)")
+	}
+	// Should NOT include 21st
+	if strings.Contains(result, "doc-20.md") {
+		t.Error("should NOT include 21st doc (doc-20)")
+	}
+	// Should mention remaining
+	if !strings.Contains(result, "5 more") {
+		t.Errorf("should mention '5 more documents', got: %s", result)
+	}
+}

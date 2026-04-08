@@ -194,3 +194,38 @@ func TestAnalyzeDraft_NilPersonas_NoPersonaSuggestions(t *testing.T) {
 		}
 	}
 }
+
+// --- stripFrontMatter unit tests ---
+
+func TestStripFrontMatter_NoFrontMatter(t *testing.T) {
+	doc := "## What\nSome content here.\n"
+	result := stripFrontMatter(doc)
+	if result != doc {
+		t.Errorf("stripFrontMatter should return doc unchanged when no front matter, got %q", result)
+	}
+}
+
+func TestStripFrontMatter_MalformedOnlyOneDelimiter(t *testing.T) {
+	// Only opening ---, no closing --- — should return doc unchanged.
+	doc := "---\ntype: decision\nstatus: draft\nSome content after\n"
+	result := stripFrontMatter(doc)
+	if result != doc {
+		t.Errorf("stripFrontMatter should return doc unchanged for malformed front matter (one ---), got %q", result)
+	}
+}
+
+func TestStripFrontMatter_EmptyDoc(t *testing.T) {
+	result := stripFrontMatter("")
+	if result != "" {
+		t.Errorf("stripFrontMatter should return empty string for empty doc, got %q", result)
+	}
+}
+
+func TestStripFrontMatter_ValidFrontMatter(t *testing.T) {
+	doc := "---\ntype: decision\n---\n## What\nContent.\n"
+	result := stripFrontMatter(doc)
+	expected := "## What\nContent.\n"
+	if result != expected {
+		t.Errorf("stripFrontMatter = %q, want %q", result, expected)
+	}
+}

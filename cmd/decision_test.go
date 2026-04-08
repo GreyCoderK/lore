@@ -251,6 +251,68 @@ func TestDecisionCmd_ExplainHEAD_WithCommit(t *testing.T) {
 	}
 }
 
+// decision calibrate subcommand via cobra command execution
+func TestDecisionCmd_CalibrateSubcommand_Exists(t *testing.T) {
+	streams, _, _ := testStreams()
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	cmd := newDecisionCmd(cfg, streams, &s)
+
+	// --calibration flag should be recognized
+	f := cmd.Flag("calibration")
+	if f == nil {
+		t.Fatal("expected --calibration flag to exist")
+	}
+	if f.DefValue != "false" {
+		t.Errorf("--calibration default = %q, want 'false'", f.DefValue)
+	}
+}
+
+// decision explain with no git repo → error
+func TestDecisionCmd_ExplainNoGitRepo(t *testing.T) {
+	dir := t.TempDir() // not a git repo
+	testutil.Chdir(t, dir)
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{Out: &out, Err: &errBuf, In: strings.NewReader("")}
+	cfg := &config.Config{}
+	var s domain.LoreStore
+	cmd := newDecisionCmd(cfg, streams, &s)
+	cmd.SetArgs([]string{"--explain", "HEAD"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for non-git directory")
+	}
+	if !strings.Contains(err.Error(), "log") {
+		t.Errorf("error = %q, want git log error", err)
+	}
+}
+
+// runCalibration with a real store pointer that points to nil value
+func TestRunCalibration_StorePointerToNil(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	var s domain.LoreStore // nil value
+	err := runCalibration(streams, &s)
+	if err == nil {
+		t.Fatal("expected error for nil store value")
+	}
+}
+
 // Default (no flags) in a git repo with a commit
 func TestDecisionCmd_Default_WithCommit(t *testing.T) {
 	dir := testutil.SetupGitRepo(t)

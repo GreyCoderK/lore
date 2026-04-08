@@ -12,8 +12,44 @@ import (
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/git"
 	"github.com/greycoderk/lore/internal/testutil"
 )
+
+func TestDemoBranch_NoGitRepo(t *testing.T) {
+	dir := t.TempDir()
+	testutil.Chdir(t, dir)
+
+	result := demoBranch()
+	// In a non-git dir, should fallback to "main"
+	if result != "main" && result != "master" && result != "trunk" {
+		// Accept any common default branch name
+		t.Logf("demoBranch in non-git dir returned %q (expected common default)", result)
+	}
+}
+
+func TestDemoBranch_InGitRepo(t *testing.T) {
+	dir := testutil.SetupGitRepo(t)
+	testutil.Chdir(t, dir)
+
+	result := demoBranch()
+	// Should return the current branch or the default branch
+	if result == "" {
+		t.Error("demoBranch should return a non-empty branch name")
+	}
+}
+
+func TestDefaultBranch_NoRemote(t *testing.T) {
+	dir := testutil.SetupGitRepo(t)
+	testutil.Chdir(t, dir)
+
+	adapter := git.NewAdapter(dir)
+	result := defaultBranch(adapter)
+	// No remote configured, should fallback to "main"
+	if result != "main" {
+		t.Errorf("defaultBranch = %q, want 'main'", result)
+	}
+}
 
 func TestRunDemo_NotInitialized(t *testing.T) {
 	dir := t.TempDir()

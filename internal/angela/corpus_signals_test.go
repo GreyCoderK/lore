@@ -147,3 +147,83 @@ func TestApproxDaysDiff_InvalidDates(t *testing.T) {
 		t.Errorf("diff = %d, expected 0 for invalid dates", diff)
 	}
 }
+
+func TestAnalyzeCorpusSignals_EmptyDocsSlice(t *testing.T) {
+	signals := AnalyzeCorpusSignals([]DocSummary{})
+	if signals == nil {
+		t.Fatal("expected non-nil signals for empty slice")
+	}
+	if len(signals.PotentialPairs) != 0 {
+		t.Error("expected no pairs for empty slice")
+	}
+	if len(signals.IsolatedDocs) != 0 {
+		t.Error("expected no isolated docs for empty slice")
+	}
+	if len(signals.TagClusters) != 0 {
+		t.Error("expected empty tag clusters for empty slice")
+	}
+	if len(signals.ScopeClusters) != 0 {
+		t.Error("expected empty scope clusters for empty slice")
+	}
+	if len(signals.TypeDistribution) != 0 {
+		t.Error("expected empty type distribution for empty slice")
+	}
+}
+
+func TestAnalyzeCorpusSignals_DocsWithNoScope(t *testing.T) {
+	docs := []DocSummary{
+		{Filename: "a.md", Type: "decision", Date: "2026-01-01", Tags: []string{"auth"}},
+		{Filename: "b.md", Type: "decision", Date: "2026-06-01", Tags: []string{"auth"}},
+	}
+
+	signals := AnalyzeCorpusSignals(docs)
+
+	// Should still detect pair via shared tags
+	if len(signals.PotentialPairs) == 0 {
+		t.Error("expected potential pair from shared tags even without scope")
+	}
+	// No scope clusters should exist
+	if len(signals.ScopeClusters) != 0 {
+		t.Error("expected empty scope clusters when no docs have scope")
+	}
+}
+
+func TestAnalyzeCorpusSignals_DocsWithSameScope(t *testing.T) {
+	docs := []DocSummary{
+		{Filename: "a.md", Type: "feature", Date: "2026-01-01", Scope: "auth"},
+		{Filename: "b.md", Type: "feature", Date: "2026-01-15", Scope: "auth"},
+		{Filename: "c.md", Type: "feature", Date: "2026-01-02", Scope: "auth"},
+	}
+
+	signals := AnalyzeCorpusSignals(docs)
+
+	// All 3 should be in the same scope cluster
+	if len(signals.ScopeClusters["auth"]) != 3 {
+		t.Errorf("expected 3 docs in auth scope cluster, got %d", len(signals.ScopeClusters["auth"]))
+	}
+
+	// Should detect unconsolidated scope (3 docs, no summary type)
+	if len(signals.UnconsolidatedScopes) != 1 {
+		t.Fatalf("expected 1 unconsolidated scope, got %d", len(signals.UnconsolidatedScopes))
+	}
+	if signals.UnconsolidatedScopes[0].Scope != "auth" {
+		t.Errorf("unconsolidated scope = %q, want auth", signals.UnconsolidatedScopes[0].Scope)
+	}
+	if signals.UnconsolidatedScopes[0].DocCount != 3 {
+		t.Errorf("unconsolidated doc count = %d, want 3", signals.UnconsolidatedScopes[0].DocCount)
+	}
+
+	// Same-scope pairs use 7-day threshold; a.md and b.md are 14 days apart
+	hasPair := false
+	for _, p := range signals.PotentialPairs {
+		if (p.DocA == "a.md" && p.DocB == "b.md") || (p.DocA == "b.md" && p.DocB == "a.md") {
+			hasPair = true
+			if !strings.Contains(p.Tags, "scope:auth") {
+				t.Errorf("same-scope pair should have tags containing 'scope:auth', got %q", p.Tags)
+			}
+		}
+	}
+	if !hasPair {
+		t.Error("expected potential pair between a.md and b.md (14 days apart, same scope, 7-day threshold)")
+	}
+}

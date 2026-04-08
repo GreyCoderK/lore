@@ -421,6 +421,23 @@ func TestEnsureGitignore_MultipleEntries(t *testing.T) {
 	}
 }
 
+func TestEnsureGitignore_ReadError(t *testing.T) {
+	dir := t.TempDir()
+	// Create a directory named .gitignore — reading it will fail with a non-NotExist error
+	gitignorePath := filepath.Join(dir, ".gitignore")
+	if err := os.MkdirAll(gitignorePath, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := ensureGitignore(gitignorePath, ".lorerc.local")
+	if err == nil {
+		t.Fatal("expected error when .gitignore is a directory")
+	}
+	if !strings.Contains(err.Error(), ".gitignore") {
+		t.Errorf("error = %q, want mention of .gitignore", err)
+	}
+}
+
 func TestRunInit_AlreadyInitialized_NoOverwrite(t *testing.T) {
 	dir := t.TempDir()
 	loreDir := filepath.Join(dir, ".lore")

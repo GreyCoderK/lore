@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -90,6 +91,25 @@ func TestLoadReviewCache_WrongVersion(t *testing.T) {
 	}
 	if result != nil {
 		t.Error("expected nil for incompatible version")
+	}
+}
+
+func TestSaveReviewCache_NonExistentDir_Error(t *testing.T) {
+	// Use a path that cannot be created (file as parent dir).
+	tmpDir := t.TempDir()
+	// Create a regular file where the "lore dir" should be a directory.
+	fakePath := filepath.Join(tmpDir, "blocked")
+	os.WriteFile(fakePath, []byte("not a dir"), 0o644)
+
+	// Now try to save cache inside blocked/cache/ — MkdirAll should fail
+	// because "blocked" is a file, not a directory.
+	report := &ReviewReport{DocCount: 1, Findings: nil}
+	err := SaveReviewCache(fakePath, report, 1)
+	if err == nil {
+		t.Fatal("expected error when writing to non-existent/blocked dir")
+	}
+	if !strings.Contains(err.Error(), "mkdir") {
+		t.Errorf("error = %q, want mkdir error", err.Error())
 	}
 }
 

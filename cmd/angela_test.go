@@ -383,7 +383,112 @@ func TestAngelaReview_QuietFlag(t *testing.T) {
 
 // --- angela draft additional tests ---
 
-// No filename and no --all
+// draft with no args and no docs → error about no file
+func TestAngelaDraft_NoArgsNoDocs(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaDraft(t, nil)
+	if err == nil {
+		t.Fatal("expected error for no filename and no docs")
+	}
+}
+
+// draft with no args but docs exist → auto-picks most recent
+func TestAngelaDraft_NoArgsAutoPickRecent(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	// Create two docs with different dates
+	olderDoc := "---\ntype: decision\nstatus: published\ndate: \"2026-01-01\"\n---\nOlder doc."
+	newerDoc := "---\ntype: decision\nstatus: published\ndate: \"2026-03-15\"\n---\nNewer doc about something important."
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-old-2026-01-01.md"), []byte(olderDoc), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-new-2026-03-15.md"), []byte(newerDoc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, stderr, err := runAngelaDraft(t, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Should auto-pick the newer doc and show its filename in output
+	if !strings.Contains(stderr, "decision-new-2026-03-15.md") {
+		t.Errorf("expected auto-picked newer doc in output, got: %s", stderr)
+	}
+}
+
+// draft --all with doc that has warnings (covers runDraftAll warning count path)
+func TestAngelaDraft_All_WithWarnings(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	// Short doc triggers warnings
+	doc := "---\ntype: decision\nstatus: published\ndate: \"2026-03-01\"\n---\nShort."
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-short-2026-03-01.md"), []byte(doc), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// Complete doc with no issues
+	goodDoc := "---\ntype: decision\nstatus: published\ndate: \"2026-03-02\"\ntags: [api]\nrelated: [other]\n---\n" +
+		"## What\nThis is complete.\n\n## Why\nBecause we need it.\n\n## Alternatives\nDo nothing.\n\n## Impact\nBig.\n"
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-complete-2026-03-02.md"), []byte(goodDoc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, stderr, err := runAngelaDraftAll(t, nil)
+	if err != nil {
+		t.Fatalf("--all: %v", err)
+	}
+	// Should show mixed results (one ok, one review)
+	if !strings.Contains(stderr, "2 documents") {
+		t.Errorf("expected '2 documents' in output, got: %s", stderr)
+	}
+	if !strings.Contains(stderr, "need attention") {
+		t.Errorf("expected 'need attention' summary, got: %s", stderr)
+	}
+}
+
+// draft --all with multiple docs
+func TestAngelaDraft_All_MultipleDocs(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	for i := 0; i < 3; i++ {
+		doc := fmt.Sprintf("---\ntype: decision\nstatus: published\ndate: \"2026-03-%02d\"\n---\nShort.", i+1)
+		filename := fmt.Sprintf("decision-topic-%d-2026-03-%02d.md", i, i+1)
+		if err := os.WriteFile(filepath.Join(docsDir, filename), []byte(doc), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	_, stderr, err := runAngelaDraftAll(t, nil)
+	if err != nil {
+		t.Fatalf("--all: %v", err)
+	}
+	if !strings.Contains(stderr, "3 documents") {
+		t.Errorf("expected '3 documents' in output, got: %s", stderr)
+	}
+}
+
+// draft nonexistent.md → error
+func TestAngelaDraft_NonexistentFile(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	_, _, err := runAngelaDraft(t, nil, "totally-nonexistent.md")
+	if err == nil {
+		t.Fatal("expected error for nonexistent file")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error = %q, want 'not found'", err)
+	}
+}
+
+// No filename and no --all (original test renamed)
 func TestAngelaDraft_NoFilename(t *testing.T) {
 	dir := testutil.SetupLoreDir(t)
 	testutil.Chdir(t, dir)

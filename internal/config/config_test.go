@@ -423,3 +423,137 @@ func TestReadLanguageOnly_MalformedYAML(t *testing.T) {
 		t.Errorf("ReadLanguageOnly = %q, want empty string for malformed YAML", lang)
 	}
 }
+
+// --- Load (convenience wrapper) tests ---
+
+func TestLoad_FromTempDir(t *testing.T) {
+	// Load() uses "." as dir. Create a temp dir with .lorerc and chdir into it.
+	dir := t.TempDir()
+	lorercContent := `ai:
+  provider: ollama
+language: fr
+`
+	if err := os.WriteFile(filepath.Join(dir, ".lorerc"), []byte(lorercContent), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	// Save and restore working directory.
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	t.Cleanup(func() { os.Chdir(origDir) })
+
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir: %v", err)
+	}
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.AI.Provider != "ollama" {
+		t.Errorf("AI.Provider = %q, want 'ollama'", cfg.AI.Provider)
+	}
+	if cfg.Language != "fr" {
+		t.Errorf("Language = %q, want 'fr'", cfg.Language)
+	}
+}
+
+// --- LoadFromDirWithFlags: flag overrides config values ---
+
+func TestLoadFromDirWithFlags_LanguageFlagOverridesConfig(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("language: fr\n"), 0644)
+
+	cmd := &cobra.Command{}
+	RegisterFlags(cmd)
+	cmd.SetArgs([]string{"--language", "de"})
+	_ = cmd.Execute()
+
+	cfg, err := LoadFromDirWithFlags(dir, cmd)
+	if err != nil {
+		t.Fatalf("LoadFromDirWithFlags: %v", err)
+	}
+	if cfg.Language != "de" {
+		t.Errorf("Language = %q, want 'de' from flag override", cfg.Language)
+	}
+}
+
+func TestLoadFromDirWithFlags_NoFlagsUsesConfig(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: anthropic\nlanguage: fr\n"), 0644)
+
+	cmd := &cobra.Command{}
+	RegisterFlags(cmd)
+	cmd.SetArgs([]string{}) // no flags set
+	_ = cmd.Execute()
+
+	cfg, err := LoadFromDirWithFlags(dir, cmd)
+	if err != nil {
+		t.Fatalf("LoadFromDirWithFlags: %v", err)
+	}
+	if cfg.AI.Provider != "anthropic" {
+		t.Errorf("AI.Provider = %q, want 'anthropic' from .lorerc", cfg.AI.Provider)
+	}
+	if cfg.Language != "fr" {
+		t.Errorf("Language = %q, want 'fr' from .lorerc", cfg.Language)
+	}
+}
+
+// --- bindFlags tests ---
+
+func TestBindFlags_AIProviderBound(t *testing.T) {
+	dir := t.TempDir()
+
+	cmd := &cobra.Command{}
+	RegisterFlags(cmd)
+	cmd.SetArgs([]string{"--ai-provider", "openai"})
+	_ = cmd.Execute()
+
+	cfg, err := LoadFromDirWithFlags(dir, cmd)
+	if err != nil {
+		t.Fatalf("LoadFromDirWithFlags: %v", err)
+	}
+	if cfg.AI.Provider != "openai" {
+		t.Errorf("AI.Provider = %q, want 'openai' from --ai-provider flag", cfg.AI.Provider)
+	}
+}
+
+func TestBindFlags_LanguageBound(t *testing.T) {
+	dir := t.TempDir()
+
+	cmd := &cobra.Command{}
+	RegisterFlags(cmd)
+	cmd.SetArgs([]string{"--language", "es"})
+	_ = cmd.Execute()
+
+	cfg, err := LoadFromDirWithFlags(dir, cmd)
+	if err != nil {
+		t.Fatalf("LoadFromDirWithFlags: %v", err)
+	}
+	if cfg.Language != "es" {
+		t.Errorf("Language = %q, want 'es' from --language flag", cfg.Language)
+	}
+}
+
+func TestBindFlags_BothFlagsTogether(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, ".lorerc"), []byte("ai:\n  provider: ollama\nlanguage: fr\n"), 0644)
+
+	cmd := &cobra.Command{}
+	RegisterFlags(cmd)
+	cmd.SetArgs([]string{"--ai-provider", "anthropic", "--language", "ja"})
+	_ = cmd.Execute()
+
+	cfg, err := LoadFromDirWithFlags(dir, cmd)
+	if err != nil {
+		t.Fatalf("LoadFromDirWithFlags: %v", err)
+	}
+	if cfg.AI.Provider != "anthropic" {
+		t.Errorf("AI.Provider = %q, want 'anthropic' from flag", cfg.AI.Provider)
+	}
+	if cfg.Language != "ja" {
+		t.Errorf("Language = %q, want 'ja' from flag", cfg.Language)
+	}
+}
