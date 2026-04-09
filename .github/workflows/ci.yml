@@ -72,8 +72,8 @@ jobs:
         env:
           LORE_AI_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           LORE_AI_PROVIDER: anthropic
-          LORE_AI_MODEL: claude-sonnet-4-20250514
-          LORE_AI_TIMEOUT: 240s
+          LORE_AI_MODEL: claude-haiku-4-5-20251001
+          LORE_AI_TIMEOUT: 120s
           LORE_ANGELA_MAX_TOKENS: 38192
         run: |
           if [ -n "$LORE_AI_API_KEY" ]; then
