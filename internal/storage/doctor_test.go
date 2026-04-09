@@ -526,3 +526,109 @@ func TestDiagnose_ValidRelatedReference(t *testing.T) {
 		}
 	}
 }
+
+// --- Direct fixOrphanTmp tests ---
+
+func TestFixOrphanTmp_RemovesTmpFile(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	tmpFile := "partial-write.md.tmp"
+	tmpPath := filepath.Join(docsDir, tmpFile)
+	if err := os.WriteFile(tmpPath, []byte("partial data"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	// Age the file past the 5-second threshold.
+	_ = os.Chtimes(tmpPath, time.Now().Add(-10*time.Second), time.Now().Add(-10*time.Second))
+
+	if err := fixOrphanTmp(docsDir, tmpFile); err != nil {
+		t.Fatalf("fixOrphanTmp: %v", err)
+	}
+
+	if _, err := os.Stat(tmpPath); !os.IsNotExist(err) {
+		t.Error("expected .tmp file to be removed")
+	}
+}
+
+func TestFixOrphanTmp_LeavesNonTmpFile(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	// Create a regular .md file (not .tmp).
+	mdFile := "note-keep-2026-04-09.md"
+	mdPath := filepath.Join(docsDir, mdFile)
+	content := "---\ntype: note\ndate: \"2026-04-09\"\nstatus: draft\n---\n# Keep\n"
+	if err := os.WriteFile(mdPath, []byte(content), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	_ = os.Chtimes(mdPath, time.Now().Add(-10*time.Second), time.Now().Add(-10*time.Second))
+
+	// fixOrphanTmp should still remove it if called directly (it does not
+	// check the extension — the caller is responsible for only passing .tmp files).
+	// But the file must still exist afterwards if we DON'T call fixOrphanTmp.
+	// The point: Diagnose only flags .tmp files, so non-.tmp files never reach fixOrphanTmp.
+
+	// Verify via Diagnose that a non-.tmp file is never flagged as orphan-tmp.
+	_ = RegenerateIndex(docsDir)
+	report, err := Diagnose(docsDir)
+	if err != nil {
+		t.Fatalf("Diagnose: %v", err)
+	}
+	for _, issue := range report.Issues {
+		if issue.Category == "orphan-tmp" && issue.File == mdFile {
+			t.Errorf("non-.tmp file should not be flagged as orphan-tmp")
+		}
+	}
+
+	// File must still exist.
+	if _, statErr := os.Stat(mdPath); statErr != nil {
+		t.Error("non-.tmp file should not be removed")
+	}
+}
+
+func TestFixOrphanTmp_AlreadyGone(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	// Create a .tmp file, then remove it before calling fixOrphanTmp.
+	// validateResolvedPath requires the file to exist (lstat), so for a
+	// truly missing file this returns an error from path validation.
+	err := fixOrphanTmp(docsDir, "ghost.tmp")
+	if err == nil {
+		t.Skip("path validation allows missing files on this platform")
+	}
+	// The error should come from path validation, not from os.Remove.
+	if !strings.Contains(err.Error(), "storage: doctor:") {
+		t.Errorf("expected storage: doctor: prefix, got: %v", err)
+	}
+}
+
+func TestFixOrphanTmp_TooRecent(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	tmpFile := "fresh.md.tmp"
+	tmpPath := filepath.Join(docsDir, tmpFile)
+	if err := os.WriteFile(tmpPath, []byte("in progress"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	// Do NOT age the file — it was just created (< 5s).
+
+	err := fixOrphanTmp(docsDir, tmpFile)
+	if err == nil {
+		t.Fatal("expected error for too-recent file")
+	}
+	if !strings.Contains(err.Error(), "too recent") {
+		t.Errorf("expected 'too recent' in error, got: %v", err)
+	}
+
+	// File should still exist.
+	if _, statErr := os.Stat(tmpPath); statErr != nil {
+		t.Error("too-recent .tmp should not be removed")
+	}
+}
+
+func TestFixOrphanTmp_InvalidFilename(t *testing.T) {
+	docsDir := newDoctorDir(t)
+
+	err := fixOrphanTmp(docsDir, "../escape.tmp")
+	if err == nil {
+		t.Fatal("expected error for path traversal filename")
+	}
+}

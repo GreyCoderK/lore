@@ -72,3 +72,40 @@ func TestColorEnabledWithNoColor(t *testing.T) {
 		t.Error("expected ColorEnabled=false when NO_COLOR is set")
 	}
 }
+
+func TestColorEnabledWithDumbTerm(t *testing.T) {
+	t.Setenv("TERM", "dumb")
+
+	streams := domain.IOStreams{
+		Out: os.Stdout,
+		Err: os.Stderr,
+		In:  os.Stdin,
+	}
+	// TERM=dumb causes IsTerminal to return false, so ColorEnabled should be false
+	if ColorEnabled(streams) {
+		t.Error("expected ColorEnabled=false when TERM=dumb")
+	}
+}
+
+func TestColorEnabledWithBuffers_NoPanic(t *testing.T) {
+	// Ensure calling ColorEnabled with buffer-based streams does not panic
+	streams := testStreams()
+	result := ColorEnabled(streams)
+	if result {
+		t.Error("expected ColorEnabled=false for buffer-based streams")
+	}
+}
+
+func TestColorEnabledWithNoColorEmpty(t *testing.T) {
+	// NO_COLOR spec: presence of the variable matters, even if empty
+	t.Setenv("NO_COLOR", "")
+
+	streams := domain.IOStreams{
+		Out: os.Stdout,
+		Err: os.Stderr,
+		In:  os.Stdin,
+	}
+	if ColorEnabled(streams) {
+		t.Error("expected ColorEnabled=false when NO_COLOR is set (even empty)")
+	}
+}

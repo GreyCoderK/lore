@@ -7,6 +7,8 @@ package notify
 
 import (
 	"fmt"
+
+	"github.com/greycoderk/lore/internal/brand"
 )
 
 // NotifyOSDialog launches a Windows PowerShell WPF dialog for Lore documentation.
@@ -50,12 +52,17 @@ func buildPowerShellScript(data DialogData) string {
     <TextBlock Text="%s" Foreground="Gray" Margin="0,5,0,0"/>`, escapeXML(sanitizeForShell(ctx)))
 	}
 
+	iconAttr := ""
+	if icon := brand.LogoPNGPath(); icon != "" {
+		iconAttr = fmt.Sprintf(` Icon="%s"`, escapeXML(escapePowerShell(icon)))
+	}
+
 	return fmt.Sprintf(`
 Add-Type -AssemblyName PresentationFramework
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         Title="%s — Document commit" Height="420" Width="520"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"%s>
   <StackPanel Margin="20">
     <TextBlock Text="Commit: %s" FontWeight="Bold" TextWrapping="Wrap"/>%s
     <TextBlock Text="%s" Margin="0,15,0,5"/>
@@ -90,7 +97,7 @@ if ($window.ShowDialog()) {
     & '%s' pending resolve --commit '%s' --type "$type" --what "$what" --why "$why"
 }
 `,
-		escapeXML(title), commitMsg,
+		escapeXML(title), iconAttr, commitMsg,
 		branchXAML,
 		escapeXML(coalesce(data.LabelType, "Type:")),
 		labelWhat, prefillWhat,

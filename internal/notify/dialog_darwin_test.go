@@ -6,6 +6,7 @@
 package notify
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,6 +106,88 @@ func TestBuildAppleScript_BranchOnly(t *testing.T) {
 
 	assert.Contains(t, script, "Branch: hotfix/typo")
 	assert.NotContains(t, script, "Scope:")
+}
+
+func TestResolveLogoPath_ReturnsEmbeddedLogo(t *testing.T) {
+	// resolveLogoPath now ignores the repoRoot argument and returns the
+	// embedded logo from the brand package.
+	path := resolveLogoPath("/nonexistent/repo")
+	assert.NotEmpty(t, path, "resolveLogoPath should return non-empty path")
+	assert.Contains(t, path, "lore-logo-")
+	assert.Contains(t, path, ".png")
+}
+
+func TestBuildAppleScript_ContainsIconClause(t *testing.T) {
+	// resolveLogoPath fills IconPath via brand.LogoPNGPath() — simulate the
+	// same flow that NotifyOSDialog performs before calling buildAppleScript.
+	data := DialogData{
+		CommitHash:  "abc1234",
+		CommitMsg:   "fix: icon test",
+		LorePath:    "/usr/local/bin/lore",
+		RepoRoot:    "/tmp/project",
+		PrefillType: "bugfix",
+		IconPath:    resolveLogoPath("/tmp/project"),
+	}
+
+	script := buildAppleScript(data)
+
+	assert.Contains(t, script, "with icon file")
+	assert.Contains(t, script, "lore-logo-")
+}
+
+func TestBuildAppleScript_IconInAllDialogs(t *testing.T) {
+	data := DialogData{
+		CommitHash:  "abc1234",
+		CommitMsg:   "feat: test",
+		LorePath:    "/bin/lore",
+		RepoRoot:    "/tmp",
+		PrefillType: "feature",
+		IconPath:    resolveLogoPath("/tmp"),
+	}
+
+	script := buildAppleScript(data)
+
+	// "with icon file" should appear in the What dialog, Why dialog, and error handler.
+	count := strings.Count(script, "with icon file")
+	assert.GreaterOrEqual(t, count, 2,
+		"icon clause should appear in at least 2 dialog statements, got %d", count)
+}
+
+func TestBuildAppleScript_NoIconWhenPathEmpty(t *testing.T) {
+	data := DialogData{
+		CommitHash:  "abc1234",
+		CommitMsg:   "test",
+		LorePath:    "/bin/lore",
+		RepoRoot:    "/tmp",
+		PrefillType: "note",
+		IconPath:    "", // explicitly empty
+	}
+
+	script := buildAppleScript(data)
+	assert.NotContains(t, script, "with icon file",
+		"no icon clause when IconPath is empty")
+}
+
+func TestNotifyOSDialog_Darwin_ResolvesIconAutomatically(t *testing.T) {
+	var capturedScript string
+
+	err := NotifyOSDialog(DialogData{
+		CommitHash: "abc",
+		LorePath:   "/bin/lore",
+		RepoRoot:   "/tmp",
+	}, DialogOpts{
+		StartCommand: func(name string, args, env []string) error {
+			if len(args) > 1 {
+				capturedScript = args[1]
+			}
+			return nil
+		},
+	})
+
+	require.NoError(t, err)
+	// NotifyOSDialog should auto-resolve the icon via resolveLogoPath.
+	assert.Contains(t, capturedScript, "with icon file")
+	assert.Contains(t, capturedScript, "lore-logo-")
 }
 
 func TestDialogOpts_Defaults(t *testing.T) {

@@ -226,6 +226,36 @@ func TestBuildKDialogScript_CustomLabels(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Icon / --window-icon tests
+// ---------------------------------------------------------------------------
+
+func TestBuildZenityScript_ContainsWindowIcon(t *testing.T) {
+	data := DialogData{
+		CommitHash: "abc1234",
+		CommitMsg:  "fix: icon test",
+		LorePath:   "/bin/lore",
+		RepoRoot:   "/tmp",
+	}
+	script := buildZenityScript(data)
+
+	assert.Contains(t, script, "--window-icon=", "zenity script should contain --window-icon flag")
+	assert.Contains(t, script, "lore-logo-", "zenity icon path should reference the embedded logo")
+}
+
+func TestBuildKDialogScript_ContainsIcon(t *testing.T) {
+	data := DialogData{
+		CommitHash: "abc1234",
+		CommitMsg:  "fix: icon test",
+		LorePath:   "/bin/lore",
+		RepoRoot:   "/tmp",
+	}
+	script := buildKDialogScript(data)
+
+	assert.Contains(t, script, "--icon ", "kdialog script should contain --icon flag")
+	assert.Contains(t, script, "lore-logo-", "kdialog icon path should reference the embedded logo")
+}
+
+// ---------------------------------------------------------------------------
 // NotifyOSDialog — no tools available
 // ---------------------------------------------------------------------------
 

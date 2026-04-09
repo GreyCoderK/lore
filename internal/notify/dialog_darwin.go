@@ -5,7 +5,9 @@
 
 package notify
 
-import "os"
+import (
+	"github.com/greycoderk/lore/internal/brand"
+)
 
 
 // NotifyOSDialog launches a macOS AppleScript dialog for Lore documentation.
@@ -22,24 +24,9 @@ func NotifyOSDialog(data DialogData, opts DialogOpts) error {
 	return opts.StartCommand("osascript", []string{"-e", script}, nil)
 }
 
-// resolveLogoPath finds the Lore logo PNG for dialog icons.
-// Checks repo-local assets first, then the installed binary's sibling.
-func resolveLogoPath(repoRoot string) string {
-	candidates := []string{
-		repoRoot + "/assets/logo.png",
-		repoRoot + "/docs/assets/logo.png",
-	}
-	for _, p := range candidates {
-		if fileExists(p) {
-			return p
-		}
-	}
-	return ""
-}
-
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
+// resolveLogoPath returns the embedded Lore logo PNG path via brand package.
+func resolveLogoPath(_ string) string {
+	return brand.LogoPNGPath()
 }
 
 func buildAppleScript(data DialogData) string {

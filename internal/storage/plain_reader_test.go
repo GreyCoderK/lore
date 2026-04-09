@@ -6,6 +6,7 @@ package storage
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/greycoderk/lore/internal/domain"
@@ -194,5 +195,160 @@ func TestInferTagsFromFilename(t *testing.T) {
 		if len(tags) < tt.want {
 			t.Errorf("inferTagsFromFilename(%q) = %v, want at least %d tags", tt.name, tags, tt.want)
 		}
+	}
+}
+
+func TestInferTagsFromFilename_DateFiltered(t *testing.T) {
+	tags := inferTagsFromFilename("auth-2026-03-15.md")
+	tagSet := map[string]bool{}
+	for _, tag := range tags {
+		tagSet[tag] = true
+	}
+	if !tagSet["auth"] {
+		t.Errorf("expected 'auth' tag, got %v", tags)
+	}
+	// Date segments should be filtered: "2026" is 4-digit starting with digit
+	if tagSet["2026"] {
+		t.Errorf("date segment '2026' should be filtered out, got %v", tags)
+	}
+	// Short segments "03" and "15" (len < 3) should be filtered
+	if tagSet["03"] || tagSet["15"] {
+		t.Errorf("short date segments should be filtered out, got %v", tags)
+	}
+}
+
+func TestInferTagsFromFilename_ShortSegments(t *testing.T) {
+	tags := inferTagsFromFilename("a-bb-ccc-dddd.md")
+	tagSet := map[string]bool{}
+	for _, tag := range tags {
+		tagSet[tag] = true
+	}
+	if tagSet["a"] || tagSet["bb"] {
+		t.Errorf("segments shorter than 3 chars should be filtered: got %v", tags)
+	}
+	if !tagSet["ccc"] || !tagSet["dddd"] {
+		t.Errorf("expected 'ccc' and 'dddd', got %v", tags)
+	}
+}
+
+func TestInferTagsFromFilename_Lowercase(t *testing.T) {
+	tags := inferTagsFromFilename("API-Design-Guide.md")
+	for _, tag := range tags {
+		if tag != strings.ToLower(tag) {
+			t.Errorf("tag %q should be lowercase", tag)
+		}
+	}
+}
+
+func TestPlainCorpusStore_ReadDoc_Subdirectory(t *testing.T) {
+	dir := t.TempDir()
+	subdir := filepath.Join(dir, "commands")
+	if err := os.MkdirAll(subdir, 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(subdir, "test.md"), []byte("# Test\n"), 0644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	store := &PlainCorpusStore{Dir: dir}
+	content, err := store.ReadDoc("commands/test")
+	if err != nil {
+		t.Fatalf("ReadDoc subdirectory: %v", err)
+	}
+	if !strings.Contains(content, "# Test") {
+		t.Errorf("expected content with '# Test', got %q", content)
+	}
+}
+
+func TestPlainCorpusStore_ReadDoc_AddsExtension(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "notes.md"), []byte("# Notes\n"), 0644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	store := &PlainCorpusStore{Dir: dir}
+	content, err := store.ReadDoc("notes")
+	if err != nil {
+		t.Fatalf("ReadDoc without extension: %v", err)
+	}
+	if !strings.Contains(content, "# Notes") {
+		t.Errorf("expected content with '# Notes', got %q", content)
+	}
+}
+
+func TestPlainCorpusStore_ListDocs_NestedSubdirs(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create nested structure
+	for _, sub := range []string{
+		filepath.Join(dir, "commands"),
+		filepath.Join(dir, "guides", "advanced"),
+	} {
+		if err := os.MkdirAll(sub, 0755); err != nil {
+			t.Fatalf("mkdir %s: %v", sub, err)
+		}
+	}
+
+	// Write files at various levels
+	files := map[string]string{
+		filepath.Join(dir, "root-doc.md"):                   "# Root\n",
+		filepath.Join(dir, "commands", "angela.md"):         "# Angela\n",
+		filepath.Join(dir, "guides", "advanced", "tips.md"): "# Tips\n",
+	}
+	for path, content := range files {
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatalf("write %s: %v", path, err)
+		}
+	}
+
+	store := &PlainCorpusStore{Dir: dir}
+	docs, err := store.ListDocs(domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("ListDocs: %v", err)
+	}
+	if len(docs) != 3 {
+		t.Errorf("expected 3 docs from nested dirs, got %d", len(docs))
+		for _, d := range docs {
+			t.Logf("  found: %s", d.Filename)
+		}
+	}
+
+	// Verify relative paths are used as filenames
+	filenames := map[string]bool{}
+	for _, d := range docs {
+		filenames[d.Filename] = true
+	}
+	for _, want := range []string{
+		"root-doc.md",
+		filepath.Join("commands", "angela.md"),
+		filepath.Join("guides", "advanced", "tips.md"),
+	} {
+		if !filenames[want] {
+			t.Errorf("expected filename %q in results, got %v", want, filenames)
+		}
+	}
+}
+
+func TestPlainCorpusStore_ListDocs_PlainMarkdownGetsInferredTags(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "api-design-guide.md"), []byte("# API Design\n"), 0644)
+
+	store := &PlainCorpusStore{Dir: dir}
+	docs, err := store.ListDocs(domain.DocFilter{})
+	if err != nil {
+		t.Fatalf("ListDocs: %v", err)
+	}
+	if len(docs) != 1 {
+		t.Fatalf("expected 1 doc, got %d", len(docs))
+	}
+	if len(docs[0].Tags) == 0 {
+		t.Error("expected inferred tags from filename for plain markdown")
+	}
+}
+
+func TestBuildPlainMeta_TagCount(t *testing.T) {
+	meta := BuildPlainMeta("api-authentication-guide.md")
+	if len(meta.Tags) < 3 {
+		t.Errorf("expected >= 3 tags for 'api-authentication-guide.md', got %v", meta.Tags)
 	}
 }

@@ -4,10 +4,12 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/testutil"
@@ -169,5 +171,64 @@ func TestAngelaPolishCmd_YesFlagParsed(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "unknown flag") {
 		t.Errorf("--yes should be recognized, got: %q", err)
+	}
+}
+
+func TestSanitizeAudience(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"CTO", "cto"},
+		{"équipe commerciale", "équipe-commerciale"},
+		{"", "audience"},
+		{strings.Repeat("a", 100), strings.Repeat("a", 50)},
+		{"  spaces  ", "spaces"},
+		{"foo--bar", "foo-bar"},
+	}
+	for _, tt := range tests {
+		got := sanitizeAudience(tt.input)
+		if got != tt.want {
+			t.Errorf("sanitizeAudience(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestFormatElapsed(t *testing.T) {
+	tests := []struct {
+		input time.Duration
+		want  string
+	}{
+		{5 * time.Second, "5.0s"},
+		{30 * time.Second, "30.0s"},
+		{65 * time.Second, "1m5s"},
+		{120 * time.Second, "2m0s"},
+	}
+	for _, tt := range tests {
+		got := formatElapsed(tt.input)
+		if got != tt.want {
+			t.Errorf("formatElapsed(%v) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestIsTimeoutError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"context deadline", fmt.Errorf("context deadline exceeded"), true},
+		{"client timeout", fmt.Errorf("Client.Timeout exceeded"), true},
+		{"normal error", fmt.Errorf("something went wrong"), false},
+		{"nil error", nil, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isTimeoutError(tt.err)
+			if got != tt.want {
+				t.Errorf("isTimeoutError(%v) = %v, want %v", tt.err, got, tt.want)
+			}
+		})
 	}
 }

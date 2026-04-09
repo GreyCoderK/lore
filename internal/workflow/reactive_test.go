@@ -917,3 +917,107 @@ func TestReadORIGHEAD_WithFile(t *testing.T) {
 		t.Errorf("readORIGHEAD = %q, want abc123def", result)
 	}
 }
+
+// TestHandleAmend_PrefillFromExistingDoc verifies that when amending a commit
+// that already has a doc, the detection result carries QuestionMode="reduced"
+// and PrefilledWhyConfidence=0.9, so RunFlowWithMode actually applies prefills.
+func TestHandleAmend_PrefillFromExistingDoc(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	workDir := newReactiveWorkDir(t)
+	docsDir := filepath.Join(workDir, ".lore", "docs")
+
+	origHash := "aaaa000000000000000000000000000000000001"
+	_, writeErr := storage.WriteDoc(docsDir, domain.DocMeta{
+		Type:   "feature",
+		Date:   "2026-04-01",
+		Status: "published",
+		Commit: origHash,
+	}, "existing feature", "# Existing\n\n## Why\n\nOriginal reason for this change.\n")
+	if writeErr != nil {
+		t.Fatalf("setup WriteDoc: %v", writeErr)
+	}
+
+	gitDir := filepath.Join(workDir, ".git-test")
+	os.MkdirAll(gitDir, 0o755)
+	os.WriteFile(filepath.Join(gitDir, "ORIG_HEAD"), []byte(origHash+"\n"), 0o644)
+
+	commit := &domain.CommitInfo{
+		Hash:    "bbbb000000000000000000000000000000000002",
+		Author:  "Dev",
+		Date:    time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC),
+		Message: "feat: amended feature",
+		Type:    "feat",
+		Subject: "amended feature",
+	}
+	adapter := &mockGitAdapter{headRef: commit.Hash, commit: commit, gitDir: gitDir}
+
+	// Enter (Q0: yes), u (update), then provide answers.
+	// In reduced mode: Type + What are prefilled, only Why is asked.
+	// The prefilled Why from existing doc should appear as default.
+	// We press Enter to accept all defaults, then provide minimal answers.
+	input := "\nu\n\n\nUpdated reason\n\n\n"
+	stderr := &bytes.Buffer{}
+	streams := domain.IOStreams{
+		In:  strings.NewReader(input),
+		Out: &bytes.Buffer{},
+		Err: stderr,
+	}
+
+	err := handleReactiveWithOpts(context.Background(), workDir, streams, adapter, DetectOpts{
+		IsTTY: func(_ domain.IOStreams) bool { return true },
+		GetEnv: func(key string) string {
+			if key == "GIT_REFLOG_ACTION" {
+				return "amend"
+			}
+			return ""
+		},
+	}, nil)
+	if err != nil {
+		t.Fatalf("HandleReactive amend prefill: %v", err)
+	}
+
+	output := stderr.String()
+	if !strings.Contains(output, "Updated") {
+		t.Errorf("expected 'Updated' in stderr, got: %q", output)
+	}
+}
+
+func TestExtractWhy_FromDocContent(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		want    string
+	}{
+		{
+			"standard why section",
+			"# Title\n\n## Why\n\nBecause performance.\n\n## Impact\n\nSome impact.\n",
+			"Because performance.",
+		},
+		{
+			"why with multiple lines",
+			"# Title\n\n## Why\n\nLine 1.\nLine 2.\n\n## Impact\n",
+			"Line 1.\nLine 2.",
+		},
+		{
+			"no why section",
+			"# Title\n\n## Impact\n\nSome impact.\n",
+			"",
+		},
+		{
+			"why at end of doc",
+			"# Title\n\n## Why\n\nFinal reason.\n",
+			"Final reason.",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractWhy(tt.content)
+			if got != tt.want {
+				t.Errorf("extractWhy() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

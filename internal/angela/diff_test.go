@@ -443,3 +443,560 @@ func TestClassifyHunk_Modification(t *testing.T) {
 		t.Errorf("ClassifyHunk = %d, want HunkModification", got)
 	}
 }
+
+// --- ClassifyHunk with Lines field (merged hunks) ---
+
+func TestClassifyHunk_Lines_PureAddition(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '+', Text: "new line 1"},
+			{Kind: '+', Text: "new line 2"},
+		},
+	}
+	if got := ClassifyHunk(h); got != HunkPureAddition {
+		t.Errorf("ClassifyHunk with Lines = %d, want HunkPureAddition", got)
+	}
+}
+
+func TestClassifyHunk_Lines_PureDeletion(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "old line 1"},
+			{Kind: '=', Text: "context"},
+			{Kind: '-', Text: "old line 2"},
+		},
+	}
+	if got := ClassifyHunk(h); got != HunkPureDeletion {
+		t.Errorf("ClassifyHunk with Lines = %d, want HunkPureDeletion", got)
+	}
+}
+
+func TestClassifyHunk_Lines_Cosmetic(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"hello  "},
+		Modified: []string{"hello"},
+		Lines: []DiffLine{
+			{Kind: '-', Text: "hello  "},
+			{Kind: '+', Text: "hello"},
+		},
+	}
+	if got := ClassifyHunk(h); got != HunkCosmetic {
+		t.Errorf("ClassifyHunk with Lines = %d, want HunkCosmetic", got)
+	}
+}
+
+func TestClassifyHunk_Lines_MajorDeletion(t *testing.T) {
+	var lines []DiffLine
+	for i := 0; i < 20; i++ {
+		lines = append(lines, DiffLine{Kind: '-', Text: fmt.Sprintf("line %d", i)})
+	}
+	lines = append(lines, DiffLine{Kind: '+', Text: "replacement"})
+	h := DiffHunk{Lines: lines}
+	if got := ClassifyHunk(h); got != HunkMajorDeletion {
+		t.Errorf("ClassifyHunk with Lines = %d, want HunkMajorDeletion", got)
+	}
+}
+
+// --- isCosmetic with Lines field ---
+
+func TestIsCosmetic_WithLines_True(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "foo  \t"},
+			{Kind: '+', Text: "foo"},
+			{Kind: '=', Text: "context line"},
+			{Kind: '-', Text: "bar   "},
+			{Kind: '+', Text: "bar"},
+		},
+	}
+	if !isCosmetic(h) {
+		t.Error("expected cosmetic with Lines whitespace-only changes")
+	}
+}
+
+func TestIsCosmetic_WithLines_False(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "foo"},
+			{Kind: '+', Text: "bar"},
+		},
+	}
+	if isCosmetic(h) {
+		t.Error("expected non-cosmetic with Lines content changes")
+	}
+}
+
+func TestIsCosmetic_WithLines_UnequalCount(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "foo"},
+			{Kind: '+', Text: "foo"},
+			{Kind: '+', Text: "extra"},
+		},
+	}
+	if isCosmetic(h) {
+		t.Error("expected non-cosmetic when del/add counts differ")
+	}
+}
+
+// --- renderHunkBody tests ---
+
+func TestRenderHunkBody_WithLines(t *testing.T) {
+	var buf bytes.Buffer
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "removed"},
+			{Kind: '=', Text: "context"},
+			{Kind: '+', Text: "added"},
+		},
+	}
+	renderHunkBody(&buf, h)
+	out := buf.String()
+	if !strings.Contains(out, "removed") {
+		t.Error("expected removed line in output")
+	}
+	if !strings.Contains(out, "context") {
+		t.Error("expected context line in output")
+	}
+	if !strings.Contains(out, "added") {
+		t.Error("expected added line in output")
+	}
+}
+
+func TestRenderHunkBody_WithoutLines(t *testing.T) {
+	var buf bytes.Buffer
+	h := DiffHunk{
+		Original: []string{"old"},
+		Modified: []string{"new"},
+	}
+	renderHunkBody(&buf, h)
+	out := buf.String()
+	if !strings.Contains(out, "old") {
+		t.Error("expected original line in output")
+	}
+	if !strings.Contains(out, "new") {
+		t.Error("expected modified line in output")
+	}
+}
+
+// --- summarizeHunkContent tests ---
+
+func TestSummarizeHunkContent_PureAddition_SingleLine(t *testing.T) {
+	h := DiffHunk{Modified: []string{"This is a new line"}}
+	got := summarizeHunkContent(h, HunkPureAddition)
+	if !strings.HasPrefix(got, "+\"") {
+		t.Errorf("single-line addition should start with +\", got %q", got)
+	}
+	if !strings.Contains(got, "This is a new line") {
+		t.Errorf("should contain the line text, got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_PureAddition_SingleLineTruncation(t *testing.T) {
+	long := strings.Repeat("x", 60)
+	h := DiffHunk{Modified: []string{long}}
+	got := summarizeHunkContent(h, HunkPureAddition)
+	if !strings.Contains(got, "…") {
+		t.Errorf("long single-line addition should be truncated, got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_PureAddition_MultiLine(t *testing.T) {
+	h := DiffHunk{Modified: []string{"line 1", "line 2", "line 3"}}
+	got := summarizeHunkContent(h, HunkPureAddition)
+	if got != "+3 lines" {
+		t.Errorf("expected '+3 lines', got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_PureDeletion_WithSections(t *testing.T) {
+	h := DiffHunk{Original: []string{"## Overview", "some text", "### Details", "more text"}}
+	got := summarizeHunkContent(h, HunkPureDeletion)
+	if !strings.Contains(got, "-4 lines") {
+		t.Errorf("should mention line count, got %q", got)
+	}
+	if !strings.Contains(got, "## Overview") {
+		t.Errorf("should mention section heading, got %q", got)
+	}
+	if !strings.Contains(got, "### Details") {
+		t.Errorf("should mention subsection heading, got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_PureDeletion_NoSections(t *testing.T) {
+	h := DiffHunk{Original: []string{"line a", "line b"}}
+	got := summarizeHunkContent(h, HunkPureDeletion)
+	if got != "-2 lines" {
+		t.Errorf("expected '-2 lines', got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_Cosmetic(t *testing.T) {
+	h := DiffHunk{Original: []string{"a  "}, Modified: []string{"a"}}
+	got := summarizeHunkContent(h, HunkCosmetic)
+	if got != "whitespace fix" {
+		t.Errorf("expected 'whitespace fix', got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_MermaidDiagram(t *testing.T) {
+	h := DiffHunk{Modified: []string{"```mermaid", "graph TD", "A-->B", "```"}}
+	got := summarizeHunkContent(h, HunkPureAddition)
+	if got != "+mermaid diagram" {
+		t.Errorf("expected '+mermaid diagram', got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_Table(t *testing.T) {
+	h := DiffHunk{Modified: []string{"| Col A | Col B |", "|---|---|", "| 1 | 2 |"}}
+	got := summarizeHunkContent(h, HunkPureAddition)
+	if got != "+table" {
+		t.Errorf("expected '+table', got %q", got)
+	}
+}
+
+func TestSummarizeHunkContent_WithLines(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '+', Text: "new line 1"},
+			{Kind: '+', Text: "new line 2"},
+			{Kind: '=', Text: "context"},
+		},
+	}
+	got := summarizeHunkContent(h, HunkPureAddition)
+	if got != "+2 lines" {
+		t.Errorf("expected '+2 lines', got %q", got)
+	}
+}
+
+// --- printAutoSummary tests ---
+
+func TestPrintAutoSummary_Format(t *testing.T) {
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+	r := &AutoResult{Accepted: 3, Rejected: 1, Asked: 2}
+	printAutoSummary(streams, r)
+	out := errBuf.String()
+	if !strings.Contains(out, "3") || !strings.Contains(out, "1") || !strings.Contains(out, "2") {
+		t.Errorf("summary should contain counts 3/1/2, got %q", out)
+	}
+}
+
+// --- analyzeHunk with Lines field tests ---
+
+func TestAnalyzeHunk_WithLines_NetLoss(t *testing.T) {
+	var lines []DiffLine
+	for i := 0; i < 20; i++ {
+		lines = append(lines, DiffLine{Kind: '-', Text: fmt.Sprintf("line %d", i)})
+	}
+	lines = append(lines, DiffLine{Kind: '+', Text: "single replacement"})
+	h := DiffHunk{Lines: lines}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "removes") || strings.Contains(w, "lines") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected net-loss warning with Lines, got: %v", warnings)
+	}
+}
+
+func TestAnalyzeHunk_WithLines_SectionDeletion(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "## Architecture"},
+			{Kind: '-', Text: "content here"},
+			{Kind: '+', Text: "replaced"},
+		},
+	}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "section") && strings.Contains(w, "Architecture") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected section deletion warning with Lines, got: %v", warnings)
+	}
+}
+
+func TestAnalyzeHunk_WithLines_CodeBlockRemoval(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "```go"},
+			{Kind: '-', Text: "func main() {}"},
+			{Kind: '-', Text: "```"},
+			{Kind: '+', Text: "removed code"},
+		},
+	}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "code block") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected code block warning with Lines, got: %v", warnings)
+	}
+}
+
+func TestAnalyzeHunk_WithLines_TableRowsRemoval(t *testing.T) {
+	h := DiffHunk{
+		Lines: []DiffLine{
+			{Kind: '-', Text: "| A | B |"},
+			{Kind: '-', Text: "|---|---|"},
+			{Kind: '-', Text: "| 1 | 2 |"},
+			{Kind: '-', Text: "| 3 | 4 |"},
+			{Kind: '+', Text: "replaced"},
+		},
+	}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "table rows") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected table rows warning with Lines, got: %v", warnings)
+	}
+}
+
+func TestAnalyzeHunk_MultipleSections(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"## First", "text", "## Second", "text"},
+		Modified: []string{"replaced"},
+	}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "2 sections") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected multi-section warning, got: %v", warnings)
+	}
+}
+
+// --- InteractiveDiff extended tests ---
+
+func TestInteractiveDiff_DryRun_AllHunksRejected(t *testing.T) {
+	hunks := []DiffHunk{
+		{Original: []string{"a"}, Modified: []string{"A"}},
+		{Original: []string{"b"}, Modified: []string{"B"}},
+		{Original: []string{"c"}, Modified: []string{"C"}},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{DryRun: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for i, c := range choices {
+		if c != DiffReject {
+			t.Errorf("hunk %d: expected DiffReject in dry run, got %d", i, c)
+		}
+	}
+}
+
+func TestInteractiveDiff_YesAll_AllHunksAccepted(t *testing.T) {
+	hunks := []DiffHunk{
+		{Original: []string{"a"}, Modified: []string{"A"}},
+		{Original: []string{"b"}, Modified: []string{"B"}},
+		{Original: []string{"c"}, Modified: []string{"C"}},
+		{Original: []string{"d"}, Modified: []string{"D"}},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{YesAll: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for i, c := range choices {
+		if c != DiffAccept {
+			t.Errorf("hunk %d: expected DiffAccept with YesAll, got %d", i, c)
+		}
+	}
+}
+
+func TestInteractiveDiff_Standard_YNQ(t *testing.T) {
+	hunks := []DiffHunk{
+		{Original: []string{"a"}, Modified: []string{"A"}},
+		{Original: []string{"b"}, Modified: []string{"B"}},
+		{Original: []string{"c"}, Modified: []string{"C"}},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader("y\nn\nq\n"),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if choices[0] != DiffAccept {
+		t.Errorf("hunk 0: expected DiffAccept, got %d", choices[0])
+	}
+	if choices[1] != DiffReject {
+		t.Errorf("hunk 1: expected DiffReject, got %d", choices[1])
+	}
+	// hunk 2 should remain DiffReject since q causes early return
+	if choices[2] != DiffReject {
+		t.Errorf("hunk 2: expected DiffReject after quit, got %d", choices[2])
+	}
+}
+
+func TestInteractiveDiff_Standard_BothInput(t *testing.T) {
+	hunks := []DiffHunk{
+		{Original: []string{"old line"}, Modified: []string{"new line"}},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader("b\n"),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if choices[0] != DiffBoth {
+		t.Errorf("hunk 0: expected DiffBoth, got %d", choices[0])
+	}
+}
+
+func TestInteractiveDiff_Standard_InputEndedMidway(t *testing.T) {
+	hunks := []DiffHunk{
+		{Original: []string{"a"}, Modified: []string{"A"}},
+		{Original: []string{"b"}, Modified: []string{"B"}},
+		{Original: []string{"c"}, Modified: []string{"C"}},
+		{Original: []string{"d"}, Modified: []string{"D"}},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader("y\n"), // only 1 answer for 4 hunks
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if choices[0] != DiffAccept {
+		t.Errorf("hunk 0: expected DiffAccept, got %d", choices[0])
+	}
+	// Remaining hunks should be DiffReject (zero value) since input ended
+	for i := 1; i < len(choices); i++ {
+		if choices[i] != DiffReject {
+			t.Errorf("hunk %d: expected DiffReject after EOF, got %d", i, choices[i])
+		}
+	}
+}
+
+func TestInteractiveDiff_Auto_PureAdditionAccepted(t *testing.T) {
+	hunks := []DiffHunk{
+		{Original: nil, Modified: []string{"new line 1", "new line 2"}},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{Auto: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if choices[0] != DiffAccept {
+		t.Errorf("pure addition in auto mode: expected DiffAccept, got %d", choices[0])
+	}
+}
+
+func TestInteractiveDiff_Auto_PureDeletionRejected(t *testing.T) {
+	hunks := []DiffHunk{
+		{Original: []string{"deleted line 1", "deleted line 2"}, Modified: nil},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{Auto: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if choices[0] != DiffReject {
+		t.Errorf("pure deletion in auto mode: expected DiffReject, got %d", choices[0])
+	}
+}
+
+func TestInteractiveDiff_Auto_ModificationAsksUser(t *testing.T) {
+	hunks := []DiffHunk{
+		{
+			Original: []string{"old line 1", "old line 2", "old line 3"},
+			Modified: []string{"new line 1", "new line 2", "new line 3", "new line 4"},
+		},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader("y\n"),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{Auto: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if choices[0] != DiffAccept {
+		t.Errorf("modification with 'y' input in auto mode: expected DiffAccept, got %d", choices[0])
+	}
+}
+
+func TestInteractiveDiff_Auto_MixedHunkTypes(t *testing.T) {
+	hunks := []DiffHunk{
+		// Pure addition → auto-accept
+		{Original: nil, Modified: []string{"added"}},
+		// Pure deletion → auto-reject
+		{Original: []string{"removed"}, Modified: nil},
+		// Modification → asks user, user says n
+		{Original: []string{"old"}, Modified: []string{"completely different new text"}},
+	}
+	var errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &bytes.Buffer{},
+		Err: &errBuf,
+		In:  strings.NewReader("n\n"),
+	}
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{Auto: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if choices[0] != DiffAccept {
+		t.Errorf("hunk 0 (addition): expected DiffAccept, got %d", choices[0])
+	}
+	if choices[1] != DiffReject {
+		t.Errorf("hunk 1 (deletion): expected DiffReject, got %d", choices[1])
+	}
+	if choices[2] != DiffReject {
+		t.Errorf("hunk 2 (modification, user said n): expected DiffReject, got %d", choices[2])
+	}
+}

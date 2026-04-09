@@ -344,12 +344,14 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 
 	// Pre-fill from existing doc when updating.
 	var detection DetectionResult
+	detection.QuestionMode = "reduced"
 	if existingDoc != nil {
 		detection.PrefilledWhat = storage.ExtractSlug(existingDoc.Filename)
 		// Read body to extract existing Why section for pre-fill.
 		if content, readErr := storage.ReadDocContent(filepath.Join(docsDir, existingFilename)); readErr == nil {
 			if why := extractWhy(content); why != "" {
 				detection.PrefilledWhy = why
+				detection.PrefilledWhyConfidence = 0.9
 			}
 		}
 	}

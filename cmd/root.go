@@ -4,9 +4,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/greycoderk/lore/internal/cli"
 	"github.com/greycoderk/lore/internal/config"
@@ -133,11 +136,16 @@ func Execute() {
 		i18n.Init(earlyLang)
 	}
 
+	// Wire signal handling so Ctrl+C cancels the context gracefully,
+	// giving SavePending a chance to persist partial answers before exit.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	cfg := &config.Config{}
 	var loreStore domain.LoreStore
 	cmd := newRootCmd(cfg, streams, &loreStore)
 
-	if err := cmd.Execute(); err != nil {
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		if code := cli.ExitCodeFrom(err); code >= 0 {
 			os.Exit(code)
 		}

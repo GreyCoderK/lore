@@ -7,6 +7,8 @@ package notify
 
 import (
 	"fmt"
+
+	"github.com/greycoderk/lore/internal/brand"
 )
 
 // NotifyOSDialog launches a Linux GUI dialog (zenity/kdialog/yad) for Lore documentation.
@@ -54,33 +56,38 @@ func buildZenityScript(data DialogData) string {
 
 	branchCtx := branchScopeContext(data)
 
+	iconFlag := ""
+	if icon := brand.LogoPNGPath(); icon != "" {
+		iconFlag = " --window-icon=" + bashQuote(icon)
+	}
+
 	return fmt.Sprintf(`#!/bin/bash
 COMMIT_MSG=%s
 DIFF_STAT=%s
 PREFILL_WHAT=%s
 PREFILL_WHY=%s
 
-DOC_TYPE=$(zenity --list --title=%s --text="Commit: $COMMIT_MSG\nDiff: $DIFF_STAT%s\n\n%s" --column="Type" feature bugfix decision refactor release note 2>/dev/null)
+DOC_TYPE=$(zenity --list --title=%s%s --text="Commit: $COMMIT_MSG\nDiff: $DIFF_STAT%s\n\n%s" --column="Type" feature bugfix decision refactor release note 2>/dev/null)
 [ -z "$DOC_TYPE" ] && exit 0
 
-WHAT=$(zenity --entry --title=%s --text=%s --entry-text="$PREFILL_WHAT" 2>/dev/null)
+WHAT=$(zenity --entry --title=%s%s --text=%s --entry-text="$PREFILL_WHAT" 2>/dev/null)
 [ -z "$WHAT" ] && exit 0
 
-WHY=$(zenity --entry --title=%s --text=%s --entry-text="$PREFILL_WHY" 2>/dev/null)
+WHY=$(zenity --entry --title=%s%s --text=%s --entry-text="$PREFILL_WHY" 2>/dev/null)
 [ -z "$WHY" ] && exit 0
 
-cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || zenity --error --title=%s --text=%s 2>/dev/null
+cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || zenity --error --title=%s%s --text=%s 2>/dev/null
 `,
 		bashQuote(sanitizeForShell(data.CommitMsg)),
 		bashQuote(sanitizeForShell(data.DiffStat)),
 		bashQuote(sanitizeForShell(data.PrefillWhat)),
 		bashQuote(sanitizeForShell(data.PrefillWhy)),
-		bashQuote(title), branchCtx, labelType,
-		bashQuote(titleWhat), bashQuote(labelWhat),
-		bashQuote(titleWhy), bashQuote(labelWhy),
+		bashQuote(title), iconFlag, branchCtx, labelType,
+		bashQuote(titleWhat), iconFlag, bashQuote(labelWhat),
+		bashQuote(titleWhy), iconFlag, bashQuote(labelWhy),
 		bashQuote(sanitizeForShell(data.RepoRoot)),
 		bashQuote(sanitizeForShell(data.LorePath)), hash,
-		bashQuote(coalesce(data.LabelTitle, "Lore")),
+		bashQuote(coalesce(data.LabelTitle, "Lore")), iconFlag,
 		bashQuote(coalesce(data.LabelErrResolve, "Failed to resolve pending")),
 	)
 }
@@ -94,29 +101,34 @@ func buildKDialogScript(data DialogData) string {
 	labelWhy := coalesce(data.LabelWhy, "Why did you make this change?")
 	branchCtx := branchScopeContext(data)
 
+	iconFlag := ""
+	if icon := brand.LogoPNGPath(); icon != "" {
+		iconFlag = " --icon " + bashQuote(icon)
+	}
+
 	return fmt.Sprintf(`#!/bin/bash
 COMMIT_MSG=%s
 DIFF_STAT=%s
 
-DOC_TYPE=$(kdialog --combobox "Commit: $COMMIT_MSG\nDiff: $DIFF_STAT%s" feature bugfix decision refactor release note --default bugfix --title %s)
+DOC_TYPE=$(kdialog --combobox "Commit: $COMMIT_MSG\nDiff: $DIFF_STAT%s" feature bugfix decision refactor release note --default bugfix --title %s%s)
 [ -z "$DOC_TYPE" ] && exit 0
 
-WHAT=$(kdialog --inputbox %s %s --title %s)
+WHAT=$(kdialog --inputbox %s %s --title %s%s)
 [ -z "$WHAT" ] && exit 0
 
-WHY=$(kdialog --inputbox %s %s --title %s)
+WHY=$(kdialog --inputbox %s %s --title %s%s)
 [ -z "$WHY" ] && exit 0
 
-cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || kdialog --error %s --title %s
+cd %s && %s pending resolve --commit '%s' --type "$DOC_TYPE" --what "$WHAT" --why "$WHY" 2>&1 || kdialog --error %s --title %s%s
 `,
 		bashQuote(sanitizeForShell(data.CommitMsg)),
 		bashQuote(sanitizeForShell(data.DiffStat)),
-		branchCtx, bashQuote(title),
-		bashQuote(labelWhat), bashQuote(sanitizeForShell(data.PrefillWhat)), bashQuote(titleWhat),
-		bashQuote(labelWhy), bashQuote(sanitizeForShell(data.PrefillWhy)), bashQuote(titleWhy),
+		branchCtx, bashQuote(title), iconFlag,
+		bashQuote(labelWhat), bashQuote(sanitizeForShell(data.PrefillWhat)), bashQuote(titleWhat), iconFlag,
+		bashQuote(labelWhy), bashQuote(sanitizeForShell(data.PrefillWhy)), bashQuote(titleWhy), iconFlag,
 		bashQuote(sanitizeForShell(data.RepoRoot)),
 		bashQuote(sanitizeForShell(data.LorePath)), hash,
 		bashQuote(coalesce(data.LabelErrResolve, "Failed to resolve pending")),
-		bashQuote(coalesce(data.LabelTitle, "Lore")),
+		bashQuote(coalesce(data.LabelTitle, "Lore")), iconFlag,
 	)
 }

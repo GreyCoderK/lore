@@ -163,3 +163,94 @@ func TestList_Empty(t *testing.T) {
 		t.Errorf("expected no output for empty list, got %q", out.String())
 	}
 }
+
+func TestList_EmptySlice(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	idx, err := ui.List(streams, []ui.ListItem{}, "Pick")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if idx != -1 {
+		t.Errorf("expected -1 for empty slice, got %d", idx)
+	}
+	if out.String() != "" {
+		t.Errorf("expected no output for empty slice, got %q", out.String())
+	}
+	if errBuf.String() != "" {
+		t.Errorf("expected no stderr for empty slice, got %q", errBuf.String())
+	}
+}
+
+func TestList_SingleItem(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader("1\n"),
+	}
+
+	items := []ui.ListItem{
+		{Type: "decision", Title: "single-item", Date: "2026-04-01"},
+	}
+
+	idx, err := ui.List(streams, items, "Select")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Non-TTY: returns -1
+	if idx != -1 {
+		t.Errorf("expected -1 for non-TTY, got %d", idx)
+	}
+	stdout := out.String()
+	if !strings.Contains(stdout, "single-item") {
+		t.Errorf("expected 'single-item' in output, got %q", stdout)
+	}
+	if !strings.Contains(stdout, "decision") {
+		t.Errorf("expected 'decision' in output, got %q", stdout)
+	}
+	lines := strings.Split(strings.TrimSpace(stdout), "\n")
+	if len(lines) != 1 {
+		t.Errorf("expected 1 line, got %d", len(lines))
+	}
+}
+
+func TestList_MultipleItems_DifferentWidths(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	streams := domain.IOStreams{
+		Out: &out,
+		Err: &errBuf,
+		In:  strings.NewReader(""),
+	}
+
+	items := []ui.ListItem{
+		{Type: "decision", Title: "x", Date: "2026-01-01"},
+		{Type: "feature", Title: "very-long-title-name-here", Date: "2026-02-15"},
+		{Type: "bugfix", Title: "ab", Date: "2026-03-30"},
+	}
+
+	idx, err := ui.List(streams, items, "Pick one")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if idx != -1 {
+		t.Errorf("expected -1 for non-TTY, got %d", idx)
+	}
+	stdout := out.String()
+	lines := strings.Split(strings.TrimSpace(stdout), "\n")
+	if len(lines) != 3 {
+		t.Errorf("expected 3 lines, got %d", len(lines))
+	}
+	// Verify all items present
+	if !strings.Contains(stdout, "very-long-title-name-here") {
+		t.Error("expected long title in output")
+	}
+	if !strings.Contains(stdout, "bugfix") {
+		t.Error("expected 'bugfix' type in output")
+	}
+}

@@ -151,3 +151,95 @@ func TestEscapeTOON_EscapeOrder(t *testing.T) {
 		t.Errorf("escapeTOON order wrong, got %q, want %q", result, `a \|b\\`)
 	}
 }
+
+// --- SerializeTOONWithVHS tests ---
+
+func TestSerializeTOONWithVHS_NilVHS(t *testing.T) {
+	docs := []DocSummary{{Filename: "a.md", Type: "decision", Date: "2026-01-01", Summary: "test"}}
+	got := SerializeTOONWithVHS(docs, nil, nil)
+	base := SerializeTOON(docs, nil)
+	if got != base {
+		t.Error("nil VHS should return same as SerializeTOON")
+	}
+}
+
+func TestSerializeTOONWithVHS_EmptyVHS(t *testing.T) {
+	docs := []DocSummary{{Filename: "a.md", Type: "decision", Date: "2026-01-01", Summary: "test"}}
+	vhs := &VHSSignals{}
+	got := SerializeTOONWithVHS(docs, nil, vhs)
+	if strings.Contains(got, "vhs_signals:") {
+		t.Error("empty VHS signals should not produce vhs_signals section")
+	}
+}
+
+func TestSerializeTOONWithVHS_WithOrphanTapes(t *testing.T) {
+	docs := []DocSummary{{Filename: "a.md", Type: "decision", Date: "2026-01-01", Summary: "test"}}
+	vhs := &VHSSignals{
+		OrphanTapes: []string{"demo.tape"},
+	}
+	got := SerializeTOONWithVHS(docs, nil, vhs)
+	if !strings.Contains(got, "vhs_signals:\n") {
+		t.Error("should contain vhs_signals section")
+	}
+	if !strings.Contains(got, "signal_type|source|detail\n") {
+		t.Error("should contain VHS header row")
+	}
+	if !strings.Contains(got, "orphan_tape|demo.tape|") {
+		t.Error("should contain orphan tape row")
+	}
+}
+
+func TestSerializeTOONWithVHS_WithOrphanGIFs(t *testing.T) {
+	docs := []DocSummary{{Filename: "a.md", Type: "decision", Date: "2026-01-01", Summary: "test"}}
+	vhs := &VHSSignals{
+		OrphanGIFs: []GIFRef{
+			{DocFilename: "readme.md", GIFPath: "demo.gif"},
+		},
+	}
+	got := SerializeTOONWithVHS(docs, nil, vhs)
+	if !strings.Contains(got, "orphan_gif|readme.md|") {
+		t.Error("should contain orphan GIF row")
+	}
+	if !strings.Contains(got, "demo.gif") {
+		t.Error("should reference the GIF path")
+	}
+}
+
+func TestSerializeTOONWithVHS_WithCommandMismatches(t *testing.T) {
+	docs := []DocSummary{{Filename: "a.md", Type: "decision", Date: "2026-01-01", Summary: "test"}}
+	vhs := &VHSSignals{
+		CommandMismatches: []TapeMismatch{
+			{TapeFile: "demo.tape", Command: "lore review", Reason: "undocumented_command"},
+		},
+	}
+	got := SerializeTOONWithVHS(docs, nil, vhs)
+	if !strings.Contains(got, "command_mismatch|demo.tape|") {
+		t.Error("should contain command mismatch row")
+	}
+	if !strings.Contains(got, "lore review") {
+		t.Error("should contain the mismatched command")
+	}
+	if !strings.Contains(got, "undocumented_command") {
+		t.Error("should contain the reason")
+	}
+}
+
+func TestSerializeTOONWithVHS_AllSignalTypes(t *testing.T) {
+	docs := []DocSummary{{Filename: "a.md", Type: "decision", Date: "2026-01-01", Summary: "test"}}
+	vhs := &VHSSignals{
+		OrphanTapes:       []string{"tape1.tape"},
+		OrphanGIFs:        []GIFRef{{DocFilename: "doc.md", GIFPath: "old.gif"}},
+		CommandMismatches: []TapeMismatch{{TapeFile: "tape2.tape", Command: "lore init", Reason: "unknown_subcommand"}},
+	}
+	got := SerializeTOONWithVHS(docs, nil, vhs)
+	// Count signal rows (3 data rows expected)
+	if !strings.Contains(got, "orphan_tape|") {
+		t.Error("should contain orphan_tape signal")
+	}
+	if !strings.Contains(got, "orphan_gif|") {
+		t.Error("should contain orphan_gif signal")
+	}
+	if !strings.Contains(got, "command_mismatch|") {
+		t.Error("should contain command_mismatch signal")
+	}
+}

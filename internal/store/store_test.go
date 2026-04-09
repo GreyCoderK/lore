@@ -403,3 +403,80 @@ func TestStubs_DoNotPanic(t *testing.T) {
 		t.Errorf("UpdatePattern: got %v, want ErrNotImplemented", err)
 	}
 }
+
+func TestMigrate_FreshDB_LatestVersion(t *testing.T) {
+	s, _ := tempDB(t)
+
+	var version int
+	err := s.db.QueryRow("SELECT MAX(version) FROM schema_version").Scan(&version)
+	if err != nil {
+		t.Fatalf("query schema_version: %v", err)
+	}
+	// migrations slice has 2 entries (v1, v2), so latest should be 2.
+	if version != len(migrations) {
+		t.Errorf("schema version = %d, want %d (latest)", version, len(migrations))
+	}
+
+	// Verify each migration has a non-empty description and plausible applied_at.
+	rows, err := s.db.Query("SELECT version, applied_at, description FROM schema_version ORDER BY version")
+	if err != nil {
+		t.Fatalf("query rows: %v", err)
+	}
+	defer rows.Close()
+
+	count := 0
+	for rows.Next() {
+		var v int
+		var at int64
+		var desc string
+		if err := rows.Scan(&v, &at, &desc); err != nil {
+			t.Fatalf("scan: %v", err)
+		}
+		count++
+		if desc == "" {
+			t.Errorf("migration v%d has empty description", v)
+		}
+		if at <= 0 {
+			t.Errorf("migration v%d has invalid applied_at: %d", v, at)
+		}
+	}
+	if count != len(migrations) {
+		t.Errorf("schema_version row count = %d, want %d", count, len(migrations))
+	}
+}
+
+func TestMigrate_Idempotent_ThreeCalls(t *testing.T) {
+	s, _ := tempDB(t)
+	// Open already called Migrate once. Call two more times.
+	for i := 0; i < 2; i++ {
+		if err := s.Migrate(); err != nil {
+			t.Fatalf("Migrate call %d: %v", i+2, err)
+		}
+	}
+
+	// Version should still be at latest, no duplicates.
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM schema_version").Scan(&count)
+	if err != nil {
+		t.Fatalf("count: %v", err)
+	}
+	if count != len(migrations) {
+		t.Errorf("schema_version rows = %d after 3 Migrate calls, want %d", count, len(migrations))
+	}
+}
+
+func TestMigrate_V2IndexExists(t *testing.T) {
+	s, _ := tempDB(t)
+
+	// Verify the V2 composite index was created.
+	var indexName string
+	err := s.db.QueryRow(
+		"SELECT name FROM sqlite_master WHERE type='index' AND name='idx_commits_scope_date'",
+	).Scan(&indexName)
+	if err != nil {
+		t.Fatalf("idx_commits_scope_date not found: %v", err)
+	}
+	if indexName != "idx_commits_scope_date" {
+		t.Errorf("index name = %q, want idx_commits_scope_date", indexName)
+	}
+}

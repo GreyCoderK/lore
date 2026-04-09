@@ -115,3 +115,60 @@ func TestAskType_NonTTY_MultipleInvalidThenValid(t *testing.T) {
 		t.Errorf("expected error for 'baz' in stderr, got: %q", stderr)
 	}
 }
+
+// --- selectType non-TTY tests ---
+// selectType requires a real terminal (term.IsTerminal) for the interactive
+// arrow-key selector. When stdin is not an *os.File or not a terminal, it
+// returns defaultType immediately. The interactive path (raw mode, arrow keys)
+// cannot be tested without a real PTY, so we only test the fallback paths here.
+
+func TestSelectType_NonFile_ReturnsDefault(t *testing.T) {
+	// When In is a plain io.Reader (not *os.File), selectType returns defaultType.
+	streams := domain.IOStreams{
+		In:  strings.NewReader("anything\n"),
+		Out: &bytes.Buffer{},
+		Err: &bytes.Buffer{},
+	}
+	got, err := selectType(streams, "decision")
+	if err != nil {
+		t.Fatalf("selectType: %v", err)
+	}
+	if got != "decision" {
+		t.Errorf("selectType = %q, want %q (default)", got, "decision")
+	}
+}
+
+func TestSelectType_NonFile_EmptyDefault(t *testing.T) {
+	streams := domain.IOStreams{
+		In:  strings.NewReader(""),
+		Out: &bytes.Buffer{},
+		Err: &bytes.Buffer{},
+	}
+	got, err := selectType(streams, "")
+	if err != nil {
+		t.Fatalf("selectType: %v", err)
+	}
+	if got != "" {
+		t.Errorf("selectType = %q, want empty string (default)", got)
+	}
+}
+
+func TestSelectType_NonFile_AllDefaults(t *testing.T) {
+	// Verify every valid type is returned unchanged as default.
+	for _, typ := range typeSelectOptions {
+		t.Run(typ, func(t *testing.T) {
+			streams := domain.IOStreams{
+				In:  strings.NewReader(""),
+				Out: &bytes.Buffer{},
+				Err: &bytes.Buffer{},
+			}
+			got, err := selectType(streams, typ)
+			if err != nil {
+				t.Fatalf("selectType: %v", err)
+			}
+			if got != typ {
+				t.Errorf("selectType = %q, want %q", got, typ)
+			}
+		})
+	}
+}

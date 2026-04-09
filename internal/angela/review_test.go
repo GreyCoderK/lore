@@ -6,6 +6,7 @@ package angela
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -425,5 +426,85 @@ func TestTruncateRunes_Unicode(t *testing.T) {
 	result := truncateRunes(s, 200)
 	if len([]rune(result)) != 200 {
 		t.Errorf("rune count = %d, want 200", len([]rune(result)))
+	}
+}
+
+// --- PrepareDocSummaries with ReviewFilter tests ---
+
+func TestPrepareDocSummaries_PatternFilter_MatchesSubset(t *testing.T) {
+	docs := make([]domain.DocMeta, 10)
+	content := make(map[string]string)
+	for i := range docs {
+		name := fmt.Sprintf("doc-%02d.md", i)
+		if i < 3 {
+			name = fmt.Sprintf("decision-auth-%02d.md", i)
+		}
+		docs[i] = domain.DocMeta{Filename: name, Type: "decision", Date: fmt.Sprintf("2026-03-%02d", i+1)}
+		content[name] = "---\ntype: decision\n---\n## What\nContent here\n\n## Why\nBecause reasons"
+	}
+
+	reader := &mockCorpusReader{docs: docs, content: content}
+	pattern := regexp.MustCompile(`^decision-auth-`)
+	summaries, total, err := PrepareDocSummaries(reader, ReviewFilter{Pattern: pattern})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if total != 3 {
+		t.Errorf("total = %d, want 3 (only matched docs)", total)
+	}
+	if len(summaries) != 3 {
+		t.Errorf("summaries = %d, want 3", len(summaries))
+	}
+	for _, s := range summaries {
+		if !strings.HasPrefix(s.Filename, "decision-auth-") {
+			t.Errorf("unexpected filename %q in filtered results", s.Filename)
+		}
+	}
+}
+
+func TestPrepareDocSummaries_AllFlag_CorpusOver50(t *testing.T) {
+	docs := make([]domain.DocMeta, 55)
+	content := make(map[string]string)
+	for i := range docs {
+		name := fmt.Sprintf("doc-%03d.md", i)
+		docs[i] = domain.DocMeta{Filename: name, Type: "feature", Date: fmt.Sprintf("2026-%02d-%02d", (i/28)+1, (i%28)+1)}
+		content[name] = "---\ntype: feature\n---\n## What\nSomething\n\n## Why\nReasons"
+	}
+
+	reader := &mockCorpusReader{docs: docs, content: content}
+	summaries, total, err := PrepareDocSummaries(reader, ReviewFilter{All: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if total != 55 {
+		t.Errorf("total = %d, want 55", total)
+	}
+	// With All=true, all 55 docs should be included (not 25+25 sampling)
+	if len(summaries) != 55 {
+		t.Errorf("summaries = %d, want 55 (All=true bypasses sampling)", len(summaries))
+	}
+}
+
+func TestPrepareDocSummaries_PatternFilter_TooFewDocs_Error(t *testing.T) {
+	docs := make([]domain.DocMeta, 10)
+	content := make(map[string]string)
+	for i := range docs {
+		name := fmt.Sprintf("doc-%02d.md", i)
+		docs[i] = domain.DocMeta{Filename: name, Type: "decision", Date: fmt.Sprintf("2026-03-%02d", i+1)}
+		content[name] = "---\ntype: decision\n---\n## What\nContent"
+	}
+
+	reader := &mockCorpusReader{docs: docs, content: content}
+	// Pattern that matches only 1 doc (less than minRequired=2 for filtered)
+	pattern := regexp.MustCompile(`^doc-00\.md$`)
+	_, total, err := PrepareDocSummaries(reader, ReviewFilter{Pattern: pattern})
+	if err == nil {
+		t.Fatal("expected error when fewer than 2 docs match pattern")
+	}
+	if total != 1 {
+		t.Errorf("total = %d, want 1", total)
+	}
+	if !strings.Contains(err.Error(), "2") {
+		t.Errorf("error should mention minimum of 2, got: %q", err)
 	}
 }

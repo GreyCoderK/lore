@@ -447,3 +447,105 @@ func sliceContains(slice []string, val string) bool {
 	}
 	return false
 }
+
+// --- ResolvePersonasForAudience tests ---
+
+func TestResolvePersonasForAudience_CTO_BoostsArchitect(t *testing.T) {
+	scored := ResolvePersonasForAudience("decision", "We made a decision.", "CTO")
+	names := scoredNames(scored)
+	if !sliceContains(names, "architect") {
+		t.Errorf("CTO audience should boost architect, got %v", names)
+	}
+}
+
+func TestResolvePersonasForAudience_Commercial_BoostsBusinessAndStoryteller(t *testing.T) {
+	scored := ResolvePersonasForAudience("feature", "A new feature for the product.", "commercial")
+	names := scoredNames(scored)
+	if !sliceContains(names, "business-analyst") {
+		t.Errorf("commercial audience should boost business-analyst, got %v", names)
+	}
+	if !sliceContains(names, "storyteller") {
+		t.Errorf("commercial audience should boost storyteller, got %v", names)
+	}
+}
+
+func TestResolvePersonasForAudience_EmptyAudience_SameAsResolvePersonas(t *testing.T) {
+	body := "We chose this architecture because of the trade-off."
+	withAudience := ResolvePersonasForAudience("decision", body, "")
+	without := ResolvePersonas("decision", body)
+	namesA := scoredNames(withAudience)
+	namesB := scoredNames(without)
+	if len(namesA) != len(namesB) {
+		t.Fatalf("empty audience should match ResolvePersonas: %v vs %v", namesA, namesB)
+	}
+	for i := range namesA {
+		if namesA[i] != namesB[i] {
+			t.Errorf("mismatch at %d: %s vs %s", i, namesA[i], namesB[i])
+		}
+	}
+}
+
+func TestResolvePersonasForAudience_BoostedPersonaAppearsFirst(t *testing.T) {
+	// "sales" audience boosts business-analyst + storyteller
+	scored := ResolvePersonasForAudience("refactor", "A simple refactor.", "sales")
+	if len(scored) == 0 {
+		t.Fatal("expected at least 1 persona")
+	}
+	names := scoredNames(scored)
+	if !sliceContains(names, "business-analyst") {
+		t.Errorf("sales audience should include business-analyst, got %v", names)
+	}
+	// Business-analyst should have a higher score than non-boosted personas
+	for _, sp := range scored {
+		if sp.Profile.Name == "business-analyst" && sp.Score < 20 {
+			t.Errorf("boosted persona should have score >= 20, got %d", sp.Score)
+		}
+	}
+}
+
+// --- DescribePersonas tests ---
+
+func TestDescribePersonas_Empty(t *testing.T) {
+	got := DescribePersonas(nil)
+	if got != "none" {
+		t.Errorf("expected 'none' for empty, got %q", got)
+	}
+}
+
+func TestDescribePersonas_SinglePersona(t *testing.T) {
+	reg := GetRegistry()
+	scored := []ScoredPersona{{Profile: reg[0], Score: 12}}
+	got := DescribePersonas(scored)
+	if !strings.Contains(got, reg[0].Icon) {
+		t.Errorf("expected icon %s in output, got %q", reg[0].Icon, got)
+	}
+	if !strings.Contains(got, reg[0].DisplayName) {
+		t.Errorf("expected display name %s in output, got %q", reg[0].DisplayName, got)
+	}
+	if !strings.Contains(got, "12") {
+		t.Errorf("expected score 12 in output, got %q", got)
+	}
+}
+
+func TestDescribePersonas_MultiplePersonas(t *testing.T) {
+	reg := GetRegistry()
+	scored := []ScoredPersona{
+		{Profile: reg[0], Score: 14},
+		{Profile: reg[1], Score: 10},
+		{Profile: reg[3], Score: 8},
+	}
+	got := DescribePersonas(scored)
+	if !strings.Contains(got, reg[0].DisplayName) {
+		t.Errorf("missing first persona name in %q", got)
+	}
+	if !strings.Contains(got, reg[1].DisplayName) {
+		t.Errorf("missing second persona name in %q", got)
+	}
+	if !strings.Contains(got, reg[3].DisplayName) {
+		t.Errorf("missing third persona name in %q", got)
+	}
+	// Should be comma-separated
+	if strings.Count(got, ", ") != 2 {
+		t.Errorf("expected 2 comma separators for 3 personas, got %q", got)
+	}
+}

@@ -83,21 +83,15 @@ nfpms:
 #           - network
 #           - dot-gitconfig
 
-# chocolateys: (DISABLED — requires choco CLI in CI runner + CHOCOLATEY_API_KEY)
-# Uncomment when ready:
-#   1. Add windows runner or install choco on ubuntu
-#   2. Add CHOCOLATEY_API_KEY secret
-#   3. Uncomment this section
-#
-# chocolateys:
-#   - name: lore
-#     title: "Lore CLI"
-#     authors: "Museigen"
-#     project_url: "https://github.com/GreyCoderK/lore"
-#     license_url: "https://github.com/GreyCoderK/lore/blob/main/LICENSE"
-#     description: "A CLI tool that captures the why behind your code, one commit at a time"
-#     tags: "documentation cli git developer-tools"
-#     api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
+chocolateys:
+  - name: lore
+    title: "Lore CLI"
+    authors: "Museigen"
+    project_url: "https://github.com/GreyCoderK/lore"
+    license_url: "https://github.com/GreyCoderK/lore/blob/main/LICENSE"
+    description: "A CLI tool that captures the why behind your code, one commit at a time"
+    tags: "documentation cli git developer-tools"
+    api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
 
 changelog:
   sort: asc

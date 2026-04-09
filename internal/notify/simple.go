@@ -5,9 +5,9 @@ package notify
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"runtime"
+
+	"github.com/greycoderk/lore/internal/brand"
 )
 
 // NotifyOSSimple sends a simple OS notification (no dialog/form).
@@ -25,7 +25,7 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 			return opts.StartCommand(tnPath, []string{
 				"-title", "Lore",
 				"-message", safe,
-				"-appIcon", findLogoPNG(),
+				"-appIcon", brand.LogoPNGPath(),
 			}, nil)
 		}
 		// Fallback to osascript (no custom icon — uses Script Editor icon).
@@ -37,23 +37,32 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 
 	case "linux":
 		if _, err := opts.LookPath("notify-send"); err == nil {
-			// Pass commit message as a separate argument (not interpolated in shell).
-			// Use --icon flag instead of -a for broader compatibility.
-			return opts.StartCommand("notify-send",
-				[]string{"--app-name=Lore", "Lore", safe}, nil)
+			args := []string{"--app-name=Lore"}
+			if icon := brand.LogoPNGPath(); icon != "" {
+				args = append(args, "--icon="+icon)
+			}
+			args = append(args, "Lore", safe)
+			return opts.StartCommand("notify-send", args, nil)
 		}
 		return errUnsupportedOS
 
 	case "windows":
-		// Use single-quoted strings with proper PowerShell escaping.
 		msg := escapePowerShell(safe)
+		iconExpr := `[System.Drawing.SystemIcons]::Information`
+		if icon := brand.LogoPNGPath(); icon != "" {
+			iconExpr = fmt.Sprintf(
+				`[System.Drawing.Icon]::FromHandle(([System.Drawing.Bitmap]::new('%s')).GetHicon())`,
+				escapePowerShell(icon),
+			)
+		}
 		script := fmt.Sprintf(
 			`[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; `+
+				`[System.Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null; `+
 				`$n = New-Object System.Windows.Forms.NotifyIcon; `+
-				`$n.Icon = [System.Drawing.SystemIcons]::Information; `+
+				`$n.Icon = %s; `+
 				`$n.Visible = $true; `+
 				`$n.ShowBalloonTip(5000, 'Lore', '%s', 'Info')`,
-			msg,
+			iconExpr, msg,
 		)
 		return opts.StartCommand("powershell", []string{"-NoProfile", "-Command", script}, nil)
 
@@ -62,21 +71,7 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 	}
 }
 
-// findLogoPNG locates the Lore logo PNG by walking up from the current
-// working directory looking for a git repo with assets/logo.png.
+// findLogoPNG returns the embedded Lore logo PNG path via brand package.
 func findLogoPNG() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	candidates := []string{
-		filepath.Join(wd, "assets", "logo.png"),
-		filepath.Join(wd, "docs", "assets", "logo.png"),
-	}
-	for _, p := range candidates {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-	return ""
+	return brand.LogoPNGPath()
 }

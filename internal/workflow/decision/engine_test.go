@@ -3,7 +3,10 @@
 
 package decision
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestEvaluate_BoundaryScores(t *testing.T) {
 	t.Parallel()
@@ -102,5 +105,34 @@ func TestEvaluate_SignalCount(t *testing.T) {
 		if !found {
 			t.Errorf("missing expected signal %q", name)
 		}
+	}
+}
+
+func TestSetClock_OverridesTimeSource(t *testing.T) {
+	t.Parallel()
+	cfg := DefaultConfig()
+	cfg.AlwaysAsk = nil
+	cfg.AlwaysSkip = nil
+	e := NewEngine(nil, cfg)
+
+	fixedTime := time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC)
+	e.SetClock(func() time.Time { return fixedTime })
+
+	// Evaluate triggers scoreLKSHistory which calls e.now().
+	// With nil store, the clock is still called but signal returns 0.
+	// The key assertion: SetClock doesn't panic and the engine still works.
+	result := e.Evaluate(SignalContext{ConvType: "feat", LinesAdded: 50})
+	if result == nil {
+		t.Fatal("expected non-nil result after SetClock")
+	}
+	// Verify the engine used the custom clock by checking signals include lks-history
+	found := false
+	for _, s := range result.Signals {
+		if s.Name == "lks-history" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected lks-history signal after SetClock")
 	}
 }

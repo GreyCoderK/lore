@@ -181,3 +181,45 @@ func TestDeleteDoc_RegeneratesIndex(t *testing.T) {
 		t.Error("deleted doc should not appear in index")
 	}
 }
+
+func TestDeleteDoc_DirectoryRejected(t *testing.T) {
+	dir := t.TempDir()
+	subdir := filepath.Join(dir, "subdir.md")
+	if err := os.Mkdir(subdir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	// Put a file inside so os.Remove fails (non-empty directory).
+	if err := os.WriteFile(filepath.Join(subdir, "child.txt"), []byte("x"), 0o644); err != nil {
+		t.Fatalf("write child: %v", err)
+	}
+
+	err := DeleteDoc(dir, "subdir.md")
+	if err == nil {
+		t.Fatal("expected error when deleting a directory")
+	}
+	if !strings.Contains(err.Error(), "directory") {
+		t.Errorf("expected 'directory' in error, got: %v", err)
+	}
+}
+
+func TestDeleteDoc_EmptyFilename(t *testing.T) {
+	dir := t.TempDir()
+	err := DeleteDoc(dir, "")
+	if err == nil {
+		t.Fatal("expected error for empty filename")
+	}
+}
+
+func TestDeleteDoc_VerifyErrorFormat(t *testing.T) {
+	dir := t.TempDir()
+
+	// Verify error format for various failure modes.
+	err := DeleteDoc(dir, "nonexistent.md")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	// Error should start with "storage: delete <filename>:"
+	if !strings.HasPrefix(err.Error(), "storage: delete nonexistent.md:") {
+		t.Errorf("error format mismatch: %v", err)
+	}
+}
