@@ -146,11 +146,11 @@ func TestDiagnose_StaleIndex(t *testing.T) {
 	}
 }
 
-func TestDiagnose_InvalidFrontMatter(t *testing.T) {
+func TestDiagnose_InvalidFrontMatter_MalformedYAML(t *testing.T) {
 	docsDir := newDoctorDir(t)
 	_ = RegenerateIndex(docsDir)
 
-	// Write a file with invalid YAML front matter
+	// File with --- delimiters but invalid YAML inside → NOT auto-fixable
 	bad := "---\n{{invalid yaml\n---\n# Bad\n"
 	if err := os.WriteFile(filepath.Join(docsDir, "feature-bad-2026-03-07.md"), []byte(bad), 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
@@ -166,12 +166,41 @@ func TestDiagnose_InvalidFrontMatter(t *testing.T) {
 		if issue.Category == "invalid-frontmatter" {
 			found = true
 			if issue.AutoFix {
-				t.Error("invalid-frontmatter should NOT be auto-fixable")
+				t.Error("malformed YAML front matter should NOT be auto-fixable")
 			}
 		}
 	}
 	if !found {
 		t.Errorf("expected invalid-frontmatter issue, got: %+v", report.Issues)
+	}
+}
+
+func TestDiagnose_InvalidFrontMatter_Missing(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	_ = RegenerateIndex(docsDir)
+
+	// File without front matter at all → auto-fixable
+	noFM := "# Just a title\nSome content without front matter.\n"
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-no-fm-2026-03-07.md"), []byte(noFM), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	report, err := Diagnose(docsDir)
+	if err != nil {
+		t.Fatalf("Diagnose: %v", err)
+	}
+
+	found := false
+	for _, issue := range report.Issues {
+		if issue.Category == "invalid-frontmatter" && issue.File == "decision-no-fm-2026-03-07.md" {
+			found = true
+			if !issue.AutoFix {
+				t.Error("missing front matter should be auto-fixable")
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected invalid-frontmatter issue for missing FM, got: %+v", report.Issues)
 	}
 }
 
@@ -260,12 +289,18 @@ func TestFix_StaleIndexRegenerated(t *testing.T) {
 	}
 }
 
-func TestFix_InvalidFrontMatterNotFixed(t *testing.T) {
+func TestFix_InvalidFrontMatterFixed(t *testing.T) {
 	docsDir := newDoctorDir(t)
+
+	// Create a file without front matter
+	content := "# My Decision\n\nSome content without front matter."
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-auth-2026-04-08.md"), []byte(content), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
 
 	report := &DiagnosticReport{
 		Issues: []Issue{
-			{Category: "invalid-frontmatter", File: "bad.md", AutoFix: false},
+			{Category: "invalid-frontmatter", File: "decision-auth-2026-04-08.md", AutoFix: true},
 		},
 	}
 
@@ -273,11 +308,24 @@ func TestFix_InvalidFrontMatterNotFixed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Fix: %v", err)
 	}
-	if fixReport.Fixed != 0 {
-		t.Errorf("Fixed = %d, want 0 (invalid-frontmatter is manual)", fixReport.Fixed)
+	if fixReport.Fixed != 1 {
+		t.Errorf("Fixed = %d, want 1", fixReport.Fixed)
 	}
-	if fixReport.Remaining != 1 {
-		t.Errorf("Remaining = %d, want 1", fixReport.Remaining)
+
+	// Verify front matter was added
+	data, err := os.ReadFile(filepath.Join(docsDir, "decision-auth-2026-04-08.md"))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	got := string(data)
+	if !strings.HasPrefix(got, "---\n") {
+		t.Error("expected front matter to start with ---")
+	}
+	if !strings.Contains(got, "type: decision") {
+		t.Error("expected type inferred from filename as 'decision'")
+	}
+	if !strings.Contains(got, "# My Decision") {
+		t.Error("expected original content preserved")
 	}
 }
 

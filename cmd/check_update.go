@@ -10,6 +10,7 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
+	"github.com/greycoderk/lore/internal/ui"
 	"github.com/greycoderk/lore/internal/upgrade"
 	"github.com/greycoderk/lore/internal/version"
 	"github.com/spf13/cobra"
@@ -37,16 +38,18 @@ func runCheckUpdate(cmd *cobra.Command, streams domain.IOStreams) error {
 		currentVersion = "v" + currentVersion
 	}
 
-	fmt.Fprintf(streams.Err, "%s\n", t.UpgradeChecking)
+	spin := ui.StartSpinner(streams, t.CheckUpdateChecking)
 
 	ctx := cmd.Context()
 	client := upgrade.NewHTTPClient()
 
 	newer, err := upgrade.ListNewerReleases(ctx, client, upgradeRepo, currentVersion)
 	if err != nil {
+		spin.Stop()
 		fmt.Fprintf(streams.Err, "%s\n", t.UpgradeNetworkErr)
 		return &cli.ExitCodeError{Code: cli.ExitError}
 	}
+	spin.Stop()
 
 	if len(newer) == 0 {
 		fmt.Fprintf(streams.Err, t.CheckUpdateUpToDate+"\n", currentVersion)

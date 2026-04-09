@@ -102,9 +102,9 @@ func TestPolish_PassesSystemAndMaxTokens(t *testing.T) {
 	if !strings.Contains(receivedOpts.System, "You are Angela") {
 		t.Error("system prompt should contain Angela preamble")
 	}
-	// 1000 words → 1000*1.3*1.5 = 1950
-	if receivedOpts.MaxTokens != 1950 {
-		t.Errorf("MaxTokens = %d, want 1950 for 1000-word doc", receivedOpts.MaxTokens)
+	// 1000 words → 1000*1.3*1.8 = 2340
+	if receivedOpts.MaxTokens != 2340 {
+		t.Errorf("MaxTokens = %d, want 2340 for 1000-word doc", receivedOpts.MaxTokens)
 	}
 }
 

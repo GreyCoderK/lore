@@ -33,6 +33,7 @@ type ReviewFinding struct {
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
 	Documents   []string `json:"documents"`   // filenames concerned
+	Relevance   string   `json:"relevance,omitempty"` // "high", "medium", "low" — set when --for is used
 }
 
 // ReviewReport holds the complete result of a corpus review.
@@ -70,7 +71,18 @@ func sanitizePromptContent(s string) string {
 // BuildReviewPrompt constructs the AI prompt for corpus-wide review.
 // Returns (systemPrompt, userContent) where system is stable/cacheable and user varies per call.
 // signals may be nil (no pre-analysis). Corpus is serialized in TOON format.
-func BuildReviewPrompt(docs []DocSummary, styleGuide string, signals *CorpusSignals) (string, string) {
+// ReviewOpts holds optional parameters for Review.
+type ReviewOpts struct {
+	Audience  string      // target audience — findings will be framed for this audience
+	VHSSignals *VHSSignals // VHS cross-reference signals (nil if no tape dir found)
+}
+
+func BuildReviewPrompt(docs []DocSummary, styleGuide string, signals *CorpusSignals, audience ...string) (string, string) {
+	return BuildReviewPromptWithVHS(docs, styleGuide, signals, nil, audience...)
+}
+
+// BuildReviewPromptWithVHS constructs the AI prompt including VHS cross-reference signals.
+func BuildReviewPromptWithVHS(docs []DocSummary, styleGuide string, signals *CorpusSignals, vhs *VHSSignals, audience ...string) (string, string) {
 	// System prompt: stable across calls (cacheable)
 	var sys strings.Builder
 	sys.WriteString(`You are Angela, a senior technical editor reviewing a Lore documentation corpus.
@@ -104,10 +116,19 @@ WHAT TO FIND:
   - Inconsistent terminology for the same concept across docs
   - Naming inconsistencies (e.g., "rate limiter" vs "throttler" for the same thing)
 
+  VHS DEMO COHERENCE (if vhs_signals section present):
+  - Flag orphan tapes (demo GIFs not referenced in any doc) as "gap"
+  - Flag orphan GIF references (docs referencing GIFs with no tape source) as "gap"
+  - Flag command mismatches (tape commands that don't match known CLI commands) as "obsolete"
+
 QUALITY RULES:
 - Be specific: name the exact documents and the exact conflict/gap
 - Do NOT flag vague or speculative issues — every finding must be backed by evidence from the corpus
 - Do NOT flag documents for being short or lacking sections — that is polish's job, not review's
+- Do NOT suggest removing, renaming, or restructuring existing sections or headings
+- Do NOT flag detailed or lengthy documents as a problem — detail is a feature, not a bug
+- RESPECT each document's language. If a doc is in French, findings about it must be written in French.
+  Do NOT flag French headings or terminology as style issues. Mixed-language corpora are normal
 - Aim for 3-8 high-quality findings, not 20 weak ones
 - If no real issues found, return: {"findings": []}
 
@@ -117,6 +138,27 @@ OUTPUT FORMAT:
 - documents: array of filenames involved
 - Return ONLY the JSON. No markdown, no explanation, no wrapping.
 `)
+
+	// If an audience is specified, adapt findings for that audience
+	if len(audience) > 0 && audience[0] != "" {
+		sys.WriteString(`
+
+═══════════════════════════════════════
+AUDIENCE-ADAPTED REVIEW
+═══════════════════════════════════════
+
+You are reviewing this corpus for a SPECIFIC audience: "` + sanitizePromptContent(audience[0]) + `"
+
+ADDITIONAL RULES FOR AUDIENCE REVIEW:
+- Frame findings in terms that matter to this audience
+- For a commercial team: focus on gaps in business value documentation, missing client-facing explanations
+- For a CTO: focus on architectural contradictions, missing risk assessments, technical debt signals
+- For new developers: focus on missing onboarding context, unexplained jargon, missing "getting started" docs
+- For audit/compliance: focus on missing traceability, undocumented security decisions, missing approval records
+- Add a "relevance" field (high/medium/low) to each finding indicating how much it matters to this audience
+- The output format becomes: {"findings": [{severity, title, description, documents, relevance}]}
+`)
+	}
 
 	// User content: varies per call
 	var usr strings.Builder
@@ -131,8 +173,12 @@ OUTPUT FORMAT:
 	// TOON format preamble
 	usr.WriteString("The corpus below uses TOON (pipe-separated) format. Each section starts with a header row defining field names. Data rows follow with values separated by |. Pipes in values are escaped as \\|. Backslashes are escaped as \\\\.\n\n")
 
-	// Serialize corpus + signals in TOON format
-	usr.WriteString(SerializeTOON(docs, signals))
+	// Serialize corpus + signals in TOON format (with VHS signals if available)
+	if vhs != nil {
+		usr.WriteString(SerializeTOONWithVHS(docs, signals, vhs))
+	} else {
+		usr.WriteString(SerializeTOON(docs, signals))
+	}
 	usr.WriteString("\n")
 
 	usr.WriteString("Return ONLY a JSON object with a \"findings\" array. No markdown, no explanation.")
@@ -142,13 +188,19 @@ OUTPUT FORMAT:
 
 // Review performs a corpus-wide analysis using the AI provider.
 // Exactly 1 API call. Returns the review report sorted by severity.
-func Review(ctx context.Context, provider domain.AIProvider, docs []DocSummary, styleGuide string) (*ReviewReport, error) {
+func Review(ctx context.Context, provider domain.AIProvider, docs []DocSummary, styleGuide string, opts ...ReviewOpts) (*ReviewReport, error) {
 	if provider == nil {
 		return nil, fmt.Errorf("angela: review: no AI provider configured")
 	}
 
+	var aud string
+	var vhs *VHSSignals
+	if len(opts) > 0 {
+		aud = opts[0].Audience
+		vhs = opts[0].VHSSignals
+	}
 	signals := AnalyzeCorpusSignals(docs)
-	systemPrompt, userContent := BuildReviewPrompt(docs, styleGuide, signals)
+	systemPrompt, userContent := BuildReviewPromptWithVHS(docs, styleGuide, signals, vhs, aud)
 	if len(userContent) > maxAIInputSize {
 		return nil, fmt.Errorf("angela: review corpus too large for AI processing (%d bytes, max %d)", len(userContent), maxAIInputSize)
 	}

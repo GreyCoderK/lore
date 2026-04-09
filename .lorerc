@@ -5,10 +5,10 @@ language: "fr"
 ai:
   provider: ""       # anthropic, openai, ollama
   model: ""          # model name (e.g., claude-sonnet-4-20250514, llama3.2)
-
+  timeout: 240s
 angela:
   mode: draft        # draft, review, full
-  max_tokens: 2000
+  max_tokens: 10000
 
 templates:
   dir: .lore/templates

@@ -43,3 +43,39 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           args: check
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      # Build lore from source (we're in our own repo)
+      - name: Build lore
+        run: go build -o lore .
+
+      # Angela Draft — offline quality gate on our own docs
+      - name: Angela Draft (docs site)
+        run: |
+          ./lore angela draft --all --path ./docs
+
+      # Angela Draft — also check example docs
+      - name: Angela Draft (examples)
+        run: |
+          ./lore angela draft --all --path ./examples/demo-repo/.lore/docs
+
+      # Angela Review — AI corpus coherence check (only on main, requires API key)
+      - name: Angela Review (docs site)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          LORE_AI_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LORE_AI_PROVIDER: anthropic
+          LORE_AI_MODEL: claude-haiku-4-5-20251001
+        run: |
+          if [ -n "$LORE_AI_API_KEY" ]; then
+            ./lore angela review --path ./docs
+          else
+            echo "Skipping review: no API key configured"
+          fi

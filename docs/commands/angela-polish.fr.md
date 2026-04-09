@@ -38,45 +38,164 @@ lore angela polish <fichier> [flags]
 |------|------|--------|-------------|
 | `--dry-run` | bool | `false` | Prévisualiser les changements sans les appliquer |
 | `--yes` | bool | `false` | Accepter tous les changements automatiquement |
+| `--for` | string | | Réécrire pour une audience cible (ex : `"CTO"`, `"équipe commerciale"`) |
+| `--auto` / `-a` | bool | `false` | Auto-accepter les ajouts, auto-rejeter les suppressions, demander uniquement pour les modifications |
 
 ## Comment ça marche (étape par étape)
 
-### 1. Vous lancez la commande
+### Étape 1/3 : Préparation
 
 ```bash
 lore angela polish decision-database-2026-02-10.md
 ```
 
-### 2. Lore envoie votre document à l'IA
+```
+[1/3] Préparation de decision-database-2026-02-10.md…
+      ~3012 tokens → | max ←: 8192 tokens | timeout: 60s
+      Personas : 📖 Affoue (12), ✏️ Sialou (10), 🏗️ Doumbia (6)
+      Qualité : 52/100 (C)
+      Coût estimé : ~$0.0042
+```
 
-L'IA reçoit : votre document + votre guide de style (si configuré) + le contexte des documents liés.
+Angela effectue des **vérifications préalables** avant de dépenser des crédits API :
 
-### 3. Vous passez en revue chaque changement
+- **Estimation de tokens** — combien seront envoyés vs. le maximum autorisé
+- **Personas** — quels relecteurs virtuels sont activés (basé sur le type de doc + contenu)
+- **Score de qualité** — qualité actuelle du document (0-100, notes A–F)
+- **Estimation du coût** — coût API estimé en USD
+- **Abandon** — si l'entrée dépasse `max_output`, Angela s'arrête et suggère d'augmenter `angela.max_tokens` dans `.lorerc`
 
-```diff
---- original
-+++ poli
-@@ -5,3 +5,5 @@
+Si le document est volumineux, Angela le détecte et utilise le **mode multi-pass** (polish section par section avec résumés de contexte).
+
+### Étape 2/3 : Appel IA
+
+Angela envoie votre document à l'IA avec :
+
+- Le contenu du document
+- Votre guide de style (si configuré dans `.lorerc`)
+- Les directives des personas activées
+- Les règles de langue (tout nouveau contenu dans la langue du document)
+- Les règles de préservation (ne pas supprimer sections, code, tableaux existants)
+
+Un spinner avec compte à rebours affiche la progression. Après la réponse :
+
+```
+      ✓ Réponse IA reçue en 8.2s
+      Tokens : 3012 → 4521 ← | Modèle : claude-sonnet-4-20250514
+      Vitesse : 551 tok/s (rapide)
+      Coût : ~$0.0038
+```
+
+### Étape 3/3 : Revue des changements
+
+```
+[3/3] Calcul du diff…
+      5 modifications | Qualité : 52/100 (C) → 78/100 (B) (+26)
+```
+
+Vous passez en revue chaque changement avec sa position dans le document :
+
+```
+--- Modification 1/5 ---
+  @@ ligne 12 (4 lignes) @@
  ## Why
--On a pris PostgreSQL parce qu'il a des transactions
-+PostgreSQL a été choisi pour ses garanties de transactions ACID.
-+Le flux de paiement nécessite des opérations atomiques sur plusieurs tables,
-+et le driver pgx offre une excellente intégration Go.
+- On a pris PostgreSQL parce qu'il a des transactions
++ PostgreSQL a été choisi pour ses garanties de transactions ACID.
++ Le flux de paiement nécessite des opérations atomiques sur plusieurs tables,
++ et le driver pgx offre une excellente intégration Go.
 
-Accepter ce changement ? [o/n/q]
+Appliquer ? [o]ui / [n]on / [l]es deux / [q]uitter :
 ```
 
 | Touche | Action |
 |--------|--------|
-| `o` | Accepter ce changement |
+| `o` | Accepter ce changement (remplacer l'original par la version IA) |
 | `n` | Rejeter (garder l'original) |
+| `l` | Les deux — l'original reste, les nouvelles lignes sont ajoutées en dessous |
 | `q` | Quitter — garder les changements acceptés jusqu'ici |
 
-### 4. Lore applique vos changements acceptés
+> **L'option `[l]es deux`** n'apparaît que quand le hunk contient à la fois des suppressions et des ajouts. Pour les ajouts purs, seul `o/n/q` est affiché.
+
+### Avertissements de hunk
+
+Angela vous prévient avant de décider sur les changements potentiellement destructeurs :
 
 ```
-✓ 3/5 changements appliqués
+⚠ Angela supprime 24 lignes (net -18). Considérez [l]es deux.
+⚠ Ce changement supprime la section : ## 4. Logique Métier
+⚠ Ce changement supprime 2 bloc(s) de code.
 ```
+
+Les avertissements se déclenchent quand :
+- **Perte nette > 15 lignes** — suppression significative de contenu
+- **Titres de section** (## ou ###) supprimés
+- **Blocs de code** supprimés
+- **Lignes de tableau** (> 3) supprimées
+
+## Réécriture pour audience (`--for`)
+
+Réécrivez votre document pour une audience spécifique :
+
+```bash
+lore angela polish doc.md --for "équipe commerciale"
+```
+
+Angela demande s'il faut créer un **nouveau fichier** (original inchangé) ou **écraser** l'original :
+
+```
+      Audience cible : équipe commerciale
+      [n]ouveau fichier (garder l'original) / [é]craser l'original ?
+```
+
+- **Nouveau fichier** → écrit dans `doc.équipe-commerciale.md`, original intact
+- **Écraser** → passe au diff interactif sur l'original
+
+Quand `--for` est actif :
+- Les personas correspondant à l'audience reçoivent un boost de +20 (ex : `"commercial"` booste Business Analyst et Storyteller)
+- Le prompt IA inclut des instructions de réécriture spécifiques : simplifier le jargon, ajuster la profondeur, recadrer pour l'audience
+- Les résultats de review incluent un champ `relevance` (high / medium / low) pour chaque finding
+
+## Mode auto (`--auto`)
+
+```bash
+lore angela polish doc.md --auto
+```
+
+Le mode auto classifie chaque hunk et décide automatiquement quand c'est possible :
+
+| Type de hunk | Décision | Justification |
+|--------------|----------|---------------|
+| **Ajout pur** | Auto-accepté | Nouveau contenu, rien de perdu |
+| **Cosmétique** (espaces) | Auto-accepté | Pas de changement sémantique |
+| **Suppression pure** | Auto-rejeté | Prévient la perte de contenu |
+| **Suppression majeure** (net > 15) | Auto-rejeté | Prévient la perte significative |
+| **Modification** | Demande interactive | Nécessite un jugement humain |
+
+```
+  [auto] ✓ +diagramme mermaid (addition)
+  [auto] ✓ correction d'espaces (cosmétique)
+  [auto] ✗ -12 lignes incluant ## Impact (suppression → rejeté)
+
+--- Modification 3/5 (à examiner) ---
+  @@ ligne 42 (8 lignes) @@
+  ...
+
+  Auto : 2 acceptés, 1 rejeté, 2 examinés
+```
+
+## Score de qualité
+
+Angela note votre document avant et après le polish sur une échelle de 0 à 100 :
+
+| Note | Score | Signification |
+|------|-------|---------------|
+| **A** | 85+ | Qualité publication |
+| **B** | 70–84 | Bon, améliorations mineures possibles |
+| **C** | 50–69 | Travail nécessaire |
+| **D** | 30–49 | Lacunes majeures |
+| **F** | < 30 | Contenu minimal |
+
+Le score est basé sur 11 critères : section Why (15pts), diagrammes (15pts), tableaux (10pts), blocs de code (10pts), tags de code (5pts), structure (10pts), front matter (10pts), références (5pts), densité (10pts), propreté (5pts), style (5pts).
 
 ## Protections de sécurité
 
@@ -100,15 +219,27 @@ sequenceDiagram
 
     U->>L: lore angela polish doc.md
     L->>F: Lire le document
-    L->>AI: Envoyer document + guide de style + contexte corpus
-    AI->>L: Retourner version améliorée
-    loop Chaque changement (hunk)
-        L->>U: Montrer le diff
-        U->>L: Accepter (o) / Rejeter (n) / Quitter (q)
+    L->>L: Preflight (tokens, coût, personas, qualité)
+    alt Entrée > max_output
+        L->>U: ✗ Abandon — suggère d'augmenter max_tokens
     end
-    L->>F: Relire le fichier (vérification sécurité)
+    alt Multi-pass nécessaire
+        L->>L: Découper en sections
+        loop Chaque section
+            L->>AI: Polir section avec contexte
+        end
+    else Passage unique
+        L->>AI: Envoyer document + personas + guide de style
+    end
+    AI->>L: Retourner version améliorée
+    L->>L: Post-traitement (titres, code fences, mermaid)
+    L->>U: Qualité : avant → après (+delta)
+    loop Chaque changement (hunk)
+        L->>U: Montrer diff + avertissements
+        U->>L: Accepter (o) / Rejeter (n) / Les deux (l) / Quitter (q)
+    end
+    L->>F: Relire (vérification TOCTOU)
     L->>F: Écrire les changements acceptés (atomique)
-    L->>U: "✓ 3/5 changements appliqués"
 ```
 
 ## Prérequis
@@ -141,8 +272,24 @@ ai:
 # .lorerc (pas de clé API nécessaire !)
 ai:
   provider: "ollama"
-  model: "llama3"
+  model: "llama3.1"
   endpoint: "http://localhost:11434"
+```
+
+### Option 4 : Toute API compatible OpenAI
+
+Groq, Together, Mistral, Azure OpenAI, vLLM, LM Studio — tout endpoint compatible OpenAI fonctionne avec `provider: "openai"` :
+
+```yaml
+# .lorerc
+ai:
+  provider: "openai"
+  model: "mixtral-8x7b-32768"
+  endpoint: "https://api.groq.com"
+```
+```bash
+lore config set-key openai
+# → Entrer la clé API : gsk_...  (votre clé Groq/Together/Mistral)
 ```
 
 ## Exemples
@@ -156,16 +303,31 @@ lore angela polish decision-database-2026-02-10.md --dry-run
 
 # Accepter tout (faire confiance à l'IA)
 lore angela polish decision-database-2026-02-10.md --yes
+
+# Mode auto : accepter ajouts, rejeter suppressions, demander les modifications
+lore angela polish decision-database-2026-02-10.md --auto
+
+# Réécrire pour une audience cible (crée un nouveau fichier)
+lore angela polish doc.md --for "CTO"
+lore angela polish doc.md --for "équipe commerciale"
+lore angela polish doc.md --for "nouveau développeur"
+
+# Combiner auto + audience
+lore angela polish doc.md --for "CTO" --auto
 ```
 
 ## Questions fréquentes
 
 ### "Combien ça coûte ?"
 
-Un appel API par document. Coût typique :
+Angela affiche le **coût estimé avant l'appel** et le **coût réel après**. Un appel API par document (ou un par section en mode multi-pass). Coût typique :
+
 - **Claude Sonnet :** ~$0.01–0.03 par document
+- **Claude Haiku :** ~$0.001–0.005 par document
 - **GPT-4o :** ~$0.01–0.05 par document
 - **Ollama :** Gratuit (tourne localement)
+
+Vous pouvez contrôler le max tokens (et donc le coût) avec `angela.max_tokens` dans `.lorerc`.
 
 ### "Le résultat de l'IA est de mauvaise qualité / contenu inventé"
 
@@ -197,14 +359,39 @@ Oui. Vous pouvez re-polish autant de fois que vous voulez. Chaque appel envoie l
 
 Chaque re-polish est un appel API. L'IA voit la version améliorée, pas l'originale.
 
+## Personas
+
+Angela utilise 6 relecteurs virtuels. Les 3 meilleurs sont activés selon le type de document, le contenu et l'audience :
+
+| Persona | Icône | Focus | Activé par |
+|---------|-------|-------|------------|
+| **Affoue** (Storyteller) | 📖 | Clarté narrative, sections "Why" | Décisions, notes ; `--for commercial/sales` |
+| **Sialou** (Tech Writer) | ✏️ | Précision technique, structure | Features, refactors ; `--for développeur` |
+| **Kouame** (QA Reviewer) | 🔍 | Critères de validation, cas limites | Bugfixes ; `--for qa/audit` |
+| **Doumbia** (Architect) | 🏗️ | Compromis, conception système | Décisions, refactors ; `--for CTO` |
+| **Gougou** (UX Designer) | 🎨 | Empathie utilisateur, accessibilité | Features ; `--for design/ux` |
+| **Beda** (Business Analyst) | 📊 | Valeur business, exigences | Features, releases ; `--for commercial/CEO` |
+
+Avec `--for`, les personas correspondantes reçoivent un boost de +20. Par exemple, `--for "CTO"` booste Architect et Business Analyst.
+
+## Post-traitement
+
+Après la réponse IA, Angela applique des transformations locales (sans appel API) :
+
+1. **Numéros de titres** — restaure `## 4. Titre` si l'IA a supprimé les numéros
+2. **Langages de code fences** — détecte le langage depuis le contenu et ajoute le tag aux fences `` ``` `` nues (supporte 25+ langages)
+3. **Indentation mermaid** — normalise l'indentation dans les blocs de diagrammes mermaid
+
 ## Tips & Tricks
 
 - **`draft` puis `polish` :** Toujours l'analyse gratuite d'abord.
 - **`--dry-run` la première fois :** Prévisualisez avant de vous engager.
+- **`--auto` pour les gros diffs :** Laissez Angela gérer les cas évidents, ne revoyez que les modifications.
+- **`--for` pour le partage d'équipe :** Générez des versions adaptées sans modifier l'original.
 - **Ollama pour expérimenter :** Modèle local pour tester sans dépenser.
-- **Un appel API par doc :** Budgétez en conséquence.
 - **Re-polish est sûr :** Chaque appel relit le fichier actuel. Aucun risque d'écraser vos éditions.
 - **Après polish :** Le front matter reçoit `angela_mode: "polish"` automatiquement.
+- **Multi-pass automatique :** Pour les gros documents, Angela découpe en sections pour rester dans les limites de tokens.
 
 ## Codes de sortie
 

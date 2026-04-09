@@ -761,6 +761,72 @@ func TestFormatReviewReport_PartialCorpus(t *testing.T) {
 	}
 }
 
+// --- standalone mode (--path) tests ---
+
+// draft --all --path on a directory of plain markdown files (no .lore/ required)
+func TestAngelaDraft_StandalonePath(t *testing.T) {
+	dir := t.TempDir() // no .lore/
+	docsDir := filepath.Join(dir, "docs")
+	if err := os.MkdirAll(docsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Plain markdown — no front matter
+	plain := "# API Guide\n\nThis explains the API endpoints.\n"
+	_ = os.WriteFile(filepath.Join(docsDir, "api-guide.md"), []byte(plain), 0644)
+
+	_, stderr, err := runAngelaDraft(t, nil, "--all", "--path", docsDir)
+	if err != nil {
+		t.Fatalf("--path standalone: %v", err)
+	}
+	if !strings.Contains(stderr, "1 documents") {
+		t.Errorf("expected '1 documents' in output, got: %s", stderr)
+	}
+}
+
+// draft --path with a single file argument (no .lore/ required)
+func TestAngelaDraft_StandalonePath_SingleFile(t *testing.T) {
+	dir := t.TempDir()
+	docsDir := filepath.Join(dir, "docs")
+	if err := os.MkdirAll(docsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	plain := "# Architecture\n\nOur architecture is microservices-based.\n\n## What\nMicroservices.\n\n## Why\nScalability.\n"
+	_ = os.WriteFile(filepath.Join(docsDir, "architecture.md"), []byte(plain), 0644)
+
+	_, stderr, err := runAngelaDraft(t, nil, "--path", docsDir, "architecture.md")
+	if err != nil {
+		t.Fatalf("--path single file: %v", err)
+	}
+	// Should run analysis (may or may not have suggestions depending on content)
+	if stderr == "" {
+		t.Error("expected some output from draft analysis")
+	}
+}
+
+// draft --path with mixed files (some with front matter, some without)
+func TestAngelaDraft_StandalonePath_MixedFiles(t *testing.T) {
+	dir := t.TempDir()
+	docsDir := filepath.Join(dir, "docs")
+	if err := os.MkdirAll(docsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	withFM := "---\ntype: decision\nstatus: published\ndate: \"2026-04-01\"\ntags: [api]\n---\n## What\nDecision.\n"
+	withoutFM := "# Plain Doc\n\nNo front matter here.\n"
+	_ = os.WriteFile(filepath.Join(docsDir, "decision.md"), []byte(withFM), 0644)
+	_ = os.WriteFile(filepath.Join(docsDir, "plain.md"), []byte(withoutFM), 0644)
+
+	_, stderr, err := runAngelaDraft(t, nil, "--all", "--path", docsDir)
+	if err != nil {
+		t.Fatalf("--path mixed: %v", err)
+	}
+	if !strings.Contains(stderr, "2 documents") {
+		t.Errorf("expected '2 documents' in output, got: %s", stderr)
+	}
+}
+
 // countSeverities with all four known severities
 func TestCountSeverities_AllKnown(t *testing.T) {
 	findings := []angela.ReviewFinding{

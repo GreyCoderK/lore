@@ -61,3 +61,37 @@ func SerializeTOON(summaries []DocSummary, signals *CorpusSignals) string {
 
 	return sb.String()
 }
+
+// SerializeTOONWithVHS extends SerializeTOON to include VHS cross-reference signals.
+// These signals help the AI reviewer detect documentation ↔ demo inconsistencies.
+func SerializeTOONWithVHS(summaries []DocSummary, signals *CorpusSignals, vhs *VHSSignals) string {
+	base := SerializeTOON(summaries, signals)
+
+	if vhs == nil {
+		return base
+	}
+
+	hasVHS := len(vhs.OrphanTapes) > 0 || len(vhs.OrphanGIFs) > 0 || len(vhs.CommandMismatches) > 0
+	if !hasVHS {
+		return base
+	}
+
+	var sb strings.Builder
+	sb.WriteString(base)
+	sb.WriteString("vhs_signals:\n")
+	sb.WriteString("signal_type|source|detail\n")
+
+	for _, tape := range vhs.OrphanTapes {
+		fmt.Fprintf(&sb, "orphan_tape|%s|output GIF not referenced in docs\n", escapeTOON(tape))
+	}
+	for _, ref := range vhs.OrphanGIFs {
+		fmt.Fprintf(&sb, "orphan_gif|%s|%s references non-existent tape output\n",
+			escapeTOON(ref.DocFilename), escapeTOON(ref.GIFPath))
+	}
+	for _, mm := range vhs.CommandMismatches {
+		fmt.Fprintf(&sb, "command_mismatch|%s|%s (%s)\n",
+			escapeTOON(mm.TapeFile), escapeTOON(mm.Command), escapeTOON(mm.Reason))
+	}
+
+	return sb.String()
+}

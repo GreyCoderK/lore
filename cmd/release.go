@@ -84,7 +84,7 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 		if tagErr != nil {
 			if !quiet {
 				_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Error("Error:"), i18n.T().Cmd.ReleaseNoTagsError)
-			_, _ = fmt.Fprintf(streams.Err, "  %s\n", i18n.T().Cmd.ReleaseNoTagsHint)
+				_, _ = fmt.Fprintf(streams.Err, "  %s\n", i18n.T().Cmd.ReleaseNoTagsHint)
 			}
 			return fmt.Errorf("cmd: release: %w", tagErr)
 		}
@@ -115,7 +115,14 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 	}
 
 	// Collect documents
+	var spin *ui.Spinner
+	if !quiet {
+		spin = ui.StartSpinner(streams, i18n.T().Cmd.ReleaseCollecting)
+	}
 	docs, parseErr, err := storage.CollectReleaseDocuments(docsDir, commits)
+	if spin != nil {
+		spin.Stop()
+	}
 	if err != nil {
 		return fmt.Errorf("cmd: release: %w", err)
 	}
@@ -135,7 +142,14 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 	date := time.Now().Format("2006-01-02")
 
 	// Generate release notes file
+	var spinGen *ui.Spinner
+	if !quiet {
+		spinGen = ui.StartSpinner(streams, i18n.T().Cmd.ReleaseGenerating)
+	}
 	filename, err := storage.GenerateReleaseNotes(version, date, docs, docsDir)
+	if spinGen != nil {
+		spinGen.Stop()
+	}
 	if err != nil {
 		return fmt.Errorf("cmd: release: %w", err)
 	}

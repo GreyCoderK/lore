@@ -14,7 +14,7 @@ import (
 // BuildPolishPrompt constructs the AI prompt for polishing a document.
 // Returns (systemPrompt, userContent) where system is stable/cacheable and user varies per call.
 // When personas is non-nil, persona directives are injected into the user content (AC-4).
-func BuildPolishPrompt(doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile) (string, string) {
+func BuildPolishPrompt(doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile, audience ...string) (string, string) {
 	// System prompt: stable across calls (cacheable)
 	var sys strings.Builder
 	sys.WriteString(`You are Angela, a senior technical editor for the Lore project.
@@ -95,17 +95,82 @@ HARD RULES
 - Every section must earn its place — empty or repetitive sections should be removed
 - The ## Why section is sacred: it must answer "why this choice, not another?" with specifics
 
+LANGUAGE RULE (CRITICAL):
+- DETECT the document's language from its content (headings, body text)
+- ALL new sections, headings, and text you add MUST be in the SAME language as the document
+- If the document is in French: ## Why → ## Pourquoi, ## Alternatives Considered → ## Alternatives envisagées,
+  ## How It Works → ## Fonctionnement, ## Impact → ## Impact, ## Fix → ## Correction,
+  ## What Changed → ## Ce qui a changé, ## Context → ## Contexte, ## Changes → ## Changements
+- If the document is in English: use English headings as specified in the structure rules above
+- NEVER mix languages. A French document gets French headings and French prose. No exceptions.
+
+PRESERVE ORIGINAL CONTENT:
+- NEVER delete existing sections. You may restructure or enrich them, but all information must remain
+- NEVER remove code blocks, SQL queries, configuration examples, or technical details from the original
+- NEVER summarize or truncate detailed content — if the original has 30 lines of JPQL, keep them
+- KEEP original section headings. Do NOT rename ## headings unless they are grammatically incorrect
+  in the document's language. "Logique Métier" stays "Logique Métier", not "How It Works"
+- You may ADD new sections but not at the cost of removing existing ones.
+  New sections must be in the document's language (e.g., ## Pourquoi, not ## Why, for a French doc)
+- Your job is to ENRICH: add diagrams, tables, and context alongside existing content — never replace it
+
 WRITING STYLE:
 - Direct, technical, opinionated. Write for senior developers
 - Short paragraphs (2-4 lines). No wall of text
 - Active voice. "Git closes stdin" not "stdin is closed by Git"
 - Specific > generic. "Reduced latency from 200ms to 50ms" not "improved performance"
 - If the document is already excellent, return it unchanged
+
+═══════════════════════════════════════
+QUALITY REFERENCE — What a polished document looks like
+═══════════════════════════════════════
+
+A well-polished document has ALL of these:
+1. A ## Pourquoi / ## Why section that tells a STORY: the situation before, the pain point, and what this solves
+2. At least ONE mermaid diagram (architecture, sequence, or flowchart) — placed near the relevant section
+3. Tables for any structured data (endpoints, fields, comparison)
+4. Code blocks with language tags for ALL code/config/SQL examples
+5. Existing content PRESERVED and ENRICHED, not replaced or summarized
+6. Section headings that match the document's ORIGINAL language
+7. Specific numbers, names, and technical details — never vague
+8. Short paragraphs — if a paragraph exceeds 4 lines, split it
 `)
 
 
+	// If an audience is specified, override PRESERVE rules with rewrite rules.
+	// The document is being adapted for a different audience, not just enriched.
+	targetAudience := ""
+	if len(audience) > 0 && audience[0] != "" {
+		targetAudience = audience[0]
+		sys.WriteString(`
+
+═══════════════════════════════════════
+AUDIENCE REWRITE MODE (overrides PRESERVE rules)
+═══════════════════════════════════════
+
+You are rewriting this document for a SPECIFIC audience: "` + sanitizePromptContent(targetAudience) + `"
+
+REWRITE RULES:
+- ADAPT the content, structure, vocabulary, and level of detail for this audience
+- You MAY remove sections that are irrelevant to this audience (e.g., remove JPQL queries for a commercial team)
+- You MAY simplify technical jargon, add business context, or restructure entirely
+- You MAY change section headings to match what this audience expects
+- KEEP the core message and factual accuracy — never invent facts
+- KEEP diagrams but simplify them if needed (fewer nodes, business-level labels)
+- KEEP tables but adapt columns to what this audience cares about
+- The output language must match the original document's language
+- Add a note at the top: "> Adapted for: ` + sanitizePromptContent(targetAudience) + `"
+`)
+	}
+
 	// User content: varies per call
 	var usr strings.Builder
+
+	// Inject audience directive prominently
+	if targetAudience != "" {
+		usr.WriteString("TARGET AUDIENCE: " + targetAudience + "\n")
+		usr.WriteString("Rewrite the document below for this audience. Adapt tone, depth, and structure.\n\n")
+	}
 
 	// Inject persona directives (AC-4)
 	if len(personas) > 0 {
@@ -172,9 +237,15 @@ func BuildCorpusSummary(corpus []domain.DocMeta) string {
 // maxAIInputSize is the maximum document size accepted for AI processing (~100KB, roughly 25K tokens).
 const maxAIInputSize = 100_000
 
+// PolishOpts holds optional parameters for Polish.
+type PolishOpts struct {
+	Audience      string // target audience for rewrite mode (empty = standard polish)
+	ConfigMaxToks int    // angela.max_tokens from .lorerc (0 = auto-compute)
+}
+
 // Polish sends a document to the AI provider for enhancement.
 // Returns the improved document content. Exactly 1 API call.
-func Polish(ctx context.Context, provider domain.AIProvider, doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile) (string, error) {
+func Polish(ctx context.Context, provider domain.AIProvider, doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile, opts ...PolishOpts) (string, error) {
 	if provider == nil {
 		return "", fmt.Errorf("angela: polish: no AI provider configured")
 	}
@@ -182,9 +253,15 @@ func Polish(ctx context.Context, provider domain.AIProvider, doc string, meta do
 		return "", fmt.Errorf("angela: document too large for AI processing (%d bytes, max %d)", len(doc), maxAIInputSize)
 	}
 
-	systemPrompt, userContent := BuildPolishPrompt(doc, meta, styleGuide, corpusSummary, personas)
+	var audience string
+	var cfgMax int
+	if len(opts) > 0 {
+		audience = opts[0].Audience
+		cfgMax = opts[0].ConfigMaxToks
+	}
+	systemPrompt, userContent := BuildPolishPrompt(doc, meta, styleGuide, corpusSummary, personas, audience)
 	docWordCount := len(strings.Fields(doc))
-	maxTokens := ResolveMaxTokens("polish", docWordCount)
+	maxTokens := ResolveMaxTokens("polish", docWordCount, cfgMax)
 	result, err := provider.Complete(ctx, userContent, domain.WithSystem(systemPrompt), domain.WithMaxTokens(maxTokens))
 	if err != nil {
 		return "", fmt.Errorf("angela: polish: %w", err)
@@ -192,6 +269,9 @@ func Polish(ctx context.Context, provider domain.AIProvider, doc string, meta do
 
 	// Strip markdown fencing if AI wraps the response
 	result = stripCodeFence(result)
+
+	// Post-process: local quality improvements (no API)
+	result = PostProcess(doc, result)
 
 	return result, nil
 }

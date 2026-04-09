@@ -130,6 +130,7 @@ type CmdMessages struct {
 	StatusReviewAgeDays      string // arg: days
 	StatusFlagQuiet          string
 	StatusFlagBadge          string
+	StatusCollecting         string // spinner label
 
 	// hook.go
 	HookShort               string
@@ -172,6 +173,8 @@ type CmdMessages struct {
 	ReleaseNoChangesHint    string
 	ReleaseChangelogHdrWarn string
 	ReleaseIndexRegenWarn   string // arg: error
+	ReleaseCollecting       string // spinner label
+	ReleaseGenerating       string // spinner label
 
 	// doctor.go
 	DoctorShort           string
@@ -189,6 +192,10 @@ type CmdMessages struct {
 	DoctorStoreRebuilt    string // arg: docCount
 	DoctorStoreSkipped    string // arg: count
 	DoctorStoreCommits    string // arg: count
+	DoctorScanning        string // spinner label
+	DoctorScanned         string // args: docCount, checks
+	DoctorFixing          string // spinner label
+	DoctorRebuilding      string // spinner label
 
 	// config_cmd.go
 	ConfigShort          string
@@ -224,13 +231,19 @@ type CmdMessages struct {
 	AngelaDraftAllSummary    string // args: needAttention, total, suggestions
 
 	// angela_polish.go
-	AngelaPolishShort      string
-	AngelaPolishNotFound   string // arg: filename
-	AngelaPolishNoProvider string
-	AngelaPolishNoChanges  string
+	AngelaPolishShort       string
+	AngelaPolishNotFound    string // arg: filename
+	AngelaPolishNoProvider  string
+	AngelaPolishNoChanges   string
 	AngelaPolishNoneApplied string
-	AngelaPolishIndexWarn  string // arg: error
-	AngelaPolishVerb       string // arg: filename
+	AngelaPolishIndexWarn   string // arg: error
+	AngelaPolishVerb        string // arg: filename
+	AngelaPolishProgress    string // arg: filename — shown before API call
+	AngelaPolishDone        string // shown after API call completes
+	AngelaPolishStep1       string // arg: filename — step 1/3 preparing
+	AngelaPolishStep2       string // arg: filename — step 2/3 calling AI (spinner)
+	AngelaPolishStep2Done   string // step 2/3 done
+	AngelaPolishStep3       string // step 3/3 computing diff
 
 	// angela_review.go
 	AngelaReviewShort       string
@@ -241,9 +254,14 @@ type CmdMessages struct {
 	AngelaReviewHdrFull     string // arg: count
 	AngelaReviewCoherent    string
 	AngelaReviewFindingSum  string // args: count, severity
-	AngelaReviewMinDocs    string // args: minRequired, currentCount
-	AngelaReviewParseErr   string
-	AngelaPolishModified   string
+	AngelaReviewMinDocs     string // args: minRequired, currentCount
+	AngelaReviewParseErr    string
+	AngelaReviewProgress    string // arg: count — shown before API call
+	AngelaReviewDone        string // shown after API call completes
+	AngelaReviewStep1       string // arg: count — step 1/2 preparing summaries
+	AngelaReviewStep2       string // arg: count — step 2/2 calling AI (spinner)
+	AngelaReviewStep2Done   string // step 2/2 done
+	AngelaPolishModified    string
 
 	// decision.go
 	DecisionShort          string
@@ -290,9 +308,10 @@ type CmdMessages struct {
 	UpgradeVersionNotFnd string // arg: version
 
 	// check_update.go
-	CheckUpdateShort      string
-	CheckUpdateUpToDate   string // arg: version
-	CheckUpdateAvail      string // args: current, latest
-	CheckUpdateHint       string
-	CheckUpdatePreRelease string
+	CheckUpdateShort       string
+	CheckUpdateUpToDate    string // arg: version
+	CheckUpdateAvail       string // args: current, latest
+	CheckUpdateHint        string
+	CheckUpdatePreRelease  string
+	CheckUpdateChecking    string // spinner label
 }

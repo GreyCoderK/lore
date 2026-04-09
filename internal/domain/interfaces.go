@@ -42,6 +42,18 @@ type AIProvider interface {
 	Complete(ctx context.Context, prompt string, opts ...Option) (string, error)
 }
 
+// AIUsage holds token usage stats from an AI provider call.
+type AIUsage struct {
+	InputTokens  int
+	OutputTokens int
+	Model        string
+}
+
+// UsageTracker is optionally implemented by AIProviders that can report token usage.
+type UsageTracker interface {
+	LastUsage() *AIUsage
+}
+
 type CorpusReader interface {
 	ReadDoc(id string) (string, error)
 	ListDocs(filter DocFilter) ([]DocMeta, error)

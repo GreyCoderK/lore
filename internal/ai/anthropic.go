@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/greycoderk/lore/internal/config"
@@ -25,11 +26,13 @@ const (
 )
 
 type anthropicProvider struct {
-	client   *http.Client
-	apiKey   string
-	model    string
-	endpoint string
-	timeout  time.Duration
+	client    *http.Client
+	apiKey    string
+	model     string
+	endpoint  string
+	timeout   time.Duration
+	mu        sync.Mutex
+	lastUsage *domain.AIUsage
 }
 
 func newAnthropicProvider(cfg *config.Config) *anthropicProvider {
@@ -77,6 +80,11 @@ type anthropicResponse struct {
 	Content []struct {
 		Text string `json:"text"`
 	} `json:"content"`
+	Usage struct {
+		InputTokens  int `json:"input_tokens"`
+		OutputTokens int `json:"output_tokens"`
+	} `json:"usage"`
+	Model string `json:"model"`
 	Error *struct {
 		Message string `json:"message"`
 	} `json:"error"`
@@ -156,5 +164,19 @@ func (p *anthropicProvider) Complete(ctx context.Context, prompt string, opts ..
 		return "", fmt.Errorf("ai: anthropic: empty response text")
 	}
 
+	p.mu.Lock()
+	p.lastUsage = &domain.AIUsage{
+		InputTokens:  result.Usage.InputTokens,
+		OutputTokens: result.Usage.OutputTokens,
+		Model:        result.Model,
+	}
+	p.mu.Unlock()
+
 	return result.Content[0].Text, nil
+}
+
+func (p *anthropicProvider) LastUsage() *domain.AIUsage {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.lastUsage
 }

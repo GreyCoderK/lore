@@ -43,18 +43,73 @@ Analyzes the entire documentation corpus for coherence: contradictions between d
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--quiet` | bool | `false` | Suppress header and summary on stderr |
+| `--for` | string | | Adapt findings for a target audience (e.g., "CTO", "new developer") |
+| `--path` | string | `.lore/docs` | Path to a markdown directory (standalone mode — no `lore init` required) |
+
+## Standalone Mode
+
+Like `angela draft`, the review command supports `--path` for standalone usage:
+
+```bash
+lore angela review --path ./docs
+```
+
+In standalone mode, the review cache is not saved (no `.lore/` directory). See the [Angela in CI](../guides/angela-ci.md) guide for integration details.
+
+## How It Works (Step by Step)
+
+### Step 1/2: Preparing
+
+```
+[1/2] Preparing summaries for 12 documents…
+      12 docs | ~2450 input tokens | max output: 1500 tokens | timeout: 60s
+      Estimated cost: ~$0.0018
+```
+
+Angela runs the same **preflight checks** as polish:
+
+- **Token estimate** — corpus size vs. max allowed output
+- **Cost estimate** — estimated API cost in USD
+- **Abort** — if input exceeds max_output, stops and suggests increasing `angela.max_tokens`
+- **Warnings** — context window, timeout, cost alerts
+
+### Step 2/2: Calling AI
+
+A single API call reviews the entire corpus. A spinner shows progress:
+
+```
+      ✓ AI response received in 4.3s
+      Tokens: 2450 → 890 ← | Model: claude-sonnet-4-20250514
+      Speed: 207 tok/s (fast)
+      Cost: ~$0.0015
+```
 
 ## Output
 
 ```
 Corpus Review — 12 documents analyzed
 
-SEVERITY  TITLE                            DOCUMENTS                    DESCRIPTION
-error     Contradictory auth approach       auth-jwt.md, auth-session.md  JWT chosen in one, sessions in another
-warning   Isolated document                 note-meeting-2026-03-01.md    No references to/from other docs
-info      Coverage gap                      —                            No decisions documented for database layer
+SEVERITY               TITLE                                DOCUMENTS                       DESCRIPTION
+contradiction          Contradictory auth approach           auth-jwt.md, auth-session.md    JWT chosen in one, sessions in another
+gap                    Isolated document                     note-meeting-2026-03-01.md      No references to/from other docs
+style                  Coverage gap                          —                               No decisions documented for database layer
 
-3 findings (1 error, 1 warning, 1 info)
+3 findings (1 contradiction, 1 gap, 1 style)
+```
+
+### Severity Types
+
+| Severity | Meaning |
+|----------|---------|
+| `contradiction` | Conflicting information between documents |
+| `gap` | Missing coverage or isolated documents |
+| `obsolete` | Stale content that may need updating |
+| `style` | Style inconsistencies across the corpus |
+
+With `--for`, findings include a **relevance** field:
+
+```
+contradiction [high]   Contradictory auth approach       auth-jwt.md, auth-session.md  ...
 ```
 
 ## Process Flow
@@ -62,13 +117,14 @@ info      Coverage gap                      —                            No de
 ```mermaid
 graph TD
     A[lore angela review] --> B[Load all documents]
-    B --> C[Local pre-analysis: signals]
-    C --> F[Prepare summaries for AI]
-    F --> G[Single API call with corpus context]
+    B --> C[Prepare summaries]
+    C --> D[Preflight: tokens, cost, abort check]
+    D -->|Input > max_output| E[✗ Abort]
+    D -->|OK| F[Single API call with corpus context]
+    F --> G[Token stats + post-call analysis]
     G --> H[Parse AI findings]
-    H --> I[Merge local + AI findings]
-    I --> J[Display report]
-    J --> K[Cache results for lore status]
+    H --> I[Display report]
+    I --> J[Cache results for lore status]
 ```
 
 ## Local Signals (always computed)

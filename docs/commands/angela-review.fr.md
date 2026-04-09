@@ -36,18 +36,64 @@ lore angela review [flags]
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
 | `--quiet` | bool | `false` | Supprimer l'en-tête et le résumé sur stderr |
+| `--for` | string | | Adapter les résultats pour une audience cible (ex : `"CTO"`, `"nouveau développeur"`) |
+| `--path` | string | `.lore/docs` | Chemin vers un répertoire markdown (mode autonome — pas de `lore init` requis) |
+
+## Mode autonome
+
+Comme `angela draft`, la commande review supporte `--path` pour une utilisation autonome :
+
+```bash
+lore angela review --path ./docs
+```
+
+En mode autonome, le cache de revue n'est pas sauvegardé (pas de répertoire `.lore/`). Voir le guide [Angela en CI](../guides/angela-ci.md) pour les détails d'intégration.
+
+## Comment ça marche (étape par étape)
+
+### Étape 1/2 : Préparation
+
+```
+[1/2] Préparation des résumés pour 12 documents…
+      12 docs | ~2450 tokens d'entrée | max sortie : 1500 tokens | timeout : 60s
+      Coût estimé : ~$0.0018
+```
+
+Angela effectue les mêmes **vérifications préalables** que polish :
+
+- **Estimation de tokens** — taille du corpus vs. sortie max autorisée
+- **Estimation du coût** — coût API estimé en USD
+- **Abandon** — si l'entrée dépasse max_output, s'arrête et suggère d'augmenter `angela.max_tokens`
+- **Avertissements** — fenêtre de contexte, timeout, alertes de coût
+
+### Étape 2/2 : Appel IA
+
+Un seul appel API analyse tout le corpus. Un spinner affiche la progression :
+
+```
+      ✓ Réponse IA reçue en 4.3s
+      Tokens : 2450 → 890 ← | Modèle : claude-sonnet-4-20250514
+      Vitesse : 207 tok/s (rapide)
+      Coût : ~$0.0015
+```
 
 ## Sortie
 
 ```
 Corpus Review — 12 documents analysés
 
-SEVERITY  TITLE                            DOCUMENTS                    DESCRIPTION
-error     Approche auth contradictoire     auth-jwt.md, auth-session.md JWT choisi dans l'un, sessions dans l'autre
-warning   Document isolé                   note-meeting-2026-03-01.md   Aucune référence vers/depuis d'autres docs
-info      Lacune de couverture             —                            Aucune décision documentée pour la couche DB
+SEVERITY               TITLE                            DOCUMENTS                    DESCRIPTION
+contradiction          Approche auth contradictoire     auth-jwt.md, auth-session.md JWT choisi dans l'un, sessions dans l'autre
+gap                    Document isolé                   note-meeting-2026-03-01.md   Aucune référence vers/depuis d'autres docs
+style                  Lacune de couverture             —                            Aucune décision documentée pour la couche DB
 
-3 findings (1 error, 1 warning, 1 info)
+3 findings (1 contradiction, 1 gap, 1 style)
+```
+
+Avec `--for`, les résultats incluent un champ **pertinence** :
+
+```
+contradiction [high]   Approche auth contradictoire     auth-jwt.md, auth-session.md  ...
 ```
 
 ## Flux
@@ -55,13 +101,14 @@ info      Lacune de couverture             —                            Aucune
 ```mermaid
 graph TD
     A[lore angela review] --> B[Charger tous les documents]
-    B --> C[Pré-analyse locale : signaux]
-    C --> F[Préparer les résumés pour l'IA]
-    F --> G[Un seul appel API avec contexte corpus]
+    B --> C[Préparer les résumés]
+    C --> D[Preflight : tokens, coût, vérification abandon]
+    D -->|Entrée > max_output| E[✗ Abandon]
+    D -->|OK| F[Un seul appel API avec contexte corpus]
+    F --> G[Stats tokens + analyse post-appel]
     G --> H[Parser les résultats IA]
-    H --> I[Fusionner local + IA]
-    I --> J[Afficher le rapport]
-    J --> K[Mettre en cache pour lore status]
+    H --> I[Afficher le rapport]
+    I --> J[Mettre en cache pour lore status]
 ```
 
 ## Signaux locaux (toujours calculés)

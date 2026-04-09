@@ -11,9 +11,15 @@ internal/
   config/      Configuration cascade — why: 5-level override system for flexibility
   git/         Git adapter — why: abstract Git so we never shell out unsafely
   storage/     Document storage — why: Markdown is source of truth, everything derives from it
+                 plain_reader.go — PlainCorpusStore for standalone mode (any Markdown dir, no front matter required)
   workflow/    Reactive (hook) + proactive (lore new) — why: two entry points, same pipeline
   generator/   Document generation — why: decouple template rendering from storage
   angela/      AI logic — why: keep AI separate from core (opt-in, not required)
+                 langdetect.go   — 24-language detection (including VHS tape syntax)
+                 vhs_signals.go  — cross-check tape↔doc↔GIF↔CLI commands
+                 multipass.go    — split large docs into sections for sequential polishing
+                 preflight.go    — token/cost/timeout estimation before API calls
+                 postprocess.go  — auto-tag code fences, normalize Mermaid indent
   ai/          AI providers — why: interface-based, swap Anthropic/OpenAI/Ollama freely
   i18n/        Bilingual catalogs — why: EN/FR from day one, not bolted on later
   ui/          Terminal UI — why: IOStreams pattern (stderr=human, stdout=machine)

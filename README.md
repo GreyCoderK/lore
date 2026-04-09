@@ -138,10 +138,30 @@ Lore is also complementary to ADRs — it captures the daily *why* that feeds in
 | `lore hook install` | Install the post-commit hook |
 | `lore config` | Show current configuration |
 | `lore angela draft` | Zero-API structural analysis |
+| `lore angela draft --path ./docs` | Standalone mode — any Markdown directory, no `lore init` |
 | `lore angela polish` | AI-assisted rewrite with diff review |
+| `lore angela polish --for "CTO"` | Audience-adapted rewrite |
 | `lore angela review` | Corpus-wide coherence analysis |
 | `lore decision` | Decision engine status and calibration |
 | `lore completion <shell>` | Generate shell completions (bash/zsh/fish) |
+
+### Angela in CI (Standalone)
+
+Angela works as a **documentation quality gate** in any CI pipeline — no `lore init` required:
+
+```yaml
+# GitHub Actions — 3 lines
+- uses: GreyCoderK/lore@v1
+  with:
+    path: ./docs
+```
+
+```bash
+# Any CI — portable script
+./scripts/angela-ci.sh --path docs --fail-on warning --install
+```
+
+Works on **any Markdown directory** — with or without YAML front matter. See the [Angela in CI guide](https://greycoderk.github.io/lore/guides/angela-ci/) for details.
 
 ## How It Works
 

@@ -133,6 +133,7 @@ var catalogFR = &Messages{
 		StatusReviewAgeDays:     "il y a %dj",
 		StatusFlagQuiet:         "Sortie machine sur stdout",
 		StatusFlagBadge:         "Générer le badge de couverture en Markdown",
+		StatusCollecting:        "Collecte du statut…",
 
 		// hook.go
 		HookShort:             "Gérer le hook post-commit",
@@ -175,6 +176,8 @@ var catalogFR = &Messages{
 		ReleaseNoChangesHint:    "Essayez : lore release --from <tag-antérieur>",
 		ReleaseChangelogHdrWarn: "Attention : en-tête CHANGELOG.md introuvable, insertion en début de fichier.",
 		ReleaseIndexRegenWarn:   "Attention : régénération de l'index échouée : %s",
+		ReleaseCollecting:       "Collecte des documents de release…",
+		ReleaseGenerating:       "Génération des notes de release…",
 
 		// doctor.go
 		DoctorShort:          "Corriger les incohérences de documentation",
@@ -192,6 +195,10 @@ var catalogFR = &Messages{
 		DoctorStoreRebuilt:   "Store reconstruit : %d docs indexés",
 		DoctorStoreSkipped:   "(%d ignorés)",
 		DoctorStoreCommits:   ", %d commits indexés",
+		DoctorScanning:       "Analyse des documents…",
+		DoctorScanned:        "%d documents analysés (%d vérifications)",
+		DoctorFixing:         "Application des corrections…",
+		DoctorRebuilding:     "Reconstruction du store depuis les sources…",
 
 		// config_cmd.go
 		ConfigShort:          "Gérer la configuration Lore",
@@ -234,6 +241,12 @@ var catalogFR = &Messages{
 		AngelaPolishNoneApplied: "Aucune modification appliquée.",
 		AngelaPolishIndexWarn:   "Attention : régénération de l'index : %s",
 		AngelaPolishVerb:        "Amélioré  %s",
+		AngelaPolishProgress:    "Angela améliore %s … (appel au fournisseur IA)",
+		AngelaPolishDone:        "Réponse IA reçue. Calcul du diff…",
+		AngelaPolishStep1:       "Lecture de %s et résolution des personas…",
+		AngelaPolishStep2:       "Appel au fournisseur IA pour améliorer %s…",
+		AngelaPolishStep2Done:   "Réponse IA reçue",
+		AngelaPolishStep3:       "Calcul du diff…",
 
 		// angela_review.go
 		AngelaReviewShort:      "Analyser la cohérence de tout votre corpus de documentation",
@@ -246,6 +259,11 @@ var catalogFR = &Messages{
 		AngelaReviewFindingSum: "%d résultats (%s)",
 		AngelaReviewMinDocs:    "au moins %d documents requis pour la revue, vous en avez %d — continuez à documenter",
 		AngelaReviewParseErr:   "impossible de parser la réponse IA en JSON. Réessayez",
+		AngelaReviewProgress:   "Angela analyse %d documents … (appel au fournisseur IA)",
+		AngelaReviewDone:       "Réponse IA reçue. Analyse des résultats…",
+		AngelaReviewStep1:      "Préparation des résumés pour %d documents…",
+		AngelaReviewStep2:      "Appel au fournisseur IA pour analyser %d documents…",
+		AngelaReviewStep2Done:  "Réponse IA reçue",
 		AngelaPolishModified:   "document modifié pendant la revue. Annulation pour éviter la perte de données",
 
 		// decision.go
@@ -312,6 +330,7 @@ Pour charger les complétions :
 		CheckUpdateAvail:    "Mise à jour disponible : %s → %s",
 		CheckUpdateHint:       "Lancez : lore upgrade",
 		CheckUpdatePreRelease: "pre-release",
+		CheckUpdateChecking:   "Vérification des mises à jour…",
 	},
 
 	Engagement: EngagementMessages{
@@ -407,11 +426,56 @@ Pour charger les complétions :
 		CoherenceRelatedFound:  "Document lié trouvé : %s (tags partagés : %s)",
 		CoherenceMentionedBody: "Le document %q est mentionné dans le corps — envisagez de l'ajouter aux références",
 		DiffChangeHeader:       "--- Modification %d/%d ---",
-		DiffApplyPrompt:        "Appliquer ce changement ? [o/n/q] ",
+		DiffApplyPrompt:        "Appliquer ? [o]ui / [n]on / [q]uitter : ",
+		DiffApplyBothPrompt:    "Appliquer ? [o]ui / [n]on / [l]es deux / [q]uitter : ",
 		DiffInputEnded:         "Saisie terminée. %d modifications restantes rejetées.",
+		DiffHunkLocation:       "  @@ ligne %d (%d lignes) @@",
+		DiffAutoAccept:         "  [auto] ✓ %s (%s)",
+		DiffAutoReject:         "  [auto] ✗ %s (suppression → rejeté)",
+		DiffAutoNeedsReview:    "\n--- Modification %d/%d (à examiner) ---",
+		DiffAutoSummary:        "\n  Auto : %d acceptés, %d rejetés, %d examinés",
+		DiffWarnNetLoss:        "Angela supprime %d lignes (net -%d). Considérez [l]es deux.",
+		DiffWarnSection:        "Ce changement supprime la section : %s",
+		DiffWarnSections:       "Ce changement supprime %d sections : %s",
+		DiffWarnCodeBlocks:     "Ce changement supprime %d bloc(s) de code.",
+		DiffWarnTableRows:      "Ce changement supprime %d lignes de tableau.",
+		UIForPrompt:            "Audience cible : %s",
+		UIForNewFile:           "[n]ouveau fichier (garder l'original) / [é]craser l'original ? ",
+		UIForOverwrite:         "Écrasement de l'original.",
 		ReviewParseError:       "angela : revue : impossible d'analyser la réponse IA en JSON. Réessayez",
 		ReviewMinDocs:          "au moins 5 documents requis pour la revue, vous en avez %d — continuez à documenter",
 		StyleUnknownRule:       "guide de style : règle inconnue %q (ignorée)",
+
+		// Runtime UI
+		UIMode:              "Mode : réécriture pour → %s",
+		UITokenEstimate:     "~%d tokens → | max ←: %d tokens | timeout: %s",
+		UIPersonas:          "Personas : %s",
+		UIQuality:           "Qualité : %s",
+		UIMultiPass:         "→ Mode multi-pass (%d sections)",
+		UITokenStats:        "Tokens : %d → %d ← | Modèle : %s",
+		UISpeedFast:         "Vitesse : %.0f tok/s (rapide)",
+		UISpeedSlow:         "Vitesse : %.0f tok/s (lent — essayer un modèle plus petit)",
+		UISpeedNormal:       "Vitesse : %.0f tok/s",
+		UICost:              "Coût : ~$%.4f",
+		UICostCheap:         " (négligeable)",
+		UICostExpensive:     " (envisager un modèle moins cher : haiku, gpt-4o-mini)",
+		UITruncated:         "✗ Réponse tronquée (%d/%d tokens). Document incomplet — diff annulé.",
+		UITruncatedHint:     "Augmenter angela.max_tokens dans .lorerc ou utiliser un modèle avec plus de sortie.",
+		UITimeoutErr:        "✗ Timeout : le fournisseur IA n'a pas répondu dans les %s (écoulé : %s)",
+		UITimeoutHint1:      "Augmenter le timeout : ai.timeout: 120s dans .lorerc",
+		UITimeoutHint2:      "Ou utiliser un modèle plus rapide (haiku, gpt-4o-mini)",
+		UIRewrittenFor:      "✓ Réécrit pour %q → %s",
+		UIOriginalUnchanged: "Fichier original non modifié.",
+		UIChangesQuality:    "%d modifications | Qualité : %s → %s (%s)",
+		UIInputExceedsMax:   "⚠ Entrée estimée (~%d tokens) dépasse la sortie max (%d tokens). La réponse sera tronquée.",
+		UIInputExceedsHint:  "Définir angela.max_tokens: %d dans .lorerc pour corriger.",
+		UIEstimatedCost:     "Coût estimé : ~$%.4f",
+		UIContextWarning:    "Le document peut dépasser le contexte de %s (%dk tokens nécessaires, %dk limite) — raccourcir le document ou changer de modèle",
+		UIContextClose:      "Le document utilise ~%d%% du contexte de %s (%dk/%dk) — proche de la limite",
+		UITimeoutWarning:    "timeout (%s) peut être trop court — %s à ~%.0f tok/s nécessite ~%.0fs pour %d tokens. Augmenter ai.timeout dans .lorerc",
+		UILowOutput:         "Note : l'IA a produit très peu de sortie — le document est peut-être déjà bien rédigé",
+		UILocalModelTip:     "Conseil : les petits modèles locaux peuvent produire du texte générique — essayer llama3.1:8b ou plus grand",
+		UIReviewPreflight:   "%d docs | ~%d tokens d'entrée | max sortie : %d tokens | timeout : %s",
 	},
 
 	Decision: DecisionMessages{

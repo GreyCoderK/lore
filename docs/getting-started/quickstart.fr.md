@@ -78,3 +78,4 @@ lore doctor
 - [Référence commandes](../commands/index.md) — Toutes les commandes en détail
 - [Configuration](../guides/configuration.md) — Personnaliser Lore
 - [Angela IA](../commands/angela-draft.md) — Documentation assistée par IA
+- [Angela en CI](../guides/angela-ci.md) — Quality gate documentation dans tout pipeline CI (sans `lore init`)

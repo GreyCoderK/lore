@@ -14,24 +14,29 @@ import (
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/storage"
+	"github.com/greycoderk/lore/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 func newAngelaCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+	var flagPath string
+
 	cmd := &cobra.Command{
 		Use:          "angela",
 		Short:        i18n.T().Cmd.AngelaShort,
 		SilenceUsage: true,
 	}
 
-	cmd.AddCommand(newAngelaDraftCmd(cfg, streams))
+	cmd.PersistentFlags().StringVar(&flagPath, "path", "", "Path to a markdown directory (enables standalone mode without lore init)")
+
+	cmd.AddCommand(newAngelaDraftCmd(cfg, streams, &flagPath))
 	cmd.AddCommand(newAngelaPolishCmd(cfg, streams))
-	cmd.AddCommand(newAngelaReviewCmd(cfg, streams))
+	cmd.AddCommand(newAngelaReviewCmd(cfg, streams, &flagPath))
 
 	return cmd
 }
 
-func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
+func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *string) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
@@ -42,12 +47,21 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// --all mode: analyze entire corpus
 			if flagAll {
-				return runDraftAll(cfg, streams)
+				return runDraftAll(cfg, streams, flagPath)
 			}
+
+			// Resolve docs directory: --path (standalone) or .lore/docs (normal)
+			docsDir, standalone := resolveDocsDir(flagPath)
+			if !standalone {
+				if err := requireLoreDir(streams); err != nil {
+					return err
+				}
+			}
+
 			var filename string
 			if len(args) == 0 {
 				// No argument: analyze the most recent document.
-				store := &storage.CorpusStore{Dir: filepath.Join(".lore", "docs")}
+				store := newCorpusReader(docsDir, standalone)
 				docs, err := store.ListDocs(domain.DocFilter{})
 				if err != nil || len(docs) == 0 {
 					return fmt.Errorf("%s", i18n.T().Cmd.AngelaDraftNoFile)
@@ -65,15 +79,16 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 				filename = args[0]
 			}
 
-			// AC-7: Check .lore/ exists
-			if err := requireLoreDir(streams); err != nil {
-				return err
-			}
-			docsDir := filepath.Join(".lore", "docs")
-
 			// AC-6: Validate filename and check exists
-			if err := storage.ValidateFilename(filename); err != nil {
-				return fmt.Errorf("angela: draft: %w", err)
+			if !standalone {
+				if err := storage.ValidateFilename(filename); err != nil {
+					return fmt.Errorf("angela: draft: %w", err)
+				}
+			} else {
+				// Standalone: reject path traversal even without strict lore filename format
+				if strings.Contains(filename, "..") || filepath.IsAbs(filename) {
+					return fmt.Errorf("angela: draft: filename must not contain '..' or be absolute: %s", filename)
+				}
 			}
 			docPath := filepath.Join(docsDir, filename)
 			if _, err := os.Stat(docPath); err != nil {
@@ -90,15 +105,19 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 			}
 			content := string(raw)
 
-			// Parse front matter
+			// Parse front matter (graceful degradation in standalone mode)
 			meta, _, err := storage.Unmarshal(raw)
 			if err != nil {
-				return fmt.Errorf("angela: draft: parse: %w", err)
+				if !standalone {
+					return fmt.Errorf("angela: draft: parse: %w", err)
+				}
+				// Standalone: synthetic metadata from filename
+				meta = storage.BuildPlainMeta(filename)
 			}
 			meta.Filename = filename
 
 			// Load corpus (warn on error, don't fail)
-			store := &storage.CorpusStore{Dir: docsDir}
+			store := newCorpusReader(docsDir, standalone)
 			corpus, corpusErr := store.ListDocs(domain.DocFilter{})
 			if corpusErr != nil {
 				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaDraftCorpusWarn+"\n", corpusErr)
@@ -153,14 +172,34 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Comm
 	return cmd
 }
 
-// runDraftAll analyzes every document in the corpus and produces a summary.
-func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
-	if err := requireLoreDir(streams); err != nil {
-		return err
+// resolveDocsDir returns the docs directory and whether standalone mode is active.
+func resolveDocsDir(flagPath *string) (string, bool) {
+	if flagPath != nil && *flagPath != "" {
+		return *flagPath, true
 	}
-	docsDir := filepath.Join(".lore", "docs")
+	return filepath.Join(".lore", "docs"), false
+}
 
-	store := &storage.CorpusStore{Dir: docsDir}
+// newCorpusReader returns the appropriate CorpusReader based on mode.
+// Standalone mode uses PlainCorpusStore (graceful without front matter).
+// Normal mode uses CorpusStore (strict lore format).
+func newCorpusReader(dir string, standalone bool) domain.CorpusReader {
+	if standalone {
+		return &storage.PlainCorpusStore{Dir: dir}
+	}
+	return &storage.CorpusStore{Dir: dir}
+}
+
+// runDraftAll analyzes every document in the corpus and produces a summary.
+func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string) error {
+	docsDir, standalone := resolveDocsDir(flagPath)
+	if !standalone {
+		if err := requireLoreDir(streams); err != nil {
+			return err
+		}
+	}
+
+	store := newCorpusReader(docsDir, standalone)
 	corpus, err := store.ListDocs(domain.DocFilter{})
 	if err != nil {
 		return fmt.Errorf("angela: draft --all: %w", err)
@@ -182,7 +221,8 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 
 	_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaDraftAllHeader+"\n\n", len(corpus))
 
-	for _, meta := range corpus {
+	for idx, meta := range corpus {
+		ui.Progress(streams, idx+1, len(corpus), meta.Filename)
 		raw, err := os.ReadFile(filepath.Join(docsDir, meta.Filename))
 		if err != nil {
 			_, _ = fmt.Fprintf(streams.Err, "  %-8s %-40s %s\n", "error", meta.Filename, err)
@@ -193,6 +233,9 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 		scored := angela.ResolvePersonas(meta.Type, content)
 		suggestions := angela.AnalyzeDraft(content, meta, guide, corpus, angela.Profiles(scored))
 		suggestions = append(suggestions, angela.CheckCoherence(content, meta, corpus)...)
+
+		score := angela.ScoreDocument(content, meta)
+		grade := angela.FormatScore(score)
 
 		if len(suggestions) > 0 {
 			docsWithIssues++
@@ -207,14 +250,64 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams) error {
 			if warnings > 0 {
 				label = fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSuggWarn, len(suggestions), warnings)
 			}
-			_, _ = fmt.Fprintf(streams.Err, "  %-8s %-40s %s\n", "review", meta.Filename, label)
+			_, _ = fmt.Fprintf(streams.Err, "  %-4s %-8s %-40s %s\n", grade, "review", meta.Filename, label)
 		} else {
-			_, _ = fmt.Fprintf(streams.Err, "  %-8s %s\n", "ok", meta.Filename)
+			_, _ = fmt.Fprintf(streams.Err, "  %-4s %-8s %s\n", grade, "ok", meta.Filename)
 		}
 	}
+
+	// VHS tape ↔ doc cross-check (if tape directory exists) — before summary
+	vhsFindings := runVHSCheck(docsDir, streams)
+	totalSuggestions += vhsFindings
 
 	_, _ = fmt.Fprintf(streams.Err, "\n"+i18n.T().Cmd.AngelaDraftAllSummary+"\n",
 		docsWithIssues, len(corpus), totalSuggestions)
 
 	return nil
+}
+
+// runVHSCheck looks for VHS tape files near the docs directory and reports mismatches.
+// Searches common locations: assets/vhs/, ../assets/vhs/ (relative to docsDir).
+func runVHSCheck(docsDir string, streams domain.IOStreams) int {
+	// Try common tape directory locations relative to the docs dir
+	candidates := []string{
+		filepath.Join(docsDir, "..", "assets", "vhs"),
+		filepath.Join(docsDir, "..", "..", "assets", "vhs"),
+		filepath.Join(docsDir, "assets", "vhs"),
+	}
+
+	var tapeDir string
+	for _, c := range candidates {
+		if info, err := os.Stat(c); err == nil && info.IsDir() {
+			tapeDir = c
+			break
+		}
+	}
+
+	if tapeDir == "" {
+		return 0 // no tape directory found — skip silently
+	}
+
+	signals := angela.AnalyzeVHSSignals(tapeDir, docsDir, nil)
+	findings := 0
+
+	for _, tape := range signals.OrphanTapes {
+		_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s → output GIF not referenced in any doc\n",
+			"warning", "vhs", tape)
+		findings++
+	}
+
+	for _, ref := range signals.OrphanGIFs {
+		_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s references %s → no .tape source found\n",
+			"warning", "vhs", ref.DocFilename, ref.GIFPath)
+		findings++
+	}
+
+	for _, mm := range signals.CommandMismatches {
+		_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s: %q → %s\n",
+			"warning", "vhs", mm.TapeFile, mm.Command, mm.Reason)
+		findings++
+	}
+
+	return findings
 }

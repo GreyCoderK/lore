@@ -87,11 +87,16 @@ func Diagnose(docsDir string) (*DiagnosticReport, error) {
 
 		meta, body, parseErr := Unmarshal(data)
 		if parseErr != nil {
+			// Distinguish missing front matter (auto-fixable) from malformed YAML (not fixable).
+			// Files starting with "---\n" have attempted front matter (malformed YAML — not fixable).
+			// Files that are just "---" without newline are also treated as malformed.
+			content := string(data)
+			canFix := !strings.HasPrefix(content, "---\n") && content != "---"
 			report.Issues = append(report.Issues, Issue{
 				Category: "invalid-frontmatter",
 				File:     name,
 				Detail:   fmt.Sprintf("YAML parse error: %v", parseErr),
-				AutoFix:  false,
+				AutoFix:  canFix,
 			})
 			continue
 		}
@@ -179,6 +184,15 @@ func Fix(docsDir string, report *DiagnosticReport) (*FixReport, error) {
 				fix.Details = append(fix.Details, "regenerated index README.md")
 			}
 
+		case "invalid-frontmatter":
+			if err := fixMissingFrontMatter(docsDir, issue.File); err != nil {
+				fix.Errors++
+				fix.Details = append(fix.Details, fmt.Sprintf("error fixing frontmatter %s: %v", issue.File, err))
+			} else {
+				fix.Fixed++
+				fix.Details = append(fix.Details, fmt.Sprintf("added front matter to %s", issue.File))
+			}
+
 		case "stale-cache":
 			if err := validateFilename(issue.File); err != nil {
 				fix.Errors++
@@ -231,6 +245,48 @@ func fixOrphanTmp(docsDir, filename string) error {
 
 	if err := os.Remove(fullPath); err != nil {
 		return fmt.Errorf("storage: doctor: remove %s: %w", filename, err)
+	}
+	return nil
+}
+
+// fixMissingFrontMatter prepends a default YAML front matter block to a document
+// that is missing one. Infers type from the filename slug (e.g. "decision-..." → decision).
+// The original content is preserved after the front matter.
+func fixMissingFrontMatter(docsDir, filename string) error {
+	if err := validateFilename(filename); err != nil {
+		return fmt.Errorf("storage: doctor: %w", err)
+	}
+	fullPath := filepath.Join(docsDir, filename)
+	if err := validateResolvedPath(docsDir, fullPath); err != nil {
+		return fmt.Errorf("storage: doctor: %w", err)
+	}
+
+	data, err := os.ReadFile(fullPath)
+	if err != nil {
+		return fmt.Errorf("storage: doctor: read %s: %w", filename, err)
+	}
+
+	// Already has front matter — nothing to do
+	if strings.HasPrefix(string(data), "---\n") {
+		return nil
+	}
+
+	// Infer type from filename: "decision-auth-2026-04-07.md" → "decision"
+	docType := "note"
+	base := strings.TrimSuffix(filename, ".md")
+	for _, t := range []string{"decision", "feature", "bugfix", "refactor", "release", "summary"} {
+		if strings.HasPrefix(base, t+"-") || base == t {
+			docType = t
+			break
+		}
+	}
+
+	today := time.Now().Format("2006-01-02")
+	frontMatter := fmt.Sprintf("---\ntype: %s\ndate: \"%s\"\nstatus: draft\ngenerated_by: doctor-fix\n---\n", docType, today)
+
+	merged := append([]byte(frontMatter), data...)
+	if err := os.WriteFile(fullPath, merged, 0644); err != nil {
+		return fmt.Errorf("storage: doctor: write %s: %w", filename, err)
 	}
 	return nil
 }

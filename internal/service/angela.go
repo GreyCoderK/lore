@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
@@ -24,9 +25,15 @@ type PolishResult struct {
 	Filename    string
 }
 
+// PolishOptions holds optional parameters for PolishDocument.
+type PolishOptions struct {
+	Audience string                  // target audience for rewrite mode
+	Progress angela.MultiPassProgress // callback for multi-pass progress (nil = silent)
+}
+
 // PolishDocument orchestrates the full document polish workflow:
 // read document, resolve personas, call AI polish, compute diff.
-func PolishDocument(ctx context.Context, provider domain.AIProvider, cfg *config.Config, docsDir string, filename string) (*PolishResult, error) {
+func PolishDocument(ctx context.Context, provider domain.AIProvider, cfg *config.Config, docsDir string, filename string, opts ...PolishOptions) (*PolishResult, error) {
 	docPath := filepath.Join(docsDir, filename)
 
 	// Read document
@@ -54,14 +61,35 @@ func PolishDocument(ctx context.Context, provider domain.AIProvider, cfg *config
 	corpus, _ := corpusStore.ListDocs(domain.DocFilter{})
 	corpusSummary := angela.BuildCorpusSummary(corpus)
 
-	// Resolve personas for this document
-	scored := angela.ResolvePersonas(meta.Type, originalContent)
+	// Resolve personas — boost for audience if specified
+	var audience string
+	if len(opts) > 0 {
+		audience = opts[0].Audience
+	}
+	scored := angela.ResolvePersonasForAudience(meta.Type, originalContent, audience)
 	personas := angela.Profiles(scored)
 
-	// Exactly 1 API call
-	polished, err := angela.Polish(ctx, provider, originalContent, meta, styleGuideStr, corpusSummary, personas)
-	if err != nil {
-		return nil, err
+	// Decide: single-pass or multi-pass based on document size
+	docWordCount := len(strings.Fields(originalContent))
+	var polished string
+
+	if angela.ShouldMultiPass(docWordCount) {
+		// Multi-pass: section by section
+		var progress angela.MultiPassProgress
+		if len(opts) > 0 && opts[0].Progress != nil {
+			progress = opts[0].Progress
+		}
+		polished, err = angela.PolishMultiPass(ctx, provider, originalContent, meta, styleGuideStr, personas, progress, audience)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Single-pass: whole document
+		polishOpts := []angela.PolishOpts{{Audience: audience, ConfigMaxToks: cfg.Angela.MaxTokens}}
+		polished, err = angela.Polish(ctx, provider, originalContent, meta, styleGuideStr, corpusSummary, personas, polishOpts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Compute diff

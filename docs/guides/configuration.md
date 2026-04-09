@@ -22,10 +22,13 @@ language: "en"              # "en" or "fr" — UI language
 ai:
   provider: ""              # "anthropic", "openai", "ollama", or "" (zero-API)
   model: ""                 # Model name (e.g., "claude-sonnet-4-20250514")
+  # api_key: ""             # API key (prefer set-key or LORE_AI_API_KEY env var)
+  # endpoint: ""            # Custom endpoint URL (for Ollama, Groq, Together, etc.)
+  # timeout: 60s            # Timeout for AI API calls
 
 angela:
   mode: draft               # Default mode: "draft" (zero-API) or "polish" (1 API call)
-  max_tokens: 2000           # Max tokens for AI responses
+  # max_tokens: 8192         # Optional: override auto-computed max tokens (default: dynamic per mode)
 
 hooks:
   post_commit: true          # Enable post-commit hook
@@ -124,7 +127,7 @@ hooks:
   post_commit: true
 angela:
   mode: draft
-  max_tokens: 2000
+  max_tokens: 8192
 ```
 
 ```yaml
@@ -134,6 +137,8 @@ ai:
 ```
 
 Each team member stores their own API key. The shared config defines the provider and model.
+
+> **`angela.max_tokens`** — When set, this value overrides the auto-computed limit. By default, Angela computes `max_tokens` dynamically based on document size (word_count × 1.3 × 1.8, capped at 8192, floor 512). If you set `angela.max_tokens: 10000` in `.lorerc`, that value is always used instead. Increase this if Angela warns that "input exceeds max output" or if responses are being truncated.
 
 ### Bilingual Project (FR/EN)
 

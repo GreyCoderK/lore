@@ -20,8 +20,8 @@ func TestDefaultCallOptions(t *testing.T) {
 	if opts.Temperature != 0.7 {
 		t.Errorf("DefaultCallOptions: Temperature = %f, want 0.7", opts.Temperature)
 	}
-	if opts.Timeout != 30*time.Second {
-		t.Errorf("DefaultCallOptions: Timeout = %v, want 30s", opts.Timeout)
+	if opts.Timeout != 60*time.Second {
+		t.Errorf("DefaultCallOptions: Timeout = %v, want 60s", opts.Timeout)
 	}
 }
 
@@ -170,8 +170,8 @@ func TestEnsureTimeout_Positive(t *testing.T) {
 
 func TestEnsureTimeout_Zero(t *testing.T) {
 	d := EnsureTimeout(0)
-	if d != 30*time.Second {
-		t.Errorf("EnsureTimeout(0) = %v, want 30s", d)
+	if d != 60*time.Second {
+		t.Errorf("EnsureTimeout(0) = %v, want 60s", d)
 	}
 }
 

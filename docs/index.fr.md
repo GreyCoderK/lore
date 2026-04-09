@@ -94,6 +94,8 @@ Angela est la revieweuse embarquée de Lore. Pensez à elle comme une collègue 
 
 Angela est opt-in. Elle fonctionne avec Anthropic (Claude), OpenAI (GPT), ou Ollama (local). Le mode `draft` ne nécessite aucune clé API.
 
+Angela fonctionne aussi comme **quality gate CI standalone** sur n'importe quel dossier Markdown — sans `lore init`. Ajoutez 3 lignes à votre GitHub Actions, GitLab CI ou Jenkins : [Angela en CI →](guides/angela-ci.md)
+
 [Découvrir l'histoire d'Angela →](guides/philosophy.md#à-propos-dangela)
 
 ## En savoir plus

@@ -5,9 +5,81 @@ All notable changes to Lore are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Branch Awareness & Amend Workflow
+## [Unreleased] — Angela Enhancement Sprint, Branch Awareness & Amend Workflow
 
 ### Added
+
+- **Angela Quality Score** — 0-100 scoring with 11 criteria (Why section, diagrams,
+  tables, code blocks, structure, front matter, references, density, style) and
+  letter grades A-F. Before/after comparison with colored delta on `angela polish`.
+  (`internal/angela/score.go`)
+
+- **Angela `--auto` mode** — Classifies each diff hunk (pure addition, pure deletion,
+  cosmetic, major deletion, modification) and auto-decides: accept additions,
+  reject deletions, ask only for modifications. Summary at end.
+  (`internal/angela/diff.go`, `cmd/angela_polish.go`)
+
+- **Angela `--for` audience rewrite** — `angela polish --for "CTO"` rewrites for a
+  target audience with persona boost (+20 for matching personas). Interactive choice:
+  new file (original unchanged) or overwrite original.
+  (`cmd/angela_polish.go`, `internal/angela/persona.go`)
+
+- **Angela `[b]oth` diff option** — Keep original lines AND add new lines. Only
+  shown when hunk has both deletions and additions.
+  (`internal/angela/diff.go`)
+
+- **Angela Hunk Warnings** — Warns before destructive changes: net loss >15 lines,
+  section heading deletions, code block removals, table row deletions.
+  (`internal/angela/diff.go`)
+
+- **Angela Post-Processing** — Local transforms after AI response: heading number
+  restoration, code fence language detection (25+ languages), mermaid indent
+  normalization. (`internal/angela/postprocess.go`)
+
+- **Angela Token Stats** — Real-time display of tokens sent/received, model, speed
+  (tok/s), cost after each API call. `UsageTracker` interface with `sync.Mutex` in
+  all 3 providers. (`internal/domain/interfaces.go`, `internal/ai/*.go`)
+
+- **Angela i18n UI** — ~30 new i18n keys for all runtime messages (preflight, token
+  stats, timeout, cost, quality, warnings). Bilingual diff prompts accept both
+  EN (y/n/b/q) and FR (o/n/l/q) input. (`internal/i18n/catalog_en.go`, `catalog_fr.go`)
+
+- **Angela Hunk Location** — Each diff hunk shows `@@ line X (N lines) @@` header
+  for document position context. (`internal/angela/diff.go`)
+
+- **Angela Standalone Mode** — `--path` flag on `angela draft` and `angela review`
+  enables analysis of any Markdown directory without `lore init`. `PlainCorpusStore`
+  gracefully handles files with or without YAML front matter.
+  (`internal/storage/plain_reader.go`, `cmd/angela.go`)
+
+- **Angela CI Quality Gate** — GitHub Action composite (`action.yml`) and portable
+  shell script (`scripts/angela-ci.sh`) for GitHub Actions, GitLab CI, Jenkins,
+  Bitbucket. Supports `--path`, `--fail-on`, `--install`, `--quiet`.
+
+- **VHS Cross-Check** — Detects orphan tapes (output GIF not referenced in docs),
+  orphan GIF references (docs referencing non-existent tape output), and CLI command
+  mismatches in `.tape` files. Integrated into `draft --all` output and review AI prompt.
+  (`internal/angela/vhs_signals.go`)
+
+- **Language Detection** — 24 programming languages including VHS tape syntax.
+  Auto-tags bare code fences during `angela polish` post-processing.
+  (`internal/angela/langdetect.go`)
+
+- **Multi-Pass Polishing** — Documents exceeding single-pass token limits are
+  automatically split into sections and polished sequentially.
+  (`internal/angela/multipass.go`)
+
+- **Audience Rewrite** — `angela polish --for <audience>` rewrites documents for a
+  specific audience (CTO, new developer, commercial team). Saves as separate file.
+  (`cmd/angela_polish.go`)
+
+- **Preflight & Cost Estimation** — Token estimation, cost warnings, abort-if-too-large,
+  timeout prediction before API calls. Supports known model cost maps.
+  (`internal/angela/preflight.go`)
+
+- **Progress Spinners** — Visual feedback with elapsed time on all long-running commands
+  (review, polish, doctor, release, status, upgrade, check-update).
+  (`internal/ui/progress.go`)
 
 - **Branch Awareness** — `Branch` and `Scope` fields propagated through the full
   pipeline: `CommitInfo` → `GenerateInput` → `TemplateContext` → `DocMeta` → Store.
@@ -35,6 +107,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `decision.*` thresholds/always_ask/always_skip/learning. (`internal/config/defaults.go`)
 
 ### Fixed
+
+- **`angela.max_tokens` config ignored** (HIGH) — User-configured `angela.max_tokens: 10000`
+  in `.lorerc` was overridden by computed value (2756). Now config always wins via
+  `ResolveMaxTokens(..., configMaxTokens ...int)` variadic parameter.
+  (`internal/angela/tokens.go`)
+
+- **Angela adds English headings to French docs** (HIGH) — AI inserted `## Why`,
+  `## Impact` in French documents. Fixed with explicit LANGUAGE RULE in prompt +
+  translation table. (`internal/angela/polish.go`)
+
+- **Angela deletes content silently** (HIGH) — Sections 4-8 deleted when max_tokens
+  too low. Fixed with preflight abort (input > max_output), truncation guard (rejects
+  diff if output = max_tokens), and PRESERVE CONTENT rules in prompt.
+  (`internal/angela/preflight.go`, `cmd/angela_polish.go`)
+
+- **DiffBoth deduplication dropped lines** (MEDIUM) — `containsLine()` failed on
+  identical lines (empty lines). Replaced with `Lines[].Kind == '+'` approach using
+  LCS edit ops. (`internal/angela/diff.go`)
+
+- **Spinner "1m60s" at minute boundary** (LOW) — Float rounding produced "1m60s".
+  Fixed with integer modulo `int(totalSec) % 60`. (`cmd/angela_polish.go`)
+
+- **`sanitizeAudience` strips accents** (LOW) — Changed from `r >= 'a' && r <= 'z'`
+  to `unicode.IsLetter()` for French filenames. (`cmd/angela_polish.go`)
+
+- **Ollama ignores max_tokens** (MEDIUM) — Added `NumPredict` field mapped to
+  `num_predict` in Ollama API. (`internal/ai/ollama.go`)
+
+- **Race on `Spinner.warned`** (MEDIUM) — Fixed with `atomic.Bool`.
+  (`internal/ui/progress.go`)
+
+- **Race on `lastUsage` in 3 providers** (MEDIUM) — Fixed with `sync.Mutex`.
+  (`internal/ai/anthropic.go`, `openai.go`, `ollama.go`)
+
+- **`SplitSections` splits on `##` inside code blocks** (LOW) — Added code fence
+  state tracking. (`internal/angela/multipass.go`)
+
+- **`countCodeFences` wrong formula** (LOW) — Rewritten with proper open/close
+  state machine. (`internal/angela/score.go`)
+
+- **No context cancellation in multi-pass** (LOW) — Added `ctx.Err()` check between
+  sections. (`internal/angela/multipass.go`)
 
 - **`CurrentBranch()` error swallowing** (HIGH) — Was returning `"", nil` for all
   errors. Now propagates real git errors, returns `"", nil` only for detached HEAD.

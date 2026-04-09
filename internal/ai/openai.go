@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/greycoderk/lore/internal/config"
@@ -23,11 +24,13 @@ const (
 )
 
 type openaiProvider struct {
-	client   *http.Client
-	apiKey   string
-	model    string
-	endpoint string
-	timeout  time.Duration
+	client    *http.Client
+	apiKey    string
+	model     string
+	endpoint  string
+	timeout   time.Duration
+	mu        sync.Mutex
+	lastUsage *domain.AIUsage
 }
 
 func newOpenAIProvider(cfg *config.Config) *openaiProvider {
@@ -66,6 +69,11 @@ type openaiResponse struct {
 			Content string `json:"content"`
 		} `json:"message"`
 	} `json:"choices"`
+	Usage struct {
+		PromptTokens     int `json:"prompt_tokens"`
+		CompletionTokens int `json:"completion_tokens"`
+	} `json:"usage"`
+	Model string `json:"model"`
 }
 
 func (p *openaiProvider) Complete(ctx context.Context, prompt string, opts ...domain.Option) (string, error) {
@@ -134,5 +142,19 @@ func (p *openaiProvider) Complete(ctx context.Context, prompt string, opts ...do
 		return "", fmt.Errorf("ai: openai: empty response text")
 	}
 
+	p.mu.Lock()
+	p.lastUsage = &domain.AIUsage{
+		InputTokens:  result.Usage.PromptTokens,
+		OutputTokens: result.Usage.CompletionTokens,
+		Model:        result.Model,
+	}
+	p.mu.Unlock()
+
 	return result.Choices[0].Message.Content, nil
+}
+
+func (p *openaiProvider) LastUsage() *domain.AIUsage {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.lastUsage
 }

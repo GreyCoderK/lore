@@ -88,6 +88,7 @@ nav:
     - Document Types & Metadata: guides/document-types.md
     - Contextual Detection: guides/contextual-detection.md
     - How Lore Compares: guides/comparaison.md
+    - Angela in CI: guides/angela-ci.md
     - Examples: guides/exemples.md
   - Roadmap: guides/roadmap.md
   - Contributing:

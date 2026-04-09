@@ -69,32 +69,37 @@ func runUpgrade(cmd *cobra.Command, streams domain.IOStreams, targetVersion stri
 	}
 
 	// Check for release
-	fmt.Fprintf(streams.Err, "%s\n", t.UpgradeChecking)
 	ctx := cmd.Context()
 	client := upgrade.NewHTTPClient()
 
+	spinCheck := ui.StartSpinner(streams, t.UpgradeChecking)
 	var release *upgrade.ReleaseInfo
 	if targetVersion != "" {
 		release, err = upgrade.FindRelease(ctx, client, upgradeRepo, targetVersion)
 		if err != nil {
+			spinCheck.Stop()
 			fmt.Fprintf(streams.Err, "%s\n", t.UpgradeNetworkErr)
 			return &cli.ExitCodeError{Code: cli.ExitError}
 		}
 		if release == nil {
+			spinCheck.Stop()
 			fmt.Fprintf(streams.Err, t.UpgradeVersionNotFnd+"\n", targetVersion)
 			return &cli.ExitCodeError{Code: cli.ExitError}
 		}
 	} else {
 		release, err = upgrade.CheckLatestRelease(ctx, client, upgradeRepo)
 		if err != nil {
+			spinCheck.Stop()
 			fmt.Fprintf(streams.Err, "%s\n", t.UpgradeNetworkErr)
 			return &cli.ExitCodeError{Code: cli.ExitError}
 		}
 		if release == nil {
+			spinCheck.Stop()
 			fmt.Fprintf(streams.Err, "%s\n", t.UpgradeNoRelease)
 			return &cli.ExitCodeError{Code: cli.ExitError}
 		}
 	}
+	spinCheck.Stop()
 
 	// Compare versions
 	currentVersion := "v" + version.Version
@@ -138,25 +143,30 @@ func runUpgrade(cmd *cobra.Command, streams domain.IOStreams, targetVersion stri
 	}
 	defer func() { _ = os.RemoveAll(tmpDir) }()
 
-	fmt.Fprintf(streams.Err, t.UpgradeDownloading+"\n", release.TagName)
+	spinDl := ui.StartSpinner(streams, fmt.Sprintf(t.UpgradeDownloading, release.TagName))
 	archivePath, err := upgrade.DownloadAsset(ctx, client, assetURL, tmpDir)
 	if err != nil {
+		spinDl.Stop()
 		fmt.Fprintf(streams.Err, "%s\n", t.UpgradeNetworkErr)
 		return &cli.ExitCodeError{Code: cli.ExitError}
 	}
+	spinDl.StopWith(fmt.Sprintf("✓ %s", fmt.Sprintf(t.UpgradeDownloading, release.TagName)))
 
 	// Verify checksum if available
 	if checksumsURL != "" {
-		fmt.Fprintf(streams.Err, "%s\n", t.UpgradeVerifying)
+		spinV := ui.StartSpinner(streams, t.UpgradeVerifying)
 		expected, err := upgrade.DownloadChecksum(ctx, client, checksumsURL, archiveName)
 		if err != nil {
+			spinV.Stop()
 			fmt.Fprintf(streams.Err, "%s\n", t.UpgradeChecksumFail)
 			return &cli.ExitCodeError{Code: cli.ExitError}
 		}
 		if err := upgrade.VerifySHA256(archivePath, expected); err != nil {
+			spinV.Stop()
 			fmt.Fprintf(streams.Err, "%s\n", t.UpgradeChecksumFail)
 			return &cli.ExitCodeError{Code: cli.ExitError}
 		}
+		spinV.StopWith(fmt.Sprintf("✓ %s", t.UpgradeVerifying))
 	}
 
 	// Extract binary
@@ -167,11 +177,13 @@ func runUpgrade(cmd *cobra.Command, streams domain.IOStreams, targetVersion stri
 	}
 
 	// Replace binary
-	fmt.Fprintf(streams.Err, "%s\n", t.UpgradeInstalling)
+	spinInst := ui.StartSpinner(streams, t.UpgradeInstalling)
 	if err := upgrade.ReplaceBinary(execPath, newBinary); err != nil {
+		spinInst.Stop()
 		fmt.Fprintf(streams.Err, t.UpgradePermissionErr+"\n", execPath)
 		return &cli.ExitCodeError{Code: cli.ExitError}
 	}
+	spinInst.Stop()
 
 	ui.Verb(streams, "Upgraded", fmt.Sprintf(t.UpgradeSuccess, release.TagName))
 	return nil

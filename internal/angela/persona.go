@@ -442,6 +442,125 @@ func ResolvePersonas(docType, body string) []ScoredPersona {
 	return results
 }
 
+// audiencePersonaBoosts maps audience keywords to persona names that should be prioritized.
+var audiencePersonaBoosts = map[string][]string{
+	// Commercial / sales / business
+	"commercial":  {"business-analyst", "storyteller"},
+	"commerciale": {"business-analyst", "storyteller"},
+	"vente":       {"business-analyst", "storyteller"},
+	"sales":       {"business-analyst", "storyteller"},
+	"business":    {"business-analyst", "storyteller"},
+	"marketing":   {"business-analyst", "storyteller", "ux-designer"},
+	"client":      {"business-analyst", "ux-designer"},
+
+	// Management / executive
+	"cto":         {"architect", "business-analyst"},
+	"ceo":         {"business-analyst", "storyteller"},
+	"management":  {"business-analyst", "architect"},
+	"direction":   {"business-analyst", "architect"},
+	"executive":   {"business-analyst", "architect"},
+
+	// Technical audiences
+	"développeur":     {"tech-writer", "architect"},
+	"developer":       {"tech-writer", "architect"},
+	"nouveau":         {"tech-writer", "storyteller"},
+	"junior":          {"tech-writer", "storyteller"},
+	"onboarding":      {"tech-writer", "storyteller"},
+
+	// Quality / audit
+	"audit":      {"qa-reviewer", "business-analyst"},
+	"compliance": {"qa-reviewer", "business-analyst"},
+	"qualité":    {"qa-reviewer", "tech-writer"},
+	"qa":         {"qa-reviewer", "tech-writer"},
+
+	// Design
+	"design":     {"ux-designer", "storyteller"},
+	"ux":         {"ux-designer", "storyteller"},
+	"ergonomie":  {"ux-designer", "storyteller"},
+}
+
+// ResolvePersonasForAudience selects personas optimized for a target audience.
+// It boosts personas whose expertise matches the audience, then falls back to
+// standard resolution for remaining slots.
+func ResolvePersonasForAudience(docType, body, audience string) []ScoredPersona {
+	if audience == "" {
+		return ResolvePersonas(docType, body)
+	}
+
+	// Find matching boosts from audience keywords
+	boosted := map[string]bool{}
+	lowerAud := strings.ToLower(audience)
+	for keyword, personaNames := range audiencePersonaBoosts {
+		if strings.Contains(lowerAud, keyword) {
+			for _, name := range personaNames {
+				boosted[name] = true
+			}
+		}
+	}
+
+	// Start with standard resolution
+	standard := ResolvePersonas(docType, body)
+
+	if len(boosted) == 0 {
+		return standard
+	}
+
+	// Re-score: boosted personas get +20 points
+	var results []ScoredPersona
+	for _, p := range registry {
+		score := 0
+
+		// Standard scoring
+		lowerType := strings.ToLower(docType)
+		for _, dt := range p.DocTypes {
+			if dt == lowerType {
+				score += 10
+				break
+			}
+		}
+		lower := strings.ToLower(body)
+		for _, signal := range p.ContentSignals {
+			if containsWord(lower, signal) {
+				score += 2
+			}
+		}
+
+		// Audience boost
+		if boosted[p.Name] {
+			score += 20
+		}
+
+		if score > 0 {
+			results = append(results, ScoredPersona{Profile: p, Score: score})
+		}
+	}
+
+	// Sort descending
+	for i := 1; i < len(results); i++ {
+		for j := i; j > 0 && results[j].Score > results[j-1].Score; j-- {
+			results[j], results[j-1] = results[j-1], results[j]
+		}
+	}
+
+	if len(results) > 3 {
+		results = results[:3]
+	}
+
+	return results
+}
+
+// DescribePersonas returns a human-readable string of active personas with scores.
+func DescribePersonas(scored []ScoredPersona) string {
+	if len(scored) == 0 {
+		return "none"
+	}
+	var parts []string
+	for _, sp := range scored {
+		parts = append(parts, fmt.Sprintf("%s %s (score: %d)", sp.Profile.Icon, sp.Profile.DisplayName, sp.Score))
+	}
+	return strings.Join(parts, ", ")
+}
+
 // Profiles extracts PersonaProfile slice from scored results.
 func Profiles(scored []ScoredPersona) []PersonaProfile {
 	out := make([]PersonaProfile, len(scored))

@@ -1,0 +1,111 @@
+name: 'Angela Doc Review'
+description: 'AI-powered documentation quality gate — works on any Markdown docs directory'
+author: 'GreyCoderK'
+
+branding:
+  icon: 'file-text'
+  color: 'purple'
+
+inputs:
+  mode:
+    description: 'Analysis mode: draft (offline, free) or review (AI, requires api_key)'
+    default: 'draft'
+    required: false
+  path:
+    description: 'Path to the markdown documentation directory'
+    default: './docs'
+    required: false
+  fail_on:
+    description: 'Severity threshold to fail the check: error, warning, or none'
+    default: 'error'
+    required: false
+  api_key:
+    description: 'AI provider API key (required for mode=review, optional for mode=draft)'
+    required: false
+  provider:
+    description: 'AI provider: anthropic (default), openai, ollama'
+    default: 'anthropic'
+    required: false
+  model:
+    description: 'AI model name (e.g., claude-sonnet-4-20250514, gpt-4o, llama3.1)'
+    required: false
+  endpoint:
+    description: 'Custom AI endpoint URL (for Ollama, Groq, Together, or any OpenAI-compatible API)'
+    required: false
+  lore_version:
+    description: 'Lore version to install (default: latest)'
+    default: 'latest'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install lore
+      shell: bash
+      env:
+        LORE_VERSION: ${{ inputs.lore_version }}
+      run: |
+        OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+        ARCH="$(uname -m)"
+        case "$ARCH" in
+          x86_64)        ARCH="amd64" ;;
+          aarch64|arm64) ARCH="arm64" ;;
+        esac
+
+        if [[ "$LORE_VERSION" == "latest" ]]; then
+          URL="https://github.com/GreyCoderK/lore/releases/latest/download/lore_${OS}_${ARCH}.tar.gz"
+        else
+          URL="https://github.com/GreyCoderK/lore/releases/download/${LORE_VERSION}/lore_${OS}_${ARCH}.tar.gz"
+        fi
+
+        echo "::group::Installing lore"
+        curl -sL "$URL" -o /tmp/lore.tar.gz
+        tar -xzf /tmp/lore.tar.gz -C /usr/local/bin
+        chmod +x /usr/local/bin/lore
+        rm -f /tmp/lore.tar.gz
+        echo "::endgroup::"
+        lore --version
+
+    - name: Run Angela analysis
+      shell: bash
+      env:
+        LORE_AI_API_KEY: ${{ inputs.api_key }}
+        LORE_AI_PROVIDER: ${{ inputs.provider }}
+        LORE_AI_MODEL: ${{ inputs.model }}
+        LORE_AI_ENDPOINT: ${{ inputs.endpoint }}
+        MODE: ${{ inputs.mode }}
+        DOCS_PATH: ${{ inputs.path }}
+        FAIL_ON: ${{ inputs.fail_on }}
+      run: |
+        echo "::group::Angela $MODE — $DOCS_PATH"
+
+        if [[ "$MODE" == "review" ]]; then
+          if [[ -z "${LORE_AI_API_KEY:-}" && "$LORE_AI_PROVIDER" != "ollama" ]]; then
+            echo "::error::mode=review requires api_key input (unless provider=ollama)"
+            exit 1
+          fi
+          lore angela review --path "$DOCS_PATH" 2>&1 || true
+          echo "::endgroup::"
+        else
+          OUTPUT=$(lore angela draft --all --path "$DOCS_PATH" 2>&1) || true
+          echo "$OUTPUT"
+
+          ERRORS=$(echo "$OUTPUT" | grep -c "^  error" || true)
+          WARNINGS=$(echo "$OUTPUT" | grep -c "^  warning" || true)
+
+          echo "::endgroup::"
+          echo "## Angela Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Errors: $ERRORS" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Warnings: $WARNINGS" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: $MODE" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Path: $DOCS_PATH" >> "$GITHUB_STEP_SUMMARY"
+
+          case "$FAIL_ON" in
+            error)
+              [[ "$ERRORS" -gt 0 ]] && exit 1
+              ;;
+            warning)
+              [[ "$ERRORS" -gt 0 || "$WARNINGS" -gt 0 ]] && exit 1
+              ;;
+          esac
+        fi

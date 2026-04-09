@@ -47,13 +47,24 @@ func newDoctorCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			}
 
 			docsDir := filepath.Join(".lore", "docs")
+
+			var spin *ui.Spinner
+			if !quiet {
+				spin = ui.StartSpinner(streams, i18n.T().Cmd.DoctorScanning)
+			}
 			report, err := storage.Diagnose(docsDir)
 			if err != nil {
+				if spin != nil {
+					spin.Stop()
+				}
 				return fmt.Errorf("cmd: doctor: %w", err)
 			}
 
 			// Run config validation as part of standard diagnostic.
 			cfgReport := config.ValidateConfig(".")
+			if spin != nil {
+				spin.StopWith(fmt.Sprintf("✓ %s", fmt.Sprintf(i18n.T().Cmd.DoctorScanned, report.DocCount, report.Checked)))
+			}
 
 			if quiet && !fix {
 				total := len(report.Issues) + len(cfgReport.Warnings) + len(cfgReport.Errors)
@@ -70,7 +81,14 @@ func newDoctorCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			}
 
 			// Fix mode
+			var spinFix *ui.Spinner
+			if !quiet {
+				spinFix = ui.StartSpinner(streams, i18n.T().Cmd.DoctorFixing)
+			}
 			fixReport, fixErr := storage.Fix(docsDir, report)
+			if spinFix != nil {
+				spinFix.Stop()
+			}
 			if fixErr != nil {
 				return fmt.Errorf("cmd: doctor: %w", fixErr)
 			}
@@ -243,7 +261,9 @@ func runRebuildStore(streams domain.IOStreams) error {
 
 	git := gitpkg.NewAdapter(".")
 
+	spin := ui.StartSpinner(streams, i18n.T().Cmd.DoctorRebuilding)
 	docCount, docSkipped, commitCount, err := s.RebuildFromSources(context.Background(), docsDir, git)
+	spin.Stop()
 	if err != nil {
 		return fmt.Errorf("cmd: doctor: rebuild: %w", err)
 	}

@@ -39,6 +39,27 @@ lore angela draft [filename] [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--all` | bool | `false` | Analyze every document in the corpus |
+| `--path` | string | `.lore/docs` | Path to a markdown directory (standalone mode — no `lore init` required) |
+
+## Standalone Mode
+
+Angela can analyze **any directory of Markdown files**, even without `lore init`:
+
+```bash
+# Analyze docs in an external project
+lore angela draft --all --path ./my-project/docs
+
+# Single file in a custom directory
+lore angela draft --path ./wiki api-guide.md
+```
+
+In standalone mode:
+- Files **with** YAML front matter get full analysis (type, tags, scope)
+- Files **without** front matter get synthetic metadata (type=note, tags from filename)
+- No `.lorerc` needed — sensible defaults apply
+- VHS tape/doc cross-checks run if an `assets/vhs/` directory is found
+
+This makes Angela usable as a **CI quality gate** on any Markdown documentation. See the [Angela in CI](../guides/angela-ci.md) guide.
 
 ## What It Checks
 
@@ -56,13 +77,12 @@ lore angela draft decision-database-2026-02-10.md
 ```
 
 ```
-Analyzing  decision-database-2026-02-10.md
-Score: 7.2/10 by Technical Writer + Architect
+lore angela draft — decision-database-2026-02-10.md
+  Reviewed by: Sialou + Doumbia  (relevance: 7)
 
-SEVERITY   CATEGORY        MESSAGE
-error      structure       Missing "Impact" section — decisions should describe consequences
-warning    tone            "We just picked PostgreSQL" — avoid "just", it undermines the decision
-info       coherence       Related: feature-user-model-2026-02-12.md (mentions same schema)
+  error    structure       Missing "Impact" section — decisions should describe consequences
+  warning  tone            "We just picked PostgreSQL" — avoid "just", it undermines the decision
+  info     coherence       Related: feature-user-model-2026-02-12.md (mentions same schema)
 
 3 suggestions
 ```
@@ -82,16 +102,15 @@ lore angela draft --all
 ```
 
 ```
-Analyzing 12 documents in corpus...
+lore angela draft --all — 12 documents
 
-STATUS     FILENAME                          DETAILS
-review     decision-database-2026-02-10.md   3 suggestions (avg 7.2/10)
-review     feature-rate-limit-2026-03-16.md  1 suggestion  (avg 8.1/10)
-ok         refactor-extract-auth-2026-03-01.md  (9.4/10)
-ok         feature-add-jwt-2026-02-15.md     (9.0/10)
-...
+  B    review   decision-database-2026-02-10.md      3 suggestions (2 warnings)
+  C    review   feature-rate-limit-2026-03-16.md      1 suggestions
+  A    ok       refactor-extract-auth-2026-03-01.md
+  A    ok       feature-add-jwt-2026-02-15.md
+  ...
 
-12 docs reviewed, 2 with issues, 4 suggestions total
+2/12 documents need attention. 4 total suggestions.
 ```
 
 ## Process Flow
@@ -130,12 +149,18 @@ graph TD
 
 ### "What are 'personas'?"
 
-Angela uses virtual reviewers with different perspectives. Each persona scores the document from their angle:
-- **Technical Writer** — Is it clear and well-structured?
-- **Architect** — Is the technical content accurate?
-- **New Developer** — Would a newcomer understand this?
+Angela uses 6 virtual reviewers with different perspectives. The top 3 are activated based on document type and content:
 
-The final score is the average across active personas.
+| Persona | Icon | Focus |
+|---------|------|-------|
+| **Affoue** (Storyteller) | 📖 | Narrative clarity, "Why" sections |
+| **Sialou** (Tech Writer) | ✏️ | Technical precision, structure |
+| **Kouame** (QA Reviewer) | 🔍 | Validation criteria, edge cases |
+| **Doumbia** (Architect) | 🏗️ | Trade-offs, system design |
+| **Gougou** (UX Designer) | 🎨 | User empathy, accessibility |
+| **Beda** (Business Analyst) | 📊 | Business value, requirements |
+
+Each persona runs local checks and produces typed suggestions. For example, Affoue checks that the "Why" section tells a story rather than just listing bullets. Kouame checks that claims have verification criteria.
 
 ## Tips & Tricks
 

@@ -211,6 +211,37 @@ func TestOpenAIProvider_Complete_EmptyChoices(t *testing.T) {
 	}
 }
 
+func TestOpenAIProvider_LastUsage(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"ok"}}],"usage":{"prompt_tokens":200,"completion_tokens":100},"model":"gpt-4o"}`))
+	}))
+	defer srv.Close()
+
+	p := &openaiProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "gpt-4o",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	u := p.LastUsage()
+	if u == nil {
+		t.Fatal("LastUsage: expected non-nil")
+	}
+	if u.InputTokens != 200 || u.OutputTokens != 100 {
+		t.Errorf("usage = %d/%d, want 200/100", u.InputTokens, u.OutputTokens)
+	}
+	if u.Model != "gpt-4o" {
+		t.Errorf("Model = %q, want gpt-4o", u.Model)
+	}
+}
+
 func TestOpenAIProvider_DefaultModel(t *testing.T) {
 	cfg := &config.Config{AI: config.AIConfig{Provider: "openai", APIKey: "sk-test"}}
 	p := newOpenAIProvider(cfg)

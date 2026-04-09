@@ -288,6 +288,41 @@ func TestAnthropicProvider_Complete_EmptyContent(t *testing.T) {
 	}
 }
 
+func TestAnthropicProvider_LastUsage(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"content":[{"text":"result"}],"usage":{"input_tokens":150,"output_tokens":80},"model":"claude-sonnet-4-20250514"}`))
+	}))
+	defer srv.Close()
+
+	p := &anthropicProvider{
+		client:   srv.Client(),
+		apiKey:   "sk-test",
+		model:    "test-model",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	u := p.LastUsage()
+	if u == nil {
+		t.Fatal("LastUsage: expected non-nil after Complete")
+	}
+	if u.InputTokens != 150 {
+		t.Errorf("InputTokens = %d, want 150", u.InputTokens)
+	}
+	if u.OutputTokens != 80 {
+		t.Errorf("OutputTokens = %d, want 80", u.OutputTokens)
+	}
+	if u.Model != "claude-sonnet-4-20250514" {
+		t.Errorf("Model = %q, want claude-sonnet-4-20250514", u.Model)
+	}
+}
+
 func TestAnthropicProvider_DefaultModel(t *testing.T) {
 	cfg := &config.Config{AI: config.AIConfig{Provider: "anthropic", APIKey: "sk-test"}}
 	p := newAnthropicProvider(cfg)

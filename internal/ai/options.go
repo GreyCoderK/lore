@@ -23,7 +23,7 @@ func DefaultCallOptions() domain.CallOptions {
 	return domain.CallOptions{
 		MaxTokens:   4096,
 		Temperature: 0.7,
-		Timeout:     30 * time.Second,
+		Timeout:     60 * time.Second,
 	}
 }
 
@@ -35,12 +35,12 @@ func ResolveOptions(defaults domain.CallOptions, opts ...domain.Option) domain.C
 	return defaults
 }
 
-// EnsureTimeout returns t if positive, otherwise the default 30s.
+// EnsureTimeout returns t if positive, otherwise the default 60s.
 func EnsureTimeout(t time.Duration) time.Duration {
 	if t > 0 {
 		return t
 	}
-	return 30 * time.Second
+	return 60 * time.Second
 }
 
 // ValidateEndpoint checks that an endpoint URL uses http or https scheme only.

@@ -94,6 +94,8 @@ Angela is Lore's embedded reviewer. Think of her as a colleague who has read eve
 
 Angela is opt-in. She works with Anthropic (Claude), OpenAI (GPT), or Ollama (local). `draft` mode needs no API key at all.
 
+Angela also works as a **standalone CI quality gate** on any Markdown directory — no `lore init` required. Add 3 lines to your GitHub Actions, GitLab CI, or Jenkins pipeline: [Angela in CI →](guides/angela-ci.md)
+
 [Learn about Angela's story →](guides/philosophy.md#about-angela)
 
 ## Learn More

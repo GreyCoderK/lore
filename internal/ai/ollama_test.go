@@ -151,6 +151,36 @@ func TestOllamaProvider_Complete_EmptyResponse(t *testing.T) {
 	}
 }
 
+func TestOllamaProvider_LastUsage(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"response":"ok","model":"llama3.2","prompt_eval_count":300,"eval_count":150}`))
+	}))
+	defer srv.Close()
+
+	p := &ollamaProvider{
+		client:   srv.Client(),
+		model:    "llama3.2",
+		endpoint: srv.URL,
+		timeout:  5 * time.Second,
+	}
+
+	_, err := p.Complete(context.Background(), "test")
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	u := p.LastUsage()
+	if u == nil {
+		t.Fatal("LastUsage: expected non-nil")
+	}
+	if u.InputTokens != 300 || u.OutputTokens != 150 {
+		t.Errorf("usage = %d/%d, want 300/150", u.InputTokens, u.OutputTokens)
+	}
+	if u.Model != "llama3.2" {
+		t.Errorf("Model = %q, want llama3.2", u.Model)
+	}
+}
+
 func TestOllamaProvider_DefaultModel(t *testing.T) {
 	cfg := &config.Config{AI: config.AIConfig{Provider: "ollama"}}
 	p := newOllamaProvider(cfg)

@@ -42,7 +42,14 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 				return renderBadge(streams, git)
 			}
 
+			var spin *ui.Spinner
+			if !flagQuiet {
+				spin = ui.StartSpinner(streams, i18n.T().Cmd.StatusCollecting)
+			}
 			info, err := status.CollectStatus(cfg, git, domain.LoreDir)
+			if spin != nil {
+				spin.Stop()
+			}
 			if err != nil {
 				return fmt.Errorf("cmd: status: %w", err)
 			}

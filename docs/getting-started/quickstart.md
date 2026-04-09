@@ -82,3 +82,4 @@ lore doctor
 - [Commands Reference](../commands/index.md) — All commands in detail
 - [Configuration](../guides/configuration.md) — Customize Lore
 - [Angela AI](../commands/angela-draft.md) — AI-assisted documentation
+- [Angela in CI](../guides/angela-ci.md) — Use Angela as a documentation quality gate in any CI pipeline (no `lore init` required)

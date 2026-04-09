@@ -5,6 +5,7 @@ package angela
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -84,12 +85,12 @@ func TestApplyDiff_AllAccepted(t *testing.T) {
 	original := "line 1\nline 2\nline 3"
 	modified := "line 1\nline 2 changed\nline 3"
 	hunks := ComputeDiff(original, modified)
-	accepted := make([]bool, len(hunks))
-	for i := range accepted {
-		accepted[i] = true
+	choices := make([]DiffChoice, len(hunks))
+	for i := range choices {
+		choices[i] = DiffAccept
 	}
 
-	result := ApplyDiff(original, hunks, accepted)
+	result := ApplyDiff(original, hunks, choices)
 	if result != modified {
 		t.Errorf("ApplyDiff all accepted:\ngot:  %q\nwant: %q", result, modified)
 	}
@@ -99,9 +100,9 @@ func TestApplyDiff_AllRejected(t *testing.T) {
 	original := "line 1\nline 2\nline 3"
 	modified := "line 1\nline 2 changed\nline 3"
 	hunks := ComputeDiff(original, modified)
-	accepted := make([]bool, len(hunks)) // all false
+	choices := make([]DiffChoice, len(hunks)) // all DiffReject (zero value)
 
-	result := ApplyDiff(original, hunks, accepted)
+	result := ApplyDiff(original, hunks, choices)
 	if result != original {
 		t.Errorf("ApplyDiff all rejected:\ngot:  %q\nwant: %q", result, original)
 	}
@@ -117,10 +118,10 @@ func TestApplyDiff_PartialAcceptance(t *testing.T) {
 	}
 
 	// Accept first hunk only
-	accepted := make([]bool, len(hunks))
-	accepted[0] = true
+	choices := make([]DiffChoice, len(hunks))
+	choices[0] = DiffAccept
 
-	result := ApplyDiff(original, hunks, accepted)
+	result := ApplyDiff(original, hunks, choices)
 	// First change applied, second not
 	if result == original {
 		t.Error("result should differ from original (first hunk accepted)")
@@ -182,11 +183,11 @@ func TestInteractiveDiff_DryRun(t *testing.T) {
 		Err: &errBuf,
 		In:  strings.NewReader(""),
 	}
-	accepted, err := InteractiveDiff(hunks, streams, DiffOptions{DryRun: true})
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{DryRun: true})
 	if err != nil {
 		t.Fatalf("InteractiveDiff dry run: %v", err)
 	}
-	if accepted[0] {
+	if choices[0] != DiffReject {
 		t.Error("dry run should not accept any hunks")
 	}
 }
@@ -202,12 +203,12 @@ func TestInteractiveDiff_YesAll(t *testing.T) {
 		Err: &errBuf,
 		In:  strings.NewReader(""),
 	}
-	accepted, err := InteractiveDiff(hunks, streams, DiffOptions{YesAll: true})
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{YesAll: true})
 	if err != nil {
 		t.Fatalf("InteractiveDiff yes-all: %v", err)
 	}
-	for i, a := range accepted {
-		if !a {
+	for i, c := range choices {
+		if c != DiffAccept {
 			t.Errorf("hunk %d should be accepted with YesAll", i)
 		}
 	}
@@ -225,17 +226,17 @@ func TestInteractiveDiff_UserInput(t *testing.T) {
 		Err: &errBuf,
 		In:  strings.NewReader("y\nn\nq\n"),
 	}
-	accepted, err := InteractiveDiff(hunks, streams, DiffOptions{})
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{})
 	if err != nil {
 		t.Fatalf("InteractiveDiff: %v", err)
 	}
-	if !accepted[0] {
+	if choices[0] != DiffAccept {
 		t.Error("hunk 0 should be accepted (user said y)")
 	}
-	if accepted[1] {
+	if choices[1] != DiffReject {
 		t.Error("hunk 1 should be rejected (user said n)")
 	}
-	if accepted[2] {
+	if choices[2] != DiffReject {
 		t.Error("hunk 2 should be rejected (user said q)")
 	}
 }
@@ -251,14 +252,14 @@ func TestInteractiveDiff_EOFInput(t *testing.T) {
 		Err: &errBuf,
 		In:  strings.NewReader("y\n"), // EOF before second hunk
 	}
-	accepted, err := InteractiveDiff(hunks, streams, DiffOptions{})
+	choices, err := InteractiveDiff(hunks, streams, DiffOptions{})
 	if err != nil {
 		t.Fatalf("InteractiveDiff: %v", err)
 	}
-	if !accepted[0] {
+	if choices[0] != DiffAccept {
 		t.Error("hunk 0 should be accepted")
 	}
-	if accepted[1] {
+	if choices[1] != DiffReject {
 		t.Error("hunk 1 should not be accepted after EOF")
 	}
 }
@@ -311,5 +312,134 @@ func TestSplitLines_Empty(t *testing.T) {
 	result := splitLines("")
 	if result != nil {
 		t.Errorf("expected nil for empty string, got %v", result)
+	}
+}
+
+// --- analyzeHunk tests ---
+
+func TestAnalyzeHunk_MajorDeletion(t *testing.T) {
+	orig := make([]string, 30)
+	for i := range orig {
+		orig[i] = fmt.Sprintf("line %d", i)
+	}
+	h := DiffHunk{Original: orig, Modified: []string{"replacement"}}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "removes") && strings.Contains(w, "lines") {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected warning about major content removal")
+	}
+}
+
+func TestAnalyzeHunk_SectionDeletion(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"## Export PDF", "content here", "more content"},
+		Modified: []string{"replaced"},
+	}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "section") && strings.Contains(w, "Export PDF") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected warning about section removal, got: %v", warnings)
+	}
+}
+
+func TestAnalyzeHunk_CodeBlockDeletion(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"```java", "public class Foo {}", "```", "text"},
+		Modified: []string{"text"},
+	}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "code block") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected warning about code block removal, got: %v", warnings)
+	}
+}
+
+func TestAnalyzeHunk_TableDeletion(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"| A | B |", "|---|---|", "| 1 | 2 |", "| 3 | 4 |", "| 5 | 6 |"},
+		Modified: []string{"replaced"},
+	}
+	warnings := analyzeHunk(h)
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "table rows") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected warning about table removal, got: %v", warnings)
+	}
+}
+
+func TestAnalyzeHunk_NoWarnings(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"old line"},
+		Modified: []string{"new line"},
+	}
+	warnings := analyzeHunk(h)
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings for small change, got: %v", warnings)
+	}
+}
+
+// --- ClassifyHunk tests ---
+
+func TestClassifyHunk_PureAddition(t *testing.T) {
+	h := DiffHunk{Original: nil, Modified: []string{"new line 1", "new line 2"}}
+	if got := ClassifyHunk(h); got != HunkPureAddition {
+		t.Errorf("ClassifyHunk = %d, want HunkPureAddition", got)
+	}
+}
+
+func TestClassifyHunk_PureDeletion(t *testing.T) {
+	h := DiffHunk{Original: []string{"old line"}, Modified: nil}
+	if got := ClassifyHunk(h); got != HunkPureDeletion {
+		t.Errorf("ClassifyHunk = %d, want HunkPureDeletion", got)
+	}
+}
+
+func TestClassifyHunk_Cosmetic(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"line with trailing space  "},
+		Modified: []string{"line with trailing space"},
+	}
+	if got := ClassifyHunk(h); got != HunkCosmetic {
+		t.Errorf("ClassifyHunk = %d, want HunkCosmetic", got)
+	}
+}
+
+func TestClassifyHunk_MajorDeletion(t *testing.T) {
+	orig := make([]string, 20)
+	for i := range orig {
+		orig[i] = fmt.Sprintf("line %d", i)
+	}
+	h := DiffHunk{Original: orig, Modified: []string{"single replacement"}}
+	if got := ClassifyHunk(h); got != HunkMajorDeletion {
+		t.Errorf("ClassifyHunk = %d, want HunkMajorDeletion", got)
+	}
+}
+
+func TestClassifyHunk_Modification(t *testing.T) {
+	h := DiffHunk{
+		Original: []string{"old line 1", "old line 2"},
+		Modified: []string{"new line 1", "new line 2", "new line 3"},
+	}
+	if got := ClassifyHunk(h); got != HunkModification {
+		t.Errorf("ClassifyHunk = %d, want HunkModification", got)
 	}
 }

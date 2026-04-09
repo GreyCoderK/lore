@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/greycoderk/lore/internal/config"
@@ -21,10 +22,12 @@ import (
 const ollamaDefaultModel = "llama3"
 
 type ollamaProvider struct {
-	client   *http.Client
-	model    string
-	endpoint string
-	timeout  time.Duration
+	client    *http.Client
+	model     string
+	endpoint  string
+	timeout   time.Duration
+	mu        sync.Mutex
+	lastUsage *domain.AIUsage
 }
 
 func newOllamaProvider(cfg *config.Config) *ollamaProvider {
@@ -45,14 +48,18 @@ func newOllamaProvider(cfg *config.Config) *ollamaProvider {
 }
 
 type ollamaRequest struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
-	System string `json:"system,omitempty"`
-	Stream bool   `json:"stream"`
+	Model      string `json:"model"`
+	Prompt     string `json:"prompt"`
+	System     string `json:"system,omitempty"`
+	Stream     bool   `json:"stream"`
+	NumPredict int    `json:"num_predict,omitempty"` // max output tokens
 }
 
 type ollamaResponse struct {
-	Response string `json:"response"`
+	Response        string `json:"response"`
+	Model           string `json:"model"`
+	PromptEvalCount int    `json:"prompt_eval_count"`
+	EvalCount       int    `json:"eval_count"`
 }
 
 func (p *ollamaProvider) Complete(ctx context.Context, prompt string, opts ...domain.Option) (string, error) {
@@ -65,10 +72,11 @@ func (p *ollamaProvider) Complete(ctx context.Context, prompt string, opts ...do
 	defer cancel()
 
 	body := ollamaRequest{
-		Model:  resolved.Model,
-		Prompt: prompt,
-		System: resolved.System,
-		Stream: false,
+		Model:      resolved.Model,
+		Prompt:     prompt,
+		System:     resolved.System,
+		Stream:     false,
+		NumPredict: resolved.MaxTokens,
 	}
 
 	data, err := json.Marshal(body)
@@ -110,5 +118,19 @@ func (p *ollamaProvider) Complete(ctx context.Context, prompt string, opts ...do
 		return "", fmt.Errorf("ai: ollama: empty response")
 	}
 
+	p.mu.Lock()
+	p.lastUsage = &domain.AIUsage{
+		InputTokens:  result.PromptEvalCount,
+		OutputTokens: result.EvalCount,
+		Model:        result.Model,
+	}
+	p.mu.Unlock()
+
 	return result.Response, nil
+}
+
+func (p *ollamaProvider) LastUsage() *domain.AIUsage {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.lastUsage
 }
