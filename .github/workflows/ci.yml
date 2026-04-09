@@ -48,36 +48,68 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      # Detect if docs or code changed (skip everything if neither)
+      - name: Check for changes
+        id: changes
+        run: |
+          DOCS_CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'docs/**' 'examples/**' '*.md' | head -1)
+          CODE_CHANGED=$(git diff --name-only HEAD~1 HEAD -- '*.go' 'internal/**' 'cmd/**' | head -1)
+          if [ -n "$DOCS_CHANGED" ]; then
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$CODE_CHANGED" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "docs_changed=$DOCS_CHANGED code_changed=$CODE_CHANGED"
+
       - uses: actions/setup-go@v6
+        if: steps.changes.outputs.docs == 'true' || steps.changes.outputs.code == 'true'
         with:
           go-version: stable
 
       # Build lore from source (we're in our own repo)
       - name: Build lore
+        if: steps.changes.outputs.docs == 'true' || steps.changes.outputs.code == 'true'
         run: go build -o lore .
 
       # Angela Draft — offline quality gate on our own docs
       - name: Angela Draft (docs site)
+        if: steps.changes.outputs.docs == 'true' || steps.changes.outputs.code == 'true'
         run: |
           ./lore angela draft --all --path ./docs
 
       # Angela Draft — also check example docs
       - name: Angela Draft (examples)
+        if: steps.changes.outputs.docs == 'true'
         run: |
           ./lore angela draft --all --path ./examples/demo-repo/.lore/docs
 
-      # Angela Review — AI corpus coherence check (only on main, requires API key)
+      # Angela Review — AI corpus coherence check (only on main + docs changed)
       - name: Angela Review (docs site)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: >-
+          github.ref == 'refs/heads/main'
+          && github.event_name == 'push'
+          && steps.changes.outputs.docs == 'true'
         env:
           LORE_AI_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           LORE_AI_PROVIDER: anthropic
-          LORE_AI_MODEL: claude-haiku-4-5-20251001
+          LORE_AI_MODEL: claude-sonnet-4-20250514
           LORE_AI_TIMEOUT: 120s
-          LORE_ANGELA_MAX_TOKENS: 38192
+          LORE_ANGELA_MAX_TOKENS: 18192
         run: |
           if [ -n "$LORE_AI_API_KEY" ]; then
             ./lore angela review --path ./docs --all
           else
             echo "Skipping review: no API key configured"
           fi
+
+      - name: Skip notice
+        if: steps.changes.outputs.docs == 'false' && steps.changes.outputs.code == 'false'
+        run: echo "No docs or code changes — skipping Angela analysis"

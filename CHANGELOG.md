@@ -106,7 +106,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Config fields** — `hooks.amend_prompt` (bool), `notification.mode/disabled_envs/amend`,
   `decision.*` thresholds/always_ask/always_skip/learning. (`internal/config/defaults.go`)
 
+- **Angela `--filter` and `--all` for review** — `--filter <regex>` filters documents
+  by filename, `--all` disables 25+25 sampling on large corpora. Both combine freely
+  with `--for`, `--path`, `--quiet`. (`cmd/angela_review.go`, `internal/angela/review.go`)
+
+- **Embedded Logo (brand package)** — Lore logo PNG embedded via `//go:embed` and
+  cached to temp dir. Eliminates filesystem lookups for notification icons.
+  (`internal/brand/brand.go`)
+
+- **Notification Icons** — macOS (AppleScript), Linux (zenity `--window-icon`,
+  kdialog `--icon`), and Windows (WPF `Icon`, NotifyIcon) now display the Lore
+  logo in dialogs and toast notifications via the brand package.
+  (`internal/notify/dialog_darwin.go`, `dialog_linux.go`, `dialog_windows.go`, `simple.go`)
+
+- **Graceful Signal Handling** — `Ctrl+C` (SIGINT/SIGTERM) cancels the command
+  context via `signal.NotifyContext`, giving `SavePending` a chance to persist
+  partial answers before exit. (`cmd/root.go`)
+
+- **Chocolatey Distribution** — Enabled in GoReleaser config + Chocolatey CLI
+  installed in release workflow. (`/.goreleaser.yaml`, `.github/workflows/release.yml`)
+
+- **Recursive PlainCorpusStore** — `--path` now scans subdirectories recursively
+  (was flat-only). `ReadDoc` accepts relative paths with subdirectories.
+  (`internal/storage/plain_reader.go`)
+
 ### Fixed
+
+- **Amend pre-fill missing QuestionMode** (MEDIUM) — Amend workflow now sets
+  `QuestionMode: "reduced"` and `PrefilledWhyConfidence: 0.9` when pre-filling
+  from existing document. (`internal/workflow/reactive.go`)
 
 - **`angela.max_tokens` config ignored** (HIGH) — User-configured `angela.max_tokens: 10000`
   in `.lorerc` was overridden by computed value (2756). Now config always wins via

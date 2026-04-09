@@ -12,6 +12,9 @@ import (
 	"golang.org/x/term"
 )
 
+// ErrInterrupted signals that the user pressed Ctrl+C during an interactive prompt.
+var ErrInterrupted = fmt.Errorf("interrupted")
+
 // typeSelectOptions are the valid document types displayed in the selector.
 // Order is intentional: most common first.
 var typeSelectOptions = []string{
@@ -27,6 +30,7 @@ var typeSelectOptions = []string{
 // selectType displays an interactive arrow-key selector for document type.
 // Returns the selected type string.
 // Falls back to text input if stdin is not a terminal.
+// Returns ErrInterrupted if the user presses Ctrl+C or q.
 func selectType(streams domain.IOStreams, defaultType string) (string, error) {
 	inFile, ok := streams.In.(*os.File)
 	if !ok {
@@ -73,7 +77,7 @@ func selectType(streams domain.IOStreams, defaultType string) (string, error) {
 		case n == 1 && (b[0] == 'q' || b[0] == 3): // q or Ctrl+C
 			clearSelectLines(streams, len(typeSelectOptions))
 			_ = term.Restore(fd, oldState)
-			return defaultType, nil
+			return defaultType, ErrInterrupted
 
 		case n == 3 && b[0] == 27 && b[1] == 91: // ESC [ sequence
 			switch b[2] {

@@ -272,12 +272,15 @@ func (q *QuestionFlow) AskType(ctx context.Context, defaultType string) (string,
 	// TTY: use interactive arrow-key selector
 	if isRealTTY(q.streams) {
 		selected, err := selectType(q.streams, defaultType)
+		if err == ErrInterrupted {
+			return defaultType, fmt.Errorf("workflow: ask Type: %w", err)
+		}
 		if err == nil {
 			if _, valid := validateType(selected); valid {
 				return selected, nil
 			}
 		}
-		// selectType failed — fall through to text input
+		// selectType failed for other reasons — fall through to text input
 	}
 
 	// Non-TTY or fallback: text input with validation loop

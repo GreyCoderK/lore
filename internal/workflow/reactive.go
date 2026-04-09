@@ -6,6 +6,7 @@ package workflow
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -74,7 +75,7 @@ func handleReactiveWithOpts(ctx context.Context, workDir string, streams domain.
 	if err != nil {
 		// Context cancelled during detection — save a pending record so the commit
 		// is not silently lost (same behaviour as interruption mid-flow).
-		if ctx.Err() != nil {
+		if ctx.Err() != nil || errors.Is(err, ErrInterrupted) {
 			hash, msg := commitFields(commit)
 			record := BuildPendingRecord(Answers{}, hash, msg, "interrupted", "partial")
 			_ = SavePending(workDir, record) // best-effort
@@ -258,8 +259,8 @@ func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IO
 	}
 	answers, flowErr := flow.RunFlowWithMode(ctx, commit, prefill)
 	if flowErr != nil {
-		// Context cancelled → persist partial answers silently.
-		if ctx.Err() != nil {
+		// Context cancelled or user interrupted → persist partial answers silently.
+		if ctx.Err() != nil || errors.Is(flowErr, ErrInterrupted) {
 			hash, msg := commitFields(commit)
 			record := BuildPendingRecord(answers, hash, msg, "interrupted", "partial")
 			_ = SavePending(workDir, record) // best-effort
@@ -287,8 +288,15 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	if shouldPrompt && tty {
 		_, _ = fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.AmendQuestion0)
 		answer, readErr := readAmendAnswer(streams)
-		if readErr != nil || answer == "n" || answer == "no" || answer == "non" {
-			return nil // skip silently
+		if readErr != nil {
+			// Read error (Ctrl+C, EOF) → save pending so commit is not lost
+			hash, msg := commitFields(commit)
+			record := BuildPendingRecord(Answers{}, hash, msg, "amend-interrupted", "partial")
+			_ = SavePending(workDir, record)
+			return nil
+		}
+		if answer == "n" || answer == "no" || answer == "non" {
+			return nil // user explicitly declined
 		}
 	}
 
@@ -316,6 +324,10 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 		_, _ = fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.AmendChoicePrompt)
 		choice, readErr := readAmendAnswer(streams)
 		if readErr != nil {
+			// Read error (Ctrl+C, EOF) → save pending so commit is not lost
+			hash, msg := commitFields(commit)
+			record := BuildPendingRecord(Answers{}, hash, msg, "amend-interrupted", "partial")
+			_ = SavePending(workDir, record)
 			return nil
 		}
 		switch choice {

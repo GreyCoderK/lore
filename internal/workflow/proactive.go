@@ -5,6 +5,7 @@ package workflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -118,8 +119,8 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 
 	answers, err := flow.AskQuestions(ctx, qOpts)
 	if err != nil {
-		// Save partial answers on Ctrl+C so they are not silently lost.
-		if ctx.Err() != nil {
+		// Save partial answers on Ctrl+C or ErrInterrupted so they are not silently lost.
+		if ctx.Err() != nil || errors.Is(err, ErrInterrupted) {
 			commitHash := ""
 			if opts.Commit != nil {
 				commitHash = opts.Commit.Hash
