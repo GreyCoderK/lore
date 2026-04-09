@@ -508,9 +508,10 @@ func summarizeHunkContent(h DiffHunk, class HunkClass) string {
 	var adds, dels []string
 	if len(h.Lines) > 0 {
 		for _, dl := range h.Lines {
-			if dl.Kind == '+' {
+			switch dl.Kind {
+			case '+':
 				adds = append(adds, dl.Text)
-			} else if dl.Kind == '-' {
+			case '-':
 				dels = append(dels, dl.Text)
 			}
 		}

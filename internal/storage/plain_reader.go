@@ -51,48 +51,60 @@ func (s *PlainCorpusStore) ReadDoc(id string) (string, error) {
 	return string(data), nil
 }
 
-// ListDocs scans the directory for .md files and returns their metadata.
+// ListDocs scans the directory recursively for .md files and returns their metadata.
 // Files with valid YAML front matter use the parsed metadata.
 // Files without front matter get synthetic metadata derived from the filename and file modification time.
 func (s *PlainCorpusStore) ListDocs(filter domain.DocFilter) ([]domain.DocMeta, error) {
-	entries, err := os.ReadDir(s.Dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("storage: plain list: %w", err)
+	if _, err := os.Stat(s.Dir); os.IsNotExist(err) {
+		return nil, nil
 	}
 
 	var results []domain.DocMeta
 
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || !strings.HasSuffix(name, ".md") || name == "README.md" {
-			continue
+	err := filepath.WalkDir(s.Dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil // skip unreadable entries
+		}
+		if d.IsDir() {
+			return nil // continue into subdirectories
 		}
 
-		fullPath := filepath.Join(s.Dir, name)
+		name := d.Name()
+		if !strings.HasSuffix(name, ".md") || name == "README.md" {
+			return nil
+		}
 
 		// Reject symlinks that escape the docs directory
-		if err := validateResolvedPath(s.Dir, fullPath); err != nil {
-			continue
+		if err := validateResolvedPath(s.Dir, path); err != nil {
+			return nil
 		}
 
-		data, err := os.ReadFile(fullPath)
-		if err != nil {
-			continue // skip unreadable files
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return nil // skip unreadable files
+		}
+
+		// Use relative path from Dir as the display filename
+		relPath, _ := filepath.Rel(s.Dir, path)
+		if relPath == "" {
+			relPath = name
 		}
 
 		meta, _, parseErr := Unmarshal(data)
 		if parseErr != nil {
 			// No valid front matter — build synthetic metadata from file info
-			meta = buildSyntheticMeta(name, entry)
+			meta = buildSyntheticMeta(name, d)
 		}
-		meta.Filename = name
+		meta.Filename = relPath
 
-		if matchesFilter(meta, name, string(data), filter) {
+		if matchesFilter(meta, relPath, string(data), filter) {
 			results = append(results, meta)
 		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("storage: plain list: %w", err)
 	}
 
 	return results, nil
