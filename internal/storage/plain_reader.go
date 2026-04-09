@@ -23,15 +23,28 @@ type PlainCorpusStore struct {
 	Dir string // path to the markdown directory
 }
 
-// ReadDoc reads a single document by filename.
+// ReadDoc reads a single document by relative path (e.g., "commands/angela-polish.md").
+// Unlike CorpusStore.ReadDoc which only accepts flat filenames, PlainCorpusStore
+// supports subdirectory paths for recursive standalone mode.
 func (s *PlainCorpusStore) ReadDoc(id string) (string, error) {
 	filename := id
 	if !strings.HasSuffix(filename, ".md") {
 		filename += ".md"
 	}
 
-	if err := validateFilename(filename); err != nil {
-		return "", fmt.Errorf("storage: read doc %s: %w", id, err)
+	if filename == "" {
+		return "", fmt.Errorf("storage: read doc: filename is empty")
+	}
+	if filepath.IsAbs(filename) {
+		return "", fmt.Errorf("storage: read doc: filename must be relative: %s", filename)
+	}
+	if strings.Contains(filename, "..") {
+		return "", fmt.Errorf("storage: read doc: filename must not contain '..': %s", filename)
+	}
+	// Block reserved filenames (base name only — subdirs like commands/index.md are fine)
+	baseName := strings.ToLower(filepath.Base(filename))
+	if baseName == "readme.md" || baseName == ".index.lock" {
+		return "", fmt.Errorf("storage: %q is a reserved filename", filename)
 	}
 
 	path := filepath.Join(s.Dir, filename)

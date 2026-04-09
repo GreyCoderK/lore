@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -21,6 +22,8 @@ import (
 func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *string) *cobra.Command {
 	var flagQuiet bool
 	var flagFor string
+	var flagFilter string
+	var flagAll bool
 
 	cmd := &cobra.Command{
 		Use:           "review",
@@ -37,9 +40,20 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 				}
 			}
 
+			// Build review filter from flags
+			var reviewFilter angela.ReviewFilter
+			if flagFilter != "" {
+				re, reErr := regexp.Compile(flagFilter)
+				if reErr != nil {
+					return fmt.Errorf("angela: review: invalid --filter regex: %w", reErr)
+				}
+				reviewFilter.Pattern = re
+			}
+			reviewFilter.All = flagAll
+
 			// AC-1, AC-2: Prepare doc summaries (before provider — no point requesting API if corpus too small)
 			corpusStore := newCorpusReader(docsDir, standalone)
-			summaries, totalCount, err := angela.PrepareDocSummaries(corpusStore)
+			summaries, totalCount, err := angela.PrepareDocSummaries(corpusStore, reviewFilter)
 			if err != nil {
 				return err
 			}
@@ -185,6 +199,8 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 
 	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Suppress human messages on stderr")
 	cmd.Flags().StringVar(&flagFor, "for", "", "Adapt findings for a target audience (e.g., \"CTO\", \"équipe commerciale\", \"nouveau développeur\")")
+	cmd.Flags().StringVar(&flagFilter, "filter", "", "Regex to filter documents by filename (e.g., \"commands/.*\", \".*\\.fr\\.md$\")")
+	cmd.Flags().BoolVar(&flagAll, "all", false, "Review all documents (no 25+25 sampling)")
 
 	return cmd
 }

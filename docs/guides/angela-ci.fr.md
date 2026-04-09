@@ -138,21 +138,40 @@ Tout fournisseur exposant un endpoint compatible OpenAI (Groq, Together, Mistral
 
 ## Options du script
 
+Le script portable supporte les modes draft et review :
+
 ```
 ./scripts/angela-ci.sh [OPTIONS]
 
   --path <dir>        Chemin vers les docs markdown (défaut : ./docs)
+  --mode <mode>       Mode d'analyse : draft (hors-ligne) ou review (IA) (défaut : draft)
   --fail-on <level>   error | warning | none (défaut : error)
+  --filter <regex>    Regex pour filtrer les documents par nom de fichier (review uniquement)
+  --all               Analyser tous les documents, pas d'échantillonnage 25+25 (review uniquement)
   --install           Installer lore automatiquement si absent du PATH
   --version <ver>     Version spécifique de lore (défaut : latest)
   --quiet             Supprimer la sortie lisible par l'humain
 ```
 
-> **Note :** Le script lance `angela draft` (hors-ligne, gratuit). Pour `angela review` (IA), appelez `lore` directement avec les variables d'environnement `LORE_AI_*` (voir ci-dessous).
+### Exemples
 
-## Jenkins / Bitbucket / GitLab — Mode Review avec IA
+```bash
+# Draft (hors-ligne, gratuit) — chaque push
+./scripts/angela-ci.sh --path docs --fail-on warning --install
 
-Le script `angela-ci.sh` est conçu pour le cas le plus courant : l'analyse draft hors-ligne. Pour la review IA sur les systèmes CI non-GitHub, appelez `lore` directement avec les variables d'environnement :
+# Review (IA) — tous les docs
+./scripts/angela-ci.sh --mode review --path docs --all --install
+
+# Review — seulement les docs de commandes
+./scripts/angela-ci.sh --mode review --path docs --filter "commands/.*" --install
+
+# Review — silencieux pour parsing de logs
+./scripts/angela-ci.sh --mode review --path docs --all --quiet --install
+```
+
+## Jenkins / Bitbucket / GitLab
+
+Le script fonctionne dans n'importe quel système CI. Configurez les variables `LORE_AI_*` pour le mode review :
 
 ### Jenkins (Jenkinsfile)
 
@@ -161,6 +180,7 @@ pipeline {
     environment {
         LORE_AI_PROVIDER = 'anthropic'
         LORE_AI_API_KEY  = credentials('anthropic-api-key')
+        LORE_AI_TIMEOUT  = '120s'
     }
     stages {
         stage('Doc Draft') {
@@ -171,7 +191,7 @@ pipeline {
         stage('Doc Review') {
             when { buildingTag() }
             steps {
-                sh 'lore angela review --path docs'
+                sh './scripts/angela-ci.sh --mode review --path docs --all --install'
             }
         }
     }
@@ -193,12 +213,12 @@ pipelines:
       - step:
           name: Revue Doc (IA)
           script:
-            - ./scripts/angela-ci.sh --install
-            - lore angela review --path docs
+            - ./scripts/angela-ci.sh --mode review --path docs --all --install
           environment:
             LORE_AI_PROVIDER: openai
             LORE_AI_MODEL: gpt-4o
             LORE_AI_API_KEY: $OPENAI_API_KEY
+            LORE_AI_TIMEOUT: 120s
 ```
 
 ### GitLab CI
@@ -216,9 +236,10 @@ doc-review:
   variables:
     LORE_AI_PROVIDER: anthropic
     LORE_AI_API_KEY: $ANTHROPIC_API_KEY
+    LORE_AI_TIMEOUT: 120s
+    LORE_ANGELA_MAX_TOKENS: 8192
   script:
-    - ./scripts/angela-ci.sh --install
-    - lore angela review --path docs
+    - ./scripts/angela-ci.sh --mode review --path docs --all --install
 ```
 
 ### Variables d'environnement
@@ -228,10 +249,11 @@ Lore lit automatiquement les variables `LORE_AI_*` (via Viper auto-env). Pas bes
 | Variable | Description | Exemple |
 |----------|-------------|---------|
 | `LORE_AI_PROVIDER` | Fournisseur IA | `anthropic`, `openai`, `ollama` |
-| `LORE_AI_MODEL` | Nom du modèle | `claude-sonnet-4-20250514`, `gpt-4o`, `llama3.1` |
-| `LORE_AI_API_KEY` | Clé API (priorité maximale) | `sk-ant-...`, `sk-...` |
+| `LORE_AI_MODEL` | Nom du modèle | `claude-haiku-4-5-20251001`, `gpt-4o`, `llama3.1` |
+| `LORE_AI_API_KEY` | Clé API (requis pour review, sauf ollama) | `sk-ant-...`, `sk-...` |
 | `LORE_AI_ENDPOINT` | URL endpoint custom | `https://api.groq.com`, `http://localhost:11434` |
 | `LORE_AI_TIMEOUT` | Timeout de requête | `120s` |
+| `LORE_ANGELA_MAX_TOKENS` | Max tokens de sortie | `8192` |
 
 Ces variables fonctionnent dans **n'importe quel système CI** — GitHub Actions, GitLab, Jenkins, Bitbucket, CircleCI, etc.
 

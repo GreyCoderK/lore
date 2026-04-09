@@ -38,6 +38,8 @@ lore angela review [flags]
 | `--quiet` | bool | `false` | Supprimer l'en-tête et le résumé sur stderr |
 | `--for` | string | | Adapter les résultats pour une audience cible (ex : `"CTO"`, `"nouveau développeur"`) |
 | `--path` | string | `.lore/docs` | Chemin vers un répertoire markdown (mode autonome — pas de `lore init` requis) |
+| `--filter` | string | | Regex pour filtrer les documents par nom de fichier (ex : `"commands/.*"`, `".*\.fr\.md$"`) |
+| `--all` | bool | `false` | Analyser tous les documents (désactive l'échantillonnage 25+25 sur les gros corpus) |
 
 ## Mode autonome
 
@@ -124,12 +126,60 @@ Pré-analyse sans appel API :
 # Revue complète (signaux locaux + analyse IA)
 lore angela review
 
+# Tous les docs (pas d'échantillonnage 25+25 — pour les gros corpus)
+lore angela review --all
+
+# Filtrer : seulement les docs de commandes
+lore angela review --filter "commands/.*"
+
+# Filtrer : seulement les docs FR
+lore angela review --filter "\.fr\.md$"
+
+# Combiner : tous les docs Angela, adapté pour le CTO
+lore angela review --filter "angela" --all --for "CTO"
+
+# Mode autonome : analyser n'importe quel répertoire markdown
+lore angela review --path ./docs --all
+
 # Silencieux (pour intégration avec lore status)
 lore angela review --quiet
 
 # Alternative hors ligne : analyser tous les docs localement (pas d'API)
 lore angela draft --all
 ```
+
+## Réglages
+
+Contrôlez le timeout et la limite de tokens via `.lorerc` ou variables d'environnement :
+
+```yaml
+# .lorerc
+ai:
+  timeout: 120s             # défaut : 60s — augmenter pour les gros corpus
+
+angela:
+  max_tokens: 8192          # défaut : auto-calculé — augmenter si le preflight abandonne
+```
+
+Ou via env vars (utile en CI) :
+
+```bash
+LORE_AI_TIMEOUT=120s LORE_ANGELA_MAX_TOKENS=8192 lore angela review --path ./docs --all
+```
+
+Tous les flags se combinent librement :
+
+```bash
+lore angela review --path ./docs --filter "guides/.*" --all --for "CTO" --quiet
+```
+
+| Flag | Étape du pipeline | Effet |
+|------|-------------------|-------|
+| `--path` | Source | Quel répertoire scanner |
+| `--filter` | Sélection | Quels fichiers garder (regex sur le nom) |
+| `--all` | Échantillonnage | Envoyer tous les docs, pas de 25+25 |
+| `--for` | Prompt IA | Adapter les résultats pour une audience |
+| `--quiet` | Sortie | Supprimer les messages stderr |
 
 ## Questions fréquentes
 
@@ -153,8 +203,11 @@ Un seul appel API quelle que soit la taille du corpus. Lore compresse les résum
 
 - **Avant chaque release :** `lore angela review` attrape les contradictions qui dérouteraient les lecteurs.
 - **Pas d'API ?** Utilisez `lore angela draft --all` pour une analyse locale gratuite de chaque document.
+- **`--filter` pour des reviews ciblées :** Ne reviewez que les docs modifiés (`--filter "commands/angela"`).
+- **`--all` pour être exhaustif :** Par défaut, les corpus > 50 docs utilisent l'échantillonnage 25+25. Utilisez `--all` pour tout analyser.
 - **Résultats en cache :** `lore status` affiche les findings sans relancer l'analyse.
 - **Gros corpus (> 50 docs) :** Lore avertit de la consommation de tokens avant l'appel.
+- **Utilisez Haiku pour les reviews :** `LORE_AI_MODEL=claude-haiku-4-5-20251001` est 10x moins cher que Sonnet et suffisant pour les vérifications de cohérence.
 
 ## Codes de sortie
 

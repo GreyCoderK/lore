@@ -7,10 +7,21 @@
 #
 # Options:
 #   --path <dir>        Path to markdown docs directory (default: ./docs)
+#   --mode <mode>       Analysis mode: draft (offline) or review (AI) (default: draft)
 #   --fail-on <level>   Fail on: error, warning, or none (default: error)
+#   --filter <regex>    Regex to filter documents by filename (review only)
+#   --all               Review all documents, no 25+25 sampling (review only)
 #   --install           Auto-install lore if not found
 #   --version <ver>     Lore version to install (default: latest)
 #   --quiet             Suppress human-readable output
+#
+# Environment variables (for review mode):
+#   LORE_AI_PROVIDER    AI provider: anthropic, openai, ollama (default: anthropic)
+#   LORE_AI_MODEL       Model name (e.g., claude-haiku-4-5-20251001, gpt-4o)
+#   LORE_AI_API_KEY     API key (required for review mode, unless ollama)
+#   LORE_AI_ENDPOINT    Custom endpoint URL (for Ollama, Groq, Together, etc.)
+#   LORE_AI_TIMEOUT     Request timeout (e.g., 120s)
+#   LORE_ANGELA_MAX_TOKENS  Max output tokens (e.g., 8192)
 #
 # Exit codes:
 #   0  All checks passed
@@ -18,21 +29,26 @@
 #   2  Script error (missing dependencies, bad arguments)
 #
 # Examples:
-#   # GitHub Actions
-#   - run: ./scripts/angela-ci.sh --path docs --fail-on warning
+#   # Draft (offline, free)
+#   ./scripts/angela-ci.sh --path docs --fail-on warning
 #
-#   # GitLab CI
-#   script:
-#     - ./scripts/angela-ci.sh --path docs --install
+#   # Review (AI, requires LORE_AI_API_KEY)
+#   ./scripts/angela-ci.sh --mode review --path docs --all --install
+#
+#   # Review with filter
+#   ./scripts/angela-ci.sh --mode review --path docs --filter "commands/.*"
 #
 #   # Jenkins
-#   sh './scripts/angela-ci.sh --path docs --fail-on error'
+#   sh './scripts/angela-ci.sh --mode review --path docs --all --install'
 
 set -euo pipefail
 
 # --- Defaults ---
 DOCS_PATH="./docs"
+MODE="draft"
 FAIL_ON="error"
+FILTER=""
+ALL=false
 AUTO_INSTALL=false
 LORE_VERSION="latest"
 QUIET=false
@@ -44,9 +60,21 @@ while [[ $# -gt 0 ]]; do
       DOCS_PATH="$2"
       shift 2
       ;;
+    --mode)
+      MODE="$2"
+      shift 2
+      ;;
     --fail-on)
       FAIL_ON="$2"
       shift 2
+      ;;
+    --filter)
+      FILTER="$2"
+      shift 2
+      ;;
+    --all)
+      ALL=true
+      shift
       ;;
     --install)
       AUTO_INSTALL=true
@@ -61,7 +89,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -h|--help)
-      head -30 "$0" | grep "^#" | sed 's/^# \?//'
+      head -44 "$0" | grep "^#" | sed 's/^# \?//'
       exit 0
       ;;
     *)
@@ -77,8 +105,18 @@ if [[ ! "$FAIL_ON" =~ ^(error|warning|none)$ ]]; then
   exit 2
 fi
 
+if [[ ! "$MODE" =~ ^(draft|review)$ ]]; then
+  echo "error: --mode must be 'draft' or 'review'" >&2
+  exit 2
+fi
+
 if [[ ! -d "$DOCS_PATH" ]]; then
   echo "error: docs directory not found: $DOCS_PATH" >&2
+  exit 2
+fi
+
+if [[ "$MODE" == "review" && -z "${LORE_AI_API_KEY:-}" && "${LORE_AI_PROVIDER:-anthropic}" != "ollama" ]]; then
+  echo "error: review mode requires LORE_AI_API_KEY (unless LORE_AI_PROVIDER=ollama)" >&2
   exit 2
 fi
 
@@ -122,22 +160,40 @@ else
   exit 2
 fi
 
-# --- Run Angela Draft ---
+# --- Helpers ---
 log() {
   if [[ "$QUIET" != "true" ]]; then
     echo "$@" >&2
   fi
 }
 
-log "angela-ci: analyzing $DOCS_PATH ..."
+# --- Run Angela ---
+if [[ "$MODE" == "review" ]]; then
+  # Build review command with optional flags
+  REVIEW_CMD=("$LORE_BIN" angela review --path "$DOCS_PATH")
+  if [[ "$ALL" == "true" ]]; then
+    REVIEW_CMD+=(--all)
+  fi
+  if [[ -n "$FILTER" ]]; then
+    REVIEW_CMD+=(--filter "$FILTER")
+  fi
+  if [[ "$QUIET" == "true" ]]; then
+    REVIEW_CMD+=(--quiet)
+  fi
 
-OUTPUT=$("$LORE_BIN" angela draft --all --path "$DOCS_PATH" 2>&1) || true
+  log "angela-ci: reviewing $DOCS_PATH (mode=review) ..."
+  OUTPUT=$("${REVIEW_CMD[@]}" 2>&1) || true
+else
+  # Draft mode (offline)
+  log "angela-ci: analyzing $DOCS_PATH (mode=draft) ..."
+  OUTPUT=$("$LORE_BIN" angela draft --all --path "$DOCS_PATH" 2>&1) || true
+fi
 
 log "$OUTPUT"
 
 # --- Count issues by severity ---
-ERRORS=$(echo "$OUTPUT" | grep -c "^  error" || true)
-WARNINGS=$(echo "$OUTPUT" | grep -c "^  warning" || true)
+ERRORS=$(echo "$OUTPUT" | grep -c "^  error\|^  contradiction" || true)
+WARNINGS=$(echo "$OUTPUT" | grep -c "^  warning\|^  gap\|^  obsolete\|^  style" || true)
 
 log ""
 log "angela-ci: $ERRORS errors, $WARNINGS warnings"

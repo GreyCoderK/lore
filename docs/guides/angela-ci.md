@@ -138,21 +138,40 @@ Any provider that exposes an OpenAI-compatible endpoint (Groq, Together, Mistral
 
 ## Script Options
 
+The portable script supports both draft and review modes:
+
 ```
 ./scripts/angela-ci.sh [OPTIONS]
 
   --path <dir>        Path to markdown docs (default: ./docs)
+  --mode <mode>       Analysis mode: draft (offline) or review (AI) (default: draft)
   --fail-on <level>   error | warning | none (default: error)
+  --filter <regex>    Regex to filter documents by filename (review only)
+  --all               Review all documents, no 25+25 sampling (review only)
   --install           Auto-install lore if not in PATH
   --version <ver>     Specific lore version (default: latest)
   --quiet             Suppress human-readable output
 ```
 
-> **Note:** The script runs `angela draft` (offline, free). For `angela review` (AI), call `lore` directly with `LORE_AI_*` environment variables (see below).
+### Examples
 
-## Jenkins / Bitbucket / GitLab — Review Mode with AI
+```bash
+# Draft (offline, free) — every push
+./scripts/angela-ci.sh --path docs --fail-on warning --install
 
-The script `angela-ci.sh` is designed for the most common case: offline draft analysis. For AI-powered review on non-GitHub CI systems, call `lore` directly with environment variables:
+# Review (AI) — all docs
+./scripts/angela-ci.sh --mode review --path docs --all --install
+
+# Review — only command docs
+./scripts/angela-ci.sh --mode review --path docs --filter "commands/.*" --install
+
+# Review — quiet for log parsing
+./scripts/angela-ci.sh --mode review --path docs --all --quiet --install
+```
+
+## Jenkins / Bitbucket / GitLab
+
+The script works in any CI system. Set `LORE_AI_*` environment variables for review mode:
 
 ### Jenkins (Jenkinsfile)
 
@@ -161,6 +180,7 @@ pipeline {
     environment {
         LORE_AI_PROVIDER = 'anthropic'
         LORE_AI_API_KEY  = credentials('anthropic-api-key')
+        LORE_AI_TIMEOUT  = '120s'
     }
     stages {
         stage('Doc Draft') {
@@ -171,7 +191,7 @@ pipeline {
         stage('Doc Review') {
             when { buildingTag() }
             steps {
-                sh 'lore angela review --path docs'
+                sh './scripts/angela-ci.sh --mode review --path docs --all --install'
             }
         }
     }
@@ -193,12 +213,12 @@ pipelines:
       - step:
           name: Doc Review (AI)
           script:
-            - ./scripts/angela-ci.sh --install
-            - lore angela review --path docs
+            - ./scripts/angela-ci.sh --mode review --path docs --all --install
           environment:
             LORE_AI_PROVIDER: openai
             LORE_AI_MODEL: gpt-4o
             LORE_AI_API_KEY: $OPENAI_API_KEY
+            LORE_AI_TIMEOUT: 120s
 ```
 
 ### GitLab CI
@@ -216,9 +236,10 @@ doc-review:
   variables:
     LORE_AI_PROVIDER: anthropic
     LORE_AI_API_KEY: $ANTHROPIC_API_KEY
+    LORE_AI_TIMEOUT: 120s
+    LORE_ANGELA_MAX_TOKENS: 8192
   script:
-    - ./scripts/angela-ci.sh --install
-    - lore angela review --path docs
+    - ./scripts/angela-ci.sh --mode review --path docs --all --install
 ```
 
 ### Environment Variables
@@ -228,10 +249,11 @@ Lore automatically reads `LORE_AI_*` environment variables (via Viper auto-env).
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `LORE_AI_PROVIDER` | AI provider | `anthropic`, `openai`, `ollama` |
-| `LORE_AI_MODEL` | Model name | `claude-sonnet-4-20250514`, `gpt-4o`, `llama3.1` |
-| `LORE_AI_API_KEY` | API key (highest priority) | `sk-ant-...`, `sk-...` |
+| `LORE_AI_MODEL` | Model name | `claude-haiku-4-5-20251001`, `gpt-4o`, `llama3.1` |
+| `LORE_AI_API_KEY` | API key (required for review, unless ollama) | `sk-ant-...`, `sk-...` |
 | `LORE_AI_ENDPOINT` | Custom endpoint URL | `https://api.groq.com`, `http://localhost:11434` |
 | `LORE_AI_TIMEOUT` | Request timeout | `120s` |
+| `LORE_ANGELA_MAX_TOKENS` | Max output tokens | `8192` |
 
 These variables work in **any CI system** — GitHub Actions, GitLab, Jenkins, Bitbucket, CircleCI, etc.
 

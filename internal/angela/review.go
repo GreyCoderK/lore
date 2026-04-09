@@ -300,15 +300,40 @@ func severityRank(sev string) int {
 // PrepareDocSummaries reads documents from the corpus and builds summaries.
 // Returns error if fewer than 5 documents exist (AC-2).
 // Limits to 50 docs: 25 most recent + 25 oldest when corpus exceeds 50.
-func PrepareDocSummaries(reader domain.CorpusReader) ([]DocSummary, int, error) {
+// ReviewFilter controls which documents are included in a review.
+type ReviewFilter struct {
+	Pattern *regexp.Regexp // if non-nil, only include files matching this pattern
+	All     bool           // if true, include all docs (no 25+25 sampling)
+}
+
+func PrepareDocSummaries(reader domain.CorpusReader, filters ...ReviewFilter) ([]DocSummary, int, error) {
 	allDocs, err := reader.ListDocs(domain.DocFilter{})
 	if err != nil {
 		return nil, 0, fmt.Errorf("angela: review: list docs: %w", err)
 	}
 
+	// Apply regex filter if provided
+	var filter ReviewFilter
+	if len(filters) > 0 {
+		filter = filters[0]
+	}
+	if filter.Pattern != nil {
+		filtered := allDocs[:0]
+		for _, d := range allDocs {
+			if filter.Pattern.MatchString(d.Filename) {
+				filtered = append(filtered, d)
+			}
+		}
+		allDocs = filtered
+	}
+
 	totalCount := len(allDocs)
-	if totalCount < 5 {
-		return nil, totalCount, fmt.Errorf(i18n.T().Cmd.AngelaReviewMinDocs, 5, totalCount)
+	minRequired := 5
+	if filter.Pattern != nil {
+		minRequired = 2 // lower threshold when filtering
+	}
+	if totalCount < minRequired {
+		return nil, totalCount, fmt.Errorf(i18n.T().Cmd.AngelaReviewMinDocs, minRequired, totalCount)
 	}
 
 	// Sort by date descending (most recent first)
@@ -316,9 +341,9 @@ func PrepareDocSummaries(reader domain.CorpusReader) ([]DocSummary, int, error) 
 		return allDocs[i].Date > allDocs[j].Date
 	})
 
-	// Select docs: all if <= 50, else 25 newest + 25 oldest
+	// Select docs: all if --all or <= 50, else 25 newest + 25 oldest
 	var selected []domain.DocMeta
-	if totalCount <= 50 {
+	if filter.All || totalCount <= 50 {
 		selected = allDocs
 	} else {
 		selected = append(selected, allDocs[:25]...)
