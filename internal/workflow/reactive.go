@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
@@ -287,7 +288,7 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 	shouldPrompt := amendPrompt == nil || *amendPrompt
 	if shouldPrompt && tty {
 		_, _ = fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.AmendQuestion0)
-		answer, readErr := readAmendAnswer(streams)
+		answer, readErr := readAmendAnswer(streams, ctx)
 		if readErr != nil {
 			// Read error (Ctrl+C, EOF) → save pending so commit is not lost
 			hash, msg := commitFields(commit)
@@ -322,7 +323,7 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 		// [U]pdate / [C]reate / [S]kip choice
 		_, _ = fmt.Fprintf(streams.Err, i18n.T().Workflow.AmendUpdatingExisting+"\n", existingFilename)
 		_, _ = fmt.Fprintf(streams.Err, "%s", i18n.T().Workflow.AmendChoicePrompt)
-		choice, readErr := readAmendAnswer(streams)
+		choice, readErr := readAmendAnswer(streams, ctx)
 		if readErr != nil {
 			// Read error (Ctrl+C, EOF) → save pending so commit is not lost
 			hash, msg := commitFields(commit)
@@ -383,7 +384,35 @@ func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, 
 }
 
 // readAmendAnswer reads a single line from stdin for amend prompt responses.
-func readAmendAnswer(streams domain.IOStreams) (string, error) {
+// Respects context cancellation so Ctrl+C doesn't hang.
+func readAmendAnswer(streams domain.IOStreams, ctx ...context.Context) (string, error) {
+	// If a context is provided, run read in a goroutine so we can select on ctx.Done().
+	if len(ctx) > 0 && ctx[0] != nil {
+		type result struct {
+			line string
+			err  error
+		}
+		ch := make(chan result, 1)
+		go func() {
+			line, err := readAmendLine(streams)
+			ch <- result{line, err}
+		}()
+		select {
+		case <-ctx[0].Done():
+			// Unblock the goroutine by setting a past read deadline if possible.
+			if f, ok := streams.In.(*os.File); ok {
+				_ = f.SetReadDeadline(time.Now())
+			}
+			return "", ctx[0].Err()
+		case r := <-ch:
+			return r.line, r.err
+		}
+	}
+	return readAmendLine(streams)
+}
+
+// readAmendLine does the actual byte-by-byte read from stdin.
+func readAmendLine(streams domain.IOStreams) (string, error) {
 	var buf []byte
 	b := make([]byte, 1)
 	for {
@@ -391,6 +420,9 @@ func readAmendAnswer(streams domain.IOStreams) (string, error) {
 		if n > 0 {
 			if b[0] == '\n' {
 				break
+			}
+			if b[0] == 3 { // Ctrl+C in raw-ish mode
+				return "", ErrInterrupted
 			}
 			buf = append(buf, b[0])
 		}
