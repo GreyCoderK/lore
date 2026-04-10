@@ -134,6 +134,11 @@ func TestAngelaDraft_NotInitialized(t *testing.T) {
 
 func runAngelaDraftAll(t *testing.T, cfg *config.Config) (stdout, stderr string, exitErr error) {
 	t.Helper()
+	return runAngelaDraftAllWithArgs(t, cfg, "draft", "--all")
+}
+
+func runAngelaDraftAllWithArgs(t *testing.T, cfg *config.Config, args ...string) (stdout, stderr string, exitErr error) {
+	t.Helper()
 	restore := ui.SaveAndDisableColor()
 	defer restore()
 
@@ -143,7 +148,7 @@ func runAngelaDraftAll(t *testing.T, cfg *config.Config) (stdout, stderr string,
 		cfg = &config.Config{}
 	}
 	cmd := newAngelaCmd(cfg, streams)
-	cmd.SetArgs([]string{"draft", "--all"})
+	cmd.SetArgs(args)
 	err := cmd.Execute()
 	return out.String(), errBuf.String(), err
 }
@@ -417,6 +422,83 @@ func TestAngelaDraft_NoArgsAutoPickRecent(t *testing.T) {
 	// Should auto-pick the newer doc and show its filename in output
 	if !strings.Contains(stderr, "decision-new-2026-03-15.md") {
 		t.Errorf("expected auto-picked newer doc in output, got: %s", stderr)
+	}
+}
+
+// draft --all prints warning messages inline by default (not just counts).
+func TestAngelaDraft_All_WarningsShownInline(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	// Short doc guaranteed to produce warning-severity findings.
+	doc := "---\ntype: decision\nstatus: published\ndate: \"2026-04-01\"\n---\nShort."
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-short-2026-04-01.md"), []byte(doc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, stderr, err := runAngelaDraftAll(t, nil)
+	if err != nil {
+		t.Fatalf("--all: %v", err)
+	}
+
+	// The default output (no -v) must include a line starting with the
+	// severity "warning" indented under the doc entry — this is the new
+	// inline-warning behaviour.
+	if !strings.Contains(stderr, "warning") {
+		t.Errorf("expected inline 'warning' severity line in default output, got: %s", stderr)
+	}
+}
+
+// draft --all -v prints every suggestion (info + warning) inline.
+func TestAngelaDraft_All_VerboseShowsAll(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	// A short doc that produces several suggestions of mixed severity.
+	doc := "---\ntype: decision\nstatus: published\ndate: \"2026-04-02\"\n---\n## What\nToo short.\n"
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-mixed-2026-04-02.md"), []byte(doc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Non-verbose baseline: may or may not print info-level lines.
+	_, stderrDefault, err := runAngelaDraftAll(t, nil)
+	if err != nil {
+		t.Fatalf("--all default: %v", err)
+	}
+	defaultInfoCount := strings.Count(stderrDefault, "info ")
+
+	// Verbose: every suggestion (including info) must appear inline.
+	_, stderrVerbose, err := runAngelaDraftAllWithArgs(t, nil, "draft", "--all", "--verbose")
+	if err != nil {
+		t.Fatalf("--all --verbose: %v", err)
+	}
+	verboseInfoCount := strings.Count(stderrVerbose, "info ")
+
+	if verboseInfoCount <= defaultInfoCount {
+		t.Errorf("verbose should show more info-level lines than default (default=%d, verbose=%d)",
+			defaultInfoCount, verboseInfoCount)
+	}
+}
+
+// draft --all shows a hint about -v when info suggestions are hidden.
+func TestAngelaDraft_All_VerboseHint(t *testing.T) {
+	dir := testutil.SetupLoreDir(t)
+	testutil.Chdir(t, dir)
+
+	docsDir := filepath.Join(dir, ".lore", "docs")
+	doc := "---\ntype: decision\nstatus: published\ndate: \"2026-04-03\"\n---\n## What\nBrief.\n"
+	if err := os.WriteFile(filepath.Join(docsDir, "decision-hint-2026-04-03.md"), []byte(doc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, stderr, err := runAngelaDraftAll(t, nil)
+	if err != nil {
+		t.Fatalf("--all: %v", err)
+	}
+	if !strings.Contains(stderr, "--verbose") && !strings.Contains(stderr, "-v") {
+		t.Errorf("expected hint mentioning --verbose/-v when info suggestions are hidden, got: %s", stderr)
 	}
 }
 

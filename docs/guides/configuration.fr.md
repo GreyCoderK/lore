@@ -58,6 +58,39 @@ output:
   dir: .lore/docs
 ```
 
+## Branch Awareness (branche git)
+
+Depuis l'Angela Enhancement Sprint, Lore capture la **branche git** et le **scope du commit conventionnel** au moment du commit et les stocke dans le front matter du document :
+
+```yaml
+---
+type: feature
+date: 2026-04-01
+commit: a1b2c3d
+branch: feature/auth        # branche git courante
+scope: auth                 # parsé depuis "feat(auth): ..."
+---
+```
+
+Les deux champs se propagent dans tout le pipeline — hook → question flow → template → stockage → LKS store — et apparaissent dans les dialogs de notification pour que vous voyiez à quelle branche appartient un commit en attente.
+
+### Désactivation
+
+Branch et scope utilisent `omitempty` dans la sortie YAML : les docs créés sur une HEAD détachée ou depuis des commits sans scope conventionnel les omettent simplement. Aucune configuration nécessaire.
+
+### Impact sur le workflow amend
+
+Quand vous faites `git commit --amend` et qu'un doc existe déjà pour le commit pré-amend, Lore demande `Document this change? [Y/n]` (Question 0) puis propose `[U]pdate / [C]reate / [S]kip`. Configurable :
+
+```yaml
+hooks:
+  amend_prompt: true       # Mettre à false pour ignorer la Question 0
+notification:
+  amend: true              # Activer les notifications pour les commits amend
+```
+
+Voir [Détection contextuelle](contextual-detection.fr.md#workflow-amend) pour le comportement complet.
+
 ## Surcharges personnelles
 
 ```yaml

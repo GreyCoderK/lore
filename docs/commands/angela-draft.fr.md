@@ -39,6 +39,7 @@ lore angela draft [fichier] [flags]
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
 | `--all` | bool | `false` | Analyser chaque document du corpus |
+| `--verbose`, `-v` | bool | `false` | Avec `--all` : afficher chaque suggestion en détail (par défaut, seuls les avertissements sont affichés) |
 | `--path` | string | `.lore/docs` | Chemin vers un répertoire markdown (mode autonome — pas de `lore init` requis) |
 
 ## Mode autonome
@@ -100,14 +101,35 @@ lore angela draft — decision-database-2026-02-10.md
 lore angela draft --all
 ```
 
+Par défaut, Angela affiche la ligne de résumé pour chaque document et le
+détail inline de chaque **avertissement** (les blockers à corriger en priorité) :
+
 ```
 lore angela draft --all — 12 documents
 
-  B    review   decision-database-2026-02-10.md      3 suggestions (2 warnings)
+  B    review   decision-database-2026-02-10.md      3 suggestions (2 avertissements)
+         warning  structure      Section "Impact" manquante
+         warning  completeness   La section "Why" ne fait que 5 mots
   C    review   feature-rate-limit-2026-03-16.md      1 suggestions
   A    ok       refactor-extract-auth-2026-03-01.md
 
-2/12 documents need attention. 4 total suggestions.
+2/12 documents nécessitent une attention. 4 suggestions au total.
+Utilisez --verbose (-v) pour voir toutes les suggestions en détail.
+```
+
+### `--verbose` / `-v`
+
+Pour voir toutes les suggestions (info, warning, error), passez `-v` :
+
+```bash
+lore angela draft --all -v
+```
+
+```
+  B    review   decision-database-2026-02-10.md      3 suggestions (2 avertissements)
+         warning  structure      Section "Impact" manquante
+         warning  completeness   La section "Why" ne fait que 5 mots
+         info     coherence      Lié : feature-user-model-2026-02-12.md
 ```
 
 ## Flux

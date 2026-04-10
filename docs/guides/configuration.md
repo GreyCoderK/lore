@@ -58,6 +58,39 @@ output:
   dir: .lore/docs            # Documentation directory
 ```
 
+## Branch Awareness
+
+Since the Angela Enhancement Sprint, Lore captures the **git branch** and **conventional commit scope** at commit time and stores them in the document front matter:
+
+```yaml
+---
+type: feature
+date: 2026-04-01
+commit: a1b2c3d
+branch: feature/auth        # current git branch
+scope: auth                 # parsed from "feat(auth): ..."
+---
+```
+
+Both fields propagate through the full pipeline — hook → question flow → template → storage → LKS store — and appear in notification dialogs so you can see which branch a pending commit belongs to.
+
+### Opting out
+
+Branch and scope use `omitempty` in YAML output, so docs created on a detached HEAD or from commits without a conventional scope simply omit them. No config needed.
+
+### Impact on the amend workflow
+
+When you `git commit --amend` and a doc already exists for the pre-amend commit, Lore asks `Document this change? [Y/n]` (Question 0) and then offers `[U]pdate / [C]reate / [S]kip`. Configurable:
+
+```yaml
+hooks:
+  amend_prompt: true       # Set to false to skip Question 0
+notification:
+  amend: true              # Enable notifications for amend commits
+```
+
+See [Contextual Detection](contextual-detection.md#amend-workflow) for the full behaviour.
+
 ## Personal Overrides
 
 ```yaml

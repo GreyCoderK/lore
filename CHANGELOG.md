@@ -130,7 +130,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (was flat-only). `ReadDoc` accepts relative paths with subdirectories.
   (`internal/storage/plain_reader.go`)
 
+- **`angela draft --all --verbose`** — New `--verbose`/`-v` flag prints every
+  suggestion inline instead of just a count. By default, the command already
+  prints warning-severity suggestions inline (they are blockers), and displays
+  a hint at the end inviting the user to re-run with `-v` for the full detail.
+  Previously, the only output was `5 suggestions (2 warnings)` with no way to
+  see what the suggestions actually were without re-running `draft` per-file.
+  (`cmd/angela.go`, `internal/i18n/catalog_{en,fr}.go`)
+
 ### Fixed
+
+- **macOS notifications have no icon** (LOW) — `display notification` (osascript)
+  does not support custom icons on macOS. Lore now auto-installs `terminal-notifier`
+  via Homebrew when available (`brew install --quiet terminal-notifier`) to enable
+  Lore logo in toast notifications. Manual install: `brew install terminal-notifier`.
+  (`internal/notify/simple.go`)
+
+- **Ctrl+C before first question loses commit** (HIGH) — `RegisterInterruptState`
+  is now called BEFORE `PreflightCheck` in `HandleProactive`, so the signal handler
+  can save pending even if the user interrupts before any question is asked.
+  (`internal/workflow/proactive.go`)
 
 - **Ctrl+C loses partial answers** (HIGH) — Pressing Ctrl+C during any question
   (type selector, What, Why, amend Question 0, [U]/[C]/[S]) now saves partial

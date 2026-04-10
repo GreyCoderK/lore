@@ -84,7 +84,9 @@ nfpms:
 #           - dot-gitconfig
 
 chocolateys:
-  - name: lore
+  # NOTE: the bare name "lore" is already taken on community.chocolatey.org
+  # (version 0.1.1 by a third party). We publish as "lore-cli" instead.
+  - name: lore-cli
     title: "Lore CLI"
     authors: "Museigen"
     project_url: "https://github.com/GreyCoderK/lore"
@@ -123,7 +125,7 @@ release:
     sudo rpm -i lore_*.rpm
 
     # Chocolatey (Windows)
-    choco install lore
+    choco install lore-cli
 
     # Go
     go install github.com/greycoderk/lore@{{ .Tag }}

@@ -229,6 +229,8 @@ var catalogEN = &Messages{
 		AngelaDraftAllSugg:       "%d suggestions",
 		AngelaDraftAllSuggWarn:   "%d suggestions (%d warnings)",
 		AngelaDraftAllSummary:    "%d/%d documents need attention. %d total suggestions.",
+		AngelaDraftAllVerboseHint: "Run with --verbose (-v) to see every suggestion.",
+		AngelaDraftAllWarningsHeader: "warnings",
 
 		// angela_polish.go
 		AngelaPolishShort:       "Improve a document with AI assistance",

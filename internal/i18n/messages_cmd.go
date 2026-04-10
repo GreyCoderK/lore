@@ -229,6 +229,8 @@ type CmdMessages struct {
 	AngelaDraftAllSugg       string // args: count, score
 	AngelaDraftAllSuggWarn   string // args: count, warnings, score
 	AngelaDraftAllSummary    string // args: needAttention, total, suggestions
+	AngelaDraftAllVerboseHint string // hint about --verbose flag when warnings exist
+	AngelaDraftAllWarningsHeader string // shown before inline warning list
 
 	// angela_polish.go
 	AngelaPolishShort       string

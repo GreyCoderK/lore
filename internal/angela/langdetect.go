@@ -233,18 +233,25 @@ func DetectLanguage(line string) string {
 }
 
 // DetectLanguageMultiLine guesses the language from multiple lines for better accuracy.
-// Checks first 5 non-empty lines and uses majority vote.
+// Checks first 5 non-empty lines and uses majority vote. Ties are broken
+// deterministically: the language whose first vote occurred earliest in the
+// line sequence wins. This prevents map-iteration randomness (which differed
+// between Linux/darwin and Windows) from producing flaky results.
 func DetectLanguageMultiLine(lines []string) string {
 	votes := map[string]int{}
+	firstVoteIdx := map[string]int{} // line index of each language's first vote
 	checked := 0
 
-	for _, line := range lines {
+	for i, line := range lines {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
 		lang := DetectLanguage(line)
 		if lang != "" {
 			votes[lang]++
+			if _, seen := firstVoteIdx[lang]; !seen {
+				firstVoteIdx[lang] = i
+			}
 		}
 		checked++
 		if checked >= 5 {
@@ -256,13 +263,17 @@ func DetectLanguageMultiLine(lines []string) string {
 		return ""
 	}
 
-	// Return language with most votes
+	// Return language with most votes. On ties, the language whose first vote
+	// occurred earliest wins — this makes the output deterministic regardless
+	// of Go map iteration order.
 	best := ""
 	bestCount := 0
+	bestFirstIdx := -1
 	for lang, count := range votes {
-		if count > bestCount {
+		if count > bestCount || (count == bestCount && firstVoteIdx[lang] < bestFirstIdx) {
 			best = lang
 			bestCount = count
+			bestFirstIdx = firstVoteIdx[lang]
 		}
 	}
 	return best

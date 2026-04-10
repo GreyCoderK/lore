@@ -253,6 +253,24 @@ lore hook uninstall
 lore hook install
 ```
 
+### Why don't I see the Lore logo in notifications on macOS?
+
+macOS `display notification` (osascript) does not support custom icons. Install `terminal-notifier` to enable the Lore logo:
+
+```bash
+brew install terminal-notifier
+```
+
+Lore auto-installs it if Homebrew is available. After installation, the logo appears in all toast notifications. Dialogs (the interactive question flow) already show the logo without `terminal-notifier`.
+
+### The amend workflow isn't asking me any questions
+
+Two common causes:
+
+1. **You're running an old version of Lore.** Check `lore --version`. The git hook uses `lore` from your `PATH` — make sure it resolves to the latest version. Update via `brew upgrade lore` or `go install github.com/greycoderk/lore@latest`.
+
+2. **The terminal is not interactive.** Some IDEs and CI environments don't provide a TTY. Lore then defers the commit to `.lore/pending/` automatically. Check with `lore pending` and resolve with `lore pending resolve`.
+
 ---
 
 **Question not listed?** [Ask on GitHub Discussions Q&A](https://github.com/greycoderk/lore/discussions/categories/q-a)

@@ -38,6 +38,7 @@ func newAngelaCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 
 func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *string) *cobra.Command {
 	var flagAll bool
+	var flagVerbose bool
 
 	cmd := &cobra.Command{
 		Use:           "draft [filename]",
@@ -47,7 +48,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// --all mode: analyze entire corpus
 			if flagAll {
-				return runDraftAll(cfg, streams, flagPath)
+				return runDraftAll(cfg, streams, flagPath, flagVerbose)
 			}
 
 			// Resolve docs directory: --path (standalone) or .lore/docs (normal)
@@ -169,6 +170,7 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 	}
 
 	cmd.Flags().BoolVar(&flagAll, "all", false, "Analyze all documents in the corpus")
+	cmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, "Show every suggestion inline (default: warnings only)")
 	return cmd
 }
 
@@ -191,7 +193,9 @@ func newCorpusReader(dir string, standalone bool) domain.CorpusReader {
 }
 
 // runDraftAll analyzes every document in the corpus and produces a summary.
-func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string) error {
+// When verbose is true, every suggestion is printed inline; otherwise only
+// warnings are shown inline and a hint invites the user to re-run with -v.
+func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string, verbose bool) error {
 	docsDir, standalone := resolveDocsDir(flagPath)
 	if !standalone {
 		if err := requireLoreDir(streams); err != nil {
@@ -217,6 +221,7 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string)
 	guide := angela.ParseStyleGuide(styleRules)
 
 	var totalSuggestions int
+	var totalWarnings int
 	var docsWithIssues int
 
 	_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaDraftAllHeader+"\n\n", len(corpus))
@@ -246,11 +251,23 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string)
 					warnings++
 				}
 			}
+			totalWarnings += warnings
 			label := fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSugg, len(suggestions))
 			if warnings > 0 {
 				label = fmt.Sprintf(i18n.T().Cmd.AngelaDraftAllSuggWarn, len(suggestions), warnings)
 			}
 			_, _ = fmt.Fprintf(streams.Err, "  %-4s %-8s %-40s %s\n", grade, "review", meta.Filename, label)
+
+			// Inline details:
+			//   - verbose: show every suggestion
+			//   - default: show only warnings (they are blockers the user must see)
+			for _, s := range suggestions {
+				if !verbose && s.Severity != "warning" {
+					continue
+				}
+				_, _ = fmt.Fprintf(streams.Err, "         %-8s %-14s %s\n",
+					s.Severity, s.Category, s.Message)
+			}
 		} else {
 			_, _ = fmt.Fprintf(streams.Err, "  %-4s %-8s %s\n", grade, "ok", meta.Filename)
 		}
@@ -262,6 +279,12 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string)
 
 	_, _ = fmt.Fprintf(streams.Err, "\n"+i18n.T().Cmd.AngelaDraftAllSummary+"\n",
 		docsWithIssues, len(corpus), totalSuggestions)
+
+	// If non-verbose and there are info-level suggestions that were hidden,
+	// invite the user to re-run with -v for the full detail.
+	if !verbose && totalSuggestions > totalWarnings {
+		_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.AngelaDraftAllVerboseHint)
+	}
 
 	return nil
 }

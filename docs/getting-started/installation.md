@@ -59,8 +59,10 @@ Lore runs **natively on Windows** — no WSL required.
 
 **Chocolatey (recommended):**
 ```powershell
-choco install lore
+choco install lore-cli
 ```
+
+> The Chocolatey package is named `lore-cli` because the bare `lore` name was already taken on community.chocolatey.org. The installed binary is still `lore`.
 
 **Go install:**
 ```powershell
@@ -90,7 +92,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 |---------|---------|-----------|
 | **Homebrew** | `brew install GreyCoderK/tap/lore` | macOS, Linux |
 | **Snap** | `sudo snap install lore --classic` | Linux |
-| **Chocolatey** | `choco install lore` | Windows |
+| **Chocolatey** | `choco install lore-cli` | Windows |
 | **Go** | `go install github.com/greycoderk/lore@latest` | All (requires Go 1.21+) |
 | **curl** | `curl -sSfL .../install.sh \| sh` | macOS, Linux |
 | **deb** | `sudo dpkg -i lore_*.deb` | Debian, Ubuntu |

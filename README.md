@@ -56,8 +56,8 @@ brew install GreyCoderK/tap/lore
 # Snap (Linux)
 sudo snap install lore --classic
 
-# Chocolatey (Windows)
-choco install lore
+# Chocolatey (Windows) — package name is lore-cli (bare "lore" was taken)
+choco install lore-cli
 
 # Go (any platform)
 go install github.com/greycoderk/lore@latest
@@ -67,6 +67,16 @@ curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh
 ```
 
 Or download from [GitHub Releases](https://github.com/GreyCoderK/lore/releases) — binaries for macOS, Linux, and Windows.
+
+### Optional (macOS only) — Notification icons
+
+For Lore logo in notifications on macOS, install `terminal-notifier`:
+
+```bash
+brew install terminal-notifier
+```
+
+Without it, notifications fall back to `osascript display notification` which does not support custom icons (macOS limitation). Lore attempts to auto-install via Homebrew if available.
 
 ## Quickstart (5 minutes)
 

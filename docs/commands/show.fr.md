@@ -55,8 +55,23 @@ lore show [mot-clé] [flags]
 
 ```bash
 lore show "JWT auth"
-# → Affiche le document complet
 ```
+
+```markdown
+---
+type: decision
+date: 2026-02-15
+commit: b2c3d4e
+branch: feature/jwt-auth
+scope: auth
+---
+# Add JWT auth middleware
+
+## Why
+L'authentification stateless passe mieux à l'échelle que les sessions...
+```
+
+> **Branche et scope** sont capturés automatiquement au moment du commit (voir [Branch Awareness](../guides/configuration.fr.md#branch-awareness-branche-git)). Ils sont omis du front matter lorsqu'ils ne sont pas disponibles (HEAD détachée, absence de scope conventionnel).
 
 ### Plusieurs résultats → Sélection interactive (TTY)
 

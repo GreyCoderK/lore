@@ -39,6 +39,7 @@ lore angela draft [filename] [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--all` | bool | `false` | Analyze every document in the corpus |
+| `--verbose`, `-v` | bool | `false` | With `--all`: print every suggestion inline (default shows warnings only) |
 | `--path` | string | `.lore/docs` | Path to a markdown directory (standalone mode — no `lore init` required) |
 
 ## Standalone Mode
@@ -101,16 +102,37 @@ lore angela draft — decision-database-2026-02-10.md
 lore angela draft --all
 ```
 
+By default, Angela prints the summary line for every document and the inline
+detail of every **warning** (blockers you should act on):
+
 ```
 lore angela draft --all — 12 documents
 
   B    review   decision-database-2026-02-10.md      3 suggestions (2 warnings)
+         warning  structure      Missing "Impact" section
+         warning  completeness   "Why" section is only 5 words
   C    review   feature-rate-limit-2026-03-16.md      1 suggestions
   A    ok       refactor-extract-auth-2026-03-01.md
   A    ok       feature-add-jwt-2026-02-15.md
   ...
 
 2/12 documents need attention. 4 total suggestions.
+Run with --verbose (-v) to see every suggestion.
+```
+
+### `--verbose` / `-v`
+
+To see every suggestion (info, warning, error), pass `-v`:
+
+```bash
+lore angela draft --all -v
+```
+
+```
+  B    review   decision-database-2026-02-10.md      3 suggestions (2 warnings)
+         warning  structure      Missing "Impact" section
+         warning  completeness   "Why" section is only 5 words
+         info     coherence      Related: feature-user-model-2026-02-12.md
 ```
 
 ## Process Flow

@@ -64,12 +64,16 @@ lore show "JWT auth"
 type: decision
 date: 2026-02-15
 commit: b2c3d4e
+branch: feature/jwt-auth
+scope: auth
 ---
 # Add JWT auth middleware
 
 ## Why
 Stateless authentication scales better than sessions...
 ```
+
+> **Branch & scope** are captured automatically at commit time (see [Branch Awareness](../guides/configuration.md#branch-awareness)). They are omitted from front matter when unavailable (detached HEAD, no conventional scope).
 
 ### Multiple Results → Interactive Selection (TTY)
 
