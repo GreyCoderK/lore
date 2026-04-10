@@ -17,7 +17,7 @@ func TestConfig() *config.Config {
 			Model:    "claude-sonnet-4-20250514",
 		},
 		Angela: config.AngelaConfig{
-			Mode:      "draft",
+			// Mode intentionally not set — deprecated, no runtime effect.
 			MaxTokens: 2000,
 		},
 		Templates: config.TemplatesConfig{

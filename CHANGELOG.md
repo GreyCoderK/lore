@@ -171,6 +171,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   translation pairs. No more "Possible duplicate: foo.fr.md" warnings
   on bilingual mkdocs sites. (`internal/angela/coherence.go`)
 
+### Deprecated
+
+- **`angela.mode` config field** — Had no runtime effect: the mode is selected
+  by the sub-command (`lore angela draft | polish | review`). The field is
+  retained in the struct for backward compatibility so existing `.lorerc`
+  files parse without error, but:
+  - `doctor --config` emits a deprecation warning when the field is present
+  - the field no longer has a default value (was `"draft"`)
+  - it is no longer shown in the "Active values" table
+  - the `init` template and documentation no longer mention it
+
+  The field will be removed entirely in v2.
+  (`internal/config/defaults.go`, `internal/config/validate.go`, `cmd/init.go`)
+
+- **`hooks.post_commit: false` was silently ignored** (HIGH, now also fixed) —
+  The hook runner `_hook-post-commit` in `cmd/hook_run.go` never read the
+  flag. Setting `hooks.post_commit: false` in `.lorerc` did not prevent the
+  question flow from running on subsequent commits. The runner now returns
+  early when the flag is false; the installed `.git/hooks/post-commit`
+  script becomes a no-op instead of a full dispatch.
+  (`cmd/hook_run.go`)
+
 ### Fixed
 
 - **macOS notifications have no icon** (LOW) — `display notification` (osascript)

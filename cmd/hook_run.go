@@ -24,6 +24,14 @@ func newHookPostCommitCmd(cfg *config.Config, streams domain.IOStreams, storePtr
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Respect the user's explicit opt-out. When hooks.post_commit is
+			// false in .lorerc, the hook script may still be installed in
+			// .git/hooks/ from a previous run — we must exit cleanly here
+			// instead of running the question flow.
+			if !cfg.Hooks.PostCommit {
+				return nil
+			}
+
 			workDir, err := os.Getwd()
 			if err != nil {
 				return fmt.Errorf("cmd: hook-post-commit getwd: %w", err)

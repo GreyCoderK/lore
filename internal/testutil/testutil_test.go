@@ -142,8 +142,9 @@ func TestTestConfig(t *testing.T) {
 	if cfg.AI.Provider != "anthropic" {
 		t.Errorf("expected provider 'anthropic', got %q", cfg.AI.Provider)
 	}
-	if cfg.Angela.Mode != "draft" {
-		t.Errorf("expected angela mode 'draft', got %q", cfg.Angela.Mode)
+	// angela.mode is deprecated — testutil.TestConfig no longer sets it.
+	if cfg.Angela.Mode != "" {
+		t.Errorf("expected angela mode '' (deprecated), got %q", cfg.Angela.Mode)
 	}
 }
 

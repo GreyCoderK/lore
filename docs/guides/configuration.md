@@ -27,7 +27,7 @@ ai:
   # timeout: 60s            # Timeout for AI API calls
 
 angela:
-  mode: draft               # Default mode: "draft" (zero-API) or "polish" (1 API call)
+  # mode: draft             # DEPRECATED — no runtime effect. Pick the mode via the sub-command: `lore angela draft|polish|review`
   # max_tokens: 8192         # Optional: override auto-computed max tokens (default: dynamic per mode)
 
 hooks:
@@ -159,7 +159,6 @@ ai:
 hooks:
   post_commit: true
 angela:
-  mode: draft
   max_tokens: 8192
 ```
 

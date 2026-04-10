@@ -87,8 +87,10 @@ func TestValidateConfig_NoConfigFiles(t *testing.T) {
 
 	assert.True(t, report.Valid)
 	assert.True(t, report.OK())
-	// Active values should have defaults
-	assert.Equal(t, "draft", report.Active["angela.mode"])
+	// Active values should have defaults. angela.mode is deprecated and
+	// intentionally not reported (see deprecatedFields in validate.go).
+	_, reported := report.Active["angela.mode"]
+	assert.False(t, reported, "angela.mode should not appear in Active — it is deprecated")
 }
 
 func TestValidateConfig_LocalOverridesShared(t *testing.T) {

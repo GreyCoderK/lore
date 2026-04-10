@@ -115,6 +115,7 @@ func TestHookPostCommitCmd_ExecuteInGitRepo(t *testing.T) {
 
 	streams, _, _ := testStreams()
 	cfg := &config.Config{
+		Hooks: config.HooksConfig{PostCommit: true},
 		Decision: config.DecisionConfig{
 			ThresholdFull:    60,
 			ThresholdReduced: 35,
@@ -154,7 +155,7 @@ func TestHookPostCommitCmd_NilStore(t *testing.T) {
 	defer restore()
 
 	streams, _, _ := testStreams()
-	cfg := &config.Config{}
+	cfg := &config.Config{Hooks: config.HooksConfig{PostCommit: true}}
 	// nil storePtr — should still run without panic
 	cmd := newHookPostCommitCmd(cfg, streams, nil)
 	cmd.SetArgs([]string{})
@@ -183,7 +184,7 @@ func TestHookPostCommitCmd_NoGitRepo(t *testing.T) {
 	defer restore()
 
 	streams, _, _ := testStreams()
-	cfg := &config.Config{}
+	cfg := &config.Config{Hooks: config.HooksConfig{PostCommit: true}}
 	cmd := newHookPostCommitCmd(cfg, streams, nil)
 	cmd.SetArgs([]string{})
 	err := cmd.Execute()
@@ -194,5 +195,28 @@ func TestHookPostCommitCmd_NoGitRepo(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "panic") {
 		t.Errorf("should not panic, got: %v", err)
+	}
+}
+
+// Regression test for the silent-failure bug where hooks.post_commit=false in
+// .lorerc was ignored by the hook runner: the git hook script would still
+// invoke `lore _hook-post-commit` and the question flow would run anyway.
+// The runner must now return cleanly without touching the git adapter or the
+// workflow dispatch. Running this test in a non-git directory proves the
+// early return — dispatch would otherwise error on HeadCommit.
+func TestHookPostCommitCmd_PostCommitDisabled_ExitsEarly(t *testing.T) {
+	dir := t.TempDir() // not a git repo — dispatch would fail if reached
+	testutil.Chdir(t, dir)
+
+	restore := ui.SaveAndDisableColor()
+	defer restore()
+
+	streams, _, _ := testStreams()
+	cfg := &config.Config{Hooks: config.HooksConfig{PostCommit: false}}
+	cmd := newHookPostCommitCmd(cfg, streams, nil)
+	cmd.SetArgs([]string{})
+	err := cmd.Execute()
+	if err != nil {
+		t.Errorf("expected nil error on early return, got: %v", err)
 	}
 }

@@ -30,6 +30,12 @@ type AIConfig struct {
 }
 
 type AngelaConfig struct {
+	// Mode is retained for backward compatibility with existing .lorerc
+	// files but has no runtime effect. The mode is selected by the sub-
+	// command: `lore angela draft`, `polish`, or `review`.
+	//
+	// Deprecated: unused. ValidateConfig emits a deprecation warning when
+	// this field is set in a config file. Will be removed in v2.
 	Mode       string                 `yaml:"mode" mapstructure:"mode"`
 	MaxTokens  int                    `yaml:"max_tokens" mapstructure:"max_tokens"`
 	StyleGuide map[string]interface{} `yaml:"style_guide" mapstructure:"style_guide"`
@@ -66,7 +72,12 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ai.endpoint", "http://localhost:11434")
 	v.SetDefault("ai.timeout", "30s")
 
-	v.SetDefault("angela.mode", "draft")
+	// angela.mode is deprecated (no runtime effect). Viper still needs to
+	// know the key exists so that existing .lorerc files and LORE_ANGELA_MODE
+	// env vars can be parsed without YAML decode errors — but the default
+	// is now empty (was "draft") so tooling can distinguish "user set it"
+	// from "inherited default".
+	v.SetDefault("angela.mode", "")
 	v.SetDefault("angela.max_tokens", 2000)
 
 	v.SetDefault("templates.dir", filepath.Join(domain.LoreDir, domain.TemplatesDir))

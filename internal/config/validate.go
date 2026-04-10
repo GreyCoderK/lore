@@ -40,6 +40,14 @@ func maskSecret(s string) string {
 // This eliminates manual synchronization when adding new config fields.
 var validFields = buildValidFields(reflect.TypeOf(Config{}), "")
 
+// deprecatedFields maps dot-separated config keys to a deprecation message.
+// A present-but-ignored field emits a warning at doctor --config time so the
+// user discovers that the knob they thought they were turning is inert.
+// Keep the message short — it is shown inline in the doctor report.
+var deprecatedFields = map[string]string{
+	"angela.mode": "angela.mode is ignored — choose the mode via the sub-command (lore angela draft / polish / review)",
+}
+
 // buildValidFields recursively extracts yaml tag names from a struct type
 // to build the set of valid dot-separated config keys.
 func buildValidFields(t reflect.Type, prefix string) map[string]bool {
@@ -97,7 +105,8 @@ func ValidateConfig(dir string) *ConfigReport {
 	report.Active["ai.api_key"] = maskSecret(cfg.AI.APIKey)
 	report.Active["ai.endpoint"] = cfg.AI.Endpoint
 	report.Active["ai.timeout"] = cfg.AI.Timeout.String()
-	report.Active["angela.mode"] = cfg.Angela.Mode
+	// angela.mode is intentionally NOT reported: it is deprecated and has
+	// no runtime effect. See deprecatedFields above.
 	report.Active["angela.max_tokens"] = fmt.Sprintf("%d", cfg.Angela.MaxTokens)
 	report.Active["templates.dir"] = cfg.Templates.Dir
 	report.Active["hooks.post_commit"] = fmt.Sprintf("%t", cfg.Hooks.PostCommit)
@@ -142,6 +151,11 @@ func checkConfigFile(dir, name string, report *ConfigReport) {
 	// Flatten nested map to dot-separated keys.
 	flat := flattenMap("", raw)
 	for _, key := range flat {
+		if msg, deprecated := deprecatedFields[key]; deprecated {
+			report.Warnings = append(report.Warnings,
+				fmt.Sprintf("deprecated field %q in %s — %s", key, filepath.Base(path), msg))
+			continue
+		}
 		if !validFields[key] {
 			suggestion := suggestField(key)
 			if suggestion != "" {

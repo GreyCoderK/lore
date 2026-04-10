@@ -26,8 +26,9 @@ func TestLoadFromDir_DefaultsOnly(t *testing.T) {
 	if cfg.AI.Model != "" {
 		t.Errorf("expected model '', got %q", cfg.AI.Model)
 	}
-	if cfg.Angela.Mode != "draft" {
-		t.Errorf("expected angela.mode 'draft', got %q", cfg.Angela.Mode)
+	// angela.mode is deprecated — no default, left empty.
+	if cfg.Angela.Mode != "" {
+		t.Errorf("expected angela.mode '' (deprecated, no default), got %q", cfg.Angela.Mode)
 	}
 	if cfg.Angela.MaxTokens != 2000 {
 		t.Errorf("expected angela.max_tokens 2000, got %d", cfg.Angela.MaxTokens)
@@ -70,8 +71,9 @@ func TestLoadFromDir_LorercOverridesDefaults(t *testing.T) {
 	if cfg.Output.Format != "html" {
 		t.Errorf("expected format 'html' from .lorerc, got %q", cfg.Output.Format)
 	}
-	if cfg.Angela.Mode != "draft" {
-		t.Errorf("expected angela.mode 'draft' (default), got %q", cfg.Angela.Mode)
+	// angela.mode is deprecated — no default.
+	if cfg.Angela.Mode != "" {
+		t.Errorf("expected angela.mode '' (deprecated, no default), got %q", cfg.Angela.Mode)
 	}
 }
 
@@ -156,8 +158,9 @@ func TestLoadFromDir_MissingFilesGraceful(t *testing.T) {
 	if err != nil {
 		t.Fatalf("config: load with no files: %v", err)
 	}
-	if cfg.Angela.Mode != "draft" {
-		t.Errorf("expected defaults, got angela.mode=%q", cfg.Angela.Mode)
+	// angela.mode is deprecated — no default.
+	if cfg.Angela.Mode != "" {
+		t.Errorf("expected defaults (angela.mode empty), got angela.mode=%q", cfg.Angela.Mode)
 	}
 }
 
