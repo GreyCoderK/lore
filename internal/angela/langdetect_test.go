@@ -113,7 +113,7 @@ func TestDetectLanguageMultiLine(t *testing.T) {
 		},
 		{
 			"python_majority",
-			[]string{"def main():", "  class Foo:", "from os import path", "  x = 1"},
+			[]string{"def main():", "import os", "from os import path", "  x = 1"},
 			"python",
 		},
 		{

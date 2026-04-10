@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -16,10 +16,6 @@ jobs:
           go-version: stable
       - name: Run tests before release
         run: go test ./...
-      - name: Install Chocolatey CLI
-        run: |
-          dotnet tool install --global Chocolatey.Cli
-          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
       - uses: goreleaser/goreleaser-action@v6
         with:
           args: release --clean

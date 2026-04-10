@@ -78,8 +78,3 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 		return errUnsupportedOS
 	}
 }
-
-// findLogoPNG returns the embedded Lore logo PNG path via brand package.
-func findLogoPNG() string {
-	return brand.LogoPNGPath()
-}

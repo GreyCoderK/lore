@@ -94,6 +94,20 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 		}
 	}
 
+	// Register state EARLY so the signal handler can save pending even if
+	// the user Ctrl+Cs before any question is asked (during PreflightCheck).
+	commitHash := ""
+	if opts.Commit != nil {
+		commitHash = opts.Commit.Hash
+	}
+	interruptAnswers := Answers{
+		Type: opts.Type,
+		What: opts.What,
+		Why:  opts.Why,
+	}
+	RegisterInterruptState(workDir, commitHash, "", &interruptAnswers)
+	defer RegisterInterruptState("", "", "", nil)
+
 	// Pre-flight: verify pipeline can succeed before asking questions.
 	if err := PreflightCheck(workDir); err != nil {
 		return fmt.Errorf("workflow: proactive: %w", err)
@@ -103,26 +117,12 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 	flow := NewQuestionFlow(streams, renderer)
 
 	qOpts := QuestionOpts{
-		PreFilled: Answers{
-			Type: opts.Type,
-			What: opts.What,
-			Why:  opts.Why,
-		},
+		PreFilled: interruptAnswers,
 		CommitInfo: opts.Commit,
 	}
 
-	// Register state so the signal handler (root.go) can save pending
-	// even if this goroutine is blocked on a read when SIGINT arrives.
-	commitHash := ""
-	if opts.Commit != nil {
-		commitHash = opts.Commit.Hash
-	}
-	interruptAnswers := qOpts.PreFilled // start with pre-filled values
-	RegisterInterruptState(workDir, commitHash, "", &interruptAnswers)
-	defer RegisterInterruptState("", "", "", nil) // clear on normal exit
-
 	answers, flowErr := flow.AskQuestions(ctx, qOpts)
-	interruptAnswers = answers // update shared state with collected answers
+	interruptAnswers = answers
 	if flowErr != nil {
 		FlushOnInterrupt()
 		return fmt.Errorf("workflow: proactive: %w", flowErr)
