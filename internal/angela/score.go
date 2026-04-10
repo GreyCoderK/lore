@@ -30,7 +30,25 @@ var bannedPhrases = []string{
 // ScoreDocument evaluates a markdown document's quality on a 0-100 scale.
 // Works on raw content (with or without front matter).
 // Entirely local — no API calls.
+//
+// Two scoring profiles:
+//   - Strict (decision/feature/bugfix/refactor): the original lore scoring
+//     with heavy weight on ## Why, related refs, front-matter status — the
+//     hallmarks of a commit-capture document.
+//   - Free-form (notes, tutorials, guides, blog posts, concept pages, any
+//     unknown type): the same signals minus the lore-specific ones, with
+//     points redistributed so a well-written tutorial can legitimately
+//     reach an A. Before this split, a perfect tutorial plateaued at F.
 func ScoreDocument(content string, meta domain.DocMeta) QualityScore {
+	if isFreeFormType(meta.Type) {
+		return scoreFreeForm(content, meta)
+	}
+	return scoreStrict(content, meta)
+}
+
+// scoreStrict is the original lore-tuned scoring for decision/feature/bugfix/
+// refactor documents. Max 100, distribution unchanged from the initial design.
+func scoreStrict(content string, meta domain.DocMeta) QualityScore {
 	s := QualityScore{Breakdown: make(map[string]int)}
 	lower := strings.ToLower(content)
 	lines := strings.Split(content, "\n")
@@ -145,12 +163,125 @@ func ScoreDocument(content string, meta domain.DocMeta) QualityScore {
 		s.Missing = append(s.Missing, "remove generic filler phrases")
 	}
 
-	// Sum up
+	finalizeScore(&s)
+	return s
+}
+
+// scoreFreeForm rescales the scoring for narrative / external docs:
+//   - drops Why section (15 pts) and Related refs (5 pts) — not applicable
+//   - drops "status" sub-criterion in front matter (4 pts → type+date only, 6 pts)
+//   - redistributes the freed 24 pts into density, structure, code, diagram
+//     so a well-written tutorial can realistically reach A.
+func scoreFreeForm(content string, meta domain.DocMeta) QualityScore {
+	s := QualityScore{Breakdown: make(map[string]int)}
+	lower := strings.ToLower(content)
+	lines := strings.Split(content, "\n")
+	words := len(strings.Fields(content))
+
+	// 1. Mermaid diagram (10 pts — reduced from 15)
+	if strings.Contains(lower, "```mermaid") {
+		s.Breakdown["diagram"] = 10
+	}
+
+	// 2. Table (10 pts)
+	if strings.Contains(content, "|---") || strings.Contains(content, "| ---") {
+		s.Breakdown["table"] = 10
+	}
+
+	// 3. Code blocks with language tags (15 pts — up from 10)
+	fenced, naked := countCodeFences(lines)
+	if fenced > 0 {
+		s.Breakdown["code"] = 15
+	} else if words > 300 {
+		s.Missing = append(s.Missing, "add code/config examples with language tags")
+	}
+
+	// 4. No naked code fences (5 pts)
+	if naked == 0 {
+		s.Breakdown["code-tags"] = 5
+	} else {
+		s.Missing = append(s.Missing, fmt.Sprintf("%d code fence(s) missing language tag", naked))
+	}
+
+	// 5. Structured sections (20 pts — up from 10)
+	//    Tutorials and guides live or die on heading structure.
+	headingCount := countHeadings(lines)
+	switch {
+	case headingCount >= 5:
+		s.Breakdown["structure"] = 20
+	case headingCount >= 3:
+		s.Breakdown["structure"] = 15
+	case headingCount >= 1:
+		s.Breakdown["structure"] = 8
+	default:
+		s.Missing = append(s.Missing, fmt.Sprintf("add section headings (have %d)", headingCount))
+	}
+
+	// 6. Front matter (6 pts — only type + date, status is lore-specific)
+	fmPoints := 0
+	if meta.Type != "" {
+		fmPoints += 3
+	}
+	if meta.Date != "" {
+		fmPoints += 3
+	}
+	s.Breakdown["frontmatter"] = fmPoints
+
+	// 7. Density — 150-5000 words (20 pts — up from 10, wider range)
+	//    External docs can legitimately be shorter (landing pages) or longer
+	//    (comprehensive guides) than lore's 200-3000 sweet spot.
+	switch {
+	case words >= 150 && words <= 5000:
+		s.Breakdown["density"] = 20
+	case words >= 80 && words < 150:
+		s.Breakdown["density"] = 12 // short but acceptable
+	case words > 5000:
+		s.Breakdown["density"] = 15 // long docs still get most points
+		s.Missing = append(s.Missing, fmt.Sprintf("document very long (%d words) — consider splitting", words))
+	default:
+		s.Missing = append(s.Missing, fmt.Sprintf("document too short (%d words, aim for ≥80)", words))
+	}
+
+	// 8. Good paragraph/line ratio (9 pts — new criterion)
+	//    Well-structured prose has short paragraphs. A single giant blob is
+	//    a smell. This replaces the lore-specific "references" points.
+	if hasReasonableParagraphs(content) {
+		s.Breakdown["paragraphs"] = 9
+	}
+
+	// 9. No TODO/FIXME (5 pts)
+	if !strings.Contains(lower, "todo") && !strings.Contains(lower, "fixme") &&
+		!strings.Contains(lower, "xxx") && !strings.Contains(lower, "hack") {
+		s.Breakdown["clean"] = 5
+	} else {
+		s.Missing = append(s.Missing, "remove TODO/FIXME/HACK markers")
+	}
+
+	// 10. Style — no banned phrases (5 pts)
+	hasBanned := false
+	for _, phrase := range bannedPhrases {
+		if strings.Contains(lower, phrase) {
+			hasBanned = true
+			break
+		}
+	}
+	if !hasBanned {
+		s.Breakdown["style"] = 5
+	} else {
+		s.Missing = append(s.Missing, "remove generic filler phrases")
+	}
+
+	finalizeScore(&s)
+	return s
+}
+
+// finalizeScore sums the breakdown and assigns a letter grade. Shared between
+// scoreStrict and scoreFreeForm so the grade thresholds stay consistent.
+func finalizeScore(s *QualityScore) {
+	s.Total = 0
 	for _, pts := range s.Breakdown {
 		s.Total += pts
 	}
-
-	// Grade
 	switch {
 	case s.Total >= 85:
 		s.Grade = "A"
@@ -163,8 +294,41 @@ func ScoreDocument(content string, meta domain.DocMeta) QualityScore {
 	default:
 		s.Grade = "F"
 	}
+}
 
-	return s
+// hasReasonableParagraphs reports whether the doc has multiple paragraphs
+// separated by blank lines (vs. one giant blob). Used by free-form scoring.
+func hasReasonableParagraphs(content string) bool {
+	// Split on blank lines to count paragraph-like blocks outside code fences.
+	inFence := false
+	blocks := 0
+	current := 0
+	for _, line := range strings.Split(content, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "```") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+		if trimmed == "" {
+			if current > 0 {
+				blocks++
+				current = 0
+			}
+			continue
+		}
+		// Ignore heading lines as "prose paragraphs"
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		current++
+	}
+	if current > 0 {
+		blocks++
+	}
+	return blocks >= 2
 }
 
 // FormatScore returns a compact one-line summary: "72/100 (B)"

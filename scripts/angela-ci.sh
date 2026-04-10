@@ -192,8 +192,15 @@ fi
 log "$OUTPUT"
 
 # --- Count issues by severity ---
-ERRORS=$(echo "$OUTPUT" | grep -c "^  error\|^  contradiction" || true)
-WARNINGS=$(echo "$OUTPUT" | grep -c "^  warning\|^  gap\|^  obsolete\|^  style" || true)
+# Match severity lines from any `angela` command. Draft and review use
+# different indentation depending on context:
+#   draft (single file)  "  error    structure    ..."       (2 spaces)
+#   draft --all (inline) "         warning  structure ..."   (9 spaces)
+#   review               "  contradiction  ..."              (2 spaces)
+# A leading-whitespace class ^[[:space:]]+ matches all cases without
+# depending on a specific indent.
+ERRORS=$(echo "$OUTPUT" | grep -cE "^[[:space:]]+(error|contradiction)[[:space:]]" || true)
+WARNINGS=$(echo "$OUTPUT" | grep -cE "^[[:space:]]+(warning|gap|obsolete|style)[[:space:]]" || true)
 
 log ""
 log "angela-ci: $ERRORS errors, $WARNINGS warnings"

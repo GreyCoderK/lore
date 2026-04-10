@@ -57,11 +57,37 @@ flowchart LR
 ### Draft Mode (Recommended for CI)
 
 Runs entirely offline. Checks:
-- Missing sections (Why, What, Alternatives)
+- Missing sections (Why, What, Alternatives) — **only on strict lore types**
 - Style guide compliance
 - Cross-document coherence (shared tags, scope clusters)
-- VHS tape ↔ documentation consistency
-- Persona-based quality scoring
+- VHS tape ↔ documentation consistency (info only, never blocks)
+- Persona-based quality scoring (strict types only)
+
+### Using Angela on a non-lore documentation site
+
+Angela is **safe to run on any Markdown docs site** — mkdocs, docusaurus,
+astro, diátaxis, hand-rolled — even if you've never used `lore init`. The
+analysis branches on the `type` field in front matter:
+
+- **Strict types** (`decision`, `feature`, `bugfix`, `refactor`) — get
+  the full lore treatment: What/Why/Alternatives/Impact requirements,
+  persona checks, heavy-weight scoring.
+- **Everything else** — free-form profile. No section requirements, no
+  persona checks, rebalanced scoring that rewards structure, density,
+  and code examples instead of lore conventions.
+
+This means your blog posts, tutorials, guides, concept pages, landing
+pages, and any custom type won't produce false-positive warnings. A
+well-written tutorial can reach 95/100 (A) on the free-form profile.
+
+**Translation pairs** (e.g. `installation.md` and `installation.fr.md`)
+are detected automatically — they won't be flagged as duplicates.
+Supported codes: `fr`, `en`, `es`, `de`, `it`, `pt`, `zh`, `ja`, `ko`,
+`ru`, `ar`, `nl`, `pl`.
+
+**Partial front matter is preserved**: a doc with only `type: decision`
+and `date:` (no `status`) keeps its declared type — it will not be
+silently downgraded to `note` like it used to.
 
 ### Review Mode (Optional, for Releases)
 

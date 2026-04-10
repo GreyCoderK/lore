@@ -30,13 +30,16 @@ func AnalyzeDraft(doc string, meta domain.DocMeta, guide *StyleGuide, corpus []d
 	sections := extractAllSections(body)
 
 	// Structural checks
-	suggestions = append(suggestions, checkStructure(body, guide)...)
+	suggestions = append(suggestions, checkStructure(body, meta, guide)...)
 
 	// Completeness checks
 	suggestions = append(suggestions, checkCompletenessWithSections(body, meta, guide, corpus, sections)...)
 
-	// Persona-specific draft checks (AC-3)
-	if len(personas) > 0 {
+	// Persona-specific draft checks (AC-3). Only run on strict lore types —
+	// the personas are hand-tuned for decision/feature/bugfix/refactor and
+	// produce irrelevant advice on external free-form content (blog posts,
+	// how-to guides, concept pages, etc.).
+	if len(personas) > 0 && !isFreeFormType(meta.Type) {
 		suggestions = append(suggestions, runPersonaDraftChecksWithSections(body, personas, sections)...)
 	}
 
@@ -56,7 +59,12 @@ func stripFrontMatter(doc string) string {
 }
 
 // checkStructure validates document sections exist and are non-empty.
-func checkStructure(body string, guide *StyleGuide) []Suggestion {
+// Free-form document types (note, guide, tutorial, reference, index) skip the
+// What/Why/Alternatives/Impact requirements entirely — these checks only make
+// sense for decision/feature/bugfix/refactor where the "why behind the code"
+// framing applies. Without this gate, standalone mode on a mkdocs site
+// produces hundreds of false-positive warnings.
+func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Suggestion {
 	var suggestions []Suggestion
 
 	requireWhy := true
@@ -66,12 +74,18 @@ func checkStructure(body string, guide *StyleGuide) []Suggestion {
 		requireAlternatives = guide.RequireAlternatives
 	}
 
+	// Free-form document types don't follow the lore section conventions.
+	if isFreeFormType(meta.Type) {
+		requireWhy = false
+		requireAlternatives = false
+	}
+
 	hasWhy := hasSection(body, "## Why")
 	hasWhat := hasSection(body, "## What")
 	hasAlternatives := hasSection(body, "## Alternatives")
 	hasImpact := hasSection(body, "## Impact")
 
-	if !hasWhat {
+	if !isFreeFormType(meta.Type) && !hasWhat {
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "warning",
@@ -93,7 +107,7 @@ func checkStructure(body string, guide *StyleGuide) []Suggestion {
 			Severity: "warning",
 			Message:  `Section "## Alternatives" is missing`,
 		})
-	} else if !requireAlternatives && !hasAlternatives {
+	} else if !requireAlternatives && !hasAlternatives && !isFreeFormType(meta.Type) {
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "info",
@@ -101,7 +115,7 @@ func checkStructure(body string, guide *StyleGuide) []Suggestion {
 		})
 	}
 
-	if !hasImpact {
+	if !hasImpact && !isFreeFormType(meta.Type) {
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "info",
@@ -109,12 +123,19 @@ func checkStructure(body string, guide *StyleGuide) []Suggestion {
 		})
 	}
 
-	// Body length check
+	// Body length check. For free-form types (notes, guides, index pages,
+	// tutorials) a short body is often legitimate (landing page, stub,
+	// section divider), so we downgrade to info to avoid breaking external
+	// CI pipelines that run --fail-on warning on a mkdocs site.
 	bodyRunes := utf8.RuneCountInString(body)
 	if bodyRunes < 50 {
+		severity := "warning"
+		if isFreeFormType(meta.Type) {
+			severity = "info"
+		}
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
-			Severity: "warning",
+			Severity: severity,
 			Message:  "Document body is too short (< 50 characters)",
 		})
 	}
@@ -132,8 +153,12 @@ func checkStructure(body string, guide *StyleGuide) []Suggestion {
 }
 
 // checkCompletenessWithSections validates metadata and content depth using pre-parsed sections.
+// Completeness checks tied to lore conventions (scope, related refs, ## Why
+// substance) are skipped for free-form types — these concepts don't apply to
+// external mkdocs/docusaurus sites.
 func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGuide, corpus []domain.DocMeta, sections map[string]string) []Suggestion {
 	var suggestions []Suggestion
+	freeForm := isFreeFormType(meta.Type)
 
 	minTags := 0
 	if guide != nil {
@@ -141,7 +166,8 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 	}
 
 	// Scope check — if document has a commit but no scope, suggest adding one.
-	if meta.Commit != "" && meta.Scope == "" {
+	// Only relevant for lore commit-capture docs.
+	if !freeForm && meta.Commit != "" && meta.Scope == "" {
 		suggestions = append(suggestions, Suggestion{
 			Category: "completeness",
 			Severity: "info",
@@ -149,7 +175,7 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		})
 	}
 
-	// Tags check
+	// Tags check — keep for all types, tags are a universal concept.
 	if len(meta.Tags) < minTags || len(meta.Tags) == 0 {
 		suggestions = append(suggestions, Suggestion{
 			Category: "completeness",
@@ -158,8 +184,10 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		})
 	}
 
-	// Related references (only if corpus is large enough)
-	if len(corpus) > 5 && len(meta.Related) == 0 {
+	// Related references (only if corpus is large enough). This is a lore
+	// convention — external doc sites don't use the `related:` field, so
+	// skip it for free-form types.
+	if !freeForm && len(corpus) > 5 && len(meta.Related) == 0 {
 		suggestions = append(suggestions, Suggestion{
 			Category: "completeness",
 			Severity: "info",
@@ -167,7 +195,8 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		})
 	}
 
-	// Why section substance
+	// Why section substance — only check if the doc actually has a ## Why.
+	// Free-form types may legitimately have no Why section.
 	whyContent := sections["## Why"]
 	if whyContent != "" && utf8.RuneCountInString(strings.TrimSpace(whyContent)) < 20 {
 		suggestions = append(suggestions, Suggestion{
@@ -178,6 +207,36 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 	}
 
 	return suggestions
+}
+
+// isFreeFormType reports whether a document type is free-form narrative rather
+// than one that follows the strict lore section conventions
+// (What/Why/Alternatives/Impact).
+//
+// The predicate is inverted by design: we list the narrow set of *strict*
+// types (the ones tied to the lore commit-capture workflow) and return true
+// for everything else. This makes Angela safe to run on external mkdocs /
+// docusaurus / astro sites where the front-matter `type` field may be
+// anything (blog-post, howto, concept, explanation, release, landing…) —
+// unknown types default to free-form instead of producing hundreds of
+// false-positive warnings about missing "## What" sections.
+//
+// Strict types (whitelist): decision, feature, bugfix, refactor.
+// Empty type (no front matter or missing field) is also strict only when
+// the user has explicitly opted in to lore conventions via a real hook —
+// standalone mode goes through BuildPlainMeta which assigns type="note",
+// which is free-form via the default branch below.
+func isFreeFormType(t string) bool {
+	switch strings.ToLower(strings.TrimSpace(t)) {
+	case "decision", "feature", "bugfix", "refactor":
+		return false
+	case "":
+		// Empty type with front matter means a lore doc where the author
+		// simply omitted the field — treat as strict so they still get
+		// the structure guidance.
+		return false
+	}
+	return true
 }
 
 // hasSection checks if a markdown section header exists in the body.

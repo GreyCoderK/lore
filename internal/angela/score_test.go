@@ -142,7 +142,10 @@ func TestScoreDocument_TwoHeadingsNotEnough(t *testing.T) {
 }
 
 func TestScoreDocument_CompleteFrontmatter(t *testing.T) {
-	meta := domain.DocMeta{Type: "adr", Date: "2026-01-01", Status: "accepted"}
+	// Strict type is required to exercise the full 10-point frontmatter
+	// scoring (including the lore-specific `status` field, 4 pts).
+	// Free-form types skip `status` by design (see scoreFreeForm).
+	meta := domain.DocMeta{Type: "decision", Date: "2026-01-01", Status: "accepted"}
 	s := ScoreDocument("some content", meta)
 	if s.Breakdown["frontmatter"] != 10 {
 		t.Errorf("expected 10 pts for complete frontmatter, got %d", s.Breakdown["frontmatter"])
@@ -150,7 +153,7 @@ func TestScoreDocument_CompleteFrontmatter(t *testing.T) {
 }
 
 func TestScoreDocument_PartialFrontmatter(t *testing.T) {
-	meta := domain.DocMeta{Type: "adr"}
+	meta := domain.DocMeta{Type: "decision"}
 	s := ScoreDocument("some content", meta)
 	if s.Breakdown["frontmatter"] != 3 {
 		t.Errorf("expected 3 pts for type-only frontmatter, got %d", s.Breakdown["frontmatter"])

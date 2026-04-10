@@ -138,6 +138,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   see what the suggestions actually were without re-running `draft` per-file.
   (`cmd/angela.go`, `internal/i18n/catalog_{en,fr}.go`)
 
+- **Dual scoring profile: strict vs free-form** — `ScoreDocument` now picks
+  a scoring profile based on document type. Strict types (`decision`,
+  `feature`, `bugfix`, `refactor`) keep the original lore scoring with
+  heavy weight on `## Why`, related refs, and `status`. Free-form types
+  (notes, guides, tutorials, blog posts, concept pages, any unknown type)
+  use a rebalanced profile that drops lore-specific criteria (Why, related,
+  status) and redistributes points into structure, code, density, and
+  paragraph quality. A well-written tutorial now reaches 95/100 (A);
+  before it plateaued at F. (`internal/angela/score.go`)
+
+- **Free-form type detection by exclusion** — `isFreeFormType` now
+  whitelists the 4 strict lore types and treats everything else as
+  free-form. This means arbitrary types from external sites
+  (`blog-post`, `howto`, `explanation`, `concept`, `landing`, `faq`, …)
+  are recognized automatically without a code change. Structure/
+  completeness/persona/scoring behavior all branch on this predicate.
+  (`internal/angela/draft.go`)
+
+- **Permissive front matter parsing in standalone mode** — New
+  `storage.UnmarshalPermissive` skips `ValidateMeta`, so external docs
+  with partial front matter (e.g. just `type` and `date`, or arbitrary
+  custom types) are preserved instead of silently downgraded to synthetic
+  metadata. `PlainCorpusStore` now fills gaps (status="published", tags
+  inferred from filename) only when a field is missing, not when the
+  whole parse fails. (`internal/storage/frontmatter.go`,
+  `internal/storage/plain_reader.go`, `cmd/angela.go`)
+
+- **Translation pair detection** — `isTranslationPair` recognizes 13
+  language codes (fr, en, es, de, it, pt, zh, ja, ko, ru, ar, nl, pl)
+  and skips duplicate/cross-reference/body-mention checks between
+  translation pairs. No more "Possible duplicate: foo.fr.md" warnings
+  on bilingual mkdocs sites. (`internal/angela/coherence.go`)
+
 ### Fixed
 
 - **macOS notifications have no icon** (LOW) — `display notification` (osascript)
@@ -173,6 +206,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Amend pre-fill missing QuestionMode** (MEDIUM) — Amend workflow now sets
   `QuestionMode: "reduced"` and `PrefilledWhyConfidence: 0.9` when pre-filling
   from existing document. (`internal/workflow/reactive.go`)
+
+- **`angela-ci.sh --fail-on warning` never detected warnings** (HIGH) — The
+  grep pattern `^  warning` (2 spaces) matched neither the single-file draft
+  output (also 2 spaces but different column) nor the `draft --all` inline
+  format (9 spaces indent). External CI pipelines using `--fail-on warning`
+  silently passed on every run regardless of the corpus state. Now uses
+  `^[[:space:]]+(warning|gap|obsolete|style)[[:space:]]` to match any
+  indentation, with a dedicated test suite (`scripts/angela-ci_test.sh`)
+  to prevent regression. (`scripts/angela-ci.sh`)
+
+- **`action.yml` severity counting broken and missing review mode** (HIGH) —
+  The GitHub Action composite had two bugs: (a) same broken grep pattern as
+  `angela-ci.sh`, and (b) `mode: review` completely ignored `fail_on` — the
+  output was captured with `|| true` and no exit logic was applied. Fixed
+  both: unified severity counting for draft and review modes, explicit
+  `fail_on: none` handling, and invalid `fail_on` values now exit 2 with
+  an `::error::` annotation. (`action.yml`)
+
+- **False "## What / ## Why missing" warnings on free-form docs** (HIGH) —
+  The structure check emitted warnings for any document type, including
+  notes, tutorials, guides, blog posts, and external docs with arbitrary
+  types. A typical mkdocs site of 68 docs produced ~136 false warnings,
+  making CI gates unusable. Fixed by branching on `isFreeFormType(meta.Type)`
+  in `checkStructure` — What/Why/Alternatives/Impact requirements now only
+  apply to the 4 strict lore types. (`internal/angela/draft.go`)
+
+- **False "Possible duplicate" warnings on FR/EN translation pairs** (MEDIUM) —
+  Bilingual mkdocs sites where `foo.md` and `foo.fr.md` shared inferred tags
+  were flagged as duplicates. Added `isTranslationPair` detection that
+  recognizes 13 language codes (including `fr/en/es/de/it/pt/zh/ja/ko/ru/
+  ar/nl/pl`) and skips dupe/cross-ref/body-mention checks between pairs.
+  (`internal/angela/coherence.go`)
+
+- **Body-too-short was warning on narrative docs** (MEDIUM) — Landing pages,
+  section index stubs, and short tutorial intros are legitimately under 50
+  characters. The "body too short" check now emits `info` (not `warning`)
+  for free-form types, so `--fail-on warning` doesn't fail external CI
+  pipelines on legitimately short pages. Stays `warning` for strict lore
+  types where a short body signals a missing explanation.
+  (`internal/angela/draft.go`)
+
+- **VHS orphan-check severity too strict** (MEDIUM) — The VHS tape/doc
+  cross-check emitted `warning` for orphan tapes, orphan GIFs, and CLI
+  command mismatches. External users with an unrelated `assets/vhs/`
+  directory saw their CI fail. Downgraded to `info` — findings are still
+  visible in `-v` mode but never block `--fail-on warning`. (`cmd/angela.go`)
+
+- **Quality score plateaued at F for free-form docs** (MEDIUM) — The original
+  `ScoreDocument` allocated 15 pts to `## Why`, 5 pts to `related:`, and
+  4 pts to `status:` — all lore-specific. A perfect tutorial could never
+  exceed ~65/100. New `scoreFreeForm` profile redistributes these 24 pts
+  into density (20), structure (20), code (15), and paragraph quality (9).
+  A well-written tutorial now reaches 95/100 (A) legitimately.
+  (`internal/angela/score.go`)
+
+- **`PlainCorpusStore` silently downgraded partial front matter** (MEDIUM) —
+  `Unmarshal` called `ValidateMeta` which required `type + date + status`.
+  An external doc with `type: decision` + `date` but no `status` was
+  rejected and fell back to `buildSyntheticMeta` → `type: "note"` → lost
+  all strict checks the author wanted. New `UnmarshalPermissive` is used
+  by standalone mode; missing fields are backfilled with defaults instead
+  of rejecting the whole parse.
+  (`internal/storage/frontmatter.go`, `internal/storage/plain_reader.go`)
+
+- **Non-deterministic language detection on tied votes** (MEDIUM) —
+  `DetectLanguageMultiLine` used a map iteration to pick the winner on
+  tied vote counts, causing the same input to return different languages
+  on Linux/darwin vs. Windows runners. Now ties break by first-vote line
+  index (earliest wins), making the output fully deterministic.
+  (`internal/angela/langdetect.go`)
 
 - **`angela.max_tokens` config ignored** (HIGH) — User-configured `angela.max_tokens: 10000`
   in `.lorerc` was overridden by computed value (2756). Now config always wins via

@@ -70,6 +70,27 @@ Ce mode rend Angela utilisable comme **gate de qualité en CI** sur n'importe qu
 | **Cohérence** | Contradictions ou connexions avec d'autres docs | "Lié : feature-add-auth-2026-02-15.md" |
 | **Complétude** | Sections vides ou trop courtes | "La section Why ne fait que 5 mots — enrichissez" |
 
+### Types de documents : strict vs libre
+
+Angela utilise deux profils d'analyse différents selon le champ `type` du
+front matter :
+
+| Profil | Types | Vérifications de structure | Notation |
+|--------|-------|----------------------------|----------|
+| **Strict** | `decision`, `feature`, `bugfix`, `refactor` | Exige `## What` / `## Why` / `## Alternatives` / `## Impact` | Poids fort sur `## Why`, références liées, champ `status` |
+| **Libre** | Tout le reste (`note`, `guide`, `tutorial`, `reference`, `index`, `release`, `blog-post`, `howto`, `concept`, `explanation`, `landing`, `faq`, type personnalisé) | Aucune exigence de sections | Rééquilibré : structure, densité, code, paragraphes |
+
+Le profil libre rend Angela utilisable sans risque sur n'importe quel site
+mkdocs / docusaurus / astro / diátaxis sans générer de faux warnings sur
+les sections lore manquantes. Un tutoriel bien écrit peut légitimement
+atteindre 95/100 (A) sur le profil libre ; avant cette séparation, il
+plafonnait à F.
+
+**Les paires de traductions** (par ex. `installation.md` et
+`installation.fr.md`) sont détectées automatiquement et ne sont jamais
+signalées comme doublons. Codes de langue supportés : `fr`, `en`, `es`,
+`de`, `it`, `pt`, `zh`, `ja`, `ko`, `ru`, `ar`, `nl`, `pl`.
+
 ## Comprendre les sévérités
 
 | Sévérité | Signification | Action |

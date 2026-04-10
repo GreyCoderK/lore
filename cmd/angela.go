@@ -106,11 +106,19 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 			}
 			content := string(raw)
 
-			// Parse front matter (graceful degradation in standalone mode)
-			meta, _, err := storage.Unmarshal(raw)
-			if err != nil {
+			// Parse front matter. In standalone mode use the permissive
+			// parser so partial/external front matter (e.g. just `type`
+			// without `status`) is preserved instead of silently discarded.
+			var meta domain.DocMeta
+			var parseErr error
+			if standalone {
+				meta, _, parseErr = storage.UnmarshalPermissive(raw)
+			} else {
+				meta, _, parseErr = storage.Unmarshal(raw)
+			}
+			if parseErr != nil {
 				if !standalone {
-					return fmt.Errorf("angela: draft: parse: %w", err)
+					return fmt.Errorf("angela: draft: parse: %w", parseErr)
 				}
 				// Standalone: synthetic metadata from filename
 				meta = storage.BuildPlainMeta(filename)
@@ -291,6 +299,13 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string,
 
 // runVHSCheck looks for VHS tape files near the docs directory and reports mismatches.
 // Searches common locations: assets/vhs/, ../assets/vhs/ (relative to docsDir).
+//
+// Severity = info, not warning: VHS tape/doc mismatches are a convention
+// lore uses internally, but external users running Angela as a CI linter
+// on their docs site shouldn't have their pipelines fail because of an
+// unrelated GIF reference. Warning-level would also conflict with the
+// scripts/angela-ci.sh severity counter (which treats "warning" as a
+// blocker for --fail-on warning).
 func runVHSCheck(docsDir string, streams domain.IOStreams) int {
 	// Try common tape directory locations relative to the docs dir
 	candidates := []string{
@@ -316,19 +331,19 @@ func runVHSCheck(docsDir string, streams domain.IOStreams) int {
 
 	for _, tape := range signals.OrphanTapes {
 		_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s → output GIF not referenced in any doc\n",
-			"warning", "vhs", tape)
+			"info", "vhs", tape)
 		findings++
 	}
 
 	for _, ref := range signals.OrphanGIFs {
 		_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s references %s → no .tape source found\n",
-			"warning", "vhs", ref.DocFilename, ref.GIFPath)
+			"info", "vhs", ref.DocFilename, ref.GIFPath)
 		findings++
 	}
 
 	for _, mm := range signals.CommandMismatches {
 		_, _ = fmt.Fprintf(streams.Err, "  %-8s %-14s %s: %q → %s\n",
-			"warning", "vhs", mm.TapeFile, mm.Command, mm.Reason)
+			"info", "vhs", mm.TapeFile, mm.Command, mm.Reason)
 		findings++
 	}
 

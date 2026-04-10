@@ -34,8 +34,28 @@ func Marshal(meta domain.DocMeta, body string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// UnmarshalPermissive parses front matter + body from a document WITHOUT
+// running ValidateMeta. Used by PlainCorpusStore (standalone mode) so
+// external docs sites can have partial front matter (e.g. just `type` and
+// `date`, or arbitrary types like "blog-post") without being rejected and
+// silently downgraded to a synthetic "note" meta.
+//
+// Strict validation (ValidateMeta) is only appropriate for lore-managed
+// corpora where the commit-capture workflow is guaranteed to fill every
+// required field.
+func UnmarshalPermissive(data []byte) (domain.DocMeta, string, error) {
+	return unmarshalInternal(data, false)
+}
+
 // Unmarshal parses front matter + body from a document.
 func Unmarshal(data []byte) (domain.DocMeta, string, error) {
+	return unmarshalInternal(data, true)
+}
+
+// unmarshalInternal is the shared implementation. When validate is true,
+// ValidateMeta enforces the full lore contract (type+date+status required);
+// when false, any parseable YAML is accepted.
+func unmarshalInternal(data []byte, validate bool) (domain.DocMeta, string, error) {
 	const maxDocSize = 10 << 20 // 10 MB
 	if len(data) > maxDocSize {
 		return domain.DocMeta{}, "", fmt.Errorf("storage: document too large (%d bytes, max %d)", len(data), maxDocSize)
@@ -84,8 +104,10 @@ func Unmarshal(data []byte) (domain.DocMeta, string, error) {
 		return domain.DocMeta{}, "", fmt.Errorf("storage: unmarshal front matter: %w", err)
 	}
 
-	if err := ValidateMeta(meta); err != nil {
-		return domain.DocMeta{}, "", fmt.Errorf("storage: unmarshal: %w", err)
+	if validate {
+		if err := ValidateMeta(meta); err != nil {
+			return domain.DocMeta{}, "", fmt.Errorf("storage: unmarshal: %w", err)
+		}
 	}
 
 	return meta, body, nil

@@ -5,7 +5,7 @@ language: "fr"
 ai:
   provider: ""       # anthropic, openai, ollama
   model: ""          # model name (e.g., claude-sonnet-4-20250514, llama3.2)
-  timeout: 240s
+  timeout: 60s
 angela:
   mode: draft        # draft, review, full
   max_tokens: 10000
@@ -14,7 +14,7 @@ templates:
   dir: .lore/templates
 
 hooks:
-  post_commit: true
+  post_commit: false
   star_prompt: true
   star_prompt_after: 5
   amend_prompt: true     # Ask "Document this change?" on git commit --amend

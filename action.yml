@@ -84,28 +84,41 @@ runs:
             echo "::error::mode=review requires api_key input (unless provider=ollama)"
             exit 1
           fi
-          lore angela review --path "$DOCS_PATH" 2>&1 || true
-          echo "::endgroup::"
+          OUTPUT=$(lore angela review --path "$DOCS_PATH" 2>&1) || true
+          echo "$OUTPUT"
         else
           OUTPUT=$(lore angela draft --all --path "$DOCS_PATH" 2>&1) || true
           echo "$OUTPUT"
-
-          ERRORS=$(echo "$OUTPUT" | grep -c "^  error" || true)
-          WARNINGS=$(echo "$OUTPUT" | grep -c "^  warning" || true)
-
-          echo "::endgroup::"
-          echo "## Angela Report" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Errors: $ERRORS" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Warnings: $WARNINGS" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Mode: $MODE" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Path: $DOCS_PATH" >> "$GITHUB_STEP_SUMMARY"
-
-          case "$FAIL_ON" in
-            error)
-              [[ "$ERRORS" -gt 0 ]] && exit 1
-              ;;
-            warning)
-              [[ "$ERRORS" -gt 0 || "$WARNINGS" -gt 0 ]] && exit 1
-              ;;
-          esac
         fi
+        echo "::endgroup::"
+
+        # Count severity lines. The pattern must match both 2-space indent
+        # (single-file draft, review) and the wider indent used by
+        # `draft --all` inline suggestions. See scripts/angela-ci_test.sh
+        # for the regression tests that guard this pattern.
+        ERRORS=$(echo "$OUTPUT" | grep -cE "^[[:space:]]+(error|contradiction)[[:space:]]" || true)
+        WARNINGS=$(echo "$OUTPUT" | grep -cE "^[[:space:]]+(warning|gap|obsolete|style)[[:space:]]" || true)
+
+        {
+          echo "## Angela Report"
+          echo "- Errors: $ERRORS"
+          echo "- Warnings: $WARNINGS"
+          echo "- Mode: $MODE"
+          echo "- Path: $DOCS_PATH"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        case "$FAIL_ON" in
+          error)
+            [[ "$ERRORS" -gt 0 ]] && exit 1 || exit 0
+            ;;
+          warning)
+            [[ "$ERRORS" -gt 0 || "$WARNINGS" -gt 0 ]] && exit 1 || exit 0
+            ;;
+          none)
+            exit 0
+            ;;
+          *)
+            echo "::error::invalid fail_on value: $FAIL_ON (must be error, warning, or none)"
+            exit 2
+            ;;
+        esac

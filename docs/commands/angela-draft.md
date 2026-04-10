@@ -71,6 +71,26 @@ This makes Angela usable as a **CI quality gate** on any Markdown documentation.
 | **Coherence** | Contradictions or connections with other docs | "Related: feature-add-auth-2026-02-15.md" |
 | **Completeness** | Empty or too-short sections | "Why section is only 5 words — consider expanding" |
 
+### Document types: strict vs. free-form
+
+Angela runs two different analysis profiles depending on the `type` field
+in front matter:
+
+| Profile | Types | Structure check | Scoring |
+|---------|-------|-----------------|---------|
+| **Strict** | `decision`, `feature`, `bugfix`, `refactor` | Requires `## What` / `## Why` / `## Alternatives` / `## Impact` | Heavy weight on `## Why`, related refs, `status` field |
+| **Free-form** | Everything else (`note`, `guide`, `tutorial`, `reference`, `index`, `release`, `blog-post`, `howto`, `concept`, `explanation`, `landing`, `faq`, any custom type) | No section requirements | Rebalanced: structure, density, code, paragraphs |
+
+The free-form profile makes Angela safe to run on any mkdocs / docusaurus /
+astro / diátaxis site without producing false-positive warnings about
+missing lore sections. A well-written tutorial can legitimately reach
+95/100 (A) on the free-form profile; before this split, it plateaued at F.
+
+**Translation pairs** (e.g. `installation.md` and `installation.fr.md`)
+are detected automatically and never flagged as duplicates. Supported
+language codes: `fr`, `en`, `es`, `de`, `it`, `pt`, `zh`, `ja`, `ko`,
+`ru`, `ar`, `nl`, `pl`.
+
 ## Output (Single Document)
 
 ```bash

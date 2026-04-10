@@ -229,3 +229,131 @@ func TestStripFrontMatter_ValidFrontMatter(t *testing.T) {
 		t.Errorf("stripFrontMatter = %q, want %q", result, expected)
 	}
 }
+
+// --- Free-form type handling (mkdocs / standalone mode) ---
+
+func TestIsFreeFormType(t *testing.T) {
+	// Free-form is the default for any type not in the strict whitelist.
+	// This covers both the original lore free-form types AND arbitrary
+	// custom types used by external mkdocs / docusaurus / diátaxis sites.
+	freeForm := []string{
+		"note", "guide", "tutorial", "reference", "index", "release",
+		"NOTE", "Guide", // case-insensitive
+		"blog-post", "howto", "explanation", "concept", // diátaxis
+		"landing", "faq", "changelog", "about", // common mkdocs types
+		"unknown-custom-type",
+	}
+	// Strict types are only the narrow set of lore commit-capture types,
+	// plus empty string (author using lore but omitting the field).
+	strict := []string{"decision", "feature", "bugfix", "refactor", ""}
+
+	for _, tt := range freeForm {
+		if !isFreeFormType(tt) {
+			t.Errorf("isFreeFormType(%q) = false, want true", tt)
+		}
+	}
+	for _, tt := range strict {
+		if isFreeFormType(tt) {
+			t.Errorf("isFreeFormType(%q) = true, want false", tt)
+		}
+	}
+}
+
+// Free-form documents (notes, guides, tutorials, index pages) should NOT
+// trigger "Section ## What/Why missing" warnings — they are narrative
+// content that doesn't follow the decision/feature conventions.
+func TestAnalyzeDraft_FreeFormType_NoStructureWarnings(t *testing.T) {
+	// Long enough body to avoid the "too short" warning.
+	body := strings.Repeat("This is a narrative guide document explaining how to do things. ", 10)
+	doc := "---\ntype: guide\n---\n" + body
+	meta := domain.DocMeta{Type: "guide"}
+
+	suggestions := AnalyzeDraft(doc, meta, nil, nil, nil)
+	for _, s := range suggestions {
+		msg := s.Message
+		if strings.Contains(msg, `"## What" is missing`) ||
+			strings.Contains(msg, `"## Why" is missing`) ||
+			strings.Contains(msg, `"## Alternatives" is missing`) ||
+			strings.Contains(msg, `"## Impact" is missing`) {
+			t.Errorf("unexpected structure warning on free-form type: [%s] %s", s.Severity, msg)
+		}
+	}
+}
+
+// A "note" doc (the default type in standalone mode via BuildPlainMeta)
+// should not be flagged for missing sections.
+func TestAnalyzeDraft_NoteType_FromStandaloneMode(t *testing.T) {
+	body := strings.Repeat("Some notes about the project architecture and decisions. ", 5)
+	doc := body // no front matter — exactly what standalone mode feeds
+	meta := domain.DocMeta{Type: "note"} // BuildPlainMeta default
+
+	suggestions := AnalyzeDraft(doc, meta, nil, nil, nil)
+	for _, s := range suggestions {
+		if s.Category == "structure" && strings.Contains(s.Message, "missing") {
+			t.Errorf("unexpected structure 'missing' warning on note type: [%s] %s", s.Severity, s.Message)
+		}
+	}
+}
+
+// Body-too-short on a free-form type should be info (not warning) so that
+// external CI pipelines running with `--fail-on warning` on a mkdocs site
+// don't fail on legitimately short landing/index pages.
+func TestAnalyzeDraft_FreeFormType_ShortBodyIsInfo(t *testing.T) {
+	doc := "---\ntype: index\n---\nShort." // body way under 50 chars
+	meta := domain.DocMeta{Type: "index"}
+
+	suggestions := AnalyzeDraft(doc, meta, nil, nil, nil)
+	found := false
+	for _, s := range suggestions {
+		if strings.Contains(s.Message, "body is too short") {
+			found = true
+			if s.Severity != "info" {
+				t.Errorf("expected severity=info for short body on free-form type, got %q", s.Severity)
+			}
+		}
+	}
+	if !found {
+		t.Error("expected short-body suggestion on free-form type (as info)")
+	}
+}
+
+// Body-too-short on a strict type (decision) must remain a warning — this is
+// the case where a short body genuinely signals a missing "why" explanation.
+func TestAnalyzeDraft_StrictType_ShortBodyIsWarning(t *testing.T) {
+	doc := "---\ntype: decision\n---\nShort."
+	meta := domain.DocMeta{Type: "decision"}
+
+	suggestions := AnalyzeDraft(doc, meta, nil, nil, nil)
+	found := false
+	for _, s := range suggestions {
+		if strings.Contains(s.Message, "body is too short") {
+			found = true
+			if s.Severity != "warning" {
+				t.Errorf("expected severity=warning for short body on strict type, got %q", s.Severity)
+			}
+		}
+	}
+	if !found {
+		t.Error("expected short-body suggestion on strict type (as warning)")
+	}
+}
+
+// Decision documents must STILL get the full structure checks.
+func TestAnalyzeDraft_DecisionType_StillChecksStructure(t *testing.T) {
+	doc := "---\ntype: decision\n---\nShort body content here with enough characters to pass length check."
+	meta := domain.DocMeta{Type: "decision"}
+
+	suggestions := AnalyzeDraft(doc, meta, nil, nil, nil)
+	var hasWhat, hasWhy bool
+	for _, s := range suggestions {
+		if s.Message == `Section "## What" is missing` {
+			hasWhat = true
+		}
+		if s.Message == `Section "## Why" is missing` {
+			hasWhy = true
+		}
+	}
+	if !hasWhat || !hasWhy {
+		t.Error("decision type must still flag missing ## What and ## Why")
+	}
+}

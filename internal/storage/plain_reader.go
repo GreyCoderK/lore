@@ -103,10 +103,29 @@ func (s *PlainCorpusStore) ListDocs(filter domain.DocFilter) ([]domain.DocMeta, 
 			relPath = name
 		}
 
-		meta, _, parseErr := Unmarshal(data)
+		meta, _, parseErr := UnmarshalPermissive(data)
 		if parseErr != nil {
-			// No valid front matter — build synthetic metadata from file info
+			// No valid front matter at all — build synthetic metadata from file info
 			meta = buildSyntheticMeta(name, d)
+		} else {
+			// Front matter parsed but may be incomplete. Fill in gaps with
+			// synthetic defaults so downstream code (filters, scoring) works.
+			if meta.Type == "" {
+				meta.Type = "note"
+			}
+			if meta.Date == "" {
+				if info, err := d.Info(); err == nil {
+					meta.Date = info.ModTime().Format("2006-01-02")
+				} else {
+					meta.Date = time.Now().Format("2006-01-02")
+				}
+			}
+			if meta.Status == "" {
+				meta.Status = "published"
+			}
+			if len(meta.Tags) == 0 {
+				meta.Tags = inferTagsFromFilename(name)
+			}
 		}
 		meta.Filename = relPath
 

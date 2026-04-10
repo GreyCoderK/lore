@@ -57,11 +57,37 @@ flowchart LR
 ### Mode Draft (recommandé pour la CI)
 
 Fonctionne entièrement hors-ligne. Vérifie :
-- Sections manquantes (Why, What, Alternatives)
+- Sections manquantes (Why, What, Alternatives) — **uniquement sur les types stricts lore**
 - Conformité au guide de style
 - Cohérence inter-documents (tags partagés, clusters de scope)
-- Cohérence tapes VHS ↔ documentation
-- Score de qualité par personas
+- Cohérence tapes VHS ↔ documentation (info uniquement, ne bloque jamais)
+- Score de qualité par personas (types stricts uniquement)
+
+### Utiliser Angela sur un site de doc non-lore
+
+Angela peut **tourner sans risque sur n'importe quel site de doc Markdown** —
+mkdocs, docusaurus, astro, diátaxis, fait main — même si vous n'avez jamais
+utilisé `lore init`. L'analyse se branche sur le champ `type` du front matter :
+
+- **Types stricts** (`decision`, `feature`, `bugfix`, `refactor`) — reçoivent
+  le traitement lore complet : exigences What/Why/Alternatives/Impact,
+  checks personas, notation poids fort.
+- **Tout le reste** — profil libre. Aucune exigence de sections, aucun check
+  persona, notation rééquilibrée qui récompense la structure, la densité
+  et les exemples de code plutôt que les conventions lore.
+
+Vos blog posts, tutoriels, guides, concept pages, landing pages et tout
+type personnalisé ne produiront donc pas de faux warnings. Un tutoriel
+bien écrit peut atteindre 95/100 (A) sur le profil libre.
+
+**Les paires de traductions** (par ex. `installation.md` et
+`installation.fr.md`) sont détectées automatiquement — elles ne sont pas
+marquées comme doublons. Codes supportés : `fr`, `en`, `es`, `de`, `it`,
+`pt`, `zh`, `ja`, `ko`, `ru`, `ar`, `nl`, `pl`.
+
+**Le front matter partiel est préservé** : un doc avec seulement
+`type: decision` et `date:` (sans `status`) garde son type déclaré — il
+n'est plus silencieusement dégradé en `note` comme auparavant.
 
 ### Mode Review (optionnel, pour les releases)
 
