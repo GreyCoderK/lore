@@ -143,8 +143,11 @@ func TestTestConfig(t *testing.T) {
 		t.Errorf("expected provider 'anthropic', got %q", cfg.AI.Provider)
 	}
 	// angela.mode is deprecated — testutil.TestConfig no longer sets it.
-	if cfg.Angela.Mode != "" {
-		t.Errorf("expected angela mode '' (deprecated), got %q", cfg.Angela.Mode)
+	// This assertion exists precisely to pin that behavior, so reading the
+	// deprecated field here is intentional.
+	mode := cfg.Angela.Mode //nolint:staticcheck // SA1019: testing the deprecated field on purpose
+	if mode != "" {
+		t.Errorf("expected angela mode '' (deprecated), got %q", mode)
 	}
 }
 

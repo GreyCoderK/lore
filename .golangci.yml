@@ -11,6 +11,16 @@ linters:
       - path: "_test\\.go"
         linters:
           - errcheck
+      # SA5011 (possible nil pointer dereference) is flaky on test code:
+      # staticcheck does not always recognize t.Fatal/t.Fatalf as terminating,
+      # producing false positives after a nil-check guard followed by a
+      # dereference. The pattern is idiomatic in Go tests, so we exclude the
+      # rule on _test.go files rather than sprinkling `return` statements
+      # after every t.Fatal call.
+      - path: "_test\\.go"
+        text: "SA5011"
+        linters:
+          - staticcheck
   settings:
     errcheck:
       exclude-functions:
