@@ -16,6 +16,7 @@ import (
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/greycoderk/lore/internal/store"
+	"github.com/greycoderk/lore/internal/workflow"
 	"github.com/greycoderk/lore/internal/ui"
 	"github.com/greycoderk/lore/internal/version"
 	"github.com/spf13/cobra"
@@ -136,10 +137,18 @@ func Execute() {
 		i18n.Init(earlyLang)
 	}
 
-	// Wire signal handling so Ctrl+C cancels the context gracefully,
-	// giving SavePending a chance to persist partial answers before exit.
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
+	// Wire signal handling: first Ctrl+C cancels the context and flushes
+	// any in-progress answers to pending. Second Ctrl+C force-exits.
+	ctx, cancel := context.WithCancel(context.Background())
+	sigCh := make(chan os.Signal, 2)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigCh // first signal: flush pending + cancel context
+		workflow.FlushOnInterrupt()
+		cancel()
+		<-sigCh // second signal: user is impatient, force exit
+		os.Exit(130)
+	}()
 
 	cfg := &config.Config{}
 	var loreStore domain.LoreStore

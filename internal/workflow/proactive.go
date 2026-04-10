@@ -5,7 +5,6 @@ package workflow
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -103,10 +102,6 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 	renderer := NewRenderer(streams)
 	flow := NewQuestionFlow(streams, renderer)
 
-	// PreFilled skips questions entirely; CommitInfo provides interactive defaults
-	// for any remaining empty fields. Both are set intentionally: retroactive mode
-	// pre-fills Type/What above (skip), while CommitInfo covers edge cases like
-	// non-conventional commits where pre-fill didn't set a value.
 	qOpts := QuestionOpts{
 		PreFilled: Answers{
 			Type: opts.Type,
@@ -114,23 +109,23 @@ func HandleProactive(ctx context.Context, workDir string, streams domain.IOStrea
 			Why:  opts.Why,
 		},
 		CommitInfo: opts.Commit,
-		// Express mode disabled in proactive — no timer-based skip.
 	}
 
-	answers, err := flow.AskQuestions(ctx, qOpts)
-	if err != nil {
-		// Save partial answers on Ctrl+C or ErrInterrupted so they are not silently lost.
-		if ctx.Err() != nil || errors.Is(err, ErrInterrupted) {
-			commitHash := ""
-			if opts.Commit != nil {
-				commitHash = opts.Commit.Hash
-			}
-			record := BuildPendingRecord(answers, commitHash, "", "interrupted", "partial")
-			if saveErr := SavePending(workDir, record); saveErr != nil {
-				fmt.Fprintf(streams.Err, "warning: could not save pending answers: %v\n", saveErr)
-			}
-		}
-		return fmt.Errorf("workflow: proactive: %w", err)
+	// Register state so the signal handler (root.go) can save pending
+	// even if this goroutine is blocked on a read when SIGINT arrives.
+	commitHash := ""
+	if opts.Commit != nil {
+		commitHash = opts.Commit.Hash
+	}
+	interruptAnswers := qOpts.PreFilled // start with pre-filled values
+	RegisterInterruptState(workDir, commitHash, "", &interruptAnswers)
+	defer RegisterInterruptState("", "", "", nil) // clear on normal exit
+
+	answers, flowErr := flow.AskQuestions(ctx, qOpts)
+	interruptAnswers = answers // update shared state with collected answers
+	if flowErr != nil {
+		FlushOnInterrupt()
+		return fmt.Errorf("workflow: proactive: %w", flowErr)
 	}
 
 	// Determine generatedBy and commit for generateAndWrite

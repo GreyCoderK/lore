@@ -258,14 +258,17 @@ func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IO
 	if len(detection) > 0 {
 		prefill = &detection[0]
 	}
+
+	// Register state so the signal handler can save pending immediately.
+	hash, msg := commitFields(commit)
+	var answers Answers
+	RegisterInterruptState(workDir, hash, msg, &answers)
+	defer RegisterInterruptState("", "", "", nil) // clear on normal exit
+
 	answers, flowErr := flow.RunFlowWithMode(ctx, commit, prefill)
 	if flowErr != nil {
-		// Context cancelled or user interrupted → persist partial answers silently.
-		if ctx.Err() != nil || errors.Is(flowErr, ErrInterrupted) {
-			hash, msg := commitFields(commit)
-			record := BuildPendingRecord(answers, hash, msg, "interrupted", "partial")
-			_ = SavePending(workDir, record) // best-effort
-		}
+		// Also save via normal path (covers tests where signal handler doesn't run)
+		FlushOnInterrupt()
 		return storage.WriteResult{}, fmt.Errorf("workflow: question flow: %w", flowErr)
 	}
 
@@ -282,6 +285,13 @@ func runDocumentationFlow(ctx context.Context, workDir string, streams domain.IO
 //  4. If not found: run the normal flow (create a new document).
 func handleAmend(ctx context.Context, workDir string, streams domain.IOStreams, gitAdapter domain.GitAdapter, commit *domain.CommitInfo, tty bool, amendPrompt *bool) error {
 	docsDir := domain.DocsPath(workDir)
+
+	// Register interrupt state early so signal handler can save pending
+	// even if we're blocked on readAmendAnswer (Question 0 or [U]/[C]/[S]).
+	hash, msg := commitFields(commit)
+	amendAnswers := Answers{}
+	RegisterInterruptState(workDir, hash, msg, &amendAnswers)
+	defer RegisterInterruptState("", "", "", nil)
 
 	// Question 0: ask "Document this change?" before the amend flow.
 	// Default: true (prompt). Set hooks.amend_prompt=false to skip.

@@ -175,7 +175,7 @@ Or use `[doc-skip]` in your commit messages for one-off cases.
 - Check what would happen: `lore decision --explain HEAD` shows the full scoring breakdown.
 - Customize `always_ask` and `always_skip` in `.lorerc` to match your team's conventions.
 - Rebased commits go to pending — run `lore pending resolve` after a rebase.
-- If you Ctrl+C during questions, partial answers are saved. Resume with `lore pending resolve`.
+- If you Ctrl+C during any question (type selector, What, Why, amend prompts), partial answers are saved immediately to `.lore/pending/`. Resume with `lore pending resolve`.
 
 ## See Also
 

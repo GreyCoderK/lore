@@ -173,7 +173,7 @@ Ou utilisez `[doc-skip]` dans vos messages de commit pour des cas ponctuels.
 - **Vérifiez le scoring :** `lore decision --explain HEAD` montre le détail complet.
 - **Personnalisez :** `always_ask` et `always_skip` dans `.lorerc` sont vos contrôles les plus puissants.
 - **Après un rebase :** Vérifiez `lore pending` — les commits rebasés ont été différés.
-- **Ctrl+C est sûr :** Les réponses partielles sont sauvées. `lore pending resolve` reprend.
+- **Ctrl+C est sûr :** Les réponses partielles sont sauvées immédiatement dans `.lore/pending/` à n'importe quel niveau (sélecteur de type, What, Why, prompts amend). `lore pending resolve` reprend.
 
 ## Voir aussi
 

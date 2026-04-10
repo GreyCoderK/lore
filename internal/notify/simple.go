@@ -20,15 +20,23 @@ func NotifyOSSimple(commitMsg string, opts DialogOpts) error {
 
 	switch runtime.GOOS {
 	case "darwin":
-		// Prefer terminal-notifier if available (supports custom icons).
-		if tnPath, err := opts.LookPath("terminal-notifier"); err == nil {
+		// Prefer terminal-notifier if available (supports custom icons + click actions).
+		tnPath, tnErr := opts.LookPath("terminal-notifier")
+		if tnErr != nil {
+			// Try auto-install via Homebrew (silent, best-effort).
+			if brewPath, brewErr := opts.LookPath("brew"); brewErr == nil {
+				_ = opts.StartCommand(brewPath, []string{"install", "--quiet", "terminal-notifier"}, nil)
+				tnPath, tnErr = opts.LookPath("terminal-notifier")
+			}
+		}
+		if tnErr == nil {
 			return opts.StartCommand(tnPath, []string{
 				"-title", "Lore",
 				"-message", safe,
 				"-appIcon", brand.LogoPNGPath(),
 			}, nil)
 		}
-		// Fallback to osascript (no custom icon — uses Script Editor icon).
+		// Fallback to osascript display notification (no custom icon possible).
 		script := fmt.Sprintf(
 			`display notification "%s" with title "Lore"`,
 			escapeAppleScript(safe),

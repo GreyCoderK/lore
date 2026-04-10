@@ -97,6 +97,8 @@ type QuestionOpts struct {
 //   - Express mode → if first 3 Qs answered within expressThreshold, skip Alternatives+Impact
 func (q *QuestionFlow) AskQuestions(ctx context.Context, opts QuestionOpts) (Answers, error) {
 	answers := opts.PreFilled
+	// Keep interrupt state in sync with partial answers as they are collected.
+	updateInterruptAnswers(&answers)
 	var expressElapsed time.Duration
 	questionNum := 0
 	totalRequired := countInteractive(opts)

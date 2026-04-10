@@ -141,7 +141,10 @@ Lore is also complementary to ADRs — it captures the daily *why* that feeds in
 | `lore angela draft --path ./docs` | Standalone mode — any Markdown directory, no `lore init` |
 | `lore angela polish` | AI-assisted rewrite with diff review |
 | `lore angela polish --for "CTO"` | Audience-adapted rewrite |
+| `lore angela polish --auto` | Auto-accept additions, reject deletions |
 | `lore angela review` | Corpus-wide coherence analysis |
+| `lore angela review --filter "guides/.*"` | Review filtered subset |
+| `lore angela review --all` | Review all docs (no sampling) |
 | `lore decision` | Decision engine status and calibration |
 | `lore completion <shell>` | Generate shell completions (bash/zsh/fish) |
 
@@ -157,8 +160,9 @@ Angela works as a **documentation quality gate** in any CI pipeline — no `lore
 ```
 
 ```bash
-# Any CI — portable script
+# Any CI — portable script (draft: offline, review: AI)
 ./scripts/angela-ci.sh --path docs --fail-on warning --install
+./scripts/angela-ci.sh --mode review --path docs --all --install
 ```
 
 Works on **any Markdown directory** — with or without YAML front matter. See the [Angela in CI guide](https://greycoderk.github.io/lore/guides/angela-ci/) for details.
@@ -180,7 +184,7 @@ If all 3 answers come in under 3 seconds, Lore enters **express mode** and skips
 - **Cherry-pick with doc** — Skipped
 - **Amend** — Updates existing document
 - **Non-TTY** (IDE, CI) — Deferred with OS notification (VS Code, dialog)
-- **Ctrl+C** — Partial answers saved to pending
+- **Ctrl+C** — Partial answers saved to pending (at any question level, including type selector and amend prompts)
 
 ### Document Format
 
@@ -217,10 +221,14 @@ Users can now authenticate without server-side state...
 language: "en"           # "en" or "fr" — bilingual UI
 ai:
   provider: ""            # "anthropic", "openai", "ollama", or "" (zero-API)
+  model: ""               # e.g. "claude-sonnet-4-20250514", "gpt-4o"
+  endpoint: ""            # custom endpoint (Groq, Together, Ollama, etc.)
+  timeout: 60s
+angela:
+  max_tokens: 8192        # override auto-computed token limit
 hooks:
   post_commit: true
-templates:
-  dir: .lore/templates
+  amend_prompt: true      # ask "Document this change?" on amend
 ```
 
 ## Architecture (for contributors)
@@ -234,10 +242,11 @@ internal/
   storage/     → Document storage, front matter, index, doctor
   workflow/    → Reactive (hook) and proactive (lore new) flows
   generator/   → Document generation pipeline
-  angela/      → AI-assisted documentation logic
-  ai/          → AI provider implementations
-  i18n/        → Bilingual message catalogs (EN/FR)
-  ui/          → Terminal UI (colors, progress, lists)
+  angela/      → AI-assisted documentation (scoring, polish, review, personas)
+  ai/          → AI provider implementations (Anthropic, OpenAI, Ollama)
+  brand/       → Embedded assets (logo PNG via //go:embed)
+  i18n/        → Bilingual message catalogs (EN/FR, 700+ strings)
+  ui/          → Terminal UI (colors, progress spinners, lists)
 .lore/
   docs/        → Documentation corpus (Markdown)
   pending/     → Interrupted/deferred commits

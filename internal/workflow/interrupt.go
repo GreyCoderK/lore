@@ -1,4 +1,4 @@
-// Copyright (C) 2026 Museigen
+  // Copyright (C) 2026 Museigen
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 package workflow
@@ -7,12 +7,69 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/storage"
 	"gopkg.in/yaml.v3"
 )
+
+// interruptState holds the current flow state so the signal handler can
+// save a pending record even if the normal error-propagation path is blocked.
+var (
+	interruptMu    sync.Mutex
+	interruptState *interruptInfo
+)
+
+type interruptInfo struct {
+	WorkDir    string
+	CommitHash string
+	CommitMsg  string
+	Answers    *Answers
+}
+
+// RegisterInterruptState sets the current flow state so FlushOnInterrupt
+// can save a pending record. Call with nil answers to clear.
+func RegisterInterruptState(workDir, commitHash, commitMsg string, answers *Answers) {
+	interruptMu.Lock()
+	defer interruptMu.Unlock()
+	if answers == nil {
+		interruptState = nil
+		return
+	}
+	interruptState = &interruptInfo{
+		WorkDir:    workDir,
+		CommitHash: commitHash,
+		CommitMsg:  commitMsg,
+		Answers:    answers,
+	}
+}
+
+// updateInterruptAnswers updates the shared interrupt state with the latest
+// partial answers. Called from AskQuestions after each question is answered.
+func updateInterruptAnswers(answers *Answers) {
+	interruptMu.Lock()
+	defer interruptMu.Unlock()
+	if interruptState != nil {
+		interruptState.Answers = answers
+	}
+}
+
+// FlushOnInterrupt saves the current flow state as pending. Called from the
+// signal handler in root.go. Safe to call multiple times or with no state.
+func FlushOnInterrupt() {
+	interruptMu.Lock()
+	state := interruptState
+	interruptState = nil // clear so we don't save twice
+	interruptMu.Unlock()
+
+	if state == nil {
+		return
+	}
+	record := BuildPendingRecord(*state.Answers, state.CommitHash, state.CommitMsg, "interrupted", "partial")
+	_ = SavePending(state.WorkDir, record)
+}
 
 // errIsExist reports whether err (or its wrapped cause) indicates that a
 // target path already exists.  It checks both os.IsExist and the

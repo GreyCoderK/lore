@@ -132,6 +132,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Ctrl+C loses partial answers** (HIGH) — Pressing Ctrl+C during any question
+  (type selector, What, Why, amend Question 0, [U]/[C]/[S]) now saves partial
+  answers to `.lore/pending/` before exiting. Uses `RegisterInterruptState` +
+  `FlushOnInterrupt` called directly from the signal handler — works even when
+  stdin read is blocked. Second Ctrl+C force-exits with code 130.
+  (`internal/workflow/interrupt.go`, `internal/workflow/questions.go`,
+  `internal/workflow/reactive.go`, `internal/workflow/proactive.go`, `cmd/root.go`)
+
+- **`selectType` Ctrl+C silently continues** (HIGH) — Was returning `(defaultType, nil)`,
+  causing the flow to proceed as if the user chose the default type. Now returns
+  `ErrInterrupted` which propagates through the entire question chain.
+  (`internal/workflow/type_select.go`, `internal/workflow/questions.go`)
+
+- **`readAmendAnswer` ignores context** (MEDIUM) — Was blocking indefinitely on
+  stdin read without respecting context cancellation. Now accepts `ctx` parameter
+  and uses goroutine + select for interruptible reads. Detects byte `0x03` (Ctrl+C
+  in raw mode) and returns `ErrInterrupted`.
+  (`internal/workflow/reactive.go`)
+
 - **Amend pre-fill missing QuestionMode** (MEDIUM) — Amend workflow now sets
   `QuestionMode: "reduced"` and `PrefilledWhyConfidence: 0.9` when pre-filling
   from existing document. (`internal/workflow/reactive.go`)

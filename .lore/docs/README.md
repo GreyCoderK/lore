@@ -5,5 +5,8 @@
 | Document | Type | Date | Status | Tags |
 |----------|------|------|--------|------|
 | [feature-angela-enhancement-sprint-quality-scoring-audience-2026-04-09.md](feature-angela-enhancement-sprint-quality-scoring-audience-2026-04-09.md) | feature | 2026-04-09 | draft |  |
+| [feature-test-what-2026-04-09.md](feature-test-what-2026-04-09.md) | feature | 2026-04-09 | draft |  |
+| [feature-untitled-2026-04-09.md](feature-untitled-2026-04-09.md) | feature | 2026-04-09 | draft |  |
+| [note-untitled-2026-04-09.md](note-untitled-2026-04-09.md) | note | 2026-04-09 | draft |  |
 
-*1 document total*
+*4 documents total*
