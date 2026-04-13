@@ -3,6 +3,7 @@ type: refactor
 date: 2026-03-01T16:45:00Z
 status: active
 commit: d4e5f6a7b8c9
+tags: [authentication, middleware, refactor, testing]
 generated_by: lore-v1.0.0
 ---
 # Extract auth middleware into dedicated package

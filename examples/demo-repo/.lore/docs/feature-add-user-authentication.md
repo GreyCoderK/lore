@@ -3,6 +3,7 @@ type: feature
 date: 2026-02-15T14:30:00Z
 status: active
 commit: b2c3d4e5f6a7
+tags: [authentication, jwt, middleware, api, security]
 generated_by: lore-v1.0.0
 ---
 # Add user authentication middleware

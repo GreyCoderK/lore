@@ -432,7 +432,7 @@ func (m DraftInteractiveModel) View() string {
 		} else {
 			sev := formatDraftSeverity(f.Suggestion.Severity)
 			fmt.Fprintf(&b, "%s  %s\n", sev, TUIStyleDim.Render(f.Suggestion.Category))
-			b.WriteString(fmt.Sprintf("File: %s\n\n", f.Filename))
+			fmt.Fprintf(&b, "File: %s\n\n", f.Filename)
 			b.WriteString(f.Suggestion.Message)
 			b.WriteString("\n\n")
 

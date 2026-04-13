@@ -3,6 +3,7 @@ type: decision
 date: 2026-02-10T11:00:00Z
 status: active
 commit: c3d4e5f6a7b8
+tags: [database, postgresql, architecture, persistence]
 generated_by: lore-v1.0.0
 ---
 # Database selection: PostgreSQL over MongoDB

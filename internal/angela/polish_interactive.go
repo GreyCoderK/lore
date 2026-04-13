@@ -384,10 +384,10 @@ func (m PolishInteractiveModel) viewDiff() string {
 		// Show original and proposed
 		origLines := strings.Count(s.Original, "\n") + 1
 		polLines := strings.Count(s.Polished, "\n") + 1
-		b.WriteString(fmt.Sprintf("Current (%d lines):\n", origLines))
+		fmt.Fprintf(&b, "Current (%d lines):\n", origLines)
 		b.WriteString(renderWithPrefix(truncatePreview(s.Original, 10), "- "))
 		b.WriteString("\n\n")
-		b.WriteString(fmt.Sprintf("Proposed (%d lines):\n", polLines))
+		fmt.Fprintf(&b, "Proposed (%d lines):\n", polLines)
 		b.WriteString(renderWithPrefix(truncatePreview(s.Polished, 10), "+ "))
 	}
 	b.WriteString("\n\n")

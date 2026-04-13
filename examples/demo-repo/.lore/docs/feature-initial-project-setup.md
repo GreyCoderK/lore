@@ -3,6 +3,7 @@ type: feature
 date: 2026-02-01T09:00:00Z
 status: active
 commit: a1b2c3d4e5f6
+tags: [setup, bootstrap, cli, go, architecture]
 generated_by: lore-v1.0.0
 ---
 # Initial project setup
