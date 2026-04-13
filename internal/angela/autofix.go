@@ -453,7 +453,11 @@ func AutofixWriteWithBackup(docPath, fixed string, backupEnabled bool, workDir, 
 		}
 		_ = backupPath
 	}
-	if err := fileutil.AtomicWrite(docPath, []byte(fixed), 0o644); err != nil {
+	absPath := docPath
+	if !filepath.IsAbs(docPath) && workDir != "" {
+		absPath = filepath.Join(workDir, docPath)
+	}
+	if err := fileutil.AtomicWrite(absPath, []byte(fixed), 0o644); err != nil {
 		return "", fmt.Errorf("autofix: write: %w", err)
 	}
 	return docPath, nil
