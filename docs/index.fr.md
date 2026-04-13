@@ -121,7 +121,7 @@ Angela est opt-in. Elle fonctionne avec Anthropic (Claude), OpenAI (GPT), ou Oll
 
 Angela fonctionne aussi comme **quality gate CI standalone** sur n'importe quel dossier Markdown — sans `lore init`. Ajoutez 3 lignes à votre GitHub Actions, GitLab CI ou Jenkins : [Angela en CI →](guides/angela-ci.md)
 
-[Découvrir l'histoire d'Angela →](guides/philosophy.md#à-propos-dangela)
+[Découvrir l'histoire d'Angela →](guides/philosophy.md#about-angela)
 
 ## En savoir plus
 

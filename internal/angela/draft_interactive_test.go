@@ -27,9 +27,6 @@ func draftKeyMsg(key string) tea.KeyMsg {
 	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(key)}
 }
 
-func draftSpecialKey(k tea.KeyType) tea.KeyMsg {
-	return tea.KeyMsg{Type: k}
-}
 
 func TestDraftInteractive_NavigationOrder(t *testing.T) {
 	findings := testDraftFindings()

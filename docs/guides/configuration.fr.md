@@ -393,7 +393,7 @@ lore angela polish <votre-doc>.md --dry-run
 
 `lore angela draft` et `lore angela draft --all` fonctionnent **100% hors ligne** sans aucune configuration. Ils analysent la structure des documents, les sections manquantes, la cohérence de style et les références croisées — tout localement.
 
-Pour polish/review sans credits API, voir le [workflow manuel via le chat Claude.ai](../faq.fr.md#jai-un-abonnement-claudeai-mais-pas-de-crédits-api-puis-je-utiliser-angela) dans la FAQ.
+Pour polish/review sans credits API, voir le [workflow manuel via le chat Claude.ai](../faq.fr.md#abonnement-claudeai) dans la FAQ.
 
 ## Dépannage
 

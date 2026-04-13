@@ -124,9 +124,9 @@ Analyse structurelle locale : sections manquantes, conformité au guide de style
 
 Envoie votre document au fournisseur IA pour réécriture et affiche un diff interactif — acceptez ou rejetez chaque changement individuellement. Le résultat inclut des diagrammes Mermaid, des tables et des détails concrets.
 
-> **La qualité dépend du modèle.** Les petits modèles locaux (llama3.2) peuvent produire du texte générique. Les modèles plus grands (Claude Sonnet, GPT-4o, llama3.1:70b) produisent de bien meilleurs résultats avec diagrammes et tables. Voir l'[avertissement qualité](commands/angela-polish.fr.md#le-résultat-de-lia-est-de-mauvaise-qualité--contenu-inventé) dans la doc polish.
+> **La qualité dépend du modèle.** Les petits modèles locaux (llama3.2) peuvent produire du texte générique. Les modèles plus grands (Claude Sonnet, GPT-4o, llama3.1:70b) produisent de bien meilleurs résultats avec diagrammes et tables. Voir l'[avertissement qualité](commands/angela-polish.fr.md#qualite-ia-warning) dans la doc polish.
 
-### J'ai un abonnement Claude.ai mais pas de crédits API. Puis-je utiliser Angela ?
+### J'ai un abonnement Claude.ai mais pas de crédits API. Puis-je utiliser Angela ? { #abonnement-claudeai }
 
 `angela draft` fonctionne **100% hors ligne** — pas besoin d'API. Pour les fonctions polish/review, deux options gratuites :
 

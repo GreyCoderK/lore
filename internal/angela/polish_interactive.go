@@ -302,11 +302,11 @@ func (m PolishInteractiveModel) doEdit() (tea.Model, tea.Cmd) {
 	}
 	tmpPath := tmp.Name()
 	if _, err := tmp.WriteString(content); err != nil {
-		tmp.Close()
-		os.Remove(tmpPath)
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
 		return m, nil
 	}
-	tmp.Close()
+	_ = tmp.Close()
 
 	args := append(append([]string(nil), editorArgs[1:]...), tmpPath)
 	c := exec.Command(editorArgs[0], args...)
@@ -314,7 +314,7 @@ func (m PolishInteractiveModel) doEdit() (tea.Model, tea.Cmd) {
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	return m, tea.ExecProcess(c, func(err error) tea.Msg {
-		defer os.Remove(tmpPath)
+		defer func() { _ = os.Remove(tmpPath) }()
 		if err != nil {
 			return polishEditorFinishedMsg{err: err}
 		}

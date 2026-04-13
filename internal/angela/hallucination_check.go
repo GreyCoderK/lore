@@ -372,7 +372,7 @@ func insertMetricSpace(s string) string {
 	b.Grow(len(s) + 2)
 	prev := rune(0)
 	for _, r := range s {
-		if prev >= '0' && prev <= '9' && !('0' <= r && r <= '9') {
+		if prev >= '0' && prev <= '9' && (r < '0' || r > '9') {
 			b.WriteRune(' ')
 		}
 		b.WriteRune(r)

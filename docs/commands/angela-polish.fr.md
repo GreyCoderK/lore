@@ -405,7 +405,7 @@ Angela affiche le **coût estimé avant l'appel** et le **coût réel après**. 
 
 Contrôlez le max tokens (et donc le coût) avec `angela.max_tokens` dans `.lorerc`.
 
-### "Le résultat de l'IA est de mauvaise qualité / contenu inventé"
+### "Le résultat de l'IA est de mauvaise qualité / contenu inventé" { #qualite-ia-warning }
 
 La qualité de `polish` dépend de **deux choses** :
 

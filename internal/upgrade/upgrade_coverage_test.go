@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -174,6 +175,9 @@ func TestExtractBinary_TarGz_InvalidGzip(t *testing.T) {
 // TestReplaceBinary_WriteFailure tests that ReplaceBinary fails when the target
 // directory is read-only (simulated with chmod).
 func TestReplaceBinary_WriteFailure(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod does not restrict writes on Windows")
+	}
 	if os.Getuid() == 0 {
 		t.Skip("skipping: running as root, chmod 0555 does not restrict root")
 	}

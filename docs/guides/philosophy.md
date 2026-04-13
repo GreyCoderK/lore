@@ -4,7 +4,7 @@ date: 2026-04-12
 status: published
 related:
   - roadmap.md
-  - comparison.md
+  - comparaison.md
 ---
 # Philosophy
 
@@ -97,4 +97,4 @@ The corpus you build today grows more valuable with every future feature. Angela
 ## See Also
 
 - [Roadmap](roadmap.md) — Where lore is heading
-- [How lore Compares](comparison.md) — lore vs alternatives
+- [How lore Compares](comparaison.md) — lore vs alternatives

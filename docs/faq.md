@@ -124,7 +124,7 @@ Local structural analysis: missing sections, style guide compliance, related doc
 
 Sends your document to the AI provider for rewriting and shows an interactive diff — accept or reject each change individually. The output is expected to include Mermaid diagrams, tables, and concrete details.
 
-> **Quality depends on your model.** Small local models (llama3.2) may produce generic text. Larger models (Claude Sonnet, GPT-4o, llama3.1:70b) produce much better results with diagrams and tables. See the [quality warning](commands/angela-polish.md#the-ai-output-is-low-quality--hallucinated-content) in the polish docs.
+> **Quality depends on your model.** Small local models (llama3.2) may produce generic text. Larger models (Claude Sonnet, GPT-4o, llama3.1:70b) produce much better results with diagrams and tables. See the [quality warning](commands/angela-polish.md#ai-quality-warning) in the polish docs.
 
 ### I have a Claude.ai subscription but no API credits. Can I use Angela?
 

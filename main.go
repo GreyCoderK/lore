@@ -8,7 +8,3 @@ import "github.com/greycoderk/lore/cmd"
 func main() {
 	cmd.Execute()
 }
-// docs-test
-// feat-test
-// threshold-test
-// threshold-test2

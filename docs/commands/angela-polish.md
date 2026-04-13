@@ -409,7 +409,7 @@ Angela shows the **estimated cost before calling** the API, and the **actual cos
 
 You can control the max tokens (and therefore cost) with `angela.max_tokens` in `.lorerc`.
 
-### "The AI output is low quality / hallucinated content"
+### "The AI output is low quality / hallucinated content" { #ai-quality-warning }
 
 Polish quality depends on **two things**:
 

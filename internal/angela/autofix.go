@@ -470,9 +470,9 @@ func ReanalyzeAfterFix(fixed string, meta domain.DocMeta, guide *StyleGuide, cor
 func FormatAutofixReport(report AutofixReport) string {
 	var b strings.Builder
 	b.WriteString("Autofix summary:\n")
-	b.WriteString(fmt.Sprintf("  %d files modified\n", report.FilesModified))
-	b.WriteString(fmt.Sprintf("  %d findings fixed\n", report.FindingsFixed))
-	b.WriteString(fmt.Sprintf("  %d files skipped (no fixable findings)\n", report.FilesSkipped))
+	fmt.Fprintf(&b, "  %d files modified\n", report.FilesModified)
+	fmt.Fprintf(&b, "  %d findings fixed\n", report.FindingsFixed)
+	fmt.Fprintf(&b, "  %d files skipped (no fixable findings)\n", report.FilesSkipped)
 	b.WriteString(fmt.Sprintf("  %d errors\n", report.Errors))
 
 	if report.FilesModified > 0 {

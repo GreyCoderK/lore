@@ -168,10 +168,11 @@ func TestResolveStateDir_ExplicitRelative(t *testing.T) {
 // TestResolveStateDir_ExplicitAbsolute verifies that an absolute
 // StateDir value is returned as-is (not joined with workDir).
 func TestResolveStateDir_ExplicitAbsolute(t *testing.T) {
+	absDir := t.TempDir() // cross-platform absolute path
 	cfg := &Config{}
-	cfg.Angela.StateDir = "/tmp/my-angela-state"
-	got := ResolveStateDir("/fake/work", cfg, ModeHybrid)
-	if got != "/tmp/my-angela-state" {
+	cfg.Angela.StateDir = absDir
+	got := ResolveStateDir(t.TempDir(), cfg, ModeHybrid)
+	if got != absDir {
 		t.Errorf("ResolveStateDir = %q, want absolute path unchanged", got)
 	}
 }

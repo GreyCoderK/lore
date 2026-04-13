@@ -7,7 +7,7 @@ related:
   - getting-started/quickstart.md
   - commands/index.md
   - guides/philosophy.md
-  - guides/comparison.md
+  - guides/comparaison.md
   - guides/configuration.md
   - guides/document-types.md
   - guides/contextual-detection.md
@@ -118,7 +118,7 @@ Angela also works as a **standalone CI quality gate** on any Markdown directory 
 
 ## Learn More
 
-- [How lore Compares](guides/comparison.md) — Detailed comparison with alternatives
+- [How lore Compares](guides/comparaison.md) — Detailed comparison with alternatives
 - [Configuration](guides/configuration.md) — Customize lore for your workflow
 - [Document Types](guides/document-types.md) — decision, feature, bugfix, refactor, note
 - [Contextual Detection](guides/contextual-detection.md) — How the hook decides what to do

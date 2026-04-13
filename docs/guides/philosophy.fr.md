@@ -72,7 +72,7 @@ Ces principes se traduisent en décisions architecturales concrètes et non nég
 - **Pas un linter de commit** — Conventional Commits standardisent le "quoi". lore capture le "pourquoi". Ils fonctionnent ensemble.
 - **Pas un outil de surveillance** — lore ne suit pas qui documente ou non. C'est une pratique personnelle qui bénéficie à l'équipe.
 
-## À propos d'Angela
+## À propos d'Angela { #about-angela }
 
 La compagne IA de lore s'appelle **Angela**.
 
