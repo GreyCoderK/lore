@@ -460,7 +460,7 @@ func (m ReviewInteractiveModel) viewDetail() string {
 
 	// Confidence
 	if f.Confidence > 0 {
-		b.WriteString(fmt.Sprintf("Confidence: %.2f\n\n", f.Confidence))
+		fmt.Fprintf(&b, "Confidence: %.2f\n\n", f.Confidence)
 	}
 
 	// Deep dive result
@@ -541,9 +541,9 @@ Analyze this finding in detail:
 Be specific, cite exact passages from the documents. Keep your answer under 500 words.`
 
 	var usr strings.Builder
-	usr.WriteString(fmt.Sprintf("Finding: %s (%s)\n", finding.Title, finding.Severity))
-	usr.WriteString(fmt.Sprintf("Description: %s\n", finding.Description))
-	usr.WriteString(fmt.Sprintf("Documents: %s\n\n", strings.Join(finding.Documents, ", ")))
+	fmt.Fprintf(&usr, "Finding: %s (%s)\n", finding.Title, finding.Severity)
+	fmt.Fprintf(&usr, "Description: %s\n", finding.Description)
+	fmt.Fprintf(&usr, "Documents: %s\n\n", strings.Join(finding.Documents, ", "))
 
 	if reader != nil {
 		for _, doc := range finding.Documents {
@@ -551,7 +551,7 @@ Be specific, cite exact passages from the documents. Keep your answer under 500 
 			if err != nil {
 				continue
 			}
-			usr.WriteString(fmt.Sprintf("=== %s ===\n%s\n\n", doc, content))
+			fmt.Fprintf(&usr, "=== %s ===\n%s\n\n", doc, content)
 		}
 	}
 

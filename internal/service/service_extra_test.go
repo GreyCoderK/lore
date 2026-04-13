@@ -138,7 +138,7 @@ func TestPolishDocument_MultiPass(t *testing.T) {
 	sb.WriteString("# Large Document\n\n")
 	// Generate enough filler sections to exceed the word threshold.
 	for sec := 0; sec < 40; sec++ {
-		sb.WriteString(fmt.Sprintf("## Section %d\n\n", sec+1))
+		fmt.Fprintf(&sb, "## Section %d\n\n", sec+1)
 		for line := 0; line < 3; line++ {
 			sb.WriteString(strings.Repeat("word ", 35) + "\n")
 		}
@@ -179,7 +179,7 @@ func TestPolishDocument_MultiPass_WithProgress(t *testing.T) {
 	sb.WriteString("---\ntype: decision\ndate: 2026-04-05\nstatus: draft\n---\n")
 	sb.WriteString("# Large Document With Progress\n\n")
 	for sec := 0; sec < 40; sec++ {
-		sb.WriteString(fmt.Sprintf("## Section %d\n\n", sec+1))
+		fmt.Fprintf(&sb, "## Section %d\n\n", sec+1)
 		for line := 0; line < 3; line++ {
 			sb.WriteString(strings.Repeat("word ", 35) + "\n")
 		}
