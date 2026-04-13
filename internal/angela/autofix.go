@@ -473,13 +473,13 @@ func FormatAutofixReport(report AutofixReport) string {
 	fmt.Fprintf(&b, "  %d files modified\n", report.FilesModified)
 	fmt.Fprintf(&b, "  %d findings fixed\n", report.FindingsFixed)
 	fmt.Fprintf(&b, "  %d files skipped (no fixable findings)\n", report.FilesSkipped)
-	b.WriteString(fmt.Sprintf("  %d errors\n", report.Errors))
+	fmt.Fprintf(&b, "  %d errors\n", report.Errors)
 
 	if report.FilesModified > 0 {
 		b.WriteString("\n  Fixed:\n")
 		for _, f := range report.Files {
 			if len(f.Fixed) > 0 {
-				b.WriteString(fmt.Sprintf("    %s: %s\n", f.Filename, strings.Join(f.Fixed, ", ")))
+				fmt.Fprintf(&b, "    %s: %s\n", f.Filename, strings.Join(f.Fixed, ", "))
 			}
 		}
 	}

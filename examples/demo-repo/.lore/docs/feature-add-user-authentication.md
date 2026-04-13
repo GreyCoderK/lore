@@ -7,6 +7,10 @@ generated_by: lore-v1.0.0
 ---
 # Add user authentication middleware
 
+## What
+
+Added JWT-based authentication middleware that validates Bearer tokens on all API endpoints and injects user context into the request.
+
 ## Why
 
 The API was completely open — any request could access any endpoint without verification. Before adding any user-facing features, we need a solid auth foundation. JWT was chosen because our API is stateless and we don't want to manage server-side sessions.

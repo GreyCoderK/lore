@@ -102,12 +102,10 @@ func TestDraftInteractive_AddStubInsertsSection(t *testing.T) {
 	}
 
 	// The "missing What" finding should be gone after reanalysis
-	for _, f := range m.findings {
-		if f.Filename == "auth.md" && strings.Contains(f.Suggestion.Message, "What") && strings.Contains(f.Suggestion.Message, "missing") {
-			// Acceptable: the reanalysis may still flag it if the stub is too short.
-			// The key behavior is that the file was modified and reanalyzed.
-		}
-	}
+	// The key behavior is that the file was modified and reanalyzed.
+	// Reanalysis may still flag a "What missing" finding if the stub is too short —
+	// that is acceptable; we only care that the update cycle ran without error.
+	_ = m.findings
 }
 
 func TestDraftInteractive_AddStubReanalyzesResolved(t *testing.T) {

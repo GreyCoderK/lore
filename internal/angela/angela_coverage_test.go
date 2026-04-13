@@ -63,8 +63,10 @@ func TestIsSafePath_EmptyString(t *testing.T) {
 }
 
 func TestIsSafePath_AbsolutePath(t *testing.T) {
-	if isSafePath("/etc/passwd") {
-		t.Error("isSafePath('/etc/passwd') should return false for absolute path")
+	// Use a cross-platform absolute path: t.TempDir() always returns an absolute path.
+	absPath := t.TempDir()
+	if isSafePath(absPath) {
+		t.Errorf("isSafePath(%q) should return false for absolute path", absPath)
 	}
 }
 
@@ -833,9 +835,8 @@ func TestSanitizePromptContent_ControlChars(t *testing.T) {
 	if strings.Contains(got, "\x01") || strings.Contains(got, "\x1f") {
 		t.Errorf("control chars should be stripped, got %q", got)
 	}
-	if got != "helloworld end" && got != "helloworldend" {
-		// exact space positions vary, just check no control chars remain
-	}
+	// exact replacement chars vary by implementation; no control chars is sufficient
+	_ = got
 }
 
 func TestSanitizePromptContent_KeepsWhitespace(t *testing.T) {

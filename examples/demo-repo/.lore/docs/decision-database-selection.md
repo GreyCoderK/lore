@@ -7,6 +7,10 @@ generated_by: lore-v1.0.0
 ---
 # Database selection: PostgreSQL over MongoDB
 
+## What
+
+Chose PostgreSQL as the primary database for the API backend, replacing the original plan to evaluate MongoDB.
+
 ## Why
 
 We need relational integrity for user accounts, permissions, and audit trails. PostgreSQL gives us ACID transactions, mature tooling, and excellent Go driver support (pgx). Our data is inherently relational — users have roles, roles have permissions, actions have audit logs.

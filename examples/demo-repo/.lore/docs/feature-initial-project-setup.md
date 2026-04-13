@@ -7,6 +7,10 @@ generated_by: lore-v1.0.0
 ---
 # Initial project setup
 
+## What
+
+Bootstrapped the project with Go + Cobra, establishing the `cmd/`, `internal/`, and `.lore/` directory structure and wiring up the initial CLI entry point.
+
 ## Why
 
 Every project needs a solid foundation. We chose Go with Cobra for the CLI framework because it compiles to a single binary with zero runtime dependencies — ideal for a developer tool that needs to install cleanly on any machine.
