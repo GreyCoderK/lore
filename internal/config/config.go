@@ -32,6 +32,16 @@ type Config struct {
 	Templates    TemplatesConfig    `yaml:"templates"`
 	Hooks        HooksConfig        `yaml:"hooks"`
 	Output       OutputConfig       `yaml:"output"`
+
+	// DetectedMode is populated at command startup by root.go via
+	// DetectMode(). It is NOT loaded from .lorerc — the user-facing
+	// override is cfg.Angela.ModeDetection. The yaml:"-" tag keeps this
+	// field out of Viper's key set so `validate.go` does not flag it as
+	// an unknown field in a user's config file.
+	//
+	// Downstream code (Angela sub-commands, storage helpers) should read
+	// DetectedMode instead of re-probing the filesystem.
+	DetectedMode Mode `yaml:"-" mapstructure:"-"`
 }
 
 type DecisionConfig struct {

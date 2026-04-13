@@ -1,3 +1,13 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - ../commands/index.md
+  - ../guides/configuration.md
+  - ../commands/angela-draft.md
+  - ../guides/angela-ci.md
+---
 # Quickstart (5 minutes)
 
 De zéro à votre premier "pourquoi" capturé en 5 minutes.
@@ -18,7 +28,7 @@ git add .
 git commit -m "Add rate limiting to API"
 ```
 
-Le hook Lore se déclenche automatiquement :
+Le hook de lore se déclenche automatiquement :
 
 ```
 [1/3] Type [feature]:
@@ -31,6 +41,8 @@ Trois questions. Quatre-vingt-dix secondes. C'est fait.
 
 ![lore interactif](../assets/vhs/interactive.gif)
 <!-- Generate: vhs assets/vhs/interactive.tape -->
+
+> **Que vient-il de se passer ?** Le hook post-commit de lore a détecté votre commit, posé 3 questions, et enregistré un fichier Markdown dans `.lore/docs/`. Le fichier contient un en-tête YAML (type, date, hash du commit) et votre "pourquoi" — lié définitivement à ce commit.
 
 ## 3. Consulter votre document
 
@@ -59,6 +71,8 @@ lore status
 ```
 Documents : 1 | En attente : 0 | Couverture : 100%
 ```
+
+> **Que vient-il de se passer ?** lore a analysé vos commits et vos documents. 1 commit, 1 document = 100% de couverture. Au fil de vos commits, ce tableau de bord suit l'état de la documentation dans le temps.
 
 ## 5. Explorer davantage
 

@@ -15,21 +15,24 @@ type AngelaMessages struct {
 	PersonaBusinessNoValue string
 
 	// draft.go — completeness checks
-	DraftMissingWhat        string
-	DraftMissingWhy         string
-	DraftMissingAltWarn     string
-	DraftMissingAltInfo     string
-	DraftMissingImpact      string
-	DraftBodyTooShort       string
-	DraftBodyExceedsMax     string
-	DraftAddTags            string
-	DraftAddRelated         string
-	DraftWhyTooBrief        string
+	DraftMissingWhat    string
+	DraftMissingWhy     string
+	DraftMissingAltWarn string
+	DraftMissingAltInfo string
+	DraftMissingImpact  string
+	DraftBodyTooShort   string
+	DraftBodyExceedsMax string
+	DraftAddScope       string
+	DraftAddTags        string
+	DraftAddRelated     string
+	DraftWhyTooBrief    string
 
 	// coherence.go
-	CoherencePossibleDup  string // args: filename, tags
-	CoherenceRelatedFound string // args: filename, tags
-	CoherenceMentionedBody string // arg: filename
+	CoherencePossibleDup       string // args: filename, tags
+	CoherenceRelatedFound      string // args: filename, tags
+	CoherenceSameScopeOverlap  string // args: scope, filename
+	CoherenceSameScopeRelated  string // args: scope, filename, type
+	CoherenceMentionedBody     string // arg: filename
 
 	// diff.go
 	DiffChangeHeader     string // args: current, total
@@ -58,6 +61,15 @@ type AngelaMessages struct {
 
 	// style.go
 	StyleUnknownRule string // arg: key
+
+	// polish — hallucination check
+	PolishHallucinationWarn   string // no args
+	PolishHallucinationReject string // no args
+	PolishHallucinationHint   string // no args
+
+	// review — differential summary
+	ReviewDiffSummary  string // args: new, persisting, regressed, resolved
+	ReviewDiffResolved string // no args
 
 	// Runtime UI — polish/review progress messages
 	UIMode              string // arg: audience

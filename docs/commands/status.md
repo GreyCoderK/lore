@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - doctor.md
+  - list.md
+  - pending.md
+---
 # lore status
 
 Your repository's documentation health dashboard.
@@ -10,9 +19,9 @@ lore status [flags]
 
 ## What Does This Do?
 
-`lore status` gives you a bird's-eye view of your project's documentation health. It's like a fitness tracker for your codebase knowledge — how many commits are documented, what's pending, what needs attention.
+`lore status` gives you an overview of your project's documentation health: how many commits are documented, what is pending, and what needs attention.
 
-> **Analogy:** If `git status` shows the health of your *code*, `lore status` shows the health of your *knowledge*.
+> **Analogy:** `git status` shows the health of your code. `lore status` shows the health of your knowledge.
 
 ## Real World Scenario
 
@@ -57,10 +66,10 @@ Health      ✓ all good
 | **Project** | Your project name (from `.lorerc` or folder name) |
 | **Hook** | Is the post-commit hook installed? If not, commits won't trigger Lore |
 | **Docs** | How many commits are documented vs waiting in pending |
-| **Express** | % of docs created quickly (express mode) vs with full detail |
-| **Angela** | AI mode and provider. "Need review" = docs Angela hasn't analyzed |
+| **Express** | Share of docs created in express mode (quick) vs full mode (all 5 questions) |
+| **Angela** | AI mode and provider. "Need review" = documents Angela has not yet analyzed |
 | **Review** | Findings from `lore angela review`. "No issues" = clean corpus |
-| **Health** | Overall status. ✓ = good. ✗ = run `lore doctor` |
+| **Health** | Overall status. `✓` = good. `✗` = run `lore doctor` |
 
 ## Badge Mode (`--badge`)
 
@@ -176,7 +185,7 @@ health=$(lore status --quiet | grep "health=" | cut -d= -f2)
 
 ### "The badge shows gray — how do I improve?"
 
-Coverage = documented commits / total commits. To improve: `lore pending` to resolve pending commits, `lore new --commit` for old undocumented ones. Green at 50%, gold at 80%.
+Coverage = documented commits ÷ total commits. Resolve pending commits with `lore pending`, and document older ones with `lore new --commit`. The badge turns green at 50% and gold at 80%.
 
 ### "Health shows a problem"
 

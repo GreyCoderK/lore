@@ -1,3 +1,13 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - ../guides/configuration.md
+  - angela-draft.md
+  - angela-polish.md
+  - doctor.md
+---
 # lore config
 
 Manage API credentials and view configuration.
@@ -10,7 +20,7 @@ lore config <set-key|delete-key|list-keys>
 
 ## What Does This Do?
 
-`lore config` manages the API keys that power Angela's AI features. Think of it like a password manager specifically for your AI providers — it stores keys securely in your OS keychain so they never end up in a file someone could accidentally commit.
+`lore config` manages the API keys that power Angela's AI features. It stores keys securely in your OS keychain so they never end up in a file that could be accidentally committed.
 
 > **Analogy:** It's like the settings page of an app. You don't use it every day, but when you need to connect a new service, this is where you go.
 
@@ -131,7 +141,7 @@ export LORE_AI_PROVIDER="anthropic"
 
 ### "Where exactly is my key stored?"
 
-Run `lore config list-keys`. If it says "stored," the key is in your OS keychain. If you're using the fallback, it's in `.lorerc.local` (which is gitignored and chmod 600).
+Run `lore config list-keys`. If the status shows "stored," the key is in your OS keychain. If you're on the fallback, it's in `.lorerc.local` (gitignored, chmod 600).
 
 Keychain backend by platform:
 
@@ -143,17 +153,17 @@ Keychain backend by platform:
 
 ### "I set the key but Angela still says 'no provider configured'"
 
-Two things are needed:
+Two things are required:
 1. The **key** (via `lore config set-key`)
 2. The **provider name** in `.lorerc`:
 
 ```yaml
 ai:
-  provider: "anthropic"   # This tells Angela WHICH provider to use
+  provider: "anthropic"   # tells Angela which provider to use
   model: "claude-sonnet-4-20250514"
 ```
 
-The key alone isn't enough — Lore needs to know which provider to send it to.
+The key alone is not enough — lore also needs to know which provider to route it to.
 
 ### "Can I have different keys per project?"
 
@@ -168,11 +178,11 @@ Yes. `.lorerc.local` is per-project (it lives in your project root, not globally
 
 ## Tips & Tricks
 
-- **Always use `lore config set-key`** rather than editing `.lorerc.local` manually — the keychain is more secure.
-- **CI/CD:** Use `LORE_AI_API_KEY` env var — no keychain needed in CI.
-- **Ollama = free:** No API key, no cost. Great for experimenting before committing to a paid provider.
-- **Rotate keys:** `delete-key` then `set-key` to replace an expired or compromised key.
-- **Validate after setup:** Run `lore angela draft` on any document to confirm the provider works.
+- **Prefer `lore config set-key`** over editing `.lorerc.local` manually — the keychain is more secure.
+- **CI/CD:** Use the `LORE_AI_API_KEY` env var — no keychain needed in CI.
+- **Ollama = free:** No API key, no cost. Ideal for experimenting before committing to a paid provider.
+- **Rotate keys:** Run `delete-key` then `set-key` to replace an expired or compromised key.
+- **Validate after setup:** Run `lore angela draft` on any document to confirm the provider is working.
 
 ## Exit Codes
 

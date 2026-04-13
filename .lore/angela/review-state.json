@@ -1,0 +1,283 @@
+{
+  "version": 1,
+  "last_run": "2026-04-12T17:23:13.769701Z",
+  "findings": {
+    "1e80b56f40435932": {
+      "finding": {
+        "severity": "style",
+        "title": "Inconsistent naming: 'comparaison' vs expected 'comparison' in English doc",
+        "description": "The English comparison guide is named 'guides/comparaison.md' (French spelling) instead of 'guides/comparison.md', while its French counterpart is 'guides/comparaison.fr.md'. This is inconsistent with the rest of the corpus where English docs use English filenames (e.g., 'guides/philosophy.md', 'guides/configuration.md').",
+        "documents": [
+          "guides/comparaison.md",
+          "guides/comparaison.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/comparaison.md",
+            "quote": "Why Commit-Time Matters"
+          },
+          {
+            "file": "guides/comparaison.fr.md",
+            "quote": "Pourquoi le moment du commit compte"
+          }
+        ],
+        "confidence": 0.85,
+        "hash": "1e80b56f40435932",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T16:39:43.93743Z",
+      "last_seen": "2026-04-12T16:39:43.93743Z"
+    },
+    "5ee2eee435b32654": {
+      "finding": {
+        "severity": "gap",
+        "title": "VHS demo tape referenced but never documented",
+        "description": "Both index.md and index.fr.md reference a demo GIF (assets/demo.gif) generated from a VHS tape (assets/demo.tape), but there is no document in the corpus describing this tape, its commands, or how to regenerate it. This is an orphan GIF reference with no tape source documented.",
+        "documents": [
+          "index.md",
+          "index.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "index.md",
+            "quote": "![Demo](assets/demo.gif) \u003c!-- Generate: vhs assets/demo.tape --\u003e"
+          },
+          {
+            "file": "index.fr.md",
+            "quote": "![Demo](assets/demo.gif) \u003c!-- Générer : vhs assets/demo.tape --\u003e"
+          }
+        ],
+        "confidence": 0.7,
+        "hash": "5ee2eee435b32654",
+        "diff_status": "persisting"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T16:39:43.93743Z",
+      "last_seen": "2026-04-12T16:40:23.832389Z"
+    },
+    "699241651b33f38b": {
+      "finding": {
+        "severity": "gap",
+        "title": "Angela 'review' mode mentioned in CI guide but CI script only documents 'draft' and 'review' without clear API key distinction",
+        "description": "The angela-ci guide states that 'draft' mode is free and requires no API key, and the modes table shows two modes. However, the CI guide's script options say 'The portable script supports both draft and review modes' but the commands/angela-review.md describes review as requiring corpus-wide AI analysis. There is no CI-specific documentation for how review mode works in CI with API keys, cost implications, or provider configuration in a headless environment.",
+        "documents": [
+          "guides/angela-ci.md",
+          "commands/angela-review.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/angela-ci.md",
+            "quote": "| `draft` | No | Free | Structure, style, coherence, personas |"
+          },
+          {
+            "file": "commands/angela-review.md",
+            "quote": "Analyzes the entire documentation corpus for coherence: contradictions between documents, isolated documents, stale content, coverage gaps. Combines l"
+          }
+        ],
+        "confidence": 0.6,
+        "hash": "699241651b33f38b",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T17:23:13.769678Z",
+      "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "83dc86353fc086ad": {
+      "finding": {
+        "severity": "gap",
+        "title": "LKS (Lore Knowledge Store) referenced in architecture but never documented",
+        "description": "The architecture documents (both EN and FR) mention 'LKS' as a reconstructible artifact alongside index and cache, but no guide or reference document explains what LKS is, its format, or how it works.",
+        "documents": [
+          "contributing/architecture.md",
+          "contributing/architecture.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "contributing/architecture.md",
+            "quote": "Markdown is source of truth** — index, cache, LKS are all reconstructible"
+          },
+          {
+            "file": "contributing/architecture.fr.md",
+            "quote": "Markdown = source de vérité** — index, cache, LKS sont tous reconstructibles"
+          }
+        ],
+        "confidence": 0.8,
+        "hash": "83dc86353fc086ad",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T17:23:13.769678Z",
+      "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "92fd5b7a0e9af9a0": {
+      "finding": {
+        "severity": "gap",
+        "title": "Missing document-types English version content for decision documents",
+        "description": "guides/document-types.md shows examples for 'JWT/stateless auth' and 'bugfix' document types but never shows a complete decision document example with the database choice (PostgreSQL), while its French counterpart guides/document-types.fr.md includes a PostgreSQL decision example. The English version appears to be missing the decision document type example.",
+        "documents": [
+          "guides/document-types.md",
+          "guides/document-types.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/document-types.fr.md",
+            "quote": "Nous avons besoin de transactions ACID pour le flux de paiement. Le driver pgx de PostgreSQL a un excellent support Go."
+          },
+          {
+            "file": "guides/document-types.md",
+            "quote": "The API was completely open. JWT gives us stateless auth that scales horizontally without session storage."
+          }
+        ],
+        "confidence": 0.55,
+        "hash": "92fd5b7a0e9af9a0",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T16:40:23.832389Z",
+      "last_seen": "2026-04-12T16:40:23.832389Z"
+    },
+    "9b106bc61d77cd9e": {
+      "finding": {
+        "severity": "style",
+        "title": "Inconsistent naming: 'exemples' used for English doc filename",
+        "description": "Similar to the comparaison issue, the English examples guide is named 'guides/exemples.md' (French spelling) instead of 'guides/examples.md', while all other English docs use English filenames.",
+        "documents": [
+          "guides/exemples.md",
+          "guides/exemples.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/exemples.md",
+            "quote": "Demo Repository"
+          },
+          {
+            "file": "guides/exemples.fr.md",
+            "quote": "Dépôt de démonstration"
+          }
+        ],
+        "confidence": 0.85,
+        "hash": "9b106bc61d77cd9e",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T16:39:43.93743Z",
+      "last_seen": "2026-04-12T16:39:43.93743Z"
+    },
+    "9e99560d69177b99": {
+      "finding": {
+        "severity": "style",
+        "title": "Inconsistent example content across unrelated command docs",
+        "description": "Several command reference documents use example 'Why' sections that describe a database decision (PostgreSQL) or auth decision (JWT) as illustrative content, but the specific details vary inconsistently. commands/new.md mentions 'Relational integrity for user accounts' and 'ACID transactions for the payment flow', commands/angela-polish.md shows a diff switching to PostgreSQL, and commands/release.md mentions 'Switch to PostgreSQL for data persistence'. While these are just examples, the quickstart guide uses a rate-limiting scenario instead, creating a fragmented narrative.",
+        "documents": [
+          "commands/new.md",
+          "commands/angela-polish.md",
+          "getting-started/quickstart.md"
+        ],
+        "evidence": [
+          {
+            "file": "commands/new.md",
+            "quote": "Relational integrity for user accounts. We need ACID transactions for the payment flow, and PostgreSQL's Go driver (pgx) is excellent."
+          },
+          {
+            "file": "getting-started/quickstart.md",
+            "quote": "API was getting 10K req/min from one client, causing latency for everyone."
+          }
+        ],
+        "confidence": 0.45,
+        "hash": "9e99560d69177b99",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T17:23:13.769678Z",
+      "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "a27cd7727b95d88e": {
+      "finding": {
+        "severity": "gap",
+        "title": "Missing 'lore express' / Express mode documentation",
+        "description": "The roadmap mentions 'Express mode' as a completed MVP feature, and the configuration guide references branch awareness from the 'Angela Enhancement Sprint', but there is no dedicated documentation for Express mode explaining what it is or how to use it. It appears in the roadmap's done list but has no command or guide page.",
+        "documents": [
+          "guides/roadmap.md",
+          "guides/roadmap.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/roadmap.md",
+            "quote": "Capture** — Post-commit hook, 3 questions, Express mode, con"
+          },
+          {
+            "file": "guides/roadmap.fr.md",
+            "quote": "Capture** — Hook post-commit, 3 questions, mode Expres"
+          }
+        ],
+        "confidence": 0.75,
+        "hash": "a27cd7727b95d88e",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T17:23:13.769678Z",
+      "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "e3fce20750ea02e5": {
+      "finding": {
+        "severity": "style",
+        "title": "Decision Engine threshold values only documented in architecture, not in contextual-detection",
+        "description": "The architecture doc describes the Decision Engine with specific score thresholds (score ≥ 60 for full questions, score 35-59 for reduced questions), but the contextual-detection guide — which is the user-facing documentation for the same detection chain — uses a rule-based priority table without mentioning scores. These appear to describe the same system with different mental models.",
+        "documents": [
+          "contributing/architecture.md",
+          "guides/contextual-detection.md"
+        ],
+        "evidence": [
+          {
+            "file": "contributing/architecture.md",
+            "quote": "C{Decision Engine} C --\u003e|score ≥ 60| D[Full questions] C --\u003e|score 35-59| E[Reduced qu"
+          },
+          {
+            "file": "guides/contextual-detection.md",
+            "quote": "When the hook fires after a commit, Lore evaluates a chain of rules before asking any questions. The first matching rule wins."
+          }
+        ],
+        "confidence": 0.7,
+        "hash": "e3fce20750ea02e5",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T17:23:13.769678Z",
+      "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "e800374ee61a949a": {
+      "finding": {
+        "severity": "gap",
+        "title": "Missing document-types English doc content for decision/feature examples",
+        "description": "The document-types guide (both EN and FR) contains example [Why] sections showing PostgreSQL and JWT decisions as sample content, but there is no actual decision document in the corpus capturing these real architectural choices. Multiple command docs (new.md, new.fr.md, show.md) also reference PostgreSQL and JWT decisions as examples, suggesting these are canonical examples but no dedicated decision doc exists.",
+        "documents": [
+          "guides/document-types.md",
+          "guides/document-types.fr.md",
+          "commands/new.md",
+          "commands/show.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/document-types.md",
+            "quote": "The API was completely open. JWT gives us stateless auth that scales horizontally without session storage."
+          },
+          {
+            "file": "commands/show.md",
+            "quote": "Stateless authentication scales better than sessions..."
+          },
+          {
+            "file": "commands/new.md",
+            "quote": "Relational integrity for user accounts. We need ACID transactions for the payment flow, and PostgreSQL's Go driver (pgx) is excellent."
+          }
+        ],
+        "confidence": 0.55,
+        "hash": "e800374ee61a949a",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-12T16:39:43.93743Z",
+      "last_seen": "2026-04-12T16:39:43.93743Z"
+    }
+  }
+}

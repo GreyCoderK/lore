@@ -50,7 +50,7 @@ func newReleaseCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 }
 
 func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, toFlag, versionFlag string, quiet bool) error {
-	// AC-8: Check if Lore is initialized
+	// Check if Lore is initialized
 	if _, err := os.Stat(".lore"); os.IsNotExist(err) {
 		if !quiet {
 			ui.ActionableError(streams, i18n.T().Cmd.ReleaseNotInitMsg, i18n.T().Cmd.ReleaseNotInitHint)
@@ -130,7 +130,7 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 		_, _ = fmt.Fprintf(streams.Err, "%s\n", ui.Warning(fmt.Sprintf(i18n.T().Cmd.ReleaseParseWarning, parseErr.Error())))
 	}
 
-	// AC-6: No documents
+	// No documents
 	if len(docs) == 0 {
 		if !quiet {
 			_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.ReleaseNoChanges)
@@ -183,7 +183,7 @@ func runRelease(streams domain.IOStreams, adapter domain.GitAdapter, fromFlag, t
 
 	// Output
 	if quiet {
-		// AC-7: stdout = path only
+		// stdout = path only
 		_, _ = fmt.Fprintln(streams.Out, filepath.Join(docsDir, filename))
 	} else {
 		ui.Verb(streams, "Released", filename)

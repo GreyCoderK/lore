@@ -1,3 +1,13 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - pending.md
+  - show.md
+  - ../guides/document-types.md
+  - ../getting-started/quickstart.md
+---
 # lore new
 
 Create a documentation entry on demand.
@@ -10,7 +20,7 @@ lore new [type] ["what"] ["why"] [flags]
 
 ## What Does This Do?
 
-`lore new` lets you write a documentation entry **manually**, without waiting for a commit. It's like opening your project journal and writing a new page whenever you want.
+`lore new` creates a documentation entry **manually**, without waiting for a commit.
 
 **Three ways to use it:**
 
@@ -20,7 +30,7 @@ lore new [type] ["what"] ["why"] [flags]
 | **One-liner** | `lore new feature "add auth" "stateless scales"` | Quick capture when you know what to write |
 | **Retroactive** | `lore new --commit abc1234` | Document a past commit you missed |
 
-> **Analogy:** If the post-commit hook is like a journalist following you in real-time, `lore new` is like sitting down with that journalist for a dedicated interview about something you did earlier.
+> **Analogy:** If the post-commit hook captures context in real time, `lore new` is the dedicated session where you document something you did earlier — or something that never produced a commit at all.
 
 ## Real World Scenario
 
@@ -165,7 +175,7 @@ Relational integrity for user accounts. We need ACID transactions
 for the payment flow, and PostgreSQL's Go driver (pgx) is excellent.
 
 ## Alternatives Considered
-- MongoDB: Flexible schema but we'd reimplent foreign keys in app code
+- MongoDB: Flexible schema but we'd reimplement foreign keys in app code
 - SQLite: Great for embedded use but not for multi-user API
 
 ## Impact
@@ -177,7 +187,7 @@ with golang-migrate.
 
 ### "What's the difference between `lore new` and the automatic hook?"
 
-The **hook** fires automatically after every commit — you don't need to think about it. `lore new` is for when you want to document something **deliberately**: a past commit, a decision made in a meeting, or a note that isn't tied to a specific commit.
+The **hook** fires automatically after every commit. Use `lore new` when you want to document something deliberately: a past commit, a decision made in a meeting, or a note not tied to any commit.
 
 ### "Can I edit a document after creating it?"
 

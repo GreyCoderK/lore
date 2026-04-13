@@ -1,0 +1,1657 @@
+{
+  "version": 2,
+  "last_run": "2026-04-12T23:39:27.437945Z",
+  "entries": {
+    "commands/angela-draft.fr.md": {
+      "content_hash": "sha256:6918fff74e5099a6eac47b633fdb514fe69a97fbc415c18f2aa74ad7386d7c06",
+      "last_analyzed": "2026-04-12T23:39:27.346811Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"faq.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/angela-ci.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/document-types.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-draft.md": {
+      "content_hash": "sha256:f7094c24f51f99f9518fbc0d15c37157ad157cd7409676f4a5b35def2828afa2",
+      "last_analyzed": "2026-04-12T23:39:27.347383Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"faq.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/angela-ci.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/document-types.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-polish.fr.md": {
+      "content_hash": "sha256:941ea0537bbcf119dc9f64f691cca28abe3be589f42dcc12c2f621d29c538e1f",
+      "last_analyzed": "2026-04-12T23:39:27.348057Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-polish.md": {
+      "content_hash": "sha256:f6cb1950b460fed38a92fa3a09366b91376ea7b3099d7606fb2dbe068815c2bc",
+      "last_analyzed": "2026-04-12T23:39:27.348898Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-review.fr.md": {
+      "content_hash": "sha256:b8aca6169339416a55d4e281072cacc35ddf79e16746c70f4d308936ded9e974",
+      "last_analyzed": "2026-04-12T23:39:27.349623Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/angela-ci.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-review.md": {
+      "content_hash": "sha256:0b18bdaac213e5cf017f8b405465b3289d1800f99dbefb9fc13fe6cc1aa0c086",
+      "last_analyzed": "2026-04-12T23:39:27.35011Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/angela-ci.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/check-update.fr.md": {
+      "content_hash": "sha256:639e5c164caecfdf3e1ff3c768d628e16a72d481c413af6393466d923482b29d",
+      "last_analyzed": "2026-04-12T23:39:27.350284Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/installation.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/check-update.md": {
+      "content_hash": "sha256:ef46005c09852304148b72fcc0b9a6569e7bb502d989c56f7d7998361bdac499",
+      "last_analyzed": "2026-04-12T23:39:27.350496Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/installation.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/completion.fr.md": {
+      "content_hash": "sha256:c0716d4aee9d9093929abbb15589d8f9a3742ca9aaecf72a835c2a1859eea01b",
+      "last_analyzed": "2026-04-12T23:39:27.350744Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/completions.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/completion.md": {
+      "content_hash": "sha256:5849ea3e4e3ec11c94fc4bc33ad17bbda34d15b0d140d740f143e52238b4f487",
+      "last_analyzed": "2026-04-12T23:39:27.350992Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/completions.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/config.fr.md": {
+      "content_hash": "sha256:5f104f76540a46d230f5eb66ff3623a13698035eb3287be4df2b4a196589beab",
+      "last_analyzed": "2026-04-12T23:39:27.351292Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/config.md": {
+      "content_hash": "sha256:90088fe7a458e191e131c7f9953f283cb61654d698b0c3d556be2057d5a95167",
+      "last_analyzed": "2026-04-12T23:39:27.351609Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/decision.fr.md": {
+      "content_hash": "sha256:349ce059ddbe60e704358d4c32d871b0b4d27bf669c84c677be6be5b7e96ee61",
+      "last_analyzed": "2026-04-12T23:39:27.351906Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/decision.md": {
+      "content_hash": "sha256:53a1b25fce75c7f62082b898d6df76f47cef4e73eaca769005a22756e2c1d406",
+      "last_analyzed": "2026-04-12T23:39:27.352284Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/delete.fr.md": {
+      "content_hash": "sha256:d8cc2c4d165595902b2a196b4cdb54d10ef9b4625caf578844f8b135e258de48",
+      "last_analyzed": "2026-04-12T23:39:27.35251Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/delete.md": {
+      "content_hash": "sha256:df109c4089bf6a0c3f01d5e1c91c92b056ce4ae826d355a00f86ed5958061953",
+      "last_analyzed": "2026-04-12T23:39:27.35275Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/demo.fr.md": {
+      "content_hash": "sha256:84b1473a72a6a174dcd6110713575ce00fef3eb9deebacf2a25a92ac6f3974be",
+      "last_analyzed": "2026-04-12T23:39:27.353018Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/philosophy.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/demo.md": {
+      "content_hash": "sha256:1820b2ba3636bfc1d0d20b5ae062eeaf8d620519623c38cae1c675788c550c09",
+      "last_analyzed": "2026-04-12T23:39:27.353274Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/philosophy.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/doctor.fr.md": {
+      "content_hash": "sha256:2f8b94c3019ac14b28185b2dc9df22eef737e538f18b85bf63c75666054986da",
+      "last_analyzed": "2026-04-12T23:39:27.353599Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/doctor.md": {
+      "content_hash": "sha256:a6f4e138e77718e29a4a398d2cd48ae1d6855735774676a527c33617c0b65908",
+      "last_analyzed": "2026-04-12T23:39:27.354061Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/hook.fr.md": {
+      "content_hash": "sha256:e678bf62c9d243f3667bd4a97ac2415ddeb79ef592a743151c7b2fd602e7d7ad",
+      "last_analyzed": "2026-04-12T23:39:27.354431Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/hook.md": {
+      "content_hash": "sha256:d6abdd45bc4bc93f37baf8fd5ddf8a158be8760b7ba7763651fc93609f9ae712",
+      "last_analyzed": "2026-04-12T23:39:27.354701Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/index.fr.md": {
+      "content_hash": "sha256:7e55933d6e8064fe9145897c198ec11285bd0d867cd278f15747e3cacd9130ef",
+      "last_analyzed": "2026-04-12T23:39:27.354866Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/document-types.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 75,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/index.md": {
+      "content_hash": "sha256:b53a72da8231c92cf283e82608186d53cdab7896db59a00aa61d7effc9ddcb5b",
+      "last_analyzed": "2026-04-12T23:39:27.355032Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/document-types.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 75,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/init.fr.md": {
+      "content_hash": "sha256:ce6ca4c730be6c8fa337045a9f5cfdbf9109c7d6360a3efbd8c19d708961e99f",
+      "last_analyzed": "2026-04-12T23:39:27.355294Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/init.md": {
+      "content_hash": "sha256:332e2f1e314c04ad73f05d71ba97eb98809ec34516cd8ab52d4496d73c2087e2",
+      "last_analyzed": "2026-04-12T23:39:27.355639Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/list.fr.md": {
+      "content_hash": "sha256:f1e8d9bbe9a7ca7e198b662b6206eaae01445b3566fb0e683a338b7956b662c9",
+      "last_analyzed": "2026-04-12T23:39:27.355844Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/list.md": {
+      "content_hash": "sha256:333da55c9d1b2dc96cf9303a28346f491a1c0eddc1d571a8a510eada92fc61b5",
+      "last_analyzed": "2026-04-12T23:39:27.356038Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/new.fr.md": {
+      "content_hash": "sha256:03623625c6f0a7dea8c208584dfa523f88f7dbbcb345f8f467882ec88b397313",
+      "last_analyzed": "2026-04-12T23:39:27.356358Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/document-types.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/new.md": {
+      "content_hash": "sha256:b1f088de6ec02aece8a0aa56693ca7ec4573ea34db2f38532dd6b2ea19c8665f",
+      "last_analyzed": "2026-04-12T23:39:27.356653Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/document-types.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/pending.fr.md": {
+      "content_hash": "sha256:5e6770718825e643ae6176d135e330eec46210b129afd862765c719c1c25f412",
+      "last_analyzed": "2026-04-12T23:39:27.356947Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/pending.md": {
+      "content_hash": "sha256:6da9c842503c699e5077489e526f68d1860da4786a96175df684bd6655b4f3a5",
+      "last_analyzed": "2026-04-12T23:39:27.357233Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/release.fr.md": {
+      "content_hash": "sha256:4826678305c0dc12b26302dfd24c588659802a122039e13658a2bc8bb02f0324",
+      "last_analyzed": "2026-04-12T23:39:27.35748Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/release.md": {
+      "content_hash": "sha256:c93517e344ef3366e39168137ae87cfe41dec47fc751aa3b03d712862db4aa2b",
+      "last_analyzed": "2026-04-12T23:39:27.357752Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/show.fr.md": {
+      "content_hash": "sha256:d6042057af59a230982523c0c895060519228a6b9375ff15c1059154ac4f27ed",
+      "last_analyzed": "2026-04-12T23:39:27.358Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.fr.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/show.md": {
+      "content_hash": "sha256:fe3772b432a1016118d6fac53421b83d589e7ad1ed3ade24a8eb406f11329a26",
+      "last_analyzed": "2026-04-12T23:39:27.358282Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/status.fr.md": {
+      "content_hash": "sha256:6f7716ba7b277eccf1a411b2dc2c278102670a9668bb78a105ad78863e81d191",
+      "last_analyzed": "2026-04-12T23:39:27.35851Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/status.md": {
+      "content_hash": "sha256:1add97957ec593d26698ee5a3db2976633e2ffb534be452d8ed1ad3222e97186",
+      "last_analyzed": "2026-04-12T23:39:27.358893Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/upgrade.fr.md": {
+      "content_hash": "sha256:0d62af0e36a9ab2b375fb1940948943529d197a38b146489a0a046d926de94ca",
+      "last_analyzed": "2026-04-12T23:39:27.359126Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/installation.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/upgrade.md": {
+      "content_hash": "sha256:d32637f121b64d442d448dc1dfd71c37bbb19f42fe0bcb73cc514e221d043d9d",
+      "last_analyzed": "2026-04-12T23:39:27.359355Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/installation.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "contributing/architecture.fr.md": {
+      "content_hash": "sha256:8461030cdd61a4ed6c7ff431d2db5dcbf807ede7a6dd01f6c8c005dab58ddd79",
+      "last_analyzed": "2026-04-12T23:39:27.359574Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "contributing/architecture.md": {
+      "content_hash": "sha256:f86f6bbc3c6906ae001de3ac3242573cf8d370e9dfa958717b1c4aa183a510cd",
+      "last_analyzed": "2026-04-12T23:39:27.359822Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/contextual-detection.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "faq.fr.md": {
+      "content_hash": "sha256:fef2107a7cc656b58fb7508153d2cca6ff6aa13a2a1d19f0d28dc899f5e08f80",
+      "last_analyzed": "2026-04-12T23:39:27.360357Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/angela-polish.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "faq.md": {
+      "content_hash": "sha256:4b4118d2e1e2a8d6e7ab58c6717a75f5c4cdac149da8fb21ee5bcb252b4022cc",
+      "last_analyzed": "2026-04-12T23:39:27.360866Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "getting-started/completions.fr.md": {
+      "content_hash": "sha256:3ba728cba6e4040cc2edc23c468ecec75392c2b8ce38af7918b1af7827cc47af",
+      "last_analyzed": "2026-04-12T23:39:27.361105Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/completion.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 75,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "getting-started/completions.md": {
+      "content_hash": "sha256:0ab544778774b9fd8a9645f9cc0cb113042004cad25faf29bc6a658dbe175d17",
+      "last_analyzed": "2026-04-12T23:39:27.361316Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/completion.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 75,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "getting-started/installation.fr.md": {
+      "content_hash": "sha256:07e3071e1fce6a67cd64e499c3afc8c7c4ee5cae68c7b025ce25a07b21833966",
+      "last_analyzed": "2026-04-12T23:39:27.361522Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 90,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "getting-started/installation.md": {
+      "content_hash": "sha256:0d4712dd5f7e3f6801a137bf27448325ec17f64e6a778fbb1e2e7d591272611e",
+      "last_analyzed": "2026-04-12T23:39:27.361725Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 90,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "getting-started/quickstart.fr.md": {
+      "content_hash": "sha256:d9842088cb12cb093a84f53fb47be50fb5879756319b662f291c2a33fd9843bf",
+      "last_analyzed": "2026-04-12T23:39:27.361893Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/angela-draft.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/angela-ci.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 75,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "getting-started/quickstart.md": {
+      "content_hash": "sha256:66612a0c4905bcff336d8b4cde1352de768b6245b1a1c12811f7bdbeca898cdb",
+      "last_analyzed": "2026-04-12T23:39:27.362066Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/angela-draft.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/angela-ci.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"guides/configuration.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 75,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/angela-ci.fr.md": {
+      "content_hash": "sha256:375ad8cd5b1212dc415b87ce0398d01e9027aa6345d3e6a29571b19722a5865c",
+      "last_analyzed": "2026-04-12T23:39:27.36257Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/angela-ci.md": {
+      "content_hash": "sha256:248b09d524e5c4f809e2ba8a07e44a9631dd4a4fce5e3c77eb9bc6e5fee8d264",
+      "last_analyzed": "2026-04-12T23:39:27.363218Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/comparaison.fr.md": {
+      "content_hash": "sha256:3862b3cd65ad43acffb159dc5042a5725fdcd00e233b379551a7746907bd4609",
+      "last_analyzed": "2026-04-12T23:39:27.363512Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"faq.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/comparison.md": {
+      "content_hash": "sha256:19a639d5c391b221477bbbb049f6aedc73141af2f6f16b1472f91d93dc8af884",
+      "last_analyzed": "2026-04-12T23:39:27.363778Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"faq.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"index.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/configuration.fr.md": {
+      "content_hash": "sha256:250de61924a1e9d7d672b95e8172957783e84d0a9a5886aaa1c0a4f4160a3c5f",
+      "last_analyzed": "2026-04-12T23:39:27.364451Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/config.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/doctor.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"faq.fr.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"faq.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/configuration.md": {
+      "content_hash": "sha256:0cbbd4241ca8070ad326faabd6e3063a666416a4bc8e2a6e4e1de09734b265be",
+      "last_analyzed": "2026-04-12T23:39:27.365597Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/config.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/doctor.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"faq.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 85,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/contextual-detection.fr.md": {
+      "content_hash": "sha256:6c578aaa12c86edfb8fd88333ecb2bdc7e6805f12a4052b6713a8c79ecf79cb9",
+      "last_analyzed": "2026-04-12T23:39:27.365983Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/decision.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/pending.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/contextual-detection.md": {
+      "content_hash": "sha256:c88da8fb3eae778680164ff5aefdd0fa7b08fec5d9bfb33f7e47cfe1d0e6d13e",
+      "last_analyzed": "2026-04-12T23:39:27.366308Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/decision.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/pending.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/document-types.fr.md": {
+      "content_hash": "sha256:63ebf74221efe057e7546edc3afb484f6853af7062a910c19b246c226ea9222e",
+      "last_analyzed": "2026-04-12T23:39:27.366564Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/list.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/new.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/show.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/document-types.md": {
+      "content_hash": "sha256:66360991248034cf06de10e9b2a95f508e05be4b380102cc03277b454872c45f",
+      "last_analyzed": "2026-04-12T23:39:27.366958Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/list.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/new.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"commands/show.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/examples.md": {
+      "content_hash": "sha256:7fe13fb88a902e9e54c659d0a7852f4ace8f7171058959d99f91139d8b85e719",
+      "last_analyzed": "2026-04-12T23:39:27.367117Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 80,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/exemples.fr.md": {
+      "content_hash": "sha256:aa4211e3d48e0217dacf9b6261fe7e6e4a2795345523f9fee5cab9ef3762ead8",
+      "last_analyzed": "2026-04-12T23:39:27.367249Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"getting-started/quickstart.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 80,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/philosophy.fr.md": {
+      "content_hash": "sha256:6b5fac6f635a3bb103ea7656c4c01f59fed8dc271fe8ddf153034e576f7699fa",
+      "last_analyzed": "2026-04-12T23:39:27.367476Z",
+      "suggestions": null,
+      "score": 65,
+      "grade": "C",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/philosophy.md": {
+      "content_hash": "sha256:a3eaa0110a69277fcb48a136cdf5e043f896b8bddad8085c1f33fce953e1b3eb",
+      "last_analyzed": "2026-04-12T23:39:27.367714Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "new"
+        }
+      ],
+      "score": 75,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/roadmap.fr.md": {
+      "content_hash": "sha256:5217afa866830f8372eba59372d3041ebe97e0713e10b8048176eb2b89f7a4b1",
+      "last_analyzed": "2026-04-12T23:39:27.367969Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"contributing/architecture.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 90,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "guides/roadmap.md": {
+      "content_hash": "sha256:ddc761774dc8a988034fec7a2dfdc1755c9106bd2144c6c98ff52968256ba5a8",
+      "last_analyzed": "2026-04-12T23:39:27.368228Z",
+      "suggestions": [
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Document \"contributing/architecture.md\" mentioned in body — consider adding to related",
+          "diff_status": "new"
+        }
+      ],
+      "score": 90,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "index.fr.md": {
+      "content_hash": "sha256:f3a97a8204bfad5f13650e60a96118262bf04902195262f16348a7215317d6b7",
+      "last_analyzed": "2026-04-12T23:39:27.368515Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "persisting"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "index.md": {
+      "content_hash": "sha256:d2bdac15ae4c2398e42f4400977c9b7b2efb7f56d0978537b17143ec1979f0cb",
+      "last_analyzed": "2026-04-12T23:39:27.368765Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Found paragraph(s) \u003e 5 lines — consider breaking into bullets",
+          "diff_status": "persisting"
+        }
+      ],
+      "score": 95,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    }
+  }
+}

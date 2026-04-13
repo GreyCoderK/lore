@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - list.md
+  - doctor.md
+---
 # lore delete
 
 Delete a document from the corpus.
@@ -10,7 +18,7 @@ lore delete <filename> [flags]
 
 ## What Does This Do?
 
-Removes a documentation file from `.lore/docs/`. Lore asks for confirmation before deleting (safety first).
+Removes a documentation file from `.lore/docs/`. Lore prompts for confirmation before deleting.
 
 > **Analogy:** Tearing a page out of your project journal. Lore makes sure you really want to, because once it's gone, the "why" is lost.
 
@@ -80,7 +88,7 @@ lore delete decision-auth-strategy-2026-03-07.md --force
 
 ## Tips & Tricks
 
-- **Prefer archiving over deleting:** Edit the file and set `status: archived` instead. This preserves the historical record.
+- **Prefer archiving over deleting:** Edit the file and set `status: archived`. This preserves the historical record.
 - **Bulk cleanup:** `lore list --type note --quiet | xargs -I{} lore delete {} --force` (careful!).
 - **After deleting:** Run `lore doctor` to check for broken references.
 
@@ -112,7 +120,7 @@ lore delete old-doc-2025-01-01.md --force
 
 ### "Should I delete or archive?"
 
-**Prefer archiving.** Edit the document and change `status: active` to `status: archived`. This preserves the historical record. Delete only when the document is truly wrong or harmful.
+**Prefer archiving.** Change `status: active` to `status: archived` in the document. This preserves the historical record. Delete only when the document is actively misleading or harmful.
 
 ### "I deleted a document but another doc references it"
 
@@ -120,7 +128,7 @@ Run `lore doctor` — it will flag the broken reference. You can then edit the r
 
 ### "Can I undo a delete?"
 
-If you have not committed yet: `git checkout -- .lore/docs/filename.md`. If you have committed: `git show HEAD~1:.lore/docs/filename.md > .lore/docs/filename.md`. The document is just a file — Git is your undo button.
+If you have not committed yet: `git checkout -- .lore/docs/filename.md`. If you have committed: `git show HEAD~1:.lore/docs/filename.md > .lore/docs/filename.md`. Documents are plain files — Git is your undo button.
 
 ## See Also
 

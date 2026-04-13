@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - list.md
+  - status.md
+  - ../guides/configuration.md
+---
 # lore show
 
 Search and display documents from your corpus.
@@ -10,9 +19,9 @@ lore show [keyword] [flags]
 
 ## What Does This Do?
 
-`lore show` is how you **read** your documentation. Give it a keyword, and it finds matching documents. Think of it like a search engine for your project's decision history.
+`lore show` searches your corpus by keyword and displays matching documents. Give it a term, and it finds every document whose title or content matches.
 
-> **Analogy:** If `.lore/docs/` is your project's diary, `lore show` is like flipping through it and finding the page where you wrote about "authentication".
+> **Analogy:** If `.lore/docs/` is your project's corpus, `lore show` is the search that surfaces the exact entry where you documented "authentication".
 
 ## Real World Scenario
 
@@ -51,7 +60,7 @@ lore show [keyword] [flags]
 
 ## How Search Works
 
-Lore searches through **titles** and **content** of all documents in `.lore/docs/`. It's not a fuzzy search (yet) — it matches exact keywords.
+Lore searches the **title** and **content** of every document in `.lore/docs/`. Search is exact, not fuzzy — a keyword must appear verbatim to match.
 
 ### One Result → Shows It Directly
 
@@ -131,9 +140,9 @@ lore show "JWT auth" > auth-decision.md
 
 ### "No results — what am I doing wrong?"
 
-- Check spelling — search is exact, not fuzzy
-- Try broader terms: "auth" instead of "authentication middleware"
-- Check if documents exist: `lore list`
+- Check spelling — search is exact, not fuzzy.
+- Try a broader term: `"auth"` instead of `"authentication middleware"`.
+- Confirm documents exist: `lore list`.
 
 ### "How is this different from `lore list`?"
 
@@ -149,7 +158,7 @@ Think of it as: `lore list` = table of contents, `lore show` = reading a specifi
 - **Pipe-friendly:** `lore show "auth" --quiet | less` for paging through results.
 - **Export:** `lore show "JWT auth" > auth-decision.md` saves a document to a file.
 - **Combine with grep:** `lore show "api" --quiet | grep decision` — filter results.
-- **No results?** Try broader terms. Search is exact (not fuzzy yet — fuzzy coming in Circle 4).
+- **No results?** Try broader terms — search is exact, not fuzzy.
 - **Type shorthands:** `--decision` is faster to type than `--type decision`.
 
 ## Exit Codes

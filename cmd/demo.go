@@ -46,12 +46,12 @@ func newDemoCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 }
 
 func runDemo(ctx context.Context, _ *config.Config, streams domain.IOStreams) error {
-	// AC-4: Check if Lore is initialized
+	// Check if Lore is initialized
 	if err := requireLoreDir(streams); err != nil {
 		return err
 	}
 
-	// AC-1: Temporal consent
+	// Temporal consent
 	if err := ui.Confirm(streams, i18n.T().Cmd.DemoConsentPrompt); err != nil {
 		return fmt.Errorf("cmd: demo consent: %w", err)
 	}

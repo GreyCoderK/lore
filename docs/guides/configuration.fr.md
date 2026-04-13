@@ -1,6 +1,16 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - contextual-detection.fr.md
+  - ../faq.fr.md
+  - ../commands/config.md
+  - ../commands/doctor.md
+---
 # Configuration
 
-Lore utilise un système de configuration en cascade.
+lore utilise un système de configuration en cascade.
 
 ## Fichiers de configuration
 
@@ -60,7 +70,7 @@ output:
 
 ## Branch Awareness (branche git)
 
-Depuis l'Angela Enhancement Sprint, Lore capture la **branche git** et le **scope du commit conventionnel** au moment du commit et les stocke dans le front matter du document :
+Depuis l'Angela Enhancement Sprint, lore capture la **branche git** et le **scope du commit conventionnel** au moment du commit et les stocke dans le front matter du document :
 
 ```yaml
 ---
@@ -80,7 +90,7 @@ Branch et scope utilisent `omitempty` dans la sortie YAML : les docs créés sur
 
 ### Impact sur le workflow amend
 
-Quand vous faites `git commit --amend` et qu'un doc existe déjà pour le commit pré-amend, Lore demande `Document this change? [Y/n]` (Question 0) puis propose `[U]pdate / [C]reate / [S]kip`. Configurable :
+Quand vous faites `git commit --amend` et qu'un doc existe déjà pour le commit pré-amend, lore demande `Document this change? [Y/n]` (Question 0) puis propose `[U]pdate / [C]reate / [S]kip`. Configurable :
 
 ```yaml
 hooks:
@@ -129,7 +139,7 @@ output:
   dir: .lore/docs
 ```
 
-Pas d'IA, pas de config de langue. Anglais par défaut, mode zéro-API. Simplicité maximale.
+Pas d'IA, pas de config de langue. Anglais par défaut, mode zéro-API.
 
 ### Projet open source
 
@@ -200,7 +210,7 @@ Meilleure qualité pour la documentation technique. Nécessite des crédits API 
 
 > **Important :** Un abonnement chat Claude.ai (Pro, Team) n'inclut PAS de crédits API. L'API est un produit séparé facturé sur [console.anthropic.com](https://console.anthropic.com). Vous avez besoin de crédits même si vous payez pour Claude.ai.
 
-**Étape 2 — Configurer Lore :**
+**Étape 2 — Configurer lore :**
 
 ```yaml
 # .lorerc
@@ -243,7 +253,7 @@ lore angela review                                       # 1 appel API, analyse 
 
 > **Note :** Un compte API OpenAI est séparé d'un abonnement ChatGPT. L'API utilise des crédits prépayés — pas de facturation récurrente sauf si vous activez l'auto-recharge.
 
-**Étape 2 — Configurer Lore :**
+**Étape 2 — Configurer lore :**
 
 ```yaml
 # .lorerc
@@ -315,7 +325,7 @@ Autres modèles recommandés :
 | `codellama` | 3.8Go | Meilleur pour les docs avec code | Rapide |
 | `gemma2` | 5.4Go | Bon pour l'écriture technique | Moyen |
 
-**Étape 3 — Configurer Lore :**
+**Étape 3 — Configurer lore :**
 
 ```yaml
 # .lorerc
@@ -412,7 +422,7 @@ lore doctor --config
 # ✗ clé inconnue "ai.providr" — vouliez-vous dire "ai.provider" ?
 ```
 
-Lore utilise la distance de Levenshtein pour suggérer des corrections de fautes de frappe.
+lore utilise la distance de Levenshtein pour suggérer des corrections de fautes de frappe.
 
 ## Voir aussi
 

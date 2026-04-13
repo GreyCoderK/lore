@@ -10,9 +10,20 @@ lore init [flags]
 
 ## Qu'est-ce que ça fait ?
 
-Pensez à `lore init` comme configurer un journal pour votre projet. De même qu'un journal a besoin d'un cahier avant de pouvoir écrire dedans, Lore a besoin d'un dossier `.lore/` avant de pouvoir capturer vos décisions.
+`lore init` prépare votre projet à documenter le "pourquoi" derrière vos changements de code. La commande crée le dossier `.lore/` et installe le hook Git qui déclenche le flux de questions après chaque commit.
 
-**En termes simples :** Cette commande prépare votre projet à documenter le "pourquoi" derrière vos changements de code.
+## Scénario concret
+
+> Vous venez de créer un nouveau projet Go. Vous avez lancé `git init`, écrit vos premiers fichiers, fait votre premier commit. Vous voulez que chaque futur commit porte son "pourquoi". Une seule commande :
+>
+> ```bash
+> lore init
+> ```
+>
+> Désormais, chaque `git commit` déclenche 3 questions. Votre projet a une mémoire.
+
+![lore init](../assets/vhs/init.gif)
+<!-- Generate: vhs assets/vhs/init.tape -->
 
 ## Prérequis
 
@@ -44,10 +55,7 @@ Lore fait 5 choses :
 4. **Installe le hook Git** — Un petit script qui déclenche Lore après chaque commit
 5. **Propose une démo** — Vous montre comment Lore fonctionne en ~45 secondes
 
-> **Analogie :** Pensez au hook Git comme un post-it sur votre écran qui dit "Pourquoi tu viens de faire ça ?" après chaque commit. C'est automatique — pas besoin de se rappeler de documenter.
-
-![lore init](../assets/vhs/init.gif)
-<!-- Generate: vhs assets/vhs/init.tape -->
+> **Analogie :** Le hook Git agit comme un rappel automatique après chaque commit — plus besoin de penser à documenter.
 
 ## Flags
 
@@ -117,7 +125,7 @@ Après `lore init`, la prochaine fois que vous lancez `git commit`, Lore posera 
 2. **Quoi** — Pré-rempli depuis votre message de commit. Appuyez sur Entrée.
 3. **Pourquoi** — La question importante ! Pourquoi ce choix ?
 
-C'est tout — 90 secondes, et le "pourquoi" est capturé pour toujours.
+Le "pourquoi" est capturé en quelques secondes et conservé durablement avec votre code.
 
 ## Tips & Tricks
 

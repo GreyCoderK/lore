@@ -1,3 +1,28 @@
+---
+type: landing
+date: 2026-04-12
+status: published
+related:
+  - getting-started/installation.md
+  - getting-started/quickstart.md
+  - commands/index.md
+  - guides/philosophy.md
+  - guides/comparaison.fr.md
+  - guides/configuration.md
+  - guides/document-types.md
+  - guides/contextual-detection.md
+  - guides/roadmap.md
+  - faq.md
+  - contributing/architecture.md
+  - guides/angela-ci.md
+  - guides/philosophy.fr.md
+  - guides/configuration.fr.md
+  - guides/contextual-detection.fr.md
+  - guides/roadmap.fr.md
+  - guides/document-types.fr.md
+  - faq.fr.md
+  - contributing/architecture.fr.md
+---
 # Lore
 
 > **L'or de vos décisions techniques.**
@@ -13,7 +38,7 @@
 
 Vous êtes à 50 commits. Six mois plus tard, quelqu'un demande : *"Pourquoi on a fait ça comme ça ?"*
 
-Git blame montre **qui** a changé **quoi** et **quand**. Mais pas **pourquoi**. Le raisonnement a disparu — enfoui dans un thread Slack, un commentaire de PR, ou la mémoire d'un développeur parti.
+`git blame` montre **qui** a changé **quoi** et **quand** — mais pas **pourquoi**. Le raisonnement a disparu : enfoui dans un thread Slack, un commentaire de PR, ou la mémoire d'un développeur parti.
 
 ## La solution
 
@@ -27,13 +52,13 @@ $ git commit -m "feat: add JWT auth middleware"
   ✓ Capturé : feature-add-jwt-auth-2026-03-16.md
 ```
 
-Lore s'intègre dans votre workflow Git et pose **3 questions** après chaque commit. Les réponses deviennent un fichier Markdown dans votre repo — cherchable, versionnable, portable. Pas de wiki. Pas de SaaS. Zéro friction.
+lore s'intègre dans votre workflow Git et pose **3 questions** après chaque commit. Les réponses deviennent un fichier Markdown dans votre repo — cherchable, versionnable, portable. Pas de wiki. Pas de SaaS. Zéro friction.
 
 ## Comment ça marche
 
 ```mermaid
 graph LR
-    A[git commit] --> B[Le hook Lore se déclenche]
+    A[git commit] --> B[Le hook lore se déclenche]
     B --> C[3 questions : Type, Quoi, Pourquoi]
     C --> D[Document Markdown créé]
     D --> E[Cherchable avec lore show]
@@ -62,7 +87,7 @@ graph LR
 
 - :material-head-question: **[Philosophie](guides/philosophy.md)**
 
-    Pourquoi Lore existe et les principes qui le guident
+    Pourquoi lore existe et les principes qui le guident
 
 </div>
 
@@ -86,7 +111,7 @@ graph LR
 
 ## Angela — Votre compagne IA de documentation
 
-Angela est la revieweuse embarquée de Lore. Pensez à elle comme une collègue qui a lu chaque document que votre équipe a jamais écrit :
+Angela est la revieweuse embarquée de lore — une collègue qui a lu chaque document que votre équipe a jamais écrit :
 
 - **`lore angela draft`** — Analyse gratuite, hors ligne : sections manquantes, style, documents liés
 - **`lore angela polish`** — Réécriture assistée par IA avec revue de diff interactive
@@ -100,10 +125,10 @@ Angela fonctionne aussi comme **quality gate CI standalone** sur n'importe quel 
 
 ## En savoir plus
 
-- [Comparaison](guides/comparaison.md) — Comparaison détaillée avec les alternatives
-- [Configuration](guides/configuration.md) — Personnalisez Lore pour votre workflow
+- [Comparaison](guides/comparaison.fr.md) — Comparaison détaillée avec les alternatives
+- [Configuration](guides/configuration.md) — Personnalisez lore pour votre workflow
 - [Types de documents](guides/document-types.md) — decision, feature, bugfix, refactor, note
 - [Détection contextuelle](guides/contextual-detection.md) — Comment le hook décide quoi faire
-- [Roadmap](guides/roadmap.md) — Où va Lore
+- [Roadmap](guides/roadmap.md) — Où va lore
 - [FAQ](faq.md) — Questions fréquentes
 - [Architecture](contributing/architecture.md) — Pour les contributeurs

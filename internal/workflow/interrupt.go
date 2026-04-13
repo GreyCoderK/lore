@@ -80,7 +80,7 @@ func errIsExist(err error) bool {
 
 // PendingRecord is the YAML structure written to .lore/pending/{hash}.yaml
 // on Ctrl+C or non-TTY deferral. The file is retained for manual inspection
-// until `lore pending` (Epic 10) processes it.
+// until `lore pending` processes it.
 type PendingRecord struct {
 	Commit  string         `yaml:"commit"`
 	Date    string         `yaml:"date"`

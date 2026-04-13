@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - new.md
+  - ../guides/contextual-detection.md
+  - doctor.md
+---
 # lore pending
 
 Manage commits that weren't documented yet.
@@ -10,14 +19,14 @@ lore pending [list|resolve|skip] [flags]
 
 ## What Does This Do?
 
-Sometimes commits can't be documented right away:
-- You were in **CI** (no terminal to answer questions)
-- You pressed **Ctrl+C** (interrupted the questions)
-- Git was doing a **rebase** (not the right time to ask)
+Some commits cannot be documented right away:
+- You committed from **CI** (no terminal available)
+- You pressed **Ctrl+C** (questions were interrupted)
+- Git was performing a **rebase** (not the right time to ask)
 
-These commits go to the **pending queue**. `lore pending` helps you manage that queue.
+These commits enter the **pending queue**. `lore pending` helps you manage that queue.
 
-> **Analogy:** Think of pending commits like sticky notes on your desk that say "document me later." `lore pending` is looking at those sticky notes and deciding what to do with each one.
+> **Analogy:** Pending commits are sticky notes that say "document me later." `lore pending` helps you work through each one.
 
 ## Real World Scenario
 
@@ -155,8 +164,8 @@ lore pending resolve --commit abc1234 \
 - **Check after rebase:** Rebased commits always go to pending. Make it a habit: `git rebase` → `lore pending`.
 - **Ctrl+C is safe:** Pressing Ctrl+C during questions never loses data. Partial answers are saved.
 - **Batch in CI:** `lore pending --quiet | wc -l` gives you the count for CI gates.
-- **Don't let pending pile up:** Resolve pending commits while the context is fresh. A week later, you won't remember "why."
-- **Skip liberally:** Not every commit needs docs. `lore pending skip` for trivial changes.
+- **Don't let pending pile up:** Resolve commits while the context is fresh. A week later, the "why" is harder to recall.
+- **Skip liberally:** Not every commit needs documentation. Use `lore pending skip` for trivial changes.
 
 ## Exit Codes
 
@@ -174,7 +183,7 @@ No. Pending commits stay until you resolve or skip them. Lost context is the pro
 
 ### "I have 50 pending commits"
 
-Be selective. Recent ones (last few days) still have fresh context — resolve those. Older ones: skim `git show <hash>` and either write a quick "why" or `lore pending skip` for trivial ones.
+Be selective. Resolve recent commits first — their context is still fresh. For older ones, skim `git show <hash>` and either write a quick "why" or run `lore pending skip` for trivial commits.
 
 ### "Why didn't Lore ask me during the commit?"
 

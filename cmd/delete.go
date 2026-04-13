@@ -45,7 +45,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			docsDir := filepath.Join(".lore", "docs")
 			docPath := filepath.Join(docsDir, filename)
 
-			// AC-5: read document — produces friendly error if missing
+			// Read document — produces friendly error if missing
 			data, err := os.ReadFile(docPath)
 			if os.IsNotExist(err) {
 				_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Error("Error:"), fmt.Sprintf(i18n.T().Cmd.DeleteNotFound, filename))
@@ -58,7 +58,7 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				return fmt.Errorf("cmd: delete: parse %s: %w", filename, err)
 			}
 
-			// AC-4: warn about incoming references before confirmation
+			// Warn about incoming references before confirmation
 			refs, refErr := storage.FindReferencingDocs(docsDir, filename)
 			if refErr != nil {
 				_, _ = fmt.Fprintf(streams.Err, "Warning: %v\n", refErr)
@@ -71,23 +71,23 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				_, _ = fmt.Fprintf(streams.Err, "%s\n", i18n.T().Cmd.DeleteRefNotUpdated)
 			}
 
-			// AC-3: demo documents skip confirmation
+			// Demo documents skip confirmation
 			needConfirm := meta.Status != "demo" && !force
 
 			if needConfirm {
-				// AC-8: non-TTY without --force → refuse
+				// Non-TTY without --force → refuse
 				if !deleteIsTTY(streams) {
 					_, _ = fmt.Fprintf(streams.Err, "%s %s\n", ui.Error("Error:"), i18n.T().Cmd.DeleteForceRequired)
 					return fmt.Errorf("cmd: delete: %w", domain.ErrNotInteractive)
 				}
 
-				// AC-2: interactive confirmation
+				// Interactive confirmation
 				if cmd.Context().Err() != nil {
 					return cmd.Context().Err()
 				}
 				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.DeleteConfirmPrompt, filename)
 				// Read stdin byte-by-byte instead of bufio.NewReader to avoid
-				// buffering ahead — same pattern as proactive.go AC-4 confirmation.
+				// buffering ahead — same pattern as proactive.go confirmation.
 				var answerBuf []byte
 				b := make([]byte, 1)
 				for {
@@ -109,12 +109,12 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				}
 			}
 
-			// AC-1: delete the document
+			// Delete the document
 			if err := storage.DeleteDoc(docsDir, filename); err != nil {
 				return fmt.Errorf("cmd: delete: %w", err)
 			}
 
-			// AC-1: success message with red verb
+			// Success message with red verb
 			ui.VerbDelete(streams, filename)
 			return nil
 		},

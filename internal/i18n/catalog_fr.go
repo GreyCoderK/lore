@@ -250,6 +250,17 @@ var catalogFR = &Messages{
 		AngelaPolishStep2Done:   "Réponse IA reçue",
 		AngelaPolishStep3:       "Calcul du diff…",
 
+		// Polish safety nets
+		AngelaPolishBackupCreated:   "Sauvegarde enregistrée : %s",
+		AngelaPolishBackupPruneWarn: "Attention : purge des sauvegardes : %s",
+		AngelaPolishBackupDisabled:  "Les sauvegardes polish sont désactivées. Les modifications ne sont pas récupérables.",
+		AngelaPolishRestoreShort:    "Restaurer une sauvegarde polish",
+		AngelaPolishRestoreNoBackup: "Aucune sauvegarde trouvée pour %s",
+		AngelaPolishRestoreOK:       "%s restauré depuis la sauvegarde %s",
+		AngelaPolishRestoreListHdr:  "Sauvegardes pour %s (plus récente en premier) :",
+		AngelaPolishRestoreListRow:  "  %s  (%s)",
+		AngelaPolishRestoreUnknown:  "Aucune sauvegarde trouvée pour l'horodatage %s",
+
 		// angela_review.go
 		AngelaReviewShort:      "Analyser la cohérence de tout votre corpus de documentation",
 		AngelaReviewNoProvider: "aucun fournisseur IA configuré, définissez ai.provider dans .lorerc.local",
@@ -266,6 +277,11 @@ var catalogFR = &Messages{
 		AngelaReviewStep1:      "Préparation des résumés pour %d documents…",
 		AngelaReviewStep2:      "Appel au fournisseur IA pour analyser %d documents…",
 		AngelaReviewStep2Done:  "Réponse IA reçue",
+
+		// Evidence-required findings rejection output
+		AngelaReviewRejectedCount: "⚠ %d résultats rejetés (pas de preuves vérifiables). Lancez avec --verbose pour les détails.",
+		AngelaReviewRejectedLine:  "  - %q — %s",
+
 		AngelaPolishModified:   "document modifié pendant la revue. Annulation pour éviter la perte de données",
 
 		// decision.go
@@ -360,6 +376,8 @@ Pour charger les complétions :
 		ReadmeBridgeLink:    "En savoir plus : https://github.com/greycoderk/lore#quickstart",
 		ReadmeBridgeGenNote: "Ce fichier a été généré par `lore init`. N'hésitez pas à le modifier.",
 
+		InteractiveFallback: "mode interactif non disponible hors TTY, retour à la sortie standard\n",
+
 		BadgeCoverageDetail:  "Couverture : %d%% (%d éligibles : %d documentés, %d ignorés, %d manquants)",
 		BadgeNoEligible:      "aucun commit éligible",
 		BadgeSkipRateWarning: "⚠ Taux d'ignorés : %d%% (%d/%d commits éligibles ignorés)",
@@ -418,15 +436,18 @@ Pour charger les complétions :
 		DraftMissingWhy:        `La section "## Why" est manquante`,
 		DraftMissingAltWarn:    `La section "## Alternatives" est manquante`,
 		DraftMissingAltInfo:    `La section "## Alternatives" est manquante`,
-		DraftMissingImpact:     `La section "## Impact" est manquante`,
-		DraftBodyTooShort:      "Le corps du document est trop court (< 50 caractères)",
-		DraftBodyExceedsMax:    "Le corps dépasse la longueur maximale recommandée",
-		DraftAddTags:           "Envisagez d'ajouter des tags pour la découvrabilité",
-		DraftAddRelated:        "Envisagez d'ajouter des références à des documents liés",
-		DraftWhyTooBrief:       `La section "## Why" est trop brève (< 20 caractères)`,
-		CoherencePossibleDup:   "Doublon possible : %s (même type, tags partagés : %s)",
-		CoherenceRelatedFound:  "Document lié trouvé : %s (tags partagés : %s)",
-		CoherenceMentionedBody: "Le document %q est mentionné dans le corps — envisagez de l'ajouter aux références",
+		DraftMissingImpact:        `La section "## Impact" est manquante`,
+		DraftBodyTooShort:         "Le corps du document est trop court (< 50 caractères)",
+		DraftBodyExceedsMax:       "Le corps dépasse la longueur maximale recommandée",
+		DraftAddScope:             "Envisagez d'ajouter un scope pour la découvrabilité et la consolidation",
+		DraftAddTags:              "Envisagez d'ajouter des tags pour la découvrabilité",
+		DraftAddRelated:           "Envisagez d'ajouter des références à des documents liés",
+		DraftWhyTooBrief:          `La section "## Why" est trop brève (< 20 caractères)`,
+		CoherencePossibleDup:      "Doublon possible : %s (même type, tags partagés : %s)",
+		CoherenceRelatedFound:     "Document lié trouvé : %s (tags partagés : %s)",
+		CoherenceSameScopeOverlap: "Même scope %q et même type : %s — recouvrement possible, envisagez une consolidation",
+		CoherenceSameScopeRelated: "Même scope %q : %s [%s] — envisagez de l'ajouter aux références",
+		CoherenceMentionedBody:    "Le document %q est mentionné dans le corps — envisagez de l'ajouter aux références",
 		DiffChangeHeader:       "--- Modification %d/%d ---",
 		DiffApplyPrompt:        "Appliquer ? [o]ui / [n]on / [q]uitter : ",
 		DiffApplyBothPrompt:    "Appliquer ? [o]ui / [n]on / [l]es deux / [q]uitter : ",
@@ -447,6 +468,15 @@ Pour charger les complétions :
 		ReviewParseError:       "angela : revue : impossible d'analyser la réponse IA en JSON. Réessayez",
 		ReviewMinDocs:          "au moins 5 documents requis pour la revue, vous en avez %d — continuez à documenter",
 		StyleUnknownRule:       "guide de style : règle inconnue %q (ignorée)",
+
+		// polish — hallucination check
+		PolishHallucinationWarn:   "⚠ Le polissage a ajouté des affirmations potentiellement non étayées :",
+		PolishHallucinationReject: "Rejeté : utilisez --hallucination-strictness=warn ou --force pour continuer.",
+		PolishHallucinationHint:   "Vérifiez attentivement la sortie. Utilisez --hallucination-strictness=reject pour bloquer.",
+
+		// review — differential summary
+		ReviewDiffSummary:  "Diff : %d nouveaux, %d persistants, %d régressés, %d résolus\n",
+		ReviewDiffResolved: "Résolus depuis la dernière exécution :\n",
 
 		// Runtime UI
 		UIMode:              "Mode : réécriture pour → %s",

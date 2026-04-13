@@ -1,3 +1,31 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - init.md
+  - new.md
+  - show.md
+  - list.md
+  - status.md
+  - delete.md
+  - pending.md
+  - doctor.md
+  - hook.md
+  - config.md
+  - release.md
+  - demo.md
+  - decision.md
+  - angela-draft.md
+  - angela-polish.md
+  - angela-review.md
+  - check-update.md
+  - upgrade.md
+  - completion.md
+  - ../guides/document-types.md
+  - ../guides/contextual-detection.md
+  - ../guides/configuration.md
+---
 # Commands Overview
 
 All Lore CLI commands at a glance.

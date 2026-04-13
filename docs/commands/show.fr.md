@@ -10,9 +10,9 @@ lore show [mot-clé] [flags]
 
 ## Qu'est-ce que ça fait ?
 
-`lore show` est la façon de **lire** votre documentation. Donnez un mot-clé, et il trouve les documents correspondants. C'est un moteur de recherche pour l'historique des décisions de votre projet.
+`lore show` recherche votre corpus par mot-clé et affiche les documents correspondants. Donnez un terme, et il trouve chaque document dont le titre ou le contenu correspond.
 
-> **Analogie :** Si `.lore/docs/` est le journal de votre projet, `lore show` c'est feuilleter pour trouver la page où vous avez écrit à propos de "authentication".
+> **Analogie :** Si `.lore/docs/` est votre corpus de projet, `lore show` est la recherche qui remonte l'entrée exacte où vous avez documenté "authentication".
 
 ## Scénario concret
 
@@ -50,6 +50,8 @@ lore show [mot-clé] [flags]
 > Les raccourcis de type sont mutuellement exclusifs.
 
 ## Comment la recherche fonctionne
+
+Lore recherche le **titre** et le **contenu** de chaque document dans `.lore/docs/`. La recherche est exacte, pas fuzzy — un mot-clé doit apparaître tel quel pour correspondre.
 
 ### Un résultat → Affiché directement
 
@@ -93,18 +95,27 @@ lore show "auth" --quiet
 
 ## Exemples
 
+### Recherche basique
+
 ```bash
-# Recherche basique
+# Trouver les documents sur "database"
 lore show "database"
 
-# Filtrer par type
-lore show "middleware" --decision
+# Toutes les décisions sur l'API
+lore show "api" --decision
 
-# Filtrer par date
-lore show "api" --after 2026-03
+# Documents récents
+lore show "rate" --after 2026-03
+```
 
+### Combiné avec d'autres commandes
+
+```bash
 # Pipe vers less
 lore show "auth" --quiet | less
+
+# Compter les décisions sur un sujet
+lore show "auth" --decision --quiet | wc -l
 
 # Exporter un document
 lore show "JWT auth" > auth-decision.md
@@ -120,6 +131,11 @@ lore show "JWT auth" > auth-decision.md
 
 ### "Différence avec `lore list` ?"
 
+| Commande | But |
+|----------|-----|
+| `lore list` | Afficher TOUS les documents avec métadonnées (type, date, tags) |
+| `lore show` | **Rechercher** des documents spécifiques par mot-clé et afficher le contenu |
+
 `lore list` = table des matières. `lore show` = lire un chapitre spécifique.
 
 ## Tips & Tricks
@@ -127,7 +143,7 @@ lore show "JWT auth" > auth-decision.md
 - **Pipe-friendly :** `lore show "auth" --quiet | less` pour paginer.
 - **Export :** `lore show "JWT auth" > auth-decision.md` sauvegarde un document.
 - **Combiner avec grep :** `lore show "api" --quiet | grep decision` — filtrer.
-- **Pas de résultats ?** Termes plus larges. Fuzzy search arrive au Cercle 4.
+- **Pas de résultats ?** Termes plus larges — la recherche est exacte, pas fuzzy.
 - **Raccourcis type :** `--decision` est plus rapide que `--type decision`.
 
 ## Codes de sortie

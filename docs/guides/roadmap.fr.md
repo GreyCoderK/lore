@@ -1,6 +1,14 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - philosophy.md
+  - ../contributing/architecture.md
+---
 # Roadmap
 
-Où va Lore — de la capture à l'intelligence.
+Où va lore — de la capture à l'intelligence.
 
 ## La vision globale
 
@@ -11,11 +19,11 @@ graph LR
     C --> D["...<br/>À venir"]
 ```
 
-> **Aujourd'hui, Lore capture.** Demain, Lore comprend, connecte et partage.
+> **Aujourd'hui, lore capture.** Demain, lore comprend, connecte et partage.
 
 ## Ce qui est fait (Cercles 1 + 2 + 2b)
 
-Le MVP est complet. Lore capture le "pourquoi" au moment du commit et le rend cherchable :
+Le MVP est complet. lore capture le "pourquoi" au moment du commit et le rend cherchable :
 
 - **Capture** — Hook post-commit, 3 questions, mode Express, détection contextuelle
 - **Recherche** — `lore show`, `lore list`, `lore status`
@@ -62,13 +70,13 @@ Aujourd'hui, chaque document est autonome. Le Cercle 4 vise à les tisser en ré
 
 ## Ce qui vient après
 
-Le corpus que vous construisez aujourd'hui — structuré, connecté, cherchable — devient la fondation de futures fonctionnalités d'intelligence. Les détails émergeront au fur et à mesure que nous livrerons les Cercles 3 et 4.
+Le corpus que vous construisez aujourd'hui — structuré, connecté, cherchable — devient la fondation de futures fonctionnalités d'intelligence. Les détails émergeront à mesure que les Cercles 3 et 4 seront livrés.
 
-Le CLI restera toujours gratuit. Le corpus restera toujours le vôtre. Et le "pourquoi" que vous capturez aujourd'hui prendra de la valeur avec chaque future release.
+Le CLI sera toujours gratuit. Le corpus sera toujours le vôtre. Et le "pourquoi" que vous capturez aujourd'hui prendra de la valeur avec chaque future release.
 
 > *Suivez le projet sur [GitHub](https://github.com/GreyCoderK/lore) pour rester informé.*
 
 ## Voir aussi
 
-- [Philosophie](philosophy.md) — Pourquoi Lore existe
-- [Architecture](../contributing/architecture.md) — Comment Lore est construit
+- [Philosophie](philosophy.md) — Pourquoi lore existe
+- [Architecture](../contributing/architecture.md) — Comment lore est construit

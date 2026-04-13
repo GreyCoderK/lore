@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - ../getting-started/completions.md
+  - index.md
+---
 # lore completion
 
 Generate shell completion scripts for tab-completion of all commands and flags.
@@ -10,7 +18,7 @@ lore completion <bash|zsh|fish|powershell>
 
 ## What Does This Do?
 
-After setup, typing `lore ` and pressing Tab shows all available commands. Typing `lore an<TAB>` completes to `lore angela`. Typing `lore angela <TAB>` shows `draft`, `polish`, `review`. It saves keystrokes and helps you discover commands you didn't know existed.
+After setup, pressing Tab after `lore ` shows all available commands. `lore an<TAB>` completes to `lore angela`, and `lore angela <TAB>` shows `draft`, `polish`, `review`. Tab completion saves keystrokes and surfaces commands you didn't know existed.
 
 > **Analogy:** It's like autocomplete on your phone keyboard — but for Lore commands in your terminal.
 
@@ -136,11 +144,11 @@ echo $SHELL
 # → /usr/bin/fish → lore completion fish
 ```
 
-On macOS, the default is Zsh since Catalina. On most Linux distros, it's Bash.
+On macOS, the default shell is Zsh since Catalina. On most Linux distros, it's Bash.
 
-### "Do I need to re-run this after upgrading Lore?"
+### "Do I need to re-run this after upgrading lore?"
 
-Only if new commands were added. The completion script is generated from Lore's current command list. After `lore upgrade`, regenerate:
+Only if new commands were added. The completion script reflects lore's command list at generation time. After `lore upgrade`, regenerate:
 
 ```bash
 eval "$(lore completion zsh)"

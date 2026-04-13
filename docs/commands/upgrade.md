@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - check-update.md
+  - ../getting-started/installation.md
+---
 # lore upgrade
 
 Upgrade lore to the latest version — or a specific one.
@@ -10,9 +18,7 @@ lore upgrade [flags]
 
 ## What Does This Do?
 
-Think of `lore upgrade` like updating an app on your phone, but for your CLI. Instead of going to a website, downloading a new binary, and replacing the old one manually, this single command handles everything: checking what's new, downloading, verifying the file integrity, and swapping the binary in place.
-
-**In plain terms:** You run `lore upgrade`, and 5 seconds later you're on the latest version. No reinstall, no hassle.
+`lore upgrade` handles the entire update in one command: it checks for a new release, downloads the correct binary for your OS and architecture, verifies its checksum, and replaces the current binary in place. No manual download or reinstall needed.
 
 ## Real World Scenario
 
@@ -25,15 +31,15 @@ Think of `lore upgrade` like updating an app on your phone, but for your CLI. In
 
 ## How It Works
 
-When you run `lore upgrade`, here's what happens behind the scenes:
+When you run `lore upgrade`:
 
-1. **Detects how lore was installed** — Homebrew? `go install`? Direct binary?
-2. **Checks GitHub Releases** for the newest version (including pre-releases)
+1. **Detects the installation method** — Homebrew, `go install`, or direct binary
+2. **Checks GitHub Releases** for the newest version
 3. **Downloads** the correct archive for your OS and architecture
-4. **Verifies the SHA256 checksum** to ensure file integrity
+4. **Verifies the SHA256 checksum** to confirm file integrity
 5. **Replaces** the current binary with the new one
 
-> If lore detects you installed via **Homebrew** or **go install**, it won't self-update — it will tell you the right command to run instead (`brew upgrade lore` or `go install ...`). This prevents conflicts with your package manager.
+> If lore was installed via **Homebrew** or **go install**, it will not self-update. Instead, it prints the correct command (`brew upgrade lore` or `go install ...`) to avoid conflicts with your package manager.
 
 ## Flags
 
@@ -113,11 +119,11 @@ lore upgrade --version v1.0.0
 
 ### "Is it safe? What if the download fails mid-way?"
 
-The upgrade is atomic: the old binary is only replaced after the new one has been fully downloaded and its checksum verified. If anything goes wrong, the old binary stays in place.
+The upgrade is atomic. The old binary is only replaced after the new one is fully downloaded and its checksum verified. If anything fails, the old binary stays in place.
 
 ### "Does this phone home or check automatically?"
 
-No. `lore upgrade` only runs when **you** explicitly call it. Zero implicit network calls — consistent with Lore's design philosophy. Use `lore check-update` to check without installing.
+No. `lore upgrade` only runs when you explicitly call it — zero implicit network calls. Use `lore check-update` to check for a new version without installing.
 
 ### "What about permissions?"
 

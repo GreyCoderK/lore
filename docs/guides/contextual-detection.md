@@ -1,10 +1,19 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - ../commands/decision.md
+  - ../commands/pending.md
+  - configuration.md
+---
 # Contextual Detection
 
-How Lore's post-commit hook decides what to do with each commit.
+How lore's post-commit hook decides what to do with each commit.
 
 ## Overview
 
-When the hook fires after a commit, Lore evaluates a chain of rules before asking any questions. The first matching rule wins.
+When the hook fires after a commit, lore evaluates a chain of rules before asking any questions. The first matching rule wins.
 
 ## Detection Chain
 
@@ -70,19 +79,19 @@ hooks:
 
 Git redirects stdin to `/dev/null` for hooks — even when you commit from an interactive terminal. This means `isatty(stdin)` always returns `false` inside a hook.
 
-Lore's hook solves this by reconnecting stdin from the terminal:
+lore's hook solves this by reconnecting stdin from the terminal:
 
 ```sh
 exec lore _hook-post-commit < /dev/tty
 ```
 
-This is why interactive questions work in terminal emulators (iTerm, Terminal.app, VS Code integrated terminal) but **not** in environments where `/dev/tty` is unavailable (CI, Docker, pipes).
+This is why interactive questions work in terminal emulators (iTerm2, Terminal.app, VS Code integrated terminal) but **not** in environments where `/dev/tty` is unavailable (CI, Docker, pipes).
 
 > **Windows:** Git uses Git Bash (MSYS2) for hooks, which provides `/dev/tty`. Interactive questions work in Git Bash, Windows Terminal, and VS Code integrated terminal. PowerShell and CMD without Git Bash defer to pending.
 
 ## Non-TTY Detection
 
-After reconnecting stdin via `/dev/tty`, Lore checks whether stdin is a real TTY:
+After reconnecting stdin via `/dev/tty`, lore checks whether stdin is a real TTY:
 
 | Environment | `/dev/tty` | `isatty(stdin)` | Behavior |
 |-------------|-----------|-----------------|----------|
@@ -92,15 +101,15 @@ After reconnecting stdin via `/dev/tty`, Lore checks whether stdin is a real TTY
 | **Pipe** (`git commit \| ...`) | Not available | `false` | Silent defer to pending |
 | **Cron/scripts** | Not available | `false` | Silent defer to pending |
 
-When stdin is not a TTY, the commit is deferred to pending. If an IDE is detected (via `GIT_ASKPASS`), Lore also sends a notification.
+When stdin is not a TTY, the commit is deferred to pending. If an IDE is detected (via `GIT_ASKPASS`), lore also sends a notification.
 
 ### IDE Detection for Notifications
 
-After deferring, Lore detects the IDE environment to send a notification. VS Code and its forks are identified via the `GIT_ASKPASS` environment variable (containing "code", "cursor", "windsurf", or "codium" in the path). A secondary signal is `VSCODE_GIT_ASKPASS_NODE`.
+After deferring, lore detects the IDE environment to send a notification. VS Code and its forks are identified via the `GIT_ASKPASS` environment variable (containing "code", "cursor", "windsurf", or "codium" in the path). A secondary signal is `VSCODE_GIT_ASKPASS_NODE`.
 
 ## IDE Notifications
 
-When a commit is deferred and an IDE is detected, Lore sends a notification:
+When a commit is deferred and an IDE is detected, lore sends a notification:
 
 1. **VS Code IPC** — Native extension notification (multi-instance aware)
 2. **OS Dialog** — `osascript` (macOS), `zenity`/`kdialog` (Linux), PowerShell (Windows)
@@ -119,7 +128,7 @@ git commit -m "chore: update deps [doc-skip]"
 
 ### Decision Engine Auto-Skip
 
-Certain commit types are auto-skipped by default:
+Certain commit types are auto-skipped by default. Configure via `.lorerc`:
 
 ```yaml
 # .lorerc
@@ -127,13 +136,13 @@ decision:
   always_skip: [docs, style, ci, build]
 ```
 
-Commits with these conventional types are scored at 0 and skip silently.
+Commits matching these conventional types receive a score of 0 and are skipped silently.
 
 ## Troubleshooting
 
-### "Lore shows a dialog instead of interactive questions"
+### "lore shows a dialog instead of interactive questions"
 
-Your hook is probably outdated — it's missing the `< /dev/tty` redirect that reconnects stdin from the terminal. Reinstall:
+Your hook is likely outdated — it is missing the `< /dev/tty` redirect that reconnects stdin from the terminal. Reinstall:
 
 ```bash
 lore hook uninstall
@@ -147,7 +156,7 @@ grep "dev/tty" .git/hooks/post-commit
 # Should show: exec lore _hook-post-commit < /dev/tty
 ```
 
-### "Lore doesn't trigger after my commit"
+### "lore doesn't trigger after my commit"
 
 Check in this order:
 
@@ -157,14 +166,14 @@ Check in this order:
 4. **Score too low?** `lore decision --explain HEAD` — might be auto-skipped
 5. **Non-TTY?** Check `lore pending` — the commit may have been deferred
 
-### "Lore asks too many questions for trivial commits"
+### "lore asks too many questions for trivial commits"
 
 Add overrides in `.lorerc`:
 
 ```yaml
 decision:
   always_skip: [docs, style, ci, build, chore]
-  threshold_full: 70    # Higher = fewer full questions
+  threshold_full: 70    # Default: 60. Raise to reduce how often full questions are asked.
 ```
 
 Or use `[doc-skip]` in your commit messages for one-off cases.
@@ -174,8 +183,8 @@ Or use `[doc-skip]` in your commit messages for one-off cases.
 - Use `[doc-skip]` for trivial commits (typo fixes, CI config, dependency bumps).
 - Check what would happen: `lore decision --explain HEAD` shows the full scoring breakdown.
 - Customize `always_ask` and `always_skip` in `.lorerc` to match your team's conventions.
-- Rebased commits go to pending — run `lore pending resolve` after a rebase.
-- If you Ctrl+C during any question (type selector, What, Why, amend prompts), partial answers are saved immediately to `.lore/pending/`. Resume with `lore pending resolve`.
+- Rebased commits go to pending — run `lore pending resolve` after a rebase to clear them.
+- If you press Ctrl+C during any question (type selector, What, Why, amend prompts), partial answers are saved immediately to `.lore/pending/`. Resume with `lore pending resolve`.
 
 ## See Also
 

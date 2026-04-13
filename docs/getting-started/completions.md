@@ -1,18 +1,26 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - ../commands/completion.md
+  - installation.md
+---
 # Shell Completions
 
-Enable tab completion for all Lore commands, subcommands, and flags.
+Enable tab completion for all lore commands, subcommands, and flags.
 
 ## Why Set This Up?
 
-Without completions, you type full commands from memory. With completions, you type a few letters and press Tab:
+Without completions, you must type commands from memory. With completions, a few letters and Tab are enough:
 
 ```
-lore an<TAB>     → lore angela
+lore an<TAB>      → lore angela
 lore angela <TAB> → draft  polish  review
 lore show --<TAB> → --all  --after  --type  --quiet  --feature ...
 ```
 
-It saves keystrokes, prevents typos, and helps you discover commands you didn't know existed. Setup takes 15 seconds.
+Completions save keystrokes, prevent typos, and surface commands you might not know exist. Setup takes about 15 seconds.
 
 ## Setup by Shell
 
@@ -42,7 +50,7 @@ lore completion zsh > "${fpath[1]}/_lore"
 autoload -Uz compinit && compinit
 ```
 
-> **Tip:** Option 2 (fpath) is faster because the completion is compiled once, not interpreted every shell startup. Recommended for Zsh power users.
+> **Tip:** Option 2 (fpath) is faster because the completion script is compiled once rather than interpreted on every shell startup. Recommended for Zsh power users.
 
 ### Fish
 
@@ -54,7 +62,7 @@ lore completion fish | source
 lore completion fish > ~/.config/fish/completions/lore.fish
 ```
 
-Fish is the easiest — no `source` command needed for the permanent setup.
+Fish is the simplest shell to configure — no `source` command is needed for the permanent setup.
 
 ### PowerShell
 
@@ -68,7 +76,7 @@ Add-Content $PROFILE 'lore completion powershell | Out-String | Invoke-Expressio
 
 ## Verify It Works
 
-After reloading your shell, type `lore ` and press Tab:
+After reloading your shell, type `lore` followed by a space and press Tab:
 
 ```
 $ lore <TAB>
@@ -89,7 +97,7 @@ $ lore show --<TAB>
 
 ### Useful Aliases
 
-Combine completions with aliases for maximum speed:
+Pair completions with short aliases for maximum speed:
 
 ```bash
 # Add to your shell profile
@@ -111,9 +119,9 @@ alias lp='lore pending'
 
 **"Completions are slow"**
 
-Use the fpath method (Zsh) or the file method (Fish) instead of `eval`. `eval` re-generates completions on every shell startup.
+Use the fpath method (Zsh) or the file method (Fish) instead of `eval`. `eval` regenerates completions on every shell startup, which adds latency.
 
 ## See Also
 
 - [lore completion command](../commands/completion.md) — Technical reference
-- [Installation](installation.md) — Make sure Lore is installed
+- [Installation](installation.md) — Make sure lore is installed first

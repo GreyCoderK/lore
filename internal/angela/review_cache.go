@@ -5,7 +5,9 @@ package angela
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -57,7 +59,7 @@ func LoadReviewCache(loreDir string) (*ReviewCache, error) {
 	path := filepath.Join(loreDir, "cache", "review.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("angela: review cache: read: %w", err)

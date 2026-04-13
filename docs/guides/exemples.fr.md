@@ -1,3 +1,11 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - ../getting-started/quickstart.md
+  - configuration.md
+---
 # Exemples
 
 ## Dépôt de démonstration
@@ -5,7 +13,7 @@
 Un dépôt démo pré-configuré est disponible dans [`examples/demo-repo/`](https://github.com/greycoderk/lore/tree/main/examples/demo-repo) :
 
 - `.lorerc` — Configuration minimale
-- `.lore/docs/` — 3-5 documents réels générés par Lore (dogfooding)
+- `.lore/docs/` — 3-5 documents réels générés par lore (dogfooding)
 - `README.md` — Comment reproduire le setup
 
 ## Cas d'usage courants
@@ -34,7 +42,7 @@ output:
   dir: .lore/docs
 ```
 
-Les contributeurs documentent leurs changements. Le corpus devient un journal de design vivant.
+Les contributeurs documentent leurs changements au fil du temps. Le corpus devient un journal de design vivant — les nouveaux contributeurs comprennent *pourquoi* les choses sont construites ainsi.
 
 ### Équipe avec IA
 

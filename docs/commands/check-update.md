@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - upgrade.md
+  - ../getting-started/installation.md
+---
 # lore check-update
 
 Check if a newer version of lore is available.
@@ -10,7 +18,7 @@ lore check-update
 
 ## What Does This Do?
 
-This is the read-only counterpart to `lore upgrade`. It checks GitHub for newer releases and shows you what's available — without downloading or installing anything. Think of it as checking the menu before ordering.
+The read-only counterpart to `lore upgrade`. It checks GitHub for newer releases and shows what's available — without downloading or installing anything.
 
 **In plain terms:** "Am I behind? What versions are out there?"
 
@@ -75,13 +83,13 @@ lore check-update
 # → Run: lore upgrade
 ```
 
-> Even on a dev build, `check-update` works — it shows all published releases since `dev` is always considered older.
+> On dev builds, `check-update` still works — `dev` is always treated as older than any published release, so all releases are shown.
 
 ## Common Questions
 
 ### "Does this make network calls?"
 
-Yes — one GET request to the GitHub Releases API. This only happens when **you** run the command. Lore never checks for updates in the background or during other commands.
+Yes — one GET request to the GitHub Releases API. This happens only when **you** run the command. Lore never checks for updates in the background or during other commands.
 
 ### "How do I install a specific version from the list?"
 
@@ -94,7 +102,7 @@ lore upgrade --version v1.2.0  # Install a specific one
 
 ### "Why doesn't `lore status` show this?"
 
-By design. `lore status` runs offline — it never makes network calls. Update checks are explicitly opt-in via this command.
+By design. `lore status` is fully offline and never makes network calls. Update checks are explicitly opt-in via this command.
 
 ## Exit Codes
 
@@ -105,9 +113,9 @@ By design. `lore status` runs offline — it never makes network calls. Update c
 
 ## Tips & Tricks
 
-- **Before big refactors:** Check you are on the latest version to get the newest features and fixes.
-- **Pair with upgrade:** `lore check-update` to see what is available, then `lore upgrade` when ready.
-- **No automatic checks:** Lore never phones home. This is the only way to know if you are behind — fully opt-in.
+- **Before big refactors:** Confirm you're on the latest version to get the newest features and fixes.
+- **Pair with upgrade:** Run `lore check-update` to see what's available, then `lore upgrade` when ready.
+- **No automatic checks:** Lore never phones home. This is the only way to know if you're behind — fully opt-in.
 - **Dev builds:** If you built from source without version tags, `check-update` still works — it compares against published releases.
 
 ## See Also

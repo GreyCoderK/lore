@@ -247,6 +247,17 @@ type CmdMessages struct {
 	AngelaPolishStep2Done   string // step 2/3 done
 	AngelaPolishStep3       string // step 3/3 computing diff
 
+	// Polish safety nets (backup + dry-run)
+	AngelaPolishBackupCreated   string // arg: path
+	AngelaPolishBackupPruneWarn string // arg: error
+	AngelaPolishBackupDisabled  string
+	AngelaPolishRestoreShort    string
+	AngelaPolishRestoreNoBackup string // arg: filename
+	AngelaPolishRestoreOK       string // args: filename, stamp
+	AngelaPolishRestoreListHdr  string // arg: filename
+	AngelaPolishRestoreListRow  string // args: stamp, pretty time
+	AngelaPolishRestoreUnknown  string // arg: stamp
+
 	// angela_review.go
 	AngelaReviewShort       string
 	AngelaReviewNoProvider  string
@@ -263,6 +274,10 @@ type CmdMessages struct {
 	AngelaReviewStep1       string // arg: count — step 1/2 preparing summaries
 	AngelaReviewStep2       string // arg: count — step 2/2 calling AI (spinner)
 	AngelaReviewStep2Done   string // step 2/2 done
+
+	// Evidence-required findings rejection output
+	AngelaReviewRejectedCount string // arg: count
+	AngelaReviewRejectedLine  string // args: title, reason
 	AngelaPolishModified    string
 
 	// decision.go

@@ -1,3 +1,13 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - demo.md
+  - hook.md
+  - ../getting-started/quickstart.md
+  - ../guides/configuration.md
+---
 # lore init
 
 Initialize a Lore documentation repository in your project.
@@ -10,9 +20,7 @@ lore init [flags]
 
 ## What Does This Do?
 
-Think of `lore init` like setting up a journal for your project. Just like a diary needs a notebook before you can write in it, Lore needs a `.lore/` folder before it can capture your decisions.
-
-**In plain terms:** This command prepares your project to start documenting the "why" behind your code changes.
+`lore init` prepares your project to start documenting the "why" behind your code changes. It creates the `.lore/` folder and installs the Git hook that triggers the question flow after each commit.
 
 ## Real World Scenario
 
@@ -57,7 +65,7 @@ Lore does 5 things:
 4. **Installs the Git hook** — A tiny script that triggers Lore after each commit
 5. **Offers a demo** — Shows you how Lore works in ~45 seconds
 
-> **Analogy:** Think of the Git hook like a post-it note on your monitor that says "Why did you just do that?" after every commit. It's automatic — you don't need to remember to document.
+> **Analogy:** The Git hook acts like a reminder that fires automatically after every commit — you never have to remember to document.
 
 ## Flags
 
@@ -117,7 +125,7 @@ lore init
 
 ### "Can I undo this?"
 
-Yes. Remove the `.lore/` folder: `rm -rf .lore` — your code and Git history are completely untouched.
+Yes. Remove the `.lore/` folder with `rm -rf .lore` — your code and Git history are completely untouched.
 
 ## What Happens Next?
 
@@ -127,7 +135,7 @@ After `lore init`, the next time you run `git commit`, Lore will automatically a
 2. **What** — Pre-filled from your commit message. Just press Enter.
 3. **Why** — The important one! Why did you make this choice?
 
-That's it — 90 seconds, and the "why" is captured forever.
+The "why" is captured in seconds and stored permanently alongside your code.
 
 ## Tips & Tricks
 

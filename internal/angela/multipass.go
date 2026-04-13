@@ -6,7 +6,6 @@ package angela
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
@@ -168,7 +167,15 @@ func PolishMultiPass(ctx context.Context, provider domain.AIProvider, doc string
 			continue
 		}
 
-		result = stripCodeFence(result)
+		// Only strip
+		// code fencing from the AI result if the original section did
+		// NOT already start with one. Otherwise a faithfully-echoed
+		// ```python block inside a tutorial section would lose its
+		// fence on the first multipass pass and render as prose on
+		// the second pass.
+		if !strings.HasPrefix(strings.TrimSpace(sectionContent), "```") {
+			result = stripCodeFence(result)
+		}
 		result = PostProcess(sectionContent, result)
 
 		// Parse result back into heading + body
@@ -206,18 +213,25 @@ func PolishMultiPass(ctx context.Context, provider domain.AIProvider, doc string
 }
 
 // buildSectionPrompt creates the user prompt for a single section polish.
+//
+// Every value interpolated between delimiters is run through
+// sanitizePromptContent. Previously `section` and `prevStyle` were
+// written raw, which let a doc (or the AI's own previous-section output
+// via prevPolishedStyle) close the <<<SECTION>>>/<<<STYLE>>> blocks and
+// inject arbitrary instructions into the next iteration of a multi-pass
+// polish.
 func buildSectionPrompt(section string, contextSummaries []string, prevStyle string, audience string) string {
 	var sb strings.Builder
 
 	if audience != "" {
-		sb.WriteString("TARGET AUDIENCE: " + audience + "\n")
+		sb.WriteString("TARGET AUDIENCE: " + sanitizeShortField(audience) + "\n")
 		sb.WriteString("Rewrite the section below for this audience.\n\n")
 	}
 
 	if len(contextSummaries) > 0 {
 		sb.WriteString("OTHER SECTIONS IN THIS DOCUMENT (for context only, DO NOT polish these):\n")
 		for _, c := range contextSummaries {
-			sb.WriteString(c + "\n")
+			sb.WriteString(sanitizePromptContent(c) + "\n")
 		}
 		sb.WriteString("\n")
 	}
@@ -225,20 +239,16 @@ func buildSectionPrompt(section string, contextSummaries []string, prevStyle str
 	if prevStyle != "" {
 		sb.WriteString("STYLE REFERENCE (match this tone/style from a previously polished section):\n")
 		sb.WriteString("<<<STYLE>>>\n")
-		sb.WriteString(prevStyle)
+		sb.WriteString(sanitizePromptContent(prevStyle))
 		sb.WriteString("\n<<<END_STYLE>>>\n\n")
 	}
 
 	sb.WriteString("SECTION TO IMPROVE (return ONLY this section, complete with ## heading):\n")
 	sb.WriteString("<<<SECTION>>>\n")
-	sb.WriteString(section)
+	sb.WriteString(sanitizePromptContent(section))
 	sb.WriteString("\n<<<END_SECTION>>>\n\n")
 	sb.WriteString("Return ONLY the improved section. No explanations, no wrapping.")
 
 	return sb.String()
 }
 
-// MultiPassWriter is an io.Writer adapter for progress output.
-type MultiPassWriter struct {
-	W io.Writer
-}

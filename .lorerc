@@ -3,11 +3,11 @@
 language: "fr"
 
 ai:
-  provider: ""       # anthropic, openai, ollama
-  model: ""          # model name (e.g., claude-sonnet-4-20250514, llama3.2)
+  provider: "anthropic"       # anthropic, openai, ollama
+  model: "claude-sonnet-4-6"  # model name (e.g., claude-sonnet-4-20250514, llama3.2)
   timeout: 60s
 angela:
-  max_tokens: 10000  # optional: override the auto-computed max output tokens
+  max_tokens: 16000  # bumped for review on larger corpus
 
 templates:
   dir: .lore/templates

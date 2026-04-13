@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - ../getting-started/completions.md
+  - index.md
+---
 # lore completion
 
 Générer les scripts de complétion shell pour l'auto-complétion de toutes les commandes et flags.
@@ -10,9 +18,7 @@ lore completion <bash|zsh|fish|powershell>
 
 ## Qu'est-ce que ça fait ?
 
-Après configuration, taper `lore ` et appuyer sur Tab affiche toutes les commandes disponibles. Taper `lore an<TAB>` complète en `lore angela`. Taper `lore angela <TAB>` montre `draft`, `polish`, `review`. Ça économise des frappes et aide à découvrir des commandes.
-
-> **Analogie :** C'est comme l'autocomplétion de votre clavier de téléphone — mais pour les commandes Lore dans votre terminal.
+Après configuration, appuyer sur Tab après `lore ` affiche toutes les commandes disponibles. `lore an<TAB>` complète en `lore angela`, et `lore angela <TAB>` montre `draft`, `polish`, `review`. La complétion par tab économise des frappes et fait découvrir des commandes inconnues.
 
 ## Scénario concret
 
@@ -27,12 +33,6 @@ Après configuration, taper `lore ` et appuyer sur Tab affiche toutes les comman
 ![lore completion](../assets/vhs/completion.gif)
 <!-- Generate: vhs assets/vhs/completion.tape -->
 
-## Flags
-
-Cette commande ne prend pas de flags. Le nom du shell est un argument positionnel requis.
-
-**Arguments valides :** `bash`, `zsh`, `fish`, `powershell`
-
 ## Shells supportés
 
 ### Bash
@@ -46,7 +46,7 @@ echo 'eval "$(lore completion bash)"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### Zsh (défaut macOS)
+### Zsh
 
 ```bash
 # Temporaire
@@ -55,12 +55,9 @@ eval "$(lore completion zsh)"
 # Permanent (option 1 — eval dans .zshrc)
 echo 'eval "$(lore completion zsh)"' >> ~/.zshrc
 
-# Permanent (option 2 — compilé, démarrage plus rapide)
+# Permanent (option 2 — générer dans fpath)
 lore completion zsh > "${fpath[1]}/_lore"
-autoload -Uz compinit && compinit
 ```
-
-> **Astuce :** L'option 2 (fpath) est plus rapide car la complétion est compilée une fois, pas interprétée à chaque démarrage.
 
 ### Fish
 
@@ -68,7 +65,7 @@ autoload -Uz compinit && compinit
 # Temporaire
 lore completion fish | source
 
-# Permanent (Fish charge automatiquement)
+# Permanent
 lore completion fish > ~/.config/fish/completions/lore.fish
 ```
 
@@ -78,18 +75,46 @@ lore completion fish > ~/.config/fish/completions/lore.fish
 # Temporaire
 lore completion powershell | Out-String | Invoke-Expression
 
-# Permanent
+# Permanent — ajouter à votre profil
 Add-Content $PROFILE 'lore completion powershell | Out-String | Invoke-Expression'
 ```
 
-## Vérifier
+## Vérifier que ça fonctionne
+
+Après rechargement de votre shell, tapez `lore ` et appuyez sur Tab :
 
 ```
 $ lore <TAB>
-angela        check-update  completion    config        decision      delete
-demo          doctor        hook          init          list          new
-pending       release       show          status        upgrade
+angela      check-update  completion  config      decision    delete
+demo        doctor        hook        init        list        new
+pending     release       show        status      upgrade
 ```
+
+Tapez `lore show --<TAB>` pour voir les flags :
+
+```
+$ lore show --<TAB>
+--all       --after     --bugfix    --decision  --feature
+--note      --quiet     --refactor  --type
+```
+
+## Conseils avancés
+
+- **Aliases :** Combinez avec des aliases shell pour aller encore plus vite :
+  ```bash
+  alias ls='lore show'
+  alias ll='lore list'
+  alias ld='lore doctor'
+  alias la='lore angela'
+  ```
+- **Fish est le plus simple :** Fish charge les complétions depuis `~/.config/fish/completions/` automatiquement — pas besoin de `source`.
+- **La méthode Zsh fpath** est plus rapide que `eval` — la complétion est compilée une fois, pas interprétée à chaque démarrage.
+
+## Flags
+
+Cette commande ne prend pas de flags. Le nom du shell est un argument positionnel requis.
+
+**Arguments valides :** `bash`, `zsh`, `fish`, `powershell`
 
 ## Exemples
 
@@ -97,7 +122,7 @@ pending       release       show          status        upgrade
 # Générer pour votre shell et évaluer immédiatement
 eval "$(lore completion zsh)"
 
-# Sauvegarder dans un fichier
+# Sauvegarder dans un fichier pour une configuration permanente
 lore completion bash > /etc/bash_completion.d/lore
 lore completion fish > ~/.config/fish/completions/lore.fish
 
@@ -114,32 +139,27 @@ echo $SHELL
 echo $SHELL
 # → /bin/zsh    → lore completion zsh
 # → /bin/bash   → lore completion bash
+# → /usr/bin/fish → lore completion fish
 ```
 
-Sur macOS, le défaut est Zsh depuis Catalina. Sur la plupart des distros Linux, c'est Bash.
+Sur macOS, le shell par défaut est Zsh depuis Catalina. Sur la plupart des distros Linux, c'est Bash.
 
-### "Dois-je relancer après une mise à jour de Lore ?"
+### "Dois-je relancer après une mise à jour de lore ?"
 
-Uniquement si de nouvelles commandes ont été ajoutées. Après `lore upgrade`, régénérez :
+Uniquement si de nouvelles commandes ont été ajoutées. Le script de complétion reflète la liste de commandes de lore au moment de la génération. Après `lore upgrade`, régénérez :
 
 ```bash
 eval "$(lore completion zsh)"
 ```
 
-### "compinit: command not found"
+### "'command not found: compinit'"
 
-Problème spécifique à Zsh. Ajoutez ceci à `~/.zshrc` avant l'eval :
+Problème spécifique à Zsh. Ajoutez ceci à `~/.zshrc` avant l'eval de complétion :
 
 ```bash
 autoload -Uz compinit && compinit
 eval "$(lore completion zsh)"
 ```
-
-## Tips & Tricks
-
-- **Aliases :** `alias ls='lore show'`, `alias ll='lore list'`, `alias ld='lore doctor'`
-- **Fish est le plus simple :** charge automatiquement depuis `~/.config/fish/completions/`
-- **Zsh fpath** est plus rapide que `eval` — compilé une fois, pas interprété à chaque démarrage
 
 ## Codes de sortie
 

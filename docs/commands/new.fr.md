@@ -10,7 +10,7 @@ lore new [type] ["what"] ["why"] [flags]
 
 ## Qu'est-ce que ça fait ?
 
-`lore new` vous permet d'écrire une entrée de documentation **manuellement**, sans attendre un commit. C'est comme ouvrir votre journal de projet et écrire une nouvelle page quand vous voulez.
+`lore new` crée une entrée de documentation **manuellement**, sans attendre un commit.
 
 **Trois façons de l'utiliser :**
 
@@ -20,7 +20,7 @@ lore new [type] ["what"] ["why"] [flags]
 | **One-liner** | `lore new feature "add auth" "stateless scales"` | Capture rapide quand vous savez quoi écrire |
 | **Rétroactif** | `lore new --commit abc1234` | Documenter un commit passé que vous avez raté |
 
-> **Analogie :** Si le hook post-commit est comme un journaliste qui vous suit en temps réel, `lore new` c'est comme s'asseoir avec ce journaliste pour une interview dédiée sur quelque chose que vous avez fait plus tôt.
+> **Analogie :** Si le hook post-commit capture le contexte en temps réel, `lore new` est la session dédiée pour documenter quelque chose fait plus tôt — ou quelque chose qui n'a jamais produit de commit.
 
 ## Scénario concret
 
@@ -161,6 +161,13 @@ git log --oneline -5
 lore new --commit abc1234
 # → Pré-remplit "What" depuis le message de commit
 # → Vous ajoutez juste "Why"
+```
+
+### Type prédéfini
+
+```bash
+lore new --type refactor
+# → Saute la sélection du type, pose What et Why
 ```
 
 ## Questions fréquentes

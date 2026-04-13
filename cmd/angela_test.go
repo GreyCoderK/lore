@@ -836,7 +836,7 @@ func TestFormatReviewReport_PartialCorpus(t *testing.T) {
 		DocCount: 50,
 	}
 	// totalCorpus > DocCount triggers partial header
-	formatReviewReport(streams, report, 60, false)
+	formatReviewReport(streams, report, 60, false, false, false)
 
 	if errBuf.Len() == 0 {
 		t.Error("expected stderr output for partial corpus header")

@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - status.md
+  - ../guides/configuration.md
+---
 # lore doctor
 
 Diagnose and repair your documentation corpus.
@@ -10,9 +18,9 @@ lore doctor [flags]
 
 ## What Does This Do?
 
-`lore doctor` is like running a health checkup on your documentation. It scans for problems — corrupted files, missing references, outdated caches — and can fix most of them automatically.
+`lore doctor` runs a health checkup on your documentation corpus. It scans for problems — corrupted files, broken references, outdated caches — and fixes most of them automatically.
 
-> **Analogy:** Just like a real doctor checks your vitals and prescribes treatment, `lore doctor` checks your corpus health and prescribes `--fix`.
+> **Analogy:** Just as a doctor checks your vitals and prescribes treatment, `lore doctor` assesses corpus health and prescribes `--fix`.
 
 ## Real World Scenario
 
@@ -103,7 +111,7 @@ Config Check:
 
 ## Rebuild Store (`--rebuild-store`)
 
-The `store.db` file is a SQLite database that indexes your documents for fast search. It's **always reconstructible** from your Markdown files — they are the source of truth.
+The `store.db` file is a SQLite database that indexes your documents for fast search. It is **always reconstructible** from your Markdown files — they are the source of truth.
 
 ```bash
 # If store.db gets corrupted or you want a fresh start
@@ -181,11 +189,11 @@ Yes. `store.db` is a cache reconstructed from your Markdown files. Rebuilding lo
 
 ### "Doctor says 'manual fix required'"
 
-Broken references and invalid front matter cannot be auto-fixed because Lore doesn't know the correct value. Open the flagged file, fix it, then `lore doctor` again.
+Broken references and invalid front matter cannot be auto-fixed because lore cannot infer the correct value. Open the flagged file, fix it manually, then re-run `lore doctor`.
 
 ### "Should I run doctor after every merge?"
 
-Good habit. `lore doctor --fix` takes 1 second and catches stale indexes from other people's changes.
+Good habit. `lore doctor --fix` takes under a second and catches stale indexes caused by teammates' changes.
 
 ## See Also
 

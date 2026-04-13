@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - list.md
+  - angela-review.md
+  - status.md
+---
 # lore release
 
 Generate release notes from your documentation corpus.
@@ -10,9 +19,9 @@ lore release [flags]
 
 ## What Does This Do?
 
-`lore release` reads your corpus and generates release notes automatically. Instead of writing "what changed in v1.2.0" from memory, Lore collects every document created between two tags and groups them by type: features, bugfixes, decisions, refactors.
+`lore release` reads your corpus and generates release notes automatically. Instead of reconstructing "what changed in v1.2.0" from memory, Lore collects every document created between two tags and groups them by type: features, bugfixes, decisions, refactors.
 
-> **Analogy:** Imagine a secretary who attended every meeting and took notes. At the end of the quarter, you ask them to summarize everything. That's `lore release` — except the "meetings" are your commits and the "notes" are your Lore documents.
+> **Analogy:** Because every commit was documented as it happened, `lore release` just aggregates those records — turning your corpus into a structured changelog.
 
 ## Real World Scenario
 
@@ -133,7 +142,7 @@ git push origin main v1.2.0
 ```bash
 lore release --version v1.2.0
 # → Error: no documents found between v1.1.0 and HEAD
-# Means: nobody documented their commits. Fix with lore pending resolve.
+# No commits in this range were documented. Fix with: lore pending resolve
 ```
 
 ### "What if I haven't tagged before?"
@@ -180,5 +189,5 @@ lore list --type release
 ## See Also
 
 - [lore list](list.md) — See all documents before generating notes
-- [lore angela review](angela-review.md) �� Corpus coherence check before release
+- [lore angela review](angela-review.md) — Corpus coherence check before release
 - [lore status](status.md) — Check documentation coverage

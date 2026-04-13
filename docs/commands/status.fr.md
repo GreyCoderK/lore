@@ -10,9 +10,9 @@ lore status [flags]
 
 ## Qu'est-ce que ça fait ?
 
-`lore status` vous donne une vue d'ensemble de la santé documentaire de votre projet. C'est comme un tracker de fitness pour le savoir de votre codebase.
+`lore status` donne un aperçu de la santé documentaire de votre projet : combien de commits sont documentés, ce qui est en attente et ce qui nécessite une attention.
 
-> **Analogie :** Si `git status` montre la santé de votre *code*, `lore status` montre la santé de votre *savoir*.
+> **Analogie :** `git status` montre la santé de votre *code*. `lore status` montre la santé de votre *savoir*.
 
 ## Scénario concret
 
@@ -48,12 +48,13 @@ Health      ✓ all good
 
 | Ligne | Signification |
 |-------|---------------|
-| **Project** | Nom du projet |
-| **Hook** | Hook post-commit installé ? |
-| **Docs** | Commits documentés vs en attente |
-| **Express** | % docs rapides vs détaillés |
-| **Angela** | Mode IA. "Need review" = docs pas encore analysés |
-| **Health** | ✓ = bon. ✗ = lancez `lore doctor` |
+| **Project** | Nom du projet (depuis `.lorerc` ou le nom du dossier) |
+| **Hook** | Hook post-commit installé ? Si non, les commits ne déclenchent pas lore |
+| **Docs** | Commits documentés vs en attente dans la queue |
+| **Express** | Part des docs créés en mode express (rapide) vs mode complet (5 questions) |
+| **Angela** | Mode IA et fournisseur. "Need review" = docs pas encore analysés par Angela |
+| **Review** | Résultats de `lore angela review`. "No issues" = corpus propre |
+| **Health** | État global. `✓` = bon. `✗` = lancez `lore doctor` |
 
 ## Mode Badge
 
@@ -68,6 +69,17 @@ lore status --badge
 | 50–79% | Vert |
 | 80%+ | Or |
 | 100% | Or + étoile |
+
+> **Calcul de la couverture :** Commits documentés ÷ total des commits. Les merges, rebases et docs de démo sont exclus. `[doc-skip]` compte comme couvert (ignore intentionnel).
+
+> **Avertissement :** Si plus de 70% de vos commits "documentés" sont en réalité des `[doc-skip]`, le badge affiche un avertissement. Ignorer est acceptable pour les commits triviaux, mais en excès cela signifie que vous évitez la documentation.
+
+### Localisation du badge
+
+| Langue | Texte du badge |
+|--------|----------------|
+| EN (`language: "en"`) | `lore \| documented 85%` |
+| FR (`language: "fr"`) | `lore \| documenté 85%` |
 
 ## Mode Quiet (`--quiet`)
 
@@ -137,9 +149,10 @@ Lancez `lore doctor` puis `lore doctor --fix`.
 
 ## Tips & Tricks
 
-- **Badge README :** `lore status --badge` génère le Markdown prêt à coller.
-- **Vérification quotidienne :** Lancez en début de journée.
-- **Gate CI :** `--quiet` pour parser et échouer le build si nécessaire.
+- **Ajoutez le badge au README :** `lore status --badge >> README.md` (puis déplacez-le dans la section badges).
+- **Vérification quotidienne :** Lancez `lore status` en début de journée pour voir si quelque chose nécessite une attention.
+- **Gate CI :** `--quiet` pour parser les valeurs et échouer le build si la documentation est en retard.
+- **Après `lore doctor --fix` :** Lancez `lore status` pour confirmer que la santé est `✓ all good`.
 
 ## Codes de sortie
 

@@ -8,13 +8,23 @@ import (
 	"unicode/utf8"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 // Suggestion represents a single review finding from Angela draft analysis.
+// JSON tags are snake-case to match the documented draft --format=json schema
+// The field order (category, severity, message) is the same as
+// the human-readable output so JSON consumers and readers see the same layout.
+//
+// DiffStatus is populated by the differential runner to tag each
+// suggestion as "new", "persisting", or "resolved" relative to the previous
+// draft state. Empty in single-run mode or when differential is disabled,
+// hence the omitempty JSON tag.
 type Suggestion struct {
-	Category string // "structure", "completeness", "style", "coherence", "persona"
-	Message  string
-	Severity string // "info", "warning"
+	Category   string `json:"category"` // "structure", "completeness", "style", "coherence", "persona"
+	Severity   string `json:"severity"` // "info", "warning", "error"
+	Message    string `json:"message"`
+	DiffStatus string `json:"diff_status,omitempty"` // "new" | "persisting" | "resolved"
 }
 
 // AnalyzeDraft performs local structural analysis of a document.
@@ -35,11 +45,12 @@ func AnalyzeDraft(doc string, meta domain.DocMeta, guide *StyleGuide, corpus []d
 	// Completeness checks
 	suggestions = append(suggestions, checkCompletenessWithSections(body, meta, guide, corpus, sections)...)
 
-	// Persona-specific draft checks (AC-3). Only run on strict lore types —
-	// the personas are hand-tuned for decision/feature/bugfix/refactor and
-	// produce irrelevant advice on external free-form content (blog posts,
-	// how-to guides, concept pages, etc.).
-	if len(personas) > 0 && !isFreeFormType(meta.Type) {
+	// Persona-specific draft checks. The hard free-form exclusion has been
+	// replaced by smart selection in SelectPersonasForDoc — by the time we
+	// reach here, the `personas`
+	// slice already contains only the personas appropriate for this
+	// document type. We just run them unconditionally.
+	if len(personas) > 0 {
 		suggestions = append(suggestions, runPersonaDraftChecksWithSections(body, personas, sections)...)
 	}
 
@@ -85,11 +96,12 @@ func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Sugge
 	hasAlternatives := hasSection(body, "## Alternatives")
 	hasImpact := hasSection(body, "## Impact")
 
+	t := i18n.T().Angela
 	if !isFreeFormType(meta.Type) && !hasWhat {
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "warning",
-			Message:  `Section "## What" is missing`,
+			Message:  t.DraftMissingWhat,
 		})
 	}
 
@@ -97,7 +109,7 @@ func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Sugge
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "warning",
-			Message:  `Section "## Why" is missing`,
+			Message:  t.DraftMissingWhy,
 		})
 	}
 
@@ -105,13 +117,13 @@ func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Sugge
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "warning",
-			Message:  `Section "## Alternatives" is missing`,
+			Message:  t.DraftMissingAltWarn,
 		})
 	} else if !requireAlternatives && !hasAlternatives && !isFreeFormType(meta.Type) {
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "info",
-			Message:  `Section "## Alternatives" is missing`,
+			Message:  t.DraftMissingAltInfo,
 		})
 	}
 
@@ -119,7 +131,7 @@ func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Sugge
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: "info",
-			Message:  `Section "## Impact" is missing`,
+			Message:  t.DraftMissingImpact,
 		})
 	}
 
@@ -136,7 +148,7 @@ func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Sugge
 		suggestions = append(suggestions, Suggestion{
 			Category: "structure",
 			Severity: severity,
-			Message:  "Document body is too short (< 50 characters)",
+			Message:  t.DraftBodyTooShort,
 		})
 	}
 
@@ -145,7 +157,7 @@ func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Sugge
 		suggestions = append(suggestions, Suggestion{
 			Category: "style",
 			Severity: "info",
-			Message:  "Body exceeds recommended maximum length",
+			Message:  t.DraftBodyExceedsMax,
 		})
 	}
 
@@ -159,6 +171,7 @@ func checkStructure(body string, meta domain.DocMeta, guide *StyleGuide) []Sugge
 func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGuide, corpus []domain.DocMeta, sections map[string]string) []Suggestion {
 	var suggestions []Suggestion
 	freeForm := isFreeFormType(meta.Type)
+	t := i18n.T().Angela
 
 	minTags := 0
 	if guide != nil {
@@ -171,7 +184,7 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		suggestions = append(suggestions, Suggestion{
 			Category: "completeness",
 			Severity: "info",
-			Message:  "Consider adding scope for discoverability and consolidation",
+			Message:  t.DraftAddScope,
 		})
 	}
 
@@ -180,7 +193,7 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		suggestions = append(suggestions, Suggestion{
 			Category: "completeness",
 			Severity: "info",
-			Message:  "Consider adding tags for discoverability",
+			Message:  t.DraftAddTags,
 		})
 	}
 
@@ -191,7 +204,7 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		suggestions = append(suggestions, Suggestion{
 			Category: "completeness",
 			Severity: "info",
-			Message:  "Consider adding related document references",
+			Message:  t.DraftAddRelated,
 		})
 	}
 
@@ -202,7 +215,7 @@ func checkCompletenessWithSections(_ string, meta domain.DocMeta, guide *StyleGu
 		suggestions = append(suggestions, Suggestion{
 			Category: "completeness",
 			Severity: "warning",
-			Message:  `Section "## Why" is too brief (< 20 characters)`,
+			Message:  t.DraftWhyTooBrief,
 		})
 	}
 

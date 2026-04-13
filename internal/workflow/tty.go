@@ -15,7 +15,7 @@ import (
 //  3. stdin or stderr not TTY → false
 //  4. Otherwise               → true
 //
-// Story 2.5 reuses this helper in detection.go without duplication.
+// This helper is reused in detection.go without duplication.
 func IsInteractiveTTY(streams domain.IOStreams) bool {
 	return ui.IsTerminal(streams)
 }

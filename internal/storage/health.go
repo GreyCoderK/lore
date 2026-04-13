@@ -15,7 +15,7 @@ import (
 //   - orphan .tmp files (interrupted writes)
 //   - missing or empty README.md index
 //
-// This is NOT the full diagnostic — see lore doctor (Story 5.1).
+// This is NOT the full diagnostic — see lore doctor for full checks.
 func QuickHealthCheck(docsDir string) (int, error) {
 	entries, err := os.ReadDir(docsDir)
 	if err != nil {

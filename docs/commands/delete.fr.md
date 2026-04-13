@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - list.md
+  - doctor.md
+---
 # lore delete
 
 Supprimer un document du corpus.
@@ -10,19 +18,17 @@ lore delete <fichier> [flags]
 
 ## Qu'est-ce que ça fait ?
 
-Supprime un fichier de documentation de `.lore/docs/` avec confirmation interactive. Avertit des références entrantes depuis d'autres documents.
-
-> **Analogie :** Arracher une page de votre journal de projet. Lore s'assure que vous le voulez vraiment, car une fois parti, le "pourquoi" est perdu.
+Supprime un fichier de documentation de `.lore/docs/`. Lore demande une confirmation avant de supprimer.
 
 ## Scénario concret
 
-> Vous avez refactoré complètement le système d'authentification. L'ancien document "session-based-auth-2026-01.md" est maintenant trompeur. Temps de nettoyer :
+> Vous avez refactoré complètement le système d'authentification. L'ancien document "session-based-auth-2026-01.md" est maintenant trompeur — il décrit une approche abandonnée. Temps de nettoyer :
 >
 > ```bash
 > lore delete session-based-auth-2026-01.md
 > ```
 >
-> Lore avertit qu'un autre document le référence, demande confirmation.
+> Lore avertit qu'un autre document le référence, demande confirmation. Vous supprimez puis lancez `lore doctor` pour nettoyer.
 
 ![lore delete](../assets/vhs/delete.gif)
 <!-- Generate: vhs assets/vhs/delete.tape -->
@@ -41,12 +47,55 @@ Supprime un fichier de documentation de `.lore/docs/` avec confirmation interact
 |------|------|--------|-------------|
 | `--force` | bool | `false` | Supprimer sans demander (pour scripts) |
 
-## Comportement
+## Ce qui se passe
 
-- **Interactif (TTY) :** Montre le résumé du document, avertit des références, demande `Supprimer ? [o/N]`
-- **Non-TTY sans `--force` :** Erreur (sécurité — jamais d'auto-suppression dans les pipes)
-- **Documents démo :** Pas de confirmation nécessaire
-- **Fichier introuvable :** Erreur avec suggestion de vérifier `lore list`
+### Interactif (par défaut)
+
+```bash
+lore delete decision-auth-strategy-2026-03-07.md
+```
+
+```
+  decision — Switch to PostgreSQL (2026-03-07)
+  ⚠ Référencé par : feature-add-user-model-2026-03-08.md
+
+  Supprimer ce document ? [o/N] o
+  ✓ Supprimé
+```
+
+Lore affiche :
+1. **Ce que vous supprimez** — type, titre, date
+2. **Références** — autres docs qui le mentionnent (pour savoir ce qui pourrait casser)
+3. **Confirmation** — vous devez taper `o` pour continuer
+
+### Mode force (scripts/CI)
+
+```bash
+lore delete decision-auth-strategy-2026-03-07.md --force
+# → Supprimé immédiatement, sans questions
+```
+
+### Règles de sécurité
+
+| Scénario | Comportement |
+|----------|-------------|
+| **Normal (TTY)** | Demande confirmation |
+| **Pipe/Non-TTY (sans `--force`)** | Erreur — jamais d'auto-suppression dans les scripts |
+| **Documents démo** | Pas de confirmation nécessaire (ce sont juste des démos) |
+| **Fichier introuvable** | Erreur explicite avec suggestion |
+
+## Tips & Tricks
+
+- **Préférez l'archivage à la suppression :** Éditez le fichier et définissez `status: archived`. Ça préserve l'historique.
+- **Nettoyage en lot :** `lore list --type note --quiet | xargs -I{} lore delete {} --force` (attention !).
+- **Après suppression :** Lancez `lore doctor` pour vérifier les références cassées.
+
+## Codes de sortie
+
+| Code | Signification |
+|------|---------------|
+| `0` | Document supprimé |
+| `1` | Erreur (non trouvé, non-TTY sans `--force`) |
 
 ## Exemples
 
@@ -58,7 +107,6 @@ lore list
 # Supprimer avec confirmation
 lore delete database-selection-2026-02-10.md
 # → decision — Database Selection (2026-02-10)
-# → ⚠ Référencé par : feature-add-user-model-2026-02-12.md
 # → Supprimer ? [o/N] o
 # → Supprimé
 
@@ -70,7 +118,7 @@ lore delete old-doc-2025-01-01.md --force
 
 ### "Archiver ou supprimer ?"
 
-**Préférez l'archivage.** Éditez le document et changez `status: active` en `status: archived`. Ça préserve l'historique. Ne supprimez que quand le document est vraiment faux ou nuisible.
+**Préférez l'archivage.** Changez `status: active` en `status: archived` dans le document. Ça préserve l'historique. Ne supprimez que quand le document est activement trompeur ou nuisible.
 
 ### "J'ai supprimé un document mais un autre le référence"
 
@@ -78,20 +126,7 @@ Lancez `lore doctor` — il signalera la référence cassée. Éditez ensuite le
 
 ### "Puis-je annuler une suppression ?"
 
-Si pas encore committé : `git checkout -- .lore/docs/fichier.md`. Si committé : `git show HEAD~1:.lore/docs/fichier.md > .lore/docs/fichier.md`. Le document est un simple fichier — Git est votre bouton d'annulation.
-
-## Tips & Tricks
-
-- **Préférez archiver :** `status: archived` au lieu de supprimer — préserve l'historique.
-- **Après suppression :** Lancez `lore doctor` pour vérifier les références cassées.
-- **Git est votre filet :** Tout document supprimé est récupérable via `git checkout`.
-
-## Codes de sortie
-
-| Code | Signification |
-|------|---------------|
-| `0` | Document supprimé |
-| `1` | Erreur (non trouvé, non-TTY sans `--force`) |
+Si pas encore committé : `git checkout -- .lore/docs/fichier.md`. Si committé : `git show HEAD~1:.lore/docs/fichier.md > .lore/docs/fichier.md`. Les documents sont des fichiers simples — Git est votre bouton d'annulation.
 
 ## Voir aussi
 

@@ -91,7 +91,7 @@ func newInitCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 }
 
 func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams domain.IOStreams, noDemo bool) error {
-	// AC-2: Not a git repo
+	// Not a git repo
 	if !deps.git.IsInsideWorkTree() {
 		ui.ActionableError(streams, i18n.T().Cmd.InitNotGitRepo, i18n.T().Cmd.InitNotGitRepoHint)
 		return domain.ErrNotGitRepo
@@ -99,13 +99,13 @@ func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams dom
 
 	loreDir := filepath.Join(deps.workDir, ".lore")
 
-	// AC-3: Already initialized
+	// Already initialized
 	if _, err := os.Stat(loreDir); err == nil {
 		fmt.Fprintf(streams.Err, "%s\n", ui.Warning(i18n.T().Cmd.InitAlreadyInitialized))
 		return nil
 	}
 
-	// AC-1: Happy path
+	// Happy path
 	// 1. Create .lore/docs/
 	docsDir := filepath.Join(loreDir, "docs")
 	if err := os.MkdirAll(docsDir, 0755); err != nil {
@@ -147,7 +147,7 @@ func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams dom
 		ui.Verb(streams, "Installed", i18n.T().Cmd.InitInstalledHook)
 	}
 
-	// 6. Generate .lore/README.md discovery bridge (AC1 — Story 7f.3)
+	// 6. Generate .lore/README.md discovery bridge
 	if err := storage.GenerateReadmeBridge(loreDir); err != nil {
 		fmt.Fprintf(streams.Err, "%s %s\n", ui.Warning("  "+i18n.T().Cmd.InitWarningPrefix), err.Error())
 	}
@@ -165,7 +165,7 @@ func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams dom
 
 	fmt.Fprintf(streams.Err, "\n%s\n", i18n.T().Cmd.InitTagline)
 
-	// AC-4: Demo opt-in
+	// Demo opt-in
 	if !noDemo {
 		promptDemo(ctx, cfg, streams)
 	}

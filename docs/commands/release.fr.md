@@ -12,7 +12,7 @@ lore release [flags]
 
 `lore release` lit votre corpus et génère des notes de version automatiquement. Au lieu d'écrire "ce qui a changé dans la v1.2.0" de mémoire, Lore collecte tous les documents créés entre deux tags et les regroupe par type : features, bugfixes, décisions, refactors.
 
-> **Analogie :** Imaginez une secrétaire qui a assisté à chaque réunion et pris des notes. À la fin du trimestre, vous lui demandez de tout résumer. C'est `lore release` — sauf que les "réunions" sont vos commits et les "notes" sont vos documents Lore.
+> **Analogie :** Comme chaque commit a été documenté au fil du temps, `lore release` agrège simplement ces enregistrements — transformant votre corpus en changelog structuré.
 
 ## Scénario concret
 
@@ -68,6 +68,9 @@ Le fichier généré dans `.lore/docs/` :
 
 ## Decisions
 - Switch to PostgreSQL for data persistence
+
+## Refactors
+- Extract auth middleware into dedicated package
 ```
 
 Met également à jour :
@@ -89,6 +92,14 @@ lore release --version v1.2.0
 
 ```bash
 lore release --version v1.2.0 --from v1.0.0
+```
+
+### Mode silencieux (Scripting)
+
+```bash
+filepath=$(lore release --version v1.2.0 --quiet)
+echo "Notes de version : $filepath"
+# → .lore/docs/release-v1.2.0-2026-03-16.md
 ```
 
 ### Workflow de release typique
@@ -115,9 +126,22 @@ git push origin main v1.2.0
 
 ## Questions fréquentes
 
-### "Pas de documents dans la plage"
+### "Aucun document dans la plage"
 
-Signifie que personne n'a documenté ses commits. Corrigez avec `lore pending resolve`.
+```bash
+lore release --version v1.2.0
+# → Erreur : aucun document trouvé entre v1.1.0 et HEAD
+# Aucun commit de cette plage n'a été documenté. Corrigez avec : lore pending resolve
+```
+
+### "Je n'ai pas encore taggé ?"
+
+Si aucun tag n'existe, utilisez `--from` avec un hash de commit :
+
+```bash
+lore release --version v1.0.0 --from $(git rev-list --max-parents=0 HEAD)
+# → Utilise le tout premier commit comme point de départ
+```
 
 ### "Ça marche avec GoReleaser ?"
 

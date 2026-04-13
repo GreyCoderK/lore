@@ -10,9 +10,9 @@ lore hook <install|uninstall>
 
 ## Qu'est-ce que ça fait ?
 
-Le hook est le moteur invisible de Lore. Après chaque `git commit`, il se déclenche automatiquement et lance le flux de questions. `lore hook` permet d'installer ou de retirer ce hook manuellement.
+Après chaque `git commit`, le hook post-commit se déclenche automatiquement et lance le flux de questions. `lore hook` permet d'installer ou de retirer ce hook manuellement.
 
-> **Analogie :** Le hook est comme un détecteur de fumée. Vous l'installez une fois, vous l'oubliez, et il s'active quand il le faut. `lore hook install` monte le détecteur. `lore hook uninstall` le retire.
+> **Analogie :** Le hook est comme un détecteur de fumée — installez-le une fois et il s'active quand il le faut. `lore hook install` le monte ; `lore hook uninstall` le retire.
 
 La plupart des utilisateurs n'ont jamais besoin de cette commande — `lore init` installe le hook automatiquement.
 
@@ -113,7 +113,7 @@ grep -q "LORE-START" .git/hooks/post-commit 2>/dev/null && echo "installé" || e
 
 ### "C'est quoi `_hook-post-commit` ?"
 
-Une commande interne cachée. Le fichier hook appelle `lore _hook-post-commit` qui exécute le Decision Engine, la détection contextuelle et le flux de questions. Ne l'appelez jamais directement.
+Une commande interne utilisée par le fichier hook pour exécuter le Decision Engine, la détection contextuelle et le flux de questions. Ne l'appelez jamais directement.
 
 ### "Le hook ne se déclenche pas après mes commits"
 

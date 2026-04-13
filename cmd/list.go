@@ -30,7 +30,7 @@ func newListCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// AC-6: Check .lore/ exists
+			// Check .lore/ exists
 			if err := requireLoreDir(streams); err != nil {
 				return err
 			}
@@ -48,7 +48,7 @@ func newListCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.ListParseWarning+"\n", parseErr)
 			}
 
-			// AC-2: Empty results
+			// Empty results
 			if len(results) == 0 {
 				if !flagQuiet {
 					if flagType != "" {
@@ -60,12 +60,12 @@ func newListCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 				return nil
 			}
 
-			// AC-5: Sort by date descending
+			// Sort by date descending
 			sort.Slice(results, func(i, j int) bool {
 				return results[i].Date > results[j].Date
 			})
 
-			// AC-1: Format output — one line per doc, parseable
+			// Format output — one line per doc, parseable
 			for _, meta := range results {
 				slug := storage.ExtractSlug(meta.Filename)
 				tagCount := len(meta.Tags)

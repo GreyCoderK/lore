@@ -10,9 +10,9 @@ lore list [flags]
 
 ## Qu'est-ce que ça fait ?
 
-Affiche un tableau de **chaque document** dans votre dossier `.lore/docs/`, trié par date (plus récent d'abord). C'est la table des matières de votre journal de décisions.
+Affiche un tableau de chaque document dans `.lore/docs/`, trié par date (plus récent d'abord). C'est la table des matières du corpus de votre projet.
 
-> **Analogie :** `lore list` c'est comme regarder l'index d'un livre — vous voyez tous les chapitres d'un coup avec leurs dates et types. `lore show` c'est lire un chapitre spécifique.
+> **Analogie :** `lore list` est l'index d'un livre — tous les chapitres d'un coup avec leurs dates et types. `lore show` lit un chapitre spécifique.
 
 ## Scénario concret
 
@@ -46,6 +46,7 @@ decision   database-selection-2026-02-10          2026-02-10  2 tags
 feature    add-jwt-auth-2026-02-15                2026-02-15  3 tags
 feature    add-rate-limiting-2026-03-16           2026-03-16  1 tag
 refactor   extract-auth-middleware-2026-03-01     2026-03-01  0 tags
+note       meeting-api-versioning-2026-03-20      2026-03-20  1 tag
 ```
 
 ## Exemples
@@ -74,6 +75,11 @@ lore list --quiet | cut -f2
 
 # Trouver les documents de mars
 lore list --quiet | grep "2026-03"
+
+# Boucler sur les résultats
+lore list --quiet | while IFS=$'\t' read -r type slug date tags; do
+  echo "Traitement : $slug"
+done
 ```
 
 ### Combiné avec d'autres commandes

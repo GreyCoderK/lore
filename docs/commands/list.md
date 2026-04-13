@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - show.md
+  - status.md
+  - release.md
+---
 # lore list
 
 List all documents in your corpus with metadata.
@@ -10,9 +19,9 @@ lore list [flags]
 
 ## What Does This Do?
 
-Shows a table of **every document** in your `.lore/docs/` folder, sorted by date (newest first). Think of it as the table of contents for your project's decision journal.
+Displays a table of every document in `.lore/docs/`, sorted by date (newest first). Think of it as the table of contents for your project's corpus.
 
-> **Analogy:** `lore list` is like looking at the index page of a book — you see all chapters at a glance with their dates and types. `lore show` is reading a specific chapter.
+> **Analogy:** `lore list` is the index of a book — all chapters at a glance with their dates and types. `lore show` reads a specific chapter.
 
 ## Real World Scenario
 
@@ -95,9 +104,9 @@ lore show "database"
 ## Tips & Tricks
 
 - **Before a code review:** `lore list --type decision` shows all architectural choices — great context for reviewers.
-- **Before a release:** `lore list` shows everything since the project started. Combine with `lore release` to generate notes.
-- **Quick count:** `lore list --quiet | wc -l` tells you how many documents you have — useful for the "coverage" mental model.
-- **Empty corpus?** `lore list` shows a helpful message with suggestions: "No documents yet. Try `lore new` or make a commit."
+- **Before a release:** `lore list` shows the full corpus. Combine with `lore release` to generate notes.
+- **Quick count:** `lore list --quiet | wc -l` gives the total number of documents.
+- **Empty corpus?** `lore list` shows a suggestion: "No documents yet. Try `lore new` or make a commit."
 
 ## How It Differs from `lore show`
 

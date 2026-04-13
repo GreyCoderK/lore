@@ -36,7 +36,7 @@ func init() {
 
 // Init sets the active language catalog. If lang is not supported,
 // falls back silently to EN. The warning for unsupported languages
-// is added in story 7b.4a (requires streams access).
+// (a warning for unsupported languages requires streams access).
 func Init(lang string) {
 	switch Lang(lang) {
 	case EN:
@@ -47,6 +47,23 @@ func Init(lang string) {
 		current.Store(catalogEN)
 		if lang != "" {
 			fmt.Fprintf(os.Stderr, "warning: unsupported language %q, falling back to English\n", lang)
+		}
+	}
+}
+
+// Snapshot captures the current catalog and returns a function that
+// restores it when called. Intended for test helpers that temporarily
+// switch the language and want to restore whatever was active before
+// — including non-default values set by a sibling test.
+//
+// Paranoid-review fix (2026-04-11 LOW test hygiene): the previous
+// suggestions_i18n test helper unconditionally restored to EN,
+// silently clobbering any test that legitimately ran under FR.
+func Snapshot() func() {
+	prev := current.Load()
+	return func() {
+		if prev != nil {
+			current.Store(prev)
 		}
 	}
 }

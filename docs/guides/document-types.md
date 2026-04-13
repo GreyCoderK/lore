@@ -1,10 +1,19 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - ../commands/new.md
+  - ../commands/show.md
+  - ../commands/list.md
+---
 # Document Types & Metadata
 
-Complete reference for Lore document types, statuses, and front matter metadata.
+Complete reference for lore document types, statuses, and front matter metadata.
 
 ## Document Types
 
-Every Lore document has a `type` in its front matter. Types determine the question flow and how documents are grouped in reports.
+Every lore document has a `type` in its front matter. The type determines the question flow and how documents are grouped in reports.
 
 | Type | Purpose | When to use |
 |------|---------|-------------|
@@ -28,7 +37,7 @@ graph TD
     B -->|release| H[Auto-generated — no questions]
 ```
 
-**Decision** documents get additional fields (Alternatives Considered, Impact) because architectural choices need more context.
+**Decision** documents include additional fields (Alternatives Considered, Impact) because architectural choices require more context.
 
 ## Document Statuses
 
@@ -39,7 +48,7 @@ graph TD
 | **`archived`** | Obsolete, superseded | Manual |
 | **`demo`** | Created by `lore demo` | `lore demo` only |
 
-Demo documents are excluded from coverage metrics and skip delete confirmation.
+Demo documents are excluded from coverage metrics and bypass the delete confirmation prompt.
 
 ## Front Matter Reference
 
@@ -82,8 +91,8 @@ The core rationale — the most important section.
 
 - **Choosing types:** If unsure between `decision` and `feature`, ask: "Is this about choosing between options?" → `decision`. "Is this about building something?" → `feature`.
 - **Tags are searchable:** Use consistent tags across documents. `lore show --type decision` filters by type; tags provide finer granularity.
-- **Related documents:** Link decisions to the features that implement them. Builds a knowledge graph.
-- **Archived, not deleted:** Prefer `status: archived` over deletion — keeps the historical record.
+- **Related documents:** Link decisions to the features that implement them to build a knowledge graph.
+- **Archive instead of delete:** Prefer `status: archived` over deletion — this preserves the historical record.
 
 ## Choosing the Right Type (Flowchart)
 

@@ -1,6 +1,14 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - ../commands/completion.md
+  - installation.md
+---
 # Complétions Shell
 
-Activez la complétion par tabulation pour toutes les commandes, sous-commandes et flags de Lore.
+Activez la complétion par tabulation pour toutes les commandes, sous-commandes et flags de lore.
 
 ## Pourquoi configurer ceci ?
 
@@ -12,7 +20,7 @@ lore angela <TAB> → draft  polish  review
 lore show --<TAB> → --all  --after  --type  --quiet  --feature ...
 ```
 
-Ça économise des frappes, évite les fautes, et vous aide à découvrir des commandes que vous ne connaissiez pas. Configuration en 15 secondes.
+Les complétions économisent des frappes, évitent les fautes de frappe, et révèlent des commandes que vous ne connaissiez pas. Configuration en 15 secondes.
 
 ## Configuration par shell
 
@@ -66,9 +74,9 @@ lore completion powershell | Out-String | Invoke-Expression
 Add-Content $PROFILE 'lore completion powershell | Out-String | Invoke-Expression'
 ```
 
-## Vérifier que ça marche
+## Vérifier le fonctionnement
 
-Après avoir rechargé votre shell, tapez `lore ` et appuyez sur Tab :
+Après avoir rechargé votre shell, tapez `lore` suivi d'un espace et appuyez sur Tab :
 
 ```
 $ lore <TAB>
@@ -116,4 +124,4 @@ Utilisez la méthode fpath (Zsh) ou fichier (Fish) au lieu de `eval`. `eval` ré
 ## Voir aussi
 
 - [Commande lore completion](../commands/completion.md) — Référence technique
-- [Installation](installation.md) — Vérifiez que Lore est installé
+- [Installation](installation.md) — Vérifiez que lore est installé en premier

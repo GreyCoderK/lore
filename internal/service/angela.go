@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
@@ -29,6 +30,15 @@ type PolishResult struct {
 type PolishOptions struct {
 	Audience string                  // target audience for rewrite mode
 	Progress angela.MultiPassProgress // callback for multi-pass progress (nil = silent)
+
+	// Incremental enables section-level re-polish.
+	// When true the orchestrator compares section hashes with the
+	// stored polish state and only sends changed sections to the AI.
+	Incremental bool
+
+	// PolishStatePath is the absolute path to polish-state.json.
+	// Required when Incremental is true.
+	PolishStatePath string
 }
 
 // PolishDocument orchestrates the full document polish workflow:
@@ -69,11 +79,47 @@ func PolishDocument(ctx context.Context, provider domain.AIProvider, cfg *config
 	scored := angela.ResolvePersonasForAudience(meta.Type, originalContent, audience)
 	personas := angela.Profiles(scored)
 
+	// Incremental polish path — re-polish only changed
+	// sections. Falls back to full polish when conditions aren't met
+	// (first run, <2 sections, AI parse failure).
+	incremental := len(opts) > 0 && opts[0].Incremental && opts[0].PolishStatePath != ""
+
 	// Decide: single-pass or multi-pass based on document size
 	docWordCount := len(strings.Fields(originalContent))
 	var polished string
 
-	if angela.ShouldMultiPass(docWordCount) {
+	if incremental {
+		polishState, loadErr := angela.LoadPolishState(opts[0].PolishStatePath)
+		if loadErr != nil {
+			// Non-fatal: proceed with fresh state (full polish).
+			polishState = &angela.PolishState{Entries: map[string]angela.PolishStateEntry{}}
+		}
+		storedEntry := polishState.Entries[filename]
+		incOpts := angela.IncrementalOpts{
+			Provider:       provider,
+			Meta:           meta,
+			StyleGuide:     styleGuideStr,
+			CorpusSummary:  corpusSummary,
+			Personas:       personas,
+			Audience:       audience,
+			ConfigMaxToks:  cfg.Angela.MaxTokens,
+			MinChangeLines: cfg.Angela.Polish.Incremental.MinChangeLines,
+		}
+		res, incErr := angela.PolishIncremental(ctx, originalContent, storedEntry.SectionHashes, incOpts)
+		if incErr != nil {
+			return nil, incErr
+		}
+		polished = res.Polished
+		// Update and save state.
+		polishState.Entries[filename] = angela.PolishStateEntry{
+			LastPolished:   time.Now().UTC(),
+			SectionHashes: res.NewHashes,
+		}
+		if saveErr := angela.SavePolishState(opts[0].PolishStatePath, polishState); saveErr != nil {
+			// Non-fatal: warn but don't fail the polish.
+			_, _ = fmt.Fprintf(os.Stderr, "warning: polish state save: %v\n", saveErr)
+		}
+	} else if angela.ShouldMultiPass(docWordCount) {
 		// Multi-pass: section by section
 		var progress angela.MultiPassProgress
 		if len(opts) > 0 && opts[0].Progress != nil {

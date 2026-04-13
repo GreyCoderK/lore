@@ -13,10 +13,11 @@ import (
 
 // QualityScore holds the result of a document quality assessment.
 type QualityScore struct {
-	Total     int               // 0-100
-	Breakdown map[string]int    // category → points earned
-	Missing   []string          // actionable items to improve score
-	Grade     string            // A, B, C, D, F
+	Total     int            // 0-100
+	Breakdown map[string]int // category → points earned
+	Missing   []string       // actionable items to improve score
+	Grade     string         // A, B, C, D, F
+	Profile   string         // "strict" | "free-form" — which scoring path produced this
 }
 
 // bannedPhrases are filler phrases that reduce quality.
@@ -49,12 +50,14 @@ func ScoreDocument(content string, meta domain.DocMeta) QualityScore {
 // scoreStrict is the original lore-tuned scoring for decision/feature/bugfix/
 // refactor documents. Max 100, distribution unchanged from the initial design.
 func scoreStrict(content string, meta domain.DocMeta) QualityScore {
-	s := QualityScore{Breakdown: make(map[string]int)}
+	s := QualityScore{Breakdown: make(map[string]int), Profile: "strict"}
 	lower := strings.ToLower(content)
 	lines := strings.Split(content, "\n")
 	words := len(strings.Fields(content))
 
 	// 1. Why/Pourquoi section (15 pts)
+	// TODO(i18n): Missing[] strings are user-facing but not yet routed
+	// through i18n.T(). Deferred per 8-3 scope.
 	if hasSubstantialSection(content, "## Why", "## Pourquoi") {
 		s.Breakdown["why"] = 15
 	} else {
@@ -170,10 +173,17 @@ func scoreStrict(content string, meta domain.DocMeta) QualityScore {
 // scoreFreeForm rescales the scoring for narrative / external docs:
 //   - drops Why section (15 pts) and Related refs (5 pts) — not applicable
 //   - drops "status" sub-criterion in front matter (4 pts → type+date only, 6 pts)
-//   - redistributes the freed 24 pts into density, structure, code, diagram
-//     so a well-written tutorial can realistically reach A.
+//   - freed budget: 15 + 5 + 4 = 24 pts
+//   - redistribution: diagram −5, code +5, structure +10, density +10,
+//     paragraphs +4 = net +24 pts → total stays at 100.
+//
+// Historical note: the original redistribution
+// spent +29 pts (paragraphs was +9 instead of +4), causing free-form docs
+// to score up to 105/100. The paragraphs weight was rebalanced to 4 to
+// close the overflow while keeping the signal alive. Structure and density
+// remain the headline free-form signals at 20 pts each.
 func scoreFreeForm(content string, meta domain.DocMeta) QualityScore {
-	s := QualityScore{Breakdown: make(map[string]int)}
+	s := QualityScore{Breakdown: make(map[string]int), Profile: "free-form"}
 	lower := strings.ToLower(content)
 	lines := strings.Split(content, "\n")
 	words := len(strings.Fields(content))
@@ -242,11 +252,11 @@ func scoreFreeForm(content string, meta domain.DocMeta) QualityScore {
 		s.Missing = append(s.Missing, fmt.Sprintf("document too short (%d words, aim for ≥80)", words))
 	}
 
-	// 8. Good paragraph/line ratio (9 pts — new criterion)
+	// 8. Good paragraph/line ratio (4 pts)
 	//    Well-structured prose has short paragraphs. A single giant blob is
-	//    a smell. This replaces the lore-specific "references" points.
+	//    a smell. Originally 9 pts, reduced to 4 to keep the total at 100.
 	if hasReasonableParagraphs(content) {
-		s.Breakdown["paragraphs"] = 9
+		s.Breakdown["paragraphs"] = 4
 	}
 
 	// 9. No TODO/FIXME (5 pts)
@@ -336,23 +346,61 @@ func FormatScore(s QualityScore) string {
 	return fmt.Sprintf("%d/100 (%s)", s.Total, s.Grade)
 }
 
-// FormatScoreDetail returns a multi-line breakdown.
+// scoreCategoryOrder describes how a single category is rendered in the
+// breakdown: its map key, human label, and maximum for the profile.
+type scoreCategoryOrder struct {
+	key   string
+	label string
+	max   int
+}
+
+// strictCategoryOrder is the breakdown layout for scoreStrict documents.
+// The sum of max values is 100 (enforced by TestScoringInvariant_StrictMaxesSum100).
+var strictCategoryOrder = []scoreCategoryOrder{
+	{"why", "Pourquoi/Why", 15},
+	{"diagram", "Diagram", 15},
+	{"table", "Table", 10},
+	{"code", "Code blocks", 10},
+	{"code-tags", "Code tags", 5},
+	{"structure", "Sections", 10},
+	{"frontmatter", "Front matter", 10},
+	{"references", "References", 5},
+	{"density", "Density", 10},
+	{"clean", "Clean", 5},
+	{"style", "Style", 5},
+}
+
+// freeFormCategoryOrder is the breakdown layout for scoreFreeForm documents.
+// The sum of max values is 100 (enforced by TestScoringInvariant_FreeFormMaxesSum100).
+// Note: no "why" or "references" rows — these concepts don't apply to
+// free-form content. "paragraphs" is free-form specific and replaces them.
+var freeFormCategoryOrder = []scoreCategoryOrder{
+	{"diagram", "Diagram", 10},
+	{"table", "Table", 10},
+	{"code", "Code blocks", 15},
+	{"code-tags", "Code tags", 5},
+	{"structure", "Sections", 20},
+	{"frontmatter", "Front matter", 6},
+	{"density", "Density", 20},
+	{"paragraphs", "Paragraphs", 4},
+	{"clean", "Clean", 5},
+	{"style", "Style", 5},
+}
+
+// FormatScoreDetail is retained for test compatibility and future CLI use.
+//
+// FormatScoreDetail returns a multi-line breakdown whose per-category max
+// values reflect the scoring profile that produced the score. A "strict"
+// profile shows the lore-native categories (Why, References, ...); a
+// "free-form" profile shows the narrative layout (Paragraphs, higher
+// Structure and Density caps, no Why row).
 func FormatScoreDetail(s QualityScore) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "Quality: %d/100 (%s)\n", s.Total, s.Grade)
 
-	order := []struct{ key, label string; max int }{
-		{"why", "Pourquoi/Why", 15},
-		{"diagram", "Diagram", 15},
-		{"table", "Table", 10},
-		{"code", "Code blocks", 10},
-		{"code-tags", "Code tags", 5},
-		{"structure", "Sections", 10},
-		{"frontmatter", "Front matter", 10},
-		{"references", "References", 5},
-		{"density", "Density", 10},
-		{"clean", "Clean", 5},
-		{"style", "Style", 5},
+	order := strictCategoryOrder
+	if s.Profile == "free-form" {
+		order = freeFormCategoryOrder
 	}
 
 	for _, item := range order {
@@ -376,10 +424,14 @@ func hasSubstantialSection(content string, headings ...string) bool {
 		if idx < 0 {
 			continue
 		}
-		// Find content after heading until next ## or EOF
-		rest := content[idx+len(h):]
+		// Find content after heading until next ## or EOF.
+		// Use idx on `lower` (not `content`) since we only need to
+		// check substance (word count), not preserve case.
+		rest := lower[idx+len(h):]
 		nextH := strings.Index(rest, "\n## ")
-		if nextH > 0 {
+		// nextH == 0 means the next heading is immediately
+		// after, which is still a valid slice bound.
+		if nextH >= 0 {
 			rest = rest[:nextH]
 		}
 		if utf8.RuneCountInString(strings.TrimSpace(rest)) > 100 {

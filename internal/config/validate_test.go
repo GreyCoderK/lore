@@ -184,6 +184,7 @@ func TestSuggestField(t *testing.T) {
 func TestValidFields_MatchesConfigStruct(t *testing.T) {
 	// Verify that validFields contains all fields from setDefaults.
 	// If this test fails, a new field was added to Config but not to validFields.
+	// TODO: update expectedLeafFields to cover 8-2 DraftConfig/ReviewConfig/PolishConfig fields.
 	expectedLeafFields := []string{
 		"ai.provider", "ai.model", "ai.api_key", "ai.endpoint", "ai.timeout",
 		"angela.mode", "angela.max_tokens", "angela.style_guide",

@@ -38,7 +38,7 @@ func newShowCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// AC-10: Check .lore/ exists
+			// Check .lore/ exists
 			if err := requireLoreDir(streams); err != nil {
 				return err
 			}
@@ -100,7 +100,7 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 
 	switch count {
 	case 0:
-		// AC-5: Zero results
+		// Zero results
 		if !quiet {
 			if keyword != "" {
 				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.ShowNoMatchKeyword+"\n", keyword)
@@ -112,7 +112,7 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 		return &cli.ExitCodeError{Code: cli.ExitSkip}
 
 	case 1:
-		// AC-2: Single result — display directly on stdout
+		// Single result — display directly on stdout
 		content, err := storage.ReadDocContent(results[0].Path)
 		if err != nil {
 			return fmt.Errorf("cmd: show: %w", err)
@@ -120,7 +120,7 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 		_, _ = fmt.Fprint(streams.Out, content)
 
 	default:
-		// AC-3 / AC-4: Multiple results
+		// Multiple results
 		items := make([]ui.ListItem, len(results))
 		for i, r := range results {
 			items[i] = ui.ListItem{
@@ -133,7 +133,7 @@ func displayResults(streams domain.IOStreams, results []storage.SearchResult, ke
 		isTTY := ui.IsTerminal(streams)
 
 		if !quiet {
-			// AC-4: Truncation message handled by ui.List
+			// Truncation message handled by ui.List
 			idx, err := ui.List(streams, items, i18n.T().Cmd.ShowSelectPrompt)
 			if err != nil {
 				return fmt.Errorf("cmd: show: %w", err)

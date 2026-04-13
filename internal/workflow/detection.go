@@ -73,7 +73,7 @@ type DetectOpts struct {
 	// Store provides O(1) doc lookup by commit hash. When nil, falls back to corpus scan.
 	Store domain.LoreStore
 
-	// Engine is the Decision Engine for multi-signal scoring (Story 7h-4).
+	// Engine is the Decision Engine for multi-signal scoring.
 	// When nil, step 7 is skipped and fallback proceed applies (backward compat).
 	Engine *decision.Engine
 
@@ -189,7 +189,7 @@ func Detect(ctx context.Context, ref string, git domain.GitAdapter, streams doma
 		return DetectionResult{Action: "proceed"}, nil
 	}
 
-	// 7. Decision Engine — multi-signal scoring (Story 7h-4).
+	// 7. Decision Engine — multi-signal scoring.
 	if opts.Engine != nil && opts.SignalCtx != nil {
 		result := opts.Engine.Evaluate(*opts.SignalCtx)
 		dr := DetectionResult{

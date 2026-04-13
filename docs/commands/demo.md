@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - init.md
+  - ../getting-started/quickstart.md
+  - ../guides/philosophy.md
+---
 # lore demo
 
 Interactive demonstration of the Lore workflow — safe, no setup required.
@@ -10,9 +19,9 @@ lore demo
 
 ## What Does This Do?
 
-Runs a guided ~45-second simulation of the complete documentation flow. You see exactly what Lore does: commit → questions → document → retrieval. A real document is created (marked as "demo" so it's easy to clean up).
+Runs a guided ~45-second simulation of the complete documentation flow: commit → questions → document → retrieval. A real file is created and marked as "demo" for easy cleanup.
 
-> **Analogy:** It's like a test drive for a car. You experience the full thing — steering, acceleration, braking — without buying it. `lore demo` shows you Lore's workflow without committing to using it.
+> **Analogy:** Like a test drive — you experience the full thing without buying. `lore demo` shows lore's complete workflow with no commitment.
 
 ## Real World Scenario
 
@@ -50,14 +59,14 @@ sequenceDiagram
 
 ### Details
 
-1. **Temporal consent** — Shows "~45 seconds" and waits for Enter. No surprise.
+1. **Consent** — Displays "~45 seconds" and waits for Enter. No surprises.
 2. **Logo** — ASCII wordmark (Unicode or ASCII fallback based on terminal)
-3. **Simulated commit** — A fake commit message appears
+3. **Simulated commit** — A sample commit message appears
 4. **Question flow** — Type, What, Why — with realistic pauses between each
 5. **Document created** — A real file in `.lore/docs/` with `status: "demo"` in front matter
 6. **lore show** — Simulates retrieving the document you just created
 7. **Tagline** — EN: "Your code knows what. Lore knows why." / FR: "Votre code sait quoi. Lore sait pourquoi."
-8. **Next step** — Suggests `lore init` if you liked what you saw
+8. **Next step** — Suggests `lore init` if you want to continue
 
 Each step pauses for ~800ms (respects Ctrl+C — you can exit anytime).
 
@@ -85,7 +94,7 @@ The demo adapts to your `language` setting:
 | EN | "Your code knows what. Lore knows why." |
 | FR | "Votre code sait quoi. Lore sait pourquoi." + "L'or de vos décisions techniques." (dim) |
 
-The French version includes the "L'or" wordplay as a subtle second line — the brand Easter egg that francophones naturally discover.
+The French version adds the "L'or" wordplay as a subtle second line — a brand easter egg that francophones naturally discover.
 
 ## Common Questions
 
@@ -126,9 +135,9 @@ lore delete example-demo-2026-03-16.md
 
 ## Tips & Tricks
 
-- **Convince your team:** `lore demo` is the fastest way to show Lore to colleagues — 45 seconds, no slides.
-- **Screen sharing friendly:** The pauses between steps are designed for live demonstrations.
-- **Safe to re-run:** Each demo creates a new document. Old ones can be deleted without confirmation.
+- **Convince your team:** `lore demo` is the fastest way to show lore to colleagues — 45 seconds, no slides.
+- **Screen-sharing friendly:** The pauses between steps are designed for live demonstrations.
+- **Safe to re-run:** Each run creates a new document. Old demo docs can be deleted without confirmation.
 - **Demo docs do not count:** Documents with `status: "demo"` are excluded from coverage metrics in `lore status`.
 
 ## See Also

@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/greycoderk/lore/internal/angela"
@@ -22,17 +23,8 @@ func TestCountSeverities(t *testing.T) {
 	if result == "" {
 		t.Fatal("countSeverities returned empty string")
 	}
-	// Should contain counts
-	tests := []string{"1 contradiction", "2 gap", "1 style"}
-	for _, want := range tests {
-		found := false
-		for i := 0; i <= len(result)-len(want); i++ {
-			if result[i:i+len(want)] == want {
-				found = true
-				break
-			}
-		}
-		if !found {
+	for _, want := range []string{"1 contradiction", "2 gap", "1 style"} {
+		if !strings.Contains(result, want) {
 			t.Errorf("countSeverities = %q, missing %q", result, want)
 		}
 	}
@@ -44,21 +36,12 @@ func TestCountSeverities_UnknownSeverity(t *testing.T) {
 		{Severity: "custom-sev"},
 	}
 	result := countSeverities(findings)
-	if !contains(result, "1 contradiction") {
+	if !strings.Contains(result, "1 contradiction") {
 		t.Errorf("expected '1 contradiction', got %q", result)
 	}
-	if !contains(result, "1 custom-sev") {
+	if !strings.Contains(result, "1 custom-sev") {
 		t.Errorf("expected '1 custom-sev' (unknown severity), got %q", result)
 	}
-}
-
-func contains(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
 }
 
 func TestCountSeverities_Empty(t *testing.T) {
@@ -77,7 +60,7 @@ func TestFormatReviewReport_NoFindings(t *testing.T) {
 		Findings: []angela.ReviewFinding{},
 		DocCount: 10,
 	}
-	formatReviewReport(streams, report, 10, false)
+	formatReviewReport(streams, report, 10, false, false, false)
 	// Should not panic and stderr should have header
 	errOut := streams.Err.(*bytes.Buffer).String()
 	if len(errOut) == 0 {
@@ -96,10 +79,29 @@ func TestFormatReviewReport_WithFindings(t *testing.T) {
 		},
 		DocCount: 8,
 	}
-	formatReviewReport(streams, report, 10, false)
+	formatReviewReport(streams, report, 10, false, false, false)
 	stdout := out.String()
-	if len(stdout) == 0 {
-		t.Error("expected findings on stdout")
+	// Paranoid-review fix: replace the previous vacuous-truth
+	// assertion (`len(stdout) == 0`) with explicit content checks.
+	// A formatter that printed only whitespace used to pass.
+	expectContains := []string{
+		"JWT conflict",
+		"contradiction",
+		"a.md",
+		"b.md",
+		"Two docs disagree",
+		"Naming",
+		"style",
+		"Inconsistent terms",
+	}
+	for _, want := range expectContains {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("stdout missing %q, got:\n%s", want, stdout)
+		}
+	}
+	// The severity summary line should have surfaced the aggregated counts.
+	if !strings.Contains(errBuf.String(), "contradiction") {
+		t.Errorf("stderr missing severity summary, got: %s", errBuf.String())
 	}
 }
 
@@ -113,7 +115,7 @@ func TestFormatReviewReport_Quiet(t *testing.T) {
 		},
 		DocCount: 5,
 	}
-	formatReviewReport(streams, report, 5, true)
+	formatReviewReport(streams, report, 5, true, false, false)
 	// Quiet mode: stderr should be empty (no header, no summary)
 	if errBuf.Len() > 0 {
 		t.Errorf("quiet mode should suppress stderr, got: %s", errBuf.String())

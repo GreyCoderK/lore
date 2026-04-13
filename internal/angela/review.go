@@ -28,18 +28,51 @@ type DocSummary struct {
 }
 
 // ReviewFinding represents a single issue found during corpus review.
+//
+// Evidence and Confidence: the AI must back every finding with a
+// verbatim quote from a specific document, and the evidence validator
+// rejects findings whose quotes cannot be found in the actual corpus.
+// This is the project's primary defense against AI hallucinations in
+// the review output.
+//
+// Hash and DiffStatus: when differential review is enabled, the runner
+// computes a stable hash from severity + sorted documents + normalized
+// title and tracks the finding's lifecycle across runs in a JSON state
+// file. DiffStatus tags each finding with its position in that
+// lifecycle for the current run.
 type ReviewFinding struct {
-	Severity    string   `json:"severity"`    // "contradiction", "gap", "style", "obsolete"
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Documents   []string `json:"documents"`   // filenames concerned
-	Relevance   string   `json:"relevance,omitempty"` // "high", "medium", "low" — set when --for is used
+	Severity    string     `json:"severity"`    // "contradiction", "gap", "style", "obsolete"
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Documents   []string   `json:"documents"`   // filenames concerned
+	Relevance   string     `json:"relevance,omitempty"` // "high", "medium", "low" — set when --for is used
+	Evidence    []Evidence `json:"evidence,omitempty"`  // verifiable quotes
+	Confidence  float64    `json:"confidence,omitempty"` // AI self-assessment 0.0-1.0
+	Hash        string     `json:"hash,omitempty"`       // stable identity for differential tracking
+	DiffStatus  string     `json:"diff_status,omitempty"` // "new" | "persisting" | "regressed" | "resolved"
+}
+
+// Evidence is a verbatim citation from a specific corpus document used to
+// justify a ReviewFinding. The AI populates these; the validator checks
+// that each File exists and each Quote literally appears in its File
+// (after whitespace normalization) before the finding is kept.
+type Evidence struct {
+	File  string `json:"file"`
+	Quote string `json:"quote"`
+	Line  int    `json:"line,omitempty"`
 }
 
 // ReviewReport holds the complete result of a corpus review.
+//
+// Diff (omitempty): when differential review is enabled, the cmd layer
+// attaches the per-run lifecycle classification (NEW / PERSISTING /
+// REGRESSED / RESOLVED) here so the reporter can surface the delta
+// without re-doing the diff.
 type ReviewReport struct {
-	Findings []ReviewFinding
-	DocCount int
+	Findings []ReviewFinding   `json:"findings"`
+	DocCount int               `json:"doc_count"`
+	Rejected []RejectedFinding `json:"rejected,omitempty"` // evidence-validator drops
+	Diff     *ReviewDiff       `json:"diff,omitempty"`     // differential lifecycle
 }
 
 // severityOrder defines the sort priority for findings.
@@ -50,22 +83,60 @@ var severityOrder = map[string]int{
 	"style":         3,
 }
 
+// promptMarkerRe matches every prompt delimiter we use anywhere in the
+// codebase, case-insensitively, with tolerance for whitespace inside the
+// brackets. Pinned as a regex so a new marker only needs to be added in
+// one place.
+//
+// The regex-based approach (rather than an exact-match blacklist)
+// ensures all case/whitespace variants of the markers are caught,
+// including section/style markers added by multi-pass polish.
+var promptMarkerRe = regexp.MustCompile(
+	`(?i)<<<\s*/?\s*(END_)?(CORPUS|STYLE_GUIDE|DOCUMENT|SECTION|STYLE)\s*>>>`,
+)
+
 // sanitizePromptContent provides defense-in-depth against prompt injection.
 // Primary defense: structural separation of system prompt and user content.
-// Secondary defense: delimiter replacement prevents content from mimicking prompt boundaries.
-// Note: determined adversaries with document write access may still craft injection attempts.
-// This is acceptable because document authors are trusted users of the repository.
+// Secondary defense: delimiter replacement prevents content from mimicking
+// prompt boundaries.
+//
+// Also strips ASCII control characters (except TAB/LF/CR) so adversarial
+// content cannot embed ANSI escape sequences or sneak NUL bytes past a
+// downstream consumer. Note: determined adversaries with document write
+// access may still craft injection attempts; this is acceptable because
+// document authors are trusted users of the repository.
 func sanitizePromptContent(s string) string {
-	r := strings.NewReplacer(
-		// Delimiter markers — prevent structural confusion
-		"<<<CORPUS>>>", "[CORPUS]",
-		"<<<END_CORPUS>>>", "[END_CORPUS]",
-		"<<<STYLE_GUIDE>>>", "[STYLE_GUIDE]",
-		"<<<END_STYLE_GUIDE>>>", "[END_STYLE_GUIDE]",
-		"<<<DOCUMENT>>>", "[DOCUMENT]",
-		"<<<END_DOCUMENT>>>", "[END_DOCUMENT]",
-	)
-	return r.Replace(s)
+	s = promptMarkerRe.ReplaceAllString(s, "[marker]")
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		// Allow common whitespace; drop other C0/C1 controls.
+		if r == '\t' || r == '\n' || r == '\r' {
+			b.WriteRune(r)
+			continue
+		}
+		if r < 0x20 || r == 0x7f {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+// sanitizeShortField is the same as sanitizePromptContent plus an
+// explicit length cap. Used for audience/persona/filename strings that
+// are interpolated *inline* into prompts where even a short injection
+// is dangerous. 200 matches the existing caps at the CLI layer.
+func sanitizeShortField(s string) string {
+	s = sanitizePromptContent(s)
+	// Collapse newlines to spaces so a pasted multi-line string cannot
+	// visually separate itself from surrounding prompt structure.
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	if len(s) > 200 {
+		s = s[:200]
+	}
+	return strings.TrimSpace(s)
 }
 
 // BuildReviewPrompt constructs the AI prompt for corpus-wide review.
@@ -73,10 +144,27 @@ func sanitizePromptContent(s string) string {
 // signals may be nil (no pre-analysis). Corpus is serialized in TOON format.
 // ReviewOpts holds optional parameters for Review.
 type ReviewOpts struct {
-	Audience  string      // target audience — findings will be framed for this audience
+	Audience   string      // target audience — findings will be framed for this audience
 	VHSSignals *VHSSignals // VHS cross-reference signals (nil if no tape dir found)
+
+	// Evidence validation. When Evidence.Required is true and Reader
+	// is non-nil, Review() runs ValidateFindings on the parsed
+	// findings before sorting and returning. Reader is needed because
+	// the validator reads full document content (DocSummary only
+	// carries a truncated snippet) to check that each quoted passage
+	// literally exists. Leaving Reader nil while Required is true is
+	// treated as "no corpus available" and every evidence file-check
+	// fails, which is the correct default-deny stance.
+	Evidence EvidenceValidation
+	Reader   domain.CorpusReader
+
+	// ConfigMaxTokens lets Review() honor the user's `angela.max_tokens`
+	// config instead of hard-coding the default. When zero, the package
+	// default is used.
+	ConfigMaxTokens int
 }
 
+// BuildReviewPrompt is retained for test compatibility; production uses BuildReviewPromptWithVHS.
 func BuildReviewPrompt(docs []DocSummary, styleGuide string, signals *CorpusSignals, audience ...string) (string, string) {
 	return BuildReviewPromptWithVHS(docs, styleGuide, signals, nil, audience...)
 }
@@ -132,10 +220,34 @@ QUALITY RULES:
 - Aim for 3-8 high-quality findings, not 20 weak ones
 - If no real issues found, return: {"findings": []}
 
+EVIDENCE RULE (MANDATORY):
+- Every finding MUST include an "evidence" array with at least one citation.
+- Each evidence entry: { "file": "exact-filename.md", "quote": "EXACT TEXT COPIED FROM THE DOCUMENT" }
+- Quotes must be a verbatim substring of the document. Do NOT paraphrase, summarise, or reword.
+- Copy the shortest distinctive passage that proves your point (one sentence is usually enough).
+- Add a "confidence" field (float 0.0 - 1.0) self-assessing how sure you are about the finding.
+- Do NOT emit findings whose confidence is below 0.4.
+- Findings without verifiable quotes are rejected automatically by a post-processing validator,
+  so a hallucinated or reworded quote wastes a finding slot without reaching the user.
+
 OUTPUT FORMAT:
-- Return a JSON object: {"findings": [{severity, title, description, documents}]}
+- Return a JSON object: {"findings": [{severity, title, description, documents, evidence, confidence}]}
 - Valid severities: "contradiction", "gap", "obsolete", "style"
 - documents: array of filenames involved
+- evidence: array of { file, quote } objects — at least one entry per finding
+- confidence: float in [0.0, 1.0]
+- Example:
+  {"findings": [{
+    "severity": "contradiction",
+    "title": "Auth strategy conflicts",
+    "description": "decision-auth-2026-01-10.md picks JWT but feature-session-2026-02-05.md ships cookies.",
+    "documents": ["decision-auth-2026-01-10.md", "feature-session-2026-02-05.md"],
+    "evidence": [
+      {"file": "decision-auth-2026-01-10.md", "quote": "we will authenticate all API calls with stateless JWT tokens"},
+      {"file": "feature-session-2026-02-05.md", "quote": "the new endpoint issues an HTTP-only session cookie on login"}
+    ],
+    "confidence": 0.9
+  }]}
 - Return ONLY the JSON. No markdown, no explanation, no wrapping.
 `)
 
@@ -147,7 +259,7 @@ OUTPUT FORMAT:
 AUDIENCE-ADAPTED REVIEW
 ═══════════════════════════════════════
 
-You are reviewing this corpus for a SPECIFIC audience: "` + sanitizePromptContent(audience[0]) + `"
+You are reviewing this corpus for a SPECIFIC audience: "` + sanitizeShortField(audience[0]) + `"
 
 ADDITIONAL RULES FOR AUDIENCE REVIEW:
 - Frame findings in terms that matter to this audience
@@ -188,23 +300,28 @@ ADDITIONAL RULES FOR AUDIENCE REVIEW:
 
 // Review performs a corpus-wide analysis using the AI provider.
 // Exactly 1 API call. Returns the review report sorted by severity.
+//
+// When opts[0].Evidence.Required is true, the parsed findings are
+// passed through ValidateFindings BEFORE sorting. In strict mode
+// failing findings are moved to ReviewReport.Rejected. In lenient mode
+// they stay in Findings but also show up in Rejected with their reason,
+// so the CLI can surface both. In off mode (or Required=false) the
+// validator is bypassed entirely.
 func Review(ctx context.Context, provider domain.AIProvider, docs []DocSummary, styleGuide string, opts ...ReviewOpts) (*ReviewReport, error) {
 	if provider == nil {
 		return nil, fmt.Errorf("angela: review: no AI provider configured")
 	}
 
-	var aud string
-	var vhs *VHSSignals
+	var o ReviewOpts
 	if len(opts) > 0 {
-		aud = opts[0].Audience
-		vhs = opts[0].VHSSignals
+		o = opts[0]
 	}
 	signals := AnalyzeCorpusSignals(docs)
-	systemPrompt, userContent := BuildReviewPromptWithVHS(docs, styleGuide, signals, vhs, aud)
+	systemPrompt, userContent := BuildReviewPromptWithVHS(docs, styleGuide, signals, o.VHSSignals, o.Audience)
 	if len(userContent) > maxAIInputSize {
 		return nil, fmt.Errorf("angela: review corpus too large for AI processing (%d bytes, max %d)", len(userContent), maxAIInputSize)
 	}
-	maxTokens := ResolveMaxTokens("review", 0)
+	maxTokens := ResolveMaxTokens("review", 0, o.ConfigMaxTokens)
 	result, err := provider.Complete(ctx, userContent, domain.WithSystem(systemPrompt), domain.WithMaxTokens(maxTokens))
 	if err != nil {
 		return nil, fmt.Errorf("angela: review: %w", err)
@@ -215,11 +332,17 @@ func Review(ctx context.Context, provider domain.AIProvider, docs []DocSummary, 
 		return nil, err
 	}
 
-	sortFindings(findings)
+	// Validate evidence BEFORE sorting so the kept set is what gets
+	// ranked by severity. The returned Rejected slice is attached to
+	// the report so the CLI can surface drop reasons.
+	validation := ValidateFindings(findings, o.Reader, o.Evidence)
+	kept := validation.Valid
+	sortFindings(kept)
 
 	return &ReviewReport{
-		Findings: findings,
+		Findings: kept,
 		DocCount: len(docs),
+		Rejected: validation.Rejected,
 	}, nil
 }
 
@@ -232,26 +355,128 @@ type jsonResponseWrapper struct {
 var codeBlockRe = regexp.MustCompile("(?s)```(?:json)?\\s*\n?(.*?)\n?\\s*```")
 
 // parseReviewResponse attempts to parse the AI response as JSON.
-// Strategy: 1) try full response, 2) try ```json``` block, 3) error.
+//
+// AI responses are messy in practice: the model sometimes wraps the
+// JSON in a ```json fence, sometimes in a bare fence, sometimes emits
+// a conversational preamble ("Sure, here are the findings:"), and
+// sometimes appends a trailing paragraph. The strategies below are
+// tried in order, from most-strict to most-permissive, and the first
+// one that yields a valid wrapper or finding list wins.
+//
+// Includes bare-array, object-scan, and array-scan strategies so the
+// review loop does not hard-fail on a perfectly usable response just
+// because the AI strayed from the exact schema.
 func parseReviewResponse(response string) ([]ReviewFinding, error) {
 	response = strings.TrimSpace(response)
 
-	// Strategy 1: try full response
-	var wrapper jsonResponseWrapper
-	if err := json.Unmarshal([]byte(response), &wrapper); err == nil {
-		return normalizeFindings(wrapper.Findings), nil
+	// Strategy 1: entire response is the wrapper object.
+	if findings, ok := tryParseWrapper(response); ok {
+		return findings, nil
 	}
-
-	// Strategy 2: try ```json ... ``` block
-	matches := codeBlockRe.FindStringSubmatch(response)
-	if len(matches) >= 2 {
-		if err := json.Unmarshal([]byte(strings.TrimSpace(matches[1])), &wrapper); err == nil {
-			return normalizeFindings(wrapper.Findings), nil
+	// Strategy 2: entire response is a bare findings array. Some AI
+	// responses drop the `{"findings":...}` envelope and just emit the
+	// inner array; unmarshaling into a []ReviewFinding directly works.
+	if findings, ok := tryParseBareArray(response); ok {
+		return findings, nil
+	}
+	// Strategy 3: fenced code block containing either a wrapper object
+	// or a bare array. Covers ```json ... ``` and bare ``` ... ```.
+	if matches := codeBlockRe.FindStringSubmatch(response); len(matches) >= 2 {
+		inner := strings.TrimSpace(matches[1])
+		if findings, ok := tryParseWrapper(inner); ok {
+			return findings, nil
+		}
+		if findings, ok := tryParseBareArray(inner); ok {
+			return findings, nil
 		}
 	}
-
-	// Strategy 3: error
+	// Strategy 4: object scan — scan for the outermost `{ ... }` block
+	// anywhere in the response. Handles "Here are the findings: { ... }"
+	// and "{ ... } Let me know if you'd like more detail.".
+	if start, end := findOutermost(response, '{', '}'); start >= 0 {
+		if findings, ok := tryParseWrapper(response[start : end+1]); ok {
+			return findings, nil
+		}
+	}
+	// Strategy 5: array scan — same idea for a bare `[ ... ]` block.
+	if start, end := findOutermost(response, '[', ']'); start >= 0 {
+		if findings, ok := tryParseBareArray(response[start : end+1]); ok {
+			return findings, nil
+		}
+	}
 	return nil, fmt.Errorf("angela: review: %s", i18n.T().Cmd.AngelaReviewParseErr)
+}
+
+// tryParseWrapper attempts to unmarshal s as {"findings":[...]}.
+// Returns the normalized findings and true on success.
+func tryParseWrapper(s string) ([]ReviewFinding, bool) {
+	var wrapper jsonResponseWrapper
+	if err := json.Unmarshal([]byte(s), &wrapper); err == nil && wrapper.Findings != nil {
+		return normalizeFindings(wrapper.Findings), true
+	}
+	return nil, false
+}
+
+// tryParseBareArray attempts to unmarshal s as a bare [ReviewFinding]
+// slice (no wrapping object). Returns normalized findings and true on
+// success.
+func tryParseBareArray(s string) ([]ReviewFinding, bool) {
+	var arr []ReviewFinding
+	if err := json.Unmarshal([]byte(s), &arr); err == nil {
+		return normalizeFindings(arr), true
+	}
+	return nil, false
+}
+
+// findOutermost returns the byte offsets of the outermost balanced
+// pair `openCh`/`closeCh` inside s, or (-1, -1) if no balanced pair
+// exists. String literals (delimited by `"` with `\"` escaping) are
+// skipped so a `{` or `[` inside a quoted value does not confuse the
+// balance counter. This is not a full JSON parser — it is a cheap
+// recovery heuristic used only when the simpler strategies have
+// already failed.
+func findOutermost(s string, openCh, closeCh byte) (int, int) {
+	start := -1
+	depth := 0
+	inStr := false
+	esc := false
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if inStr {
+			if esc {
+				esc = false
+				continue
+			}
+			if c == '\\' {
+				esc = true
+				continue
+			}
+			if c == '"' {
+				inStr = false
+			}
+			continue
+		}
+		if c == '"' {
+			inStr = true
+			continue
+		}
+		switch c {
+		case openCh:
+			if depth == 0 {
+				start = i
+			}
+			depth++
+		case closeCh:
+			if depth == 0 {
+				continue
+			}
+			depth--
+			if depth == 0 {
+				return start, i
+			}
+		}
+	}
+	return -1, -1
 }
 
 // normalizeFindings ensures a nil slice becomes an empty slice (JSON [] instead of null).
@@ -265,6 +490,15 @@ var validSeverities = map[string]bool{
 
 // normalizeFindings ensures a nil slice becomes an empty slice and
 // normalizes unknown severities to "style" (lowest priority).
+//
+// Also strips ANSI escape sequences and C0/C1 control chars from
+// Title and Description before storing them. The AI response goes
+// straight to a terminal in the human reporter; without sanitization
+// an adversarial AI (or a prompt-injected corpus) could embed
+// cursor-move, erase-line, or clickable-link-hijack escapes in a
+// finding title. Quote sanitization is intentionally skipped — the
+// evidence validator needs verbatim match against the source content,
+// so Quote must stay raw.
 func normalizeFindings(f []ReviewFinding) []ReviewFinding {
 	if f == nil {
 		return []ReviewFinding{}
@@ -274,6 +508,11 @@ func normalizeFindings(f []ReviewFinding) []ReviewFinding {
 		if !validSeverities[f[i].Severity] {
 			f[i].Severity = "style"
 		}
+		// Title: short field — sanitize + length-cap.
+		f[i].Title = sanitizeShortField(f[i].Title)
+		// Description: longer free-form text — sanitize controls but
+		// keep newlines/tabs so multi-line descriptions still render.
+		f[i].Description = sanitizePromptContent(f[i].Description)
 	}
 	return f
 }
@@ -298,7 +537,7 @@ func severityRank(sev string) int {
 }
 
 // PrepareDocSummaries reads documents from the corpus and builds summaries.
-// Returns error if fewer than 5 documents exist (AC-2).
+// Returns error if fewer than 5 documents exist.
 // Limits to 50 docs: 25 most recent + 25 oldest when corpus exceeds 50.
 // ReviewFilter controls which documents are included in a review.
 type ReviewFilter struct {

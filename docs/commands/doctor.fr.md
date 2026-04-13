@@ -1,3 +1,11 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - status.md
+  - ../guides/configuration.md
+---
 # lore doctor
 
 Diagnostiquer et réparer votre corpus de documentation.
@@ -10,9 +18,7 @@ lore doctor [flags]
 
 ## Qu'est-ce que ça fait ?
 
-`lore doctor` est comme un bilan de santé pour votre documentation. Il scanne les problèmes — fichiers corrompus, références manquantes, caches obsolètes — et peut réparer la plupart automatiquement.
-
-> **Analogie :** Comme un vrai médecin vérifie vos constantes et prescrit un traitement, `lore doctor` vérifie la santé de votre corpus et prescrit `--fix`.
+`lore doctor` effectue un bilan de santé de votre corpus de documentation. Il scanne les problèmes — fichiers corrompus, références manquantes, caches obsolètes — et en répare la plupart automatiquement.
 
 ## Scénario concret
 
@@ -41,14 +47,14 @@ lore doctor [flags]
 
 ## Vérifications diagnostiques
 
-| Vérification | Auto-réparable ? | Description |
-|--------------|-----------------|-------------|
-| **orphan-tmp** | ✅ Oui — les supprime | Fichiers `.tmp` restants d'écritures interrompues |
-| **stale-index** | ✅ Oui — reconstruit | Fichier index désynchronisé avec les documents |
-| **stale-cache** | ✅ Oui — vide le cache | Cache review Angela obsolète |
-| **broken-ref** | ❌ Non — correction manuelle | Référence vers un document inexistant |
-| **invalid-frontmatter** | ❌ Non — correction manuelle | Erreurs d'analyse du YAML |
-| **config** | ❌ Non — correction manuelle | Fautes de frappe ou valeurs invalides dans `.lorerc` |
+| Vérification | Ce que ça détecte | Auto-réparable ? |
+|--------------|-------------------|-----------------|
+| **orphan-tmp** | Fichiers `.tmp` restants d'écritures interrompues | ✅ Oui — les supprime |
+| **stale-index** | Fichier index désynchronisé avec les documents | ✅ Oui — reconstruit l'index |
+| **stale-cache** | Cache review Angela obsolète | ✅ Oui — vide le cache |
+| **broken-ref** | Un document référence un autre qui n'existe pas | ❌ Non — correction manuelle |
+| **invalid-frontmatter** | Les métadonnées YAML ne peuvent pas être parsées | ❌ Non — correction manuelle |
+| **config** | Fautes de frappe ou valeurs invalides dans `.lorerc` | ❌ Non — correction manuelle |
 
 ## Sortie
 
@@ -59,7 +65,7 @@ lore doctor
 ```
 Docs Check:
   ✓ orphan-tmp         (aucun trouvé)
-  ✗ stale-index        .lore/docs/index.md (désynchronisé)
+  ✗ stale-index        .lore/docs/index.md (last updated 2026-01-01)
   ✓ broken-ref         (aucun trouvé)
   ✓ stale-cache        (aucun trouvé)
   ✓ invalid-frontmatter (aucun trouvé)
@@ -71,28 +77,47 @@ Config Check:
 1 problème trouvé. Lancez : lore doctor --fix
 ```
 
-## Validation Config (`--config`)
+```bash
+lore doctor --fix
+```
+
+```
+  ✓ Corrigé : stale-index (reconstruit depuis 12 documents)
+
+Tous les problèmes résolus.
+```
+
+## Validation config (`--config`)
 
 Détecte les erreurs courantes dans `.lorerc` :
 
 ```bash
 lore doctor --config
-# ✗ clé inconnue "ai.providr"
-#   → Vouliez-vous dire "ai.provider" ? (distance de Levenshtein : 1)
 ```
 
-> Lore utilise la [distance de Levenshtein](https://fr.wikipedia.org/wiki/Distance_de_Levenshtein) — une mesure de similarité entre deux mots — pour suggérer des corrections.
+```
+Config Check:
+  ✗ .lorerc ligne 3 : clé inconnue "ai.providr"
+    → Vouliez-vous dire "ai.provider" ? (distance de Levenshtein : 1)
+  ✗ .lorerc ligne 7 : "hooks.post_commit" attend un booléen, reçu "yes"
+    → Utilisez true/false (booléen YAML), pas "yes"/"no"
+
+2 problèmes trouvés.
+```
+
+> **Comment les corrections sont suggérées :** Lore utilise la [distance de Levenshtein](https://fr.wikipedia.org/wiki/Distance_de_Levenshtein) — une mesure de similarité entre deux mots. Si vous tapez `providr`, il sait que vous vouliez probablement dire `provider` (1 caractère de différence).
 
 ## Rebuild Store (`--rebuild-store`)
 
-Le fichier `store.db` est une base SQLite qui indexe vos documents. Il est **toujours reconstructible** depuis vos fichiers Markdown — ils sont la source de vérité.
+Le fichier `store.db` est une base SQLite qui indexe vos documents pour une recherche rapide. Il est **toujours reconstructible** depuis vos fichiers Markdown — ils sont la source de vérité.
 
 ```bash
+# Si store.db est corrompu ou pour repartir de zéro
 lore doctor --rebuild-store
 # → store.db reconstruit depuis 12 documents et 47 commits
 ```
 
-> **Sûr de lancer à tout moment.** Le store est un cache, pas une source de vérité.
+> **Sûr de lancer à tout moment.** Le store est un cache, pas une source de vérité. Reconstruire ne perd rien.
 
 ## Flux
 
@@ -107,6 +132,7 @@ graph TD
     G -->|Oui| H[Auto-réparer ce qui est possible]
     H --> I[Rapport : réparé + nécessite intervention manuelle]
     G -->|Non| J[Rapport + suggérer --fix]
+    C --> K[Rapport des problèmes config avec suggestions]
 ```
 
 ## Exemples
@@ -138,6 +164,21 @@ lore doctor --fix --rebuild-store
 | Après migration/upgrade | `lore doctor --fix --rebuild-store` — reset complet |
 | Quelque chose semble bizarre | `lore doctor --fix` — laissez Lore comprendre |
 
+## Tips & Tricks
+
+- **Habitude hebdomadaire :** Lancez `lore doctor` chaque semaine, comme `npm audit` ou `go vet`.
+- **Intégration CI :** `lore doctor --quiet` retourne le nombre de problèmes — parfait pour les gates CI.
+- **Après merges d'équipe :** Pull → `lore doctor --fix` → terminé. Garde tout le monde en sync.
+- **Fautes de frappe config :** Les suggestions Levenshtein attrapent 90% des typos. Faites-leur confiance.
+
+## Codes de sortie
+
+| Code | Signification |
+|------|---------------|
+| `0` | Aucun problème (ou tout réparé avec `--fix`) |
+| `1` | Problèmes trouvés (nécessitent `--fix` ou intervention manuelle) |
+| `4` | Erreur de configuration |
+
 ## Questions fréquentes
 
 ### "Est-ce que `--rebuild-store` est sûr ?"
@@ -146,28 +187,13 @@ Oui. `store.db` est un cache reconstruit depuis vos fichiers Markdown. Reconstru
 
 ### "Doctor dit 'correction manuelle requise'"
 
-Les références cassées et le front matter invalide ne peuvent pas être auto-réparés car Lore ne sait pas quelle devrait être la valeur correcte. Ouvrez le fichier signalé, corrigez, puis relancez `lore doctor`.
+Les références cassées et le front matter invalide ne peuvent pas être auto-réparés car Lore ne peut pas inférer la valeur correcte. Ouvrez le fichier signalé, corrigez-le manuellement, puis relancez `lore doctor`.
 
 ### "Faut-il lancer doctor après chaque merge ?"
 
-Bonne habitude. `lore doctor --fix` prend 1 seconde et attrape les index obsolètes créés par les changements des autres.
-
-## Tips & Tricks
-
-- **Habitude hebdomadaire :** Lancez `lore doctor` chaque semaine, comme `npm audit` ou `go vet`.
-- **Intégration CI :** `lore doctor --quiet` retourne le nombre de problèmes — parfait pour les gates CI.
-- **Après merges d'équipe :** Pull → `lore doctor --fix` → terminé.
-- **Fautes de frappe config :** Les suggestions Levenshtein attrapent 90% des typos. Faites-leur confiance.
-
-## Codes de sortie
-
-| Code | Signification |
-|------|---------------|
-| `0` | Aucun problème (ou tout réparé) |
-| `1` | Problèmes trouvés (nécessitent `--fix` ou intervention manuelle) |
-| `4` | Erreur de configuration |
+Bonne habitude. `lore doctor --fix` prend moins d'une seconde et attrape les index obsolètes causés par les changements des coéquipiers.
 
 ## Voir aussi
 
 - [lore status](status.md) — Aperçu rapide de la santé
-- [Configuration](../guides/configuration.md) — Corriger les problèmes config
+- [Configuration](../guides/configuration.md) — Corriger les problèmes de configuration

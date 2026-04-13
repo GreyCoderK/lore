@@ -6,6 +6,8 @@ package angela
 import (
 	"fmt"
 	"strings"
+
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 // StyleGuide holds parsed style rules for Angela draft analysis.
@@ -47,7 +49,7 @@ func ParseStyleGuide(rules map[string]interface{}) *StyleGuide {
 			guide.Warnings = append(guide.Warnings, Suggestion{
 				Category: "style",
 				Severity: "info",
-				Message:  fmt.Sprintf("style guide: unknown rule %q (ignored)", key),
+				Message:  fmt.Sprintf(i18n.T().Angela.StyleUnknownRule, key),
 			})
 		}
 	}

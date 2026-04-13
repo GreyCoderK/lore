@@ -38,6 +38,120 @@ func repeatWord(word string, n int) string {
 }
 
 // ---------------------------------------------------------------------------
+// Scoring invariants — Story 8.1
+// ---------------------------------------------------------------------------
+
+// TestScoringInvariant_StrictMaxesSum100 enforces that the strict scoring
+// profile's per-category maximum values sum exactly to 100. This data
+// assertion documents the intended weight distribution and catches silent
+// drift when weights are adjusted. If this test fails, either the sum was
+// broken OR this test needs updating — both require re-verifying the design.
+//
+// S1-L1: these local maps shadow the package-level strictCategoryOrder /
+// freeFormCategoryOrder vars. Deriving from the package-level vars would
+// be more DRY but risks testing the value against itself. Kept as
+// independent fixtures intentionally; update both when weights change.
+func TestScoringInvariant_StrictMaxesSum100(t *testing.T) {
+	maxes := map[string]int{
+		"why":         15,
+		"diagram":     15,
+		"table":       10,
+		"code":        10,
+		"code-tags":   5,
+		"structure":   10,
+		"frontmatter": 10, // type(3) + date(3) + status(4)
+		"references":  5,
+		"density":     10,
+		"clean":       5,
+		"style":       5,
+	}
+	total := 0
+	for _, v := range maxes {
+		total += v
+	}
+	if total != 100 {
+		t.Errorf("scoreStrict category maxes sum to %d, want 100", total)
+	}
+}
+
+// TestScoringInvariant_FreeFormMaxesSum100 enforces that the free-form
+// scoring profile's per-category maximum values sum exactly to 100.
+// Historical bug: before Story 8.1 the sum was 105 because paragraphs (9)
+// was added on top of an already-saturated redistribution — the "freed 24
+// pts" comment was wrong, actual redistribution was +29 pts. Fixed by
+// reducing paragraphs from 9 to 4.
+func TestScoringInvariant_FreeFormMaxesSum100(t *testing.T) {
+	maxes := map[string]int{
+		"diagram":     10,
+		"table":       10,
+		"code":        15,
+		"code-tags":   5,
+		"structure":   20,
+		"frontmatter": 6, // type(3) + date(3), no status
+		"density":     20,
+		"paragraphs":  4, // rebalanced from 9 to fix the 105/100 overflow
+		"clean":       5,
+		"style":       5,
+	}
+	total := 0
+	for _, v := range maxes {
+		total += v
+	}
+	if total != 100 {
+		t.Errorf("scoreFreeForm category maxes sum to %d, want 100", total)
+	}
+}
+
+// TestScoreFreeForm_MaximumContentScoresAtMost100 constructs a document that
+// hits every free-form category at its cap and asserts the total stays at
+// or below 100. This is a behavioral regression test for the 105/100 bug:
+// before Story 8.1, this document would have scored 105.
+func TestScoreFreeForm_MaximumContentScoresAtMost100(t *testing.T) {
+	var sb strings.Builder
+	// 5+ headings → structure 20
+	sb.WriteString("## Overview\n")
+	// mermaid diagram → diagram 10
+	sb.WriteString("```mermaid\ngraph LR\n  A-->B\n```\n\n")
+	// table → table 10
+	sb.WriteString("| Col1 | Col2 |\n|---|---|\n| a | b |\n\n")
+	// tagged code fence → code 15 + code-tags 5
+	sb.WriteString("```go\nfunc main() { fmt.Println(\"hi\") }\n```\n\n")
+	sb.WriteString("## Context\n\n")
+	sb.WriteString(repeatWord("context", 50))
+	sb.WriteString("\n\n## Details\n\n")
+	sb.WriteString(repeatWord("detail", 50))
+	sb.WriteString("\n\n## Implementation\n\n")
+	sb.WriteString(repeatWord("impl", 50))
+	sb.WriteString("\n\n## Conclusion\n\n")
+	sb.WriteString(repeatWord("conclude", 50))
+	sb.WriteString("\n")
+
+	// tutorial is a free-form type → triggers scoreFreeForm
+	meta := domain.DocMeta{Type: "tutorial", Date: "2026-04-10"}
+	s := ScoreDocument(sb.String(), meta)
+
+	if s.Total > 100 {
+		t.Errorf("free-form max content scored %d, must not exceed 100", s.Total)
+	}
+	if s.Profile != "free-form" {
+		t.Errorf("expected profile %q, got %q", "free-form", s.Profile)
+	}
+}
+
+// TestScoreDocument_ProfileFieldSet verifies both scoring paths populate
+// the Profile field so FormatScoreDetail can render the right max values.
+func TestScoreDocument_ProfileFieldSet(t *testing.T) {
+	strict := ScoreDocument("content", domain.DocMeta{Type: "decision"})
+	if strict.Profile != "strict" {
+		t.Errorf("strict scoring: expected Profile %q, got %q", "strict", strict.Profile)
+	}
+	free := ScoreDocument("content", domain.DocMeta{Type: "tutorial"})
+	if free.Profile != "free-form" {
+		t.Errorf("free-form scoring: expected Profile %q, got %q", "free-form", free.Profile)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // ScoreDocument
 // ---------------------------------------------------------------------------
 

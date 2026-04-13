@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - ../guides/contextual-detection.md
+  - ../guides/configuration.md
+  - status.md
+---
 # lore decision
 
 Comprendre comment Lore décide quels commits ont besoin de documentation.
@@ -10,11 +19,9 @@ lore decision [flags]
 
 ## Qu'est-ce que ça fait ?
 
-Lore ne vous demande pas de documenter chaque commit. Un fix de typo dans le README n'a pas besoin d'un "pourquoi." Mais ajouter un nouveau système d'authentification, si. Le **Decision Engine** détermine lequel est lequel.
+Lore ne demande pas de documenter chaque commit. Un fix de typo dans le README n'a pas besoin d'un "pourquoi." Mais ajouter un nouveau système d'authentification, si. Le **Decision Engine** détermine lequel est lequel.
 
-`lore decision` vous montre le scoring du moteur pour n'importe quel commit.
-
-> **Analogie :** Pensez au Decision Engine comme un filtre email intelligent. Comme Gmail décide "important" vs "spam", le moteur de Lore décide "ce commit a besoin de documentation" vs "celui-ci peut être ignoré."
+`lore decision` affiche le scoring du moteur pour n'importe quel commit afin de comprendre et ajuster son comportement.
 
 ## Scénario concret
 
@@ -35,7 +42,7 @@ Lore ne vous demande pas de documenter chaque commit. Un fix de typo dans le REA
 | Flag | Type | Défaut | Description |
 |------|------|--------|-------------|
 | `--explain <ref>` | string | HEAD | Quel commit analyser |
-| `--calibration` | bool | `false` | Afficher les métriques de qualité du moteur |
+| `--calibration` | bool | `false` | Afficher les métriques de précision du moteur |
 
 ## Comment le scoring fonctionne
 
@@ -43,21 +50,21 @@ Le moteur combine **5 signaux** pour un score de 0 à 100 :
 
 ```mermaid
 graph LR
-    A[Votre Commit] --> B["Signal 1 : Type Conv (0-30)"]
-    A --> C["Signal 2 : Taille Diff (0-25)"]
-    A --> D["Signal 3 : Contenu (0-20)"]
-    A --> E["Signal 4 : Fichiers (0-15)"]
-    A --> F["Signal 5 : Historique (0-10)"]
+    A[Votre Commit] --> B["🏷️ Signal 1 : Type Conv (0-30)"]
+    A --> C["📏 Signal 2 : Taille Diff (0-25)"]
+    A --> D["🔍 Signal 3 : Contenu (0-20)"]
+    A --> E["📁 Signal 4 : Fichiers (0-15)"]
+    A --> F["📊 Signal 5 : Historique (0-10)"]
     B --> G[Score Total : 0-100]
     C --> G
     D --> G
     E --> G
     F --> G
-    G --> H{Seuils}
-    H -->|">=60"| I[Questions complètes]
-    H -->|"35-59"| J[Questions réduites]
-    H -->|"15-34"| K[Suggérer d'ignorer]
-    H -->|"<15"| L[Auto-skip]
+    G --> H{Que se passe-t-il ?}
+    H -->|"≥60"| I["📝 Questions complètes"]
+    H -->|"35-59"| J["📋 Questions réduites"]
+    H -->|"15-34"| K["🤔 Suggérer d'ignorer"]
+    H -->|"<15"| L["⏭️ Auto-skip"]
 ```
 
 ### Les 5 signaux expliqués
@@ -74,9 +81,9 @@ graph LR
 
 | Score | Action | Ce que vous voyez |
 |-------|--------|-------------------|
-| **>= 60** | `ask-full` | Les 5 questions (Type, What, Why, Alternatives, Impact) |
+| **≥ 60** | `ask-full` | Les 5 questions (Type, What, Why, Alternatives, Impact) |
 | **35–59** | `ask-reduced` | 2 questions (Type, What) |
-| **15–34** | `suggest-skip` | "Ignorer la documentation ? [O/n]" |
+| **15–34** | `suggest-skip` | "Ignorer la documentation pour ce commit ? [O/n]" |
 | **< 15** | `auto-skip` | Rien ne se passe (silencieux) |
 
 ## Sortie
@@ -94,43 +101,80 @@ Confidence  95.0%
 
 SIGNAL       SCORE  RAISON
 conv-type    +15    feat → always_ask override
-diff-size    +22    changement modéré (180 lignes)
+diff-size    +22    changement modéré (180 lignes ajoutées)
 content      +18    mots-clés critiques : auth, middleware, token
 files        +12    3 fichiers .go dans internal/ (haute valeur)
 lks-history  +5     scope "auth" — 60% taux de documentation
+
+Prefill:
+  What: "Add JWT middleware" (extrait du subject)
+  Why:  — (pas de corps de commit, confidence 0.0)
 ```
 
+### Ce que signifie "Confidence"
+
+- **95-100 % :** Les 5 signaux calculés, store.db disponible. Très fiable.
+- **80 % :** Store indisponible (Signal 5 manquant). Toujours bon.
+- **< 80 % :** Certains signaux n'ont pas pu être calculés. Le score peut être imprécis.
+
+### Ce que signifie "Prefill"
+
+Lore **pré-remplit** les champs "What" et "Why" depuis votre message de commit :
+
+- **What :** Extrait du subject du commit (première ligne)
+- **Why :** Extrait du corps du commit (si présent)
+- **Why Confidence :** 0.0 = pas de corps trouvé, 1.0 = justification claire dans le corps
+
+> **Astuce :** Écrivez des messages de commit descriptifs et Lore pré-remplit vos réponses automatiquement.
+
 ## Overrides (contourner le scoring)
+
+Forcez certains comportements dans `.lorerc` :
+
+```yaml
+decision:
+  always_ask: [feat, breaking]          # Toujours poser toutes les questions pour ces types
+  always_skip: [docs, style, ci, build] # Toujours ignorer ces types
+  critical_scopes: [security, payments] # Toujours documenter ces zones de code
+```
+
+| Override | Effet | Exemple |
+|----------|-------|---------|
+| `always_ask` | Score ignoré → questions complètes | Chaque commit `feat:` est documenté |
+| `always_skip` | Score ignoré → skip silencieux | Les changements `ci:` ne déclenchent jamais de questions |
+| `critical_scopes` | Score boosté → questions complètes | Les changements dans `payments/` sont toujours documentés |
+
+## Mode calibration
+
+Après 20+ commits, le moteur apprend vos patterns. Vérifiez sa précision :
+
+```bash
+lore decision --calibration
+```
+
+Affiche les métriques de précision : taux de réussite, faux positifs (invité alors que ça ne l'aurait pas dû), et faux négatifs (ignoré alors que ça ne l'aurait pas dû).
+
+## Ajuster les seuils
+
+Si le moteur ignore trop de commits qui vous importent, abaissez les seuils :
 
 ```yaml
 # .lorerc
 decision:
-  always_ask: [feat, breaking]          # Toujours poser toutes les questions
-  always_skip: [docs, style, ci, build] # Toujours ignorer
-  critical_scopes: [security, payments] # Toujours documenter ces zones
+  threshold_full: 50      # Défaut : 60. Plus bas = plus de questions complètes
+  threshold_reduced: 25    # Défaut : 35. Plus bas = plus de questions réduites
+  threshold_suggest: 10    # Défaut : 15. Plus bas = moins d'auto-skips
 ```
 
-## Questions fréquentes
-
-### "Le score semble faux pour mon commit"
-
-Lancez `lore decision --explain HEAD` pour voir quel signal a le plus contribué. Cause courante : le message commence par `feat:` au lieu de `docs:`.
-
-### "Puis-je forcer la documentation pour un commit ?"
-
-Oui — `always_ask` dans `.lorerc` pour des types permanents, ou retirez le `[doc-skip]` du message.
-
-### "Combien de temps avant que le moteur apprenne ?"
-
-Le Signal 5 (Historique LKS) s'active après 20 commits. Après 50+, la précision s'améliore notablement.
+Si le moteur demande trop souvent, relevez-les.
 
 ## Tips & Tricks
 
-- **"Pourquoi ignoré ?"** → `lore decision --explain <hash>` montre le détail.
-- **Forcer la doc :** `always_ask: [feat]` dans `.lorerc`.
-- **Skip ponctuel :** `[doc-skip]` dans le message de commit.
-- **Ajuster :** Commencez par les défauts, ajustez après 50+ commits via `--calibration`.
-- **Le moteur apprend :** Après 20 commits, le Signal 5 s'adapte à vos patterns.
+- **"Pourquoi mon commit a été ignoré ?"** → `lore decision --explain <hash>` montre le détail du score.
+- **Forcer la documentation :** `always_ask: [feat]` dans `.lorerc` pour toujours documenter les features.
+- **Skip ponctuel :** Ajoutez `[doc-skip]` dans votre message de commit pour un skip unique.
+- **Ajuster progressivement :** Commencez par les défauts, puis ajustez après 50+ commits via `--calibration`.
+- **Le moteur apprend :** Après 20 commits, le Signal 5 (Historique) s'active et s'adapte à vos patterns.
 
 ## Codes de sortie
 
@@ -138,6 +182,20 @@ Le Signal 5 (Historique LKS) s'active après 20 commits. Après 50+, la précisi
 |------|---------------|
 | `0` | Succès |
 | `1` | Erreur |
+
+## Questions fréquentes
+
+### "Le score semble faux pour mon commit"
+
+Lancez `lore decision --explain HEAD` pour voir quel signal a le plus contribué. Cause courante : le message commence par `feat:` au lieu de `docs:`, ce qui gonfle le score. Corrigez le préfixe et le moteur s'adapte.
+
+### "Puis-je forcer la documentation pour un commit ?"
+
+Oui. Ajoutez `[doc-skip]` dans votre message de commit pour un skip unique. Ou utilisez `always_ask`/`always_skip` dans `.lorerc` pour des overrides permanents par type.
+
+### "Combien de temps avant que le moteur apprenne ?"
+
+Le Signal 5 (Historique LKS) s'active après 20 commits. La précision s'améliore notablement après 50+. Jusqu'alors, les quatre autres signaux sont généralement suffisants.
 
 ## Voir aussi
 

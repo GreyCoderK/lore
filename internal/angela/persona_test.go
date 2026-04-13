@@ -6,7 +6,13 @@ package angela
 import (
 	"strings"
 	"testing"
+
+	"github.com/greycoderk/lore/internal/config"
 )
+
+// TODO(S4-M): add tests for SelectPersonasForDoc edge cases (unknown type,
+// empty config, all selection mode). Add tests for audience boost interaction
+// with manual selection mode.
 
 // --- Registry tests (AC-1, AC-7) ---
 
@@ -547,5 +553,118 @@ func TestDescribePersonas_MultiplePersonas(t *testing.T) {
 	// Should be comma-separated
 	if strings.Count(got, ", ") != 2 {
 		t.Errorf("expected 2 comma separators for 3 personas, got %q", got)
+	}
+}
+
+// ─── Story 8-11: SelectPersonasForDoc tests (AC-9) ──────────────
+
+func autoCfg() config.PersonasConfig {
+	return config.PersonasConfig{Selection: "auto", Max: 3, FreeFormMode: "minimal"}
+}
+
+func profileNames(ps []PersonaProfile) []string {
+	out := make([]string, len(ps))
+	for i, p := range ps {
+		out[i] = p.Name
+	}
+	return out
+}
+
+// TestSelectPersonasForDoc_DecisionReturnsExpected — AC-2
+func TestSelectPersonasForDoc_DecisionReturnsExpected(t *testing.T) {
+	ps := SelectPersonasForDoc("decision", autoCfg())
+	names := profileNames(ps)
+	if len(names) != 3 {
+		t.Fatalf("expected 3 personas for decision, got %d: %v", len(names), names)
+	}
+	want := []string{"storyteller", "architect", "business-analyst"}
+	for i, w := range want {
+		if names[i] != w {
+			t.Errorf("persona[%d] = %q, want %q", i, names[i], w)
+		}
+	}
+}
+
+// TestSelectPersonasForDoc_FreeFormMinimalReturnsTechWriter — AC-5
+func TestSelectPersonasForDoc_FreeFormMinimalReturnsTechWriter(t *testing.T) {
+	ps := SelectPersonasForDoc("tutorial", autoCfg())
+	names := profileNames(ps)
+	if len(names) != 1 || names[0] != "tech-writer" {
+		t.Errorf("minimal free-form should return [tech-writer], got %v", names)
+	}
+}
+
+// TestSelectPersonasForDoc_FreeFormNoneReturnsEmpty — AC-5
+func TestSelectPersonasForDoc_FreeFormNoneReturnsEmpty(t *testing.T) {
+	cfg := autoCfg()
+	cfg.FreeFormMode = "none"
+	ps := SelectPersonasForDoc("tutorial", cfg)
+	if len(ps) != 0 {
+		t.Errorf("none free-form should return empty, got %v", profileNames(ps))
+	}
+}
+
+// TestSelectPersonasForDoc_FreeFormFullReturnsMapping — AC-5
+func TestSelectPersonasForDoc_FreeFormFullReturnsMapping(t *testing.T) {
+	cfg := autoCfg()
+	cfg.FreeFormMode = "full"
+	ps := SelectPersonasForDoc("tutorial", cfg)
+	names := profileNames(ps)
+	if len(names) != 2 || names[0] != "tech-writer" || names[1] != "storyteller" {
+		t.Errorf("full free-form tutorial should return [tech-writer storyteller], got %v", names)
+	}
+}
+
+// TestSelectPersonasForDoc_UnknownTypeFallsBackToTechWriter — AC-2
+func TestSelectPersonasForDoc_UnknownTypeFallsBackToTechWriter(t *testing.T) {
+	cfg := autoCfg()
+	cfg.FreeFormMode = "full"
+	ps := SelectPersonasForDoc("totally-unknown-type", cfg)
+	names := profileNames(ps)
+	if len(names) != 1 || names[0] != "tech-writer" {
+		t.Errorf("unknown type should fall back to [tech-writer], got %v", names)
+	}
+}
+
+// TestSelectPersonasForDoc_MaxRespected — AC-3
+func TestSelectPersonasForDoc_MaxRespected(t *testing.T) {
+	cfg := autoCfg()
+	cfg.Max = 2
+	cfg.FreeFormMode = "full"
+	ps := SelectPersonasForDoc("feature", cfg)
+	if len(ps) > 2 {
+		t.Errorf("max=2 should cap result, got %d: %v", len(ps), profileNames(ps))
+	}
+}
+
+// TestSelectPersonasForDoc_ManualMode — AC-4
+func TestSelectPersonasForDoc_ManualMode(t *testing.T) {
+	cfg := config.PersonasConfig{
+		Selection:  "manual",
+		Max:        3,
+		ManualList: []string{"architect", "storyteller"},
+	}
+	ps := SelectPersonasForDoc("tutorial", cfg)
+	names := profileNames(ps)
+	if len(names) != 2 || names[0] != "architect" || names[1] != "storyteller" {
+		t.Errorf("manual mode should return [architect storyteller], got %v", names)
+	}
+}
+
+// TestSelectPersonasForDoc_NoneMode — AC-4
+func TestSelectPersonasForDoc_NoneMode(t *testing.T) {
+	cfg := config.PersonasConfig{Selection: "none"}
+	ps := SelectPersonasForDoc("decision", cfg)
+	if len(ps) != 0 {
+		t.Errorf("none mode should return empty, got %v", profileNames(ps))
+	}
+}
+
+// TestSelectPersonasForDoc_AllMode — AC-4
+func TestSelectPersonasForDoc_AllMode(t *testing.T) {
+	cfg := config.PersonasConfig{Selection: "all", Max: 6}
+	ps := SelectPersonasForDoc("tutorial", cfg)
+	if len(ps) != 6 {
+		t.Errorf("all mode should return 6 personas, got %d", len(ps))
 	}
 }

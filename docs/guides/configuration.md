@@ -1,6 +1,16 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - contextual-detection.md
+  - ../faq.md
+  - ../commands/config.md
+  - ../commands/doctor.md
+---
 # Configuration
 
-Lore uses a cascading configuration system.
+lore uses a cascading configuration system.
 
 ## Config Files
 
@@ -60,7 +70,7 @@ output:
 
 ## Branch Awareness
 
-Since the Angela Enhancement Sprint, Lore captures the **git branch** and **conventional commit scope** at commit time and stores them in the document front matter:
+Since the Angela Enhancement Sprint, lore captures the **git branch** and **conventional commit scope** at commit time and stores them in the document front matter:
 
 ```yaml
 ---
@@ -72,15 +82,15 @@ scope: auth                 # parsed from "feat(auth): ..."
 ---
 ```
 
-Both fields propagate through the full pipeline — hook → question flow → template → storage → LKS store — and appear in notification dialogs so you can see which branch a pending commit belongs to.
+Both fields propagate through the full pipeline — hook → question flow → template → storage → LKS store — and appear in notification dialogs so you always know which branch a pending commit belongs to.
 
 ### Opting out
 
-Branch and scope use `omitempty` in YAML output, so docs created on a detached HEAD or from commits without a conventional scope simply omit them. No config needed.
+Branch and scope use `omitempty` in YAML output, so documents created on a detached HEAD or from commits without a conventional scope simply omit those fields. No configuration needed.
 
 ### Impact on the amend workflow
 
-When you `git commit --amend` and a doc already exists for the pre-amend commit, Lore asks `Document this change? [Y/n]` (Question 0) and then offers `[U]pdate / [C]reate / [S]kip`. Configurable:
+When you run `git commit --amend` and a document already exists for the pre-amend commit, lore asks `Document this change? [Y/n]` (Question 0) and then offers `[U]pdate / [C]reate / [S]kip`. Configurable via `.lorerc`:
 
 ```yaml
 hooks:
@@ -115,7 +125,7 @@ ai:
 lore doctor --config
 ```
 
-Checks for typos, unknown keys, and suggests corrections via Levenshtein distance.
+Checks for typos and unknown keys, and suggests corrections using Levenshtein distance.
 
 ## Typical Configurations
 
@@ -129,7 +139,7 @@ output:
   dir: .lore/docs
 ```
 
-No AI, no language config. Defaults to English, zero-API mode. Maximum simplicity.
+No AI, no language configuration. Defaults to English, zero-API mode.
 
 ### Open Source Project
 
@@ -146,7 +156,7 @@ output:
   dir: .lore/docs
 ```
 
-Star prompt encourages contributors to star the repo. Decision engine skips trivial commits automatically.
+The star prompt encourages contributors to star the repo. The Decision Engine skips trivial commits automatically.
 
 ### Team with AI
 
@@ -168,7 +178,7 @@ ai:
   api_key: "sk-ant-..."
 ```
 
-Each team member stores their own API key. The shared config defines the provider and model.
+Each team member stores their own API key locally. The shared config defines the provider and model.
 
 > **`angela.max_tokens`** — When set, this value overrides the auto-computed limit. By default, Angela computes `max_tokens` dynamically based on document size (word_count × 1.3 × 1.8, capped at 8192, floor 512). If you set `angela.max_tokens: 10000` in `.lorerc`, that value is always used instead. Increase this if Angela warns that "input exceeds max output" or if responses are being truncated.
 
@@ -181,15 +191,15 @@ hooks:
   post_commit: true
 ```
 
-All UI messages, prompts, badges, and reinforcement messages switch to French. "Lore" becomes "L'or."
+All UI messages, prompts, badges, and reinforcement messages switch to French. The product name becomes "L'or."
 
 ## AI Provider Setup
 
-Angela's `polish` and `review` commands require an AI provider. Three providers are supported, each with different trade-offs.
+Angela's `polish` and `review` commands require an AI provider. Three providers are supported, each with different trade-offs:
 
 ### Anthropic (Claude)
 
-Best quality for technical documentation. Requires API credits purchased separately from a Claude.ai chat subscription.
+Best quality for technical documentation. Requires API credits purchased separately — distinct from a Claude.ai chat subscription.
 
 **Step 1 — Get an API key:**
 
@@ -200,7 +210,7 @@ Best quality for technical documentation. Requires API credits purchased separat
 
 > **Important:** A Claude.ai chat subscription (Pro, Team) does NOT include API credits. The API is a separate product billed at [console.anthropic.com](https://console.anthropic.com). You need credits even if you pay for Claude.ai.
 
-**Step 2 — Configure Lore:**
+**Step 2 — Configure lore:**
 
 ```yaml
 # .lorerc
@@ -243,7 +253,7 @@ lore angela review                                       # 1 API call, corpus an
 
 > **Note:** An OpenAI API account is separate from a ChatGPT subscription. The API uses prepaid credits — no recurring billing unless you enable auto-recharge.
 
-**Step 2 — Configure Lore:**
+**Step 2 — Configure lore:**
 
 ```yaml
 # .lorerc
@@ -277,7 +287,7 @@ lore angela review                                       # corpus analysis
 
 ### Ollama (Local — Free)
 
-Runs entirely on your machine. No API key, no cost, no data sent anywhere.
+Runs entirely on your machine. No API key, no cost, no data leaves your system.
 
 **Step 1 — Install Ollama:**
 
@@ -315,7 +325,7 @@ Other recommended models:
 | `codellama` | 3.8GB | Best for code-heavy docs | Fast |
 | `gemma2` | 5.4GB | Good for technical writing | Medium |
 
-**Step 3 — Configure Lore:**
+**Step 3 — Configure lore:**
 
 ```yaml
 # .lorerc
@@ -324,7 +334,7 @@ ai:
   model: "llama3.2"       # or any model from `ollama list`
 ```
 
-No `lore config set-key` needed — Ollama has no authentication.
+No `lore config set-key` step needed — Ollama requires no authentication.
 
 **Step 4 — Test:**
 
@@ -348,7 +358,7 @@ lore angela review                                       # test review
 
 ### Testing OpenAI code path via Ollama (free)
 
-Ollama exposes an OpenAI-compatible API at `/v1/chat/completions`. This lets you test the `openai` provider without paying for OpenAI credits:
+Ollama exposes an OpenAI-compatible API at `/v1/chat/completions`, letting you test the `openai` provider without spending OpenAI credits:
 
 ```yaml
 # .lorerc.local
@@ -381,15 +391,15 @@ lore angela polish <your-doc>.md --dry-run
 
 ### No AI? No problem
 
-`lore angela draft` and `lore angela draft --all` work **100% offline** with zero configuration. They analyze document structure, missing sections, style consistency, and cross-references — all locally.
+`lore angela draft` and `lore angela draft --all` work **100% offline** with zero configuration. They analyze document structure, missing sections, style consistency, and cross-references — entirely locally.
 
-For polish/review without API credits, see the [manual workflow via Claude.ai chat](../faq.md#i-have-a-claudeai-subscription-but-no-api-credits-can-i-use-angela) in the FAQ.
+To use polish/review without API credits, see the [manual workflow via Claude.ai chat](../faq.md#i-have-a-claudeai-subscription-but-no-api-credits-can-i-use-angela) in the FAQ.
 
 ## Troubleshooting
 
 ### "My config change has no effect"
 
-Check the cascade order — a higher-priority source may override your change:
+Check the cascade order — a higher-priority source may be overriding your change:
 
 ```
 CLI flag (--language fr)     ← highest priority
@@ -412,7 +422,7 @@ lore doctor --config
 # ✗ unknown key "ai.providr" — did you mean "ai.provider"?
 ```
 
-Lore uses Levenshtein distance to suggest corrections for typos.
+lore uses Levenshtein distance to suggest corrections for typos.
 
 ## See Also
 

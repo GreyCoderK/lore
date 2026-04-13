@@ -25,9 +25,10 @@ type PreflightResult struct {
 
 // modelContextLimits maps known models to their max context window size.
 var modelContextLimits = map[string]int{
+	"claude-opus-4-6":           200000,
+	"claude-sonnet-4-6":         200000,
 	"claude-sonnet-4-20250514":  200000,
 	"claude-haiku-4-5-20251001": 200000,
-	"claude-opus-4-6":           200000,
 	"gpt-4o":                    128000,
 	"gpt-4o-mini":               128000,
 	"gpt-4.1":                   128000,
@@ -42,9 +43,10 @@ var modelContextLimits = map[string]int{
 
 // modelSpeedTokPerSec maps known models to approximate output tokens/second.
 var modelSpeedTokPerSec = map[string]float64{
+	"claude-opus-4-6":           60,
+	"claude-sonnet-4-6":         80,
 	"claude-sonnet-4-20250514":  80,
 	"claude-haiku-4-5-20251001": 150,
-	"claude-opus-4-6":           60,
 	"gpt-4o":                    90,
 	"gpt-4o-mini":               130,
 	"gpt-4.1":                   90,
@@ -118,9 +120,10 @@ type PostCallAnalysis struct {
 
 // modelCostPer1kInput maps models to cost per 1k input tokens (USD).
 var modelCostPer1kInput = map[string]float64{
+	"claude-opus-4-6":           0.015,
+	"claude-sonnet-4-6":         0.003,
 	"claude-sonnet-4-20250514":  0.003,
 	"claude-haiku-4-5-20251001": 0.0008,
-	"claude-opus-4-6":           0.015,
 	"gpt-4o":                    0.0025,
 	"gpt-4o-mini":               0.00015,
 	"gpt-4.1":                   0.002,
@@ -129,9 +132,10 @@ var modelCostPer1kInput = map[string]float64{
 
 // modelCostPer1kOutput maps models to cost per 1k output tokens (USD).
 var modelCostPer1kOutput = map[string]float64{
+	"claude-opus-4-6":           0.075,
+	"claude-sonnet-4-6":         0.015,
 	"claude-sonnet-4-20250514":  0.015,
 	"claude-haiku-4-5-20251001": 0.004,
-	"claude-opus-4-6":           0.075,
 	"gpt-4o":                    0.01,
 	"gpt-4o-mini":               0.0006,
 	"gpt-4.1":                   0.008,

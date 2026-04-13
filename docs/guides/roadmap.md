@@ -1,6 +1,14 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - philosophy.md
+  - ../contributing/architecture.md
+---
 # Roadmap
 
-Where Lore is heading — from capture to intelligence.
+Where lore is heading — from capture to intelligence.
 
 ## The Big Picture
 
@@ -11,11 +19,11 @@ graph LR
     C --> D["...<br/>More to come"]
 ```
 
-> **Today, Lore captures.** Tomorrow, Lore understands, connects, and shares.
+> **Today, lore captures.** Tomorrow, lore understands, connects, and shares.
 
 ## What's Done (Circles 1 + 2 + 2b)
 
-The MVP is complete. Lore captures the "why" at commit-time and makes it searchable:
+The MVP is complete. lore captures the "why" at commit-time and makes it searchable:
 
 - **Capture** — Post-commit hook, 3 questions, Express mode, contextual detection
 - **Search** — `lore show`, `lore list`, `lore status`
@@ -37,7 +45,7 @@ The MVP is complete. Lore captures the "why" at commit-time and makes it searcha
 
 ## Circle 3 — Structure
 
-As your corpus grows, you'll need better organization. Circle 3 focuses on giving structure to the knowledge you've captured — grouping related documents, adapting the capture process to your team's needs, and making documentation a sustainable habit.
+As your corpus grows, you will need better organization. Circle 3 focuses on structuring the knowledge you have captured — grouping related documents, adapting the capture process to your team's needs, and making documentation a sustainable habit.
 
 **Themes being explored:**
 
@@ -49,7 +57,7 @@ As your corpus grows, you'll need better organization. Circle 3 focuses on givin
 
 ## Circle 4 — Connections
 
-Today, each document stands alone. Circle 4 is about weaving them into a connected network — linking documents to each other, to code, and to free-form knowledge that doesn't come from commits.
+Today, each document stands alone. Circle 4 is about weaving them into a connected network — linking documents to each other, to code, and to free-form knowledge that does not originate from commits.
 
 **Themes being explored:**
 
@@ -62,13 +70,13 @@ Today, each document stands alone. Circle 4 is about weaving them into a connect
 
 ## What Comes After
 
-The corpus you build today — structured, connected, searchable — becomes the foundation for future intelligence features. The details will emerge as we ship Circles 3 and 4.
+The corpus you build today — structured, connected, searchable — becomes the foundation for future intelligence features. The details will emerge as Circles 3 and 4 ship.
 
-The CLI will always stay free. The corpus will always stay yours. And the "why" you capture today will become more valuable with every future release.
+The CLI will always be free. The corpus will always be yours. And the "why" you capture today will grow more valuable with every future release.
 
 > *Follow the project on [GitHub](https://github.com/GreyCoderK/lore) to stay informed.*
 
 ## See Also
 
-- [Philosophy](philosophy.md) — Why Lore exists
-- [Architecture](../contributing/architecture.md) — How Lore is built
+- [Philosophy](philosophy.md) — Why lore exists
+- [Architecture](../contributing/architecture.md) — How lore is built

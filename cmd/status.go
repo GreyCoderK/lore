@@ -31,7 +31,7 @@ func newStatusCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// AC-9: Check .lore/ exists
+			// Check .lore/ exists
 			if err := requireLoreDir(streams); err != nil {
 				return err
 			}
@@ -160,7 +160,7 @@ func formatReviewAge(t time.Time) string {
 }
 
 // renderBadge outputs a shields.io badge markdown snippet to stdout and
-// coverage details to stderr (AC3 — Story 7f.3).
+// coverage details to stderr.
 func renderBadge(streams domain.IOStreams, gitAdapter domain.GitAdapter) error {
 	docsDir := domain.DocsPath(".")
 	result := status.CalculateCoverage(docsDir, gitAdapter)

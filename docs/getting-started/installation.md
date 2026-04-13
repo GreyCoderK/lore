@@ -1,3 +1,11 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - quickstart.md
+  - completions.md
+---
 # Installation
 
 ## Homebrew (macOS / Linux)
@@ -26,7 +34,7 @@ go install github.com/greycoderk/lore@latest
 curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh | sh
 ```
 
-Or download directly from [GitHub Releases](https://github.com/GreyCoderK/lore/releases).
+Or download directly from [GitHub Releases](https://github.com/GreyCoderK/lore/releases) and place the binary in your `PATH`.
 
 ## Verify Installation
 
@@ -55,21 +63,21 @@ Add this to your `~/.bashrc` or `~/.zshrc` to make it permanent.
 
 ### Windows
 
-Lore runs **natively on Windows** — no WSL required.
+lore runs **natively on Windows** — no WSL required.
 
 **Chocolatey (recommended):**
 ```powershell
 choco install lore-cli
 ```
 
-> The Chocolatey package is named `lore-cli` because the bare `lore` name was already taken on community.chocolatey.org. The installed binary is still `lore`.
+> The package is named `lore-cli` on Chocolatey because `lore` was already taken on community.chocolatey.org. The installed binary is still `lore`.
 
 **Go install:**
 ```powershell
 go install github.com/greycoderk/lore@latest
 ```
 
-**Pre-built binary:** Download the `.zip` from [GitHub Releases](https://github.com/GreyCoderK/lore/releases), extract `lore.exe`, and add the folder to your `PATH`.
+**Pre-built binary:** Download the `.zip` from [GitHub Releases](https://github.com/GreyCoderK/lore/releases), extract `lore.exe`, and add its folder to your `PATH`.
 
 **PowerShell tip:** If you get an "execution policy" error, run:
 ```powershell
@@ -102,5 +110,5 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ## Next Steps
 
-- [Quickstart](quickstart.md) — Get started in 5 minutes
-- [Shell Completions](completions.md) — Tab completion for your shell
+- [Quickstart](quickstart.md) — Capture your first "why" in 5 minutes
+- [Shell Completions](completions.md) — Enable tab completion for your shell

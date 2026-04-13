@@ -1,6 +1,12 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related: []
+---
 # Angela in CI — Documentation Quality Gate
 
-Angela can run as a quality gate in any CI/CD pipeline, analyzing your Markdown documentation for structural issues, inconsistencies, and coherence problems — **without requiring `lore init`**.
+Angela runs as a quality gate in any CI/CD pipeline, analyzing your Markdown documentation for structural issues, inconsistencies, and coherence problems — **without requiring `lore init`**.
 
 ## Quick Start
 
@@ -65,33 +71,52 @@ Runs entirely offline. Checks:
 
 ### Using Angela on a non-lore documentation site
 
-Angela is **safe to run on any Markdown docs site** — mkdocs, docusaurus,
-astro, diátaxis, hand-rolled — even if you've never used `lore init`. The
+Angela is **safe to run on any Markdown docs site** — MkDocs, Docusaurus,
+Astro, Diátaxis, hand-rolled — even if you've never used `lore init`. The
 analysis branches on the `type` field in front matter:
 
-- **Strict types** (`decision`, `feature`, `bugfix`, `refactor`) — get
+- **Strict types** (`decision`, `feature`, `bugfix`, `refactor`) — receive
   the full lore treatment: What/Why/Alternatives/Impact requirements,
-  persona checks, heavy-weight scoring.
+  persona checks, and heavyweight scoring.
 - **Everything else** — free-form profile. No section requirements, no
-  persona checks, rebalanced scoring that rewards structure, density,
-  and code examples instead of lore conventions.
+  persona checks; scoring is rebalanced to reward structure, density,
+  and code examples rather than lore conventions.
 
-This means your blog posts, tutorials, guides, concept pages, landing
-pages, and any custom type won't produce false-positive warnings. A
-well-written tutorial can reach 95/100 (A) on the free-form profile.
+Blog posts, tutorials, guides, concept pages, landing pages, and any
+custom type will not produce false-positive warnings. A well-written
+tutorial can reach 95/100 (A) on the free-form profile.
 
 **Translation pairs** (e.g. `installation.md` and `installation.fr.md`)
-are detected automatically — they won't be flagged as duplicates.
-Supported codes: `fr`, `en`, `es`, `de`, `it`, `pt`, `zh`, `ja`, `ko`,
+are detected automatically and will not be flagged as duplicates.
+Supported locale codes: `fr`, `en`, `es`, `de`, `it`, `pt`, `zh`, `ja`, `ko`,
 `ru`, `ar`, `nl`, `pl`.
 
-**Partial front matter is preserved**: a doc with only `type: decision`
+**Partial front matter is preserved**: a document with only `type: decision`
 and `date:` (no `status`) keeps its declared type — it will not be
-silently downgraded to `note` like it used to.
+silently downgraded to `note`.
 
 ### Review Mode (Optional, for Releases)
 
-Uses a single AI API call to find corpus-wide issues. Best suited for pre-release checks or periodic reviews, not every commit. Works with any supported provider.
+Uses a single AI API call to find corpus-wide issues. Best suited for pre-release checks or periodic reviews — not every commit. Works with any supported provider.
+
+**API key required.** Unlike draft mode (free, offline), review mode makes one API call per run. Cost depends on corpus size and model:
+
+| Model | Typical cost per review | Notes |
+|-------|------------------------|-------|
+| `claude-haiku-4-5-20251001` | ~$0.001–0.005 | Recommended for CI — fast, cheap |
+| `claude-sonnet-4-6` | ~$0.01–0.05 | Better quality findings |
+| `gpt-4o-mini` | ~$0.001–0.005 | Good alternative |
+| `ollama/*` | Free | Self-hosted, no network cost |
+
+Set the API key as a repository secret:
+
+```bash
+# GitHub: Settings → Secrets and variables → Actions → New repository secret
+# Name: ANTHROPIC_API_KEY
+# Value: sk-ant-...
+```
+
+Angela prints the estimated cost before calling the API. The CI job will not fail on cost overruns, but it will warn if the corpus is very large.
 
 #### With Anthropic (Claude) — default
 
@@ -119,7 +144,7 @@ Uses a single AI API call to find corpus-wide issues. Best suited for pre-releas
 
 #### With Ollama (Self-Hosted, Free)
 
-If you run Ollama on your CI runner (or a sidecar service):
+If you run Ollama on your CI runner (or as a sidecar service):
 
 ```yaml
 services:
@@ -141,7 +166,7 @@ steps:
 
 #### With any OpenAI-compatible API
 
-Any provider that exposes an OpenAI-compatible endpoint (Groq, Together, Mistral, Azure OpenAI, vLLM, LM Studio) works with `provider: openai`:
+Any provider that exposes an OpenAI-compatible endpoint — Groq, Together, Mistral, Azure OpenAI, vLLM, LM Studio — works with `provider: openai`:
 
 ```yaml
 - uses: GreyCoderK/lore@v1
@@ -197,7 +222,7 @@ The portable script supports both draft and review modes:
 
 ## Jenkins / Bitbucket / GitLab
 
-The script works in any CI system. Set `LORE_AI_*` environment variables for review mode:
+The script works in any CI system. Set `LORE_AI_*` environment variables to enable review mode:
 
 ### Jenkins (Jenkinsfile)
 
@@ -270,7 +295,7 @@ doc-review:
 
 ### Environment Variables
 
-Lore automatically reads `LORE_AI_*` environment variables (via Viper auto-env). No `.lorerc` file needed in CI:
+lore automatically reads `LORE_AI_*` environment variables (via Viper auto-env). No `.lorerc` file is needed in CI:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -285,12 +310,12 @@ These variables work in **any CI system** — GitHub Actions, GitLab, Jenkins, B
 
 ## Standalone Mode
 
-Angela works on **any directory of Markdown files** — with or without lore's YAML front matter:
+Angela works on **any directory of Markdown files** — with or without YAML front matter:
 
 - **With front matter**: Full analysis (type, tags, dates, scope clusters)
-- **Without front matter**: Synthetic metadata from filename and modification date; structural and style checks still work
+- **Without front matter**: Synthetic metadata derived from filename and modification date; structural and style checks still apply
 
-This means you can add Angela to any project that has a `docs/` folder, regardless of whether you use lore.
+You can add Angela to any project with a `docs/` folder, regardless of whether you use lore.
 
 ## Integration Architecture
 

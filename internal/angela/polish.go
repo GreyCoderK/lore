@@ -13,7 +13,7 @@ import (
 
 // BuildPolishPrompt constructs the AI prompt for polishing a document.
 // Returns (systemPrompt, userContent) where system is stable/cacheable and user varies per call.
-// When personas is non-nil, persona directives are injected into the user content (AC-4).
+// When personas is non-nil, persona directives are injected into the user content.
 func BuildPolishPrompt(doc string, meta domain.DocMeta, styleGuide string, corpusSummary string, personas []PersonaProfile, audience ...string) (string, string) {
 	// System prompt: stable across calls (cacheable)
 	var sys strings.Builder
@@ -139,16 +139,23 @@ A well-polished document has ALL of these:
 
 	// If an audience is specified, override PRESERVE rules with rewrite rules.
 	// The document is being adapted for a different audience, not just enriched.
+	//
+	// The raw audience string is cached in `targetAudience` and sanitized at
+	// every interpolation point — including the user-content block below,
+	// which previously wrote the raw string and could escape the structural
+	// separation.
 	targetAudience := ""
 	if len(audience) > 0 && audience[0] != "" {
-		targetAudience = audience[0]
+		targetAudience = sanitizeShortField(audience[0])
+	}
+	if targetAudience != "" {
 		sys.WriteString(`
 
 ═══════════════════════════════════════
 AUDIENCE REWRITE MODE (overrides PRESERVE rules)
 ═══════════════════════════════════════
 
-You are rewriting this document for a SPECIFIC audience: "` + sanitizePromptContent(targetAudience) + `"
+You are rewriting this document for a SPECIFIC audience: "` + targetAudience + `"
 
 REWRITE RULES:
 - ADAPT the content, structure, vocabulary, and level of detail for this audience
@@ -159,7 +166,7 @@ REWRITE RULES:
 - KEEP diagrams but simplify them if needed (fewer nodes, business-level labels)
 - KEEP tables but adapt columns to what this audience cares about
 - The output language must match the original document's language
-- Add a note at the top: "> Adapted for: ` + sanitizePromptContent(targetAudience) + `"
+- Add a note at the top: "> Adapted for: ` + targetAudience + `"
 `)
 	}
 
@@ -172,7 +179,7 @@ REWRITE RULES:
 		usr.WriteString("Rewrite the document below for this audience. Adapt tone, depth, and structure.\n\n")
 	}
 
-	// Inject persona directives (AC-4)
+	// Inject persona directives
 	if len(personas) > 0 {
 		usr.WriteString(BuildPersonaPrompt(personas))
 	}

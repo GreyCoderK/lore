@@ -1,10 +1,17 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - architecture.fr.md
+---
 # Architecture (for Contributors)
 
-A simplified overview of the Lore codebase. For contribution guidelines, see `CONTRIBUTING.md` at the project root.
+A concise overview of the lore codebase. For contribution guidelines, see `CONTRIBUTING.md` at the project root.
 
 ## Project Structure
 
-```
+```text
 cmd/           Cobra commands — one file per CLI command (the "what")
 internal/
   domain/      Shared interfaces and types — the contract between packages (no deps)
@@ -51,18 +58,45 @@ graph LR
 ```
 
 **In words:**
-```
+
+```text
 commit → hook → Decision Engine scores → questions (if needed)
   → template → generator → atomic write → index update
 ```
 
+## What is LKS?
+
+**LKS** (Lore Knowledge Store) is the SQLite database at `.lore/store.db`. It is a **derived index** — a search and query layer built on top of the Markdown corpus in `.lore/docs/`.
+
+| Property | Value |
+|----------|-------|
+| Format | SQLite (`.lore/store.db`) |
+| Reconstructible | Yes — `lore doctor --rebuild-store` rebuilds from `.lore/docs/` |
+| What it stores | Document metadata, tags, commit associations, scope/branch info |
+| Why it exists | Fast lookups without parsing every Markdown file on every query |
+
+The LKS is **never the source of truth**. When the database and the Markdown files disagree, Markdown wins. Treat `store.db` as a build artifact.
+
 ## Key Patterns
 
-- **Markdown is source of truth** — index, cache, LKS are all reconstructible
-- **Atomic writes** — `.tmp` + `os.Rename()` prevents corruption
-- **IOStreams** — `stderr` for humans, `stdout` for machines (`--quiet`)
-- **Zero implicit network** — AI is opt-in, everything works offline
-- **Front-matter-first** — YAML metadata in every document
+- **Markdown is source of truth** — the index, cache, and LKS are all reconstructible from `.lore/docs/`
+- **Atomic writes** — `.tmp` + `os.Rename()` prevents corruption on `Ctrl+C`
+- **IOStreams** — `stderr` for human output, `stdout` for machine output (`--quiet`)
+- **Zero implicit network** — AI is opt-in; everything works offline
+- **Front-matter-first** — every document carries YAML metadata
+
+## Decision Engine Scores
+
+The Decision Engine applies three thresholds to determine how many questions to ask:
+
+| Score range | Behavior | Default threshold |
+|-------------|----------|------------------|
+| ≥ 60 | Full questions (What + Why + Alternatives + Impact) | `threshold_full: 60` |
+| 35 – 59 | Reduced questions (What + Why only) | `threshold_reduced: 35` |
+| 15 – 34 | Suggest only — minimal prompt | `threshold_suggest: 15` |
+| < 15 | Auto-skip — no questions | — |
+
+All thresholds are configurable in `.lorerc`. See [Contextual Detection](../guides/contextual-detection.md) for the 7 scoring signals.
 
 ## How to Contribute
 

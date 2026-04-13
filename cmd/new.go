@@ -28,7 +28,7 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		SilenceUsage:  true, // N4 fix: prevent cobra from printing usage on RunE errors
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// AC-4: Check if Lore is initialized
+			// Check if Lore is initialized
 			if err := requireLoreDir(streams); err != nil {
 				return err
 			}
@@ -41,7 +41,7 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 			opts := workflow.ProactiveOpts{}
 
 			if commitRef != "" {
-				// Retroactive mode (AC-1, AC-3, AC-5)
+				// Retroactive mode
 				adapter := git.NewAdapter(workDir)
 
 				exists, gitErr := adapter.CommitExists(commitRef)
@@ -49,12 +49,12 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 					return fmt.Errorf("cmd: new: %w", gitErr)
 				}
 				if !exists {
-					// AC-3: actionable error for invalid/nonexistent commit
+					// Actionable error for invalid/nonexistent commit
 					_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.NewCommitNotFound+"\n", commitRef)
 					return fmt.Errorf("cmd: new: commit '%s': %w", commitRef, domain.ErrNotFound)
 				}
 
-				// AC-5: Log resolves short hash → full hash via CommitInfo.Hash
+				// Log resolves short hash → full hash via CommitInfo.Hash
 				commitInfo, gitErr := adapter.Log(commitRef)
 				if gitErr != nil {
 					return fmt.Errorf("cmd: new: %w", gitErr)

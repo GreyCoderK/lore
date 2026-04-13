@@ -1,3 +1,11 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - quickstart.md
+  - completions.md
+---
 # Installation
 
 ## Homebrew (macOS / Linux)
@@ -26,7 +34,7 @@ go install github.com/greycoderk/lore@latest
 curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh | sh
 ```
 
-Ou télécharger depuis [GitHub Releases](https://github.com/GreyCoderK/lore/releases).
+Ou télécharger directement depuis [GitHub Releases](https://github.com/GreyCoderK/lore/releases) et placer le binaire dans votre `PATH`.
 
 ## Vérifier l'installation
 
@@ -51,9 +59,11 @@ Assurez-vous que `$GOPATH/bin` (généralement `~/go/bin`) est dans votre `PATH`
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
+Ajoutez cette ligne à votre `~/.bashrc` ou `~/.zshrc` pour la rendre permanente.
+
 ### Windows
 
-Lore fonctionne **nativement sous Windows** — pas besoin de WSL.
+lore fonctionne **nativement sous Windows** — pas besoin de WSL.
 
 **Chocolatey (recommandé) :**
 ```powershell
@@ -101,5 +111,5 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ## Étapes suivantes
 
-- [Quickstart](quickstart.md) — Démarrez en 5 minutes
-- [Shell Completions](completions.md) — Complétion pour votre shell
+- [Quickstart](quickstart.md) — Capturez votre premier "pourquoi" en 5 minutes
+- [Shell Completions](completions.md) — Activez la complétion par tabulation pour votre shell

@@ -17,7 +17,7 @@ Parfois les commits ne peuvent pas être documentés immédiatement :
 
 Ces commits vont dans la **file d'attente pending**. `lore pending` aide à gérer cette file.
 
-> **Analogie :** Pensez aux commits pending comme des post-its sur votre bureau qui disent "documente-moi plus tard." `lore pending` c'est regarder ces post-its et décider quoi faire de chacun.
+> **Analogie :** Les commits pending sont des post-its qui disent "documente-moi plus tard." `lore pending` aide à traiter chacun d'eux.
 
 ## Scénario concret
 
@@ -73,6 +73,8 @@ lore pending resolve
 | `--type` | string | Pré-remplir le type |
 | `--what` | string | Pré-remplir "what" |
 | `--why` | string | Pré-remplir "why" |
+| `--alternatives` | string | Pré-remplir les alternatives |
+| `--impact` | string | Pré-remplir l'impact |
 
 > **Récupération Ctrl+C :** Si vous avez appuyé Ctrl+C pendant les questions, vos réponses partielles sont sauvées. `resolve` les pré-remplit — vous reprenez là où vous vous êtes arrêté.
 
@@ -82,6 +84,8 @@ lore pending resolve
 lore pending skip abc1234
 # → Marqué comme ignoré, n'apparaît plus dans pending
 ```
+
+Utilisez cette commande pour les commits qui n'ont pas besoin de documentation (mises à jour de dépendances, changements de formatage, etc.).
 
 ## Flux
 
@@ -154,7 +158,7 @@ Vérifiez `lore decision --explain <hash>` pour le score. Causes courantes : non
 - **Ctrl+C est sûr :** Ne perd jamais de données. Les réponses partielles sont sauvées.
 - **Batch en CI :** `lore pending --quiet | wc -l` donne le comptage pour les gates CI.
 - **Ne laissez pas s'accumuler :** Résolvez tant que le contexte est frais. Une semaine plus tard, vous ne vous rappellerez plus "pourquoi."
-- **Ignorez libéralement :** Pas chaque commit a besoin de doc. `lore pending skip` pour les triviaux.
+- **Ignorez libéralement :** Tous les commits n'ont pas besoin de documentation. Utilisez `lore pending skip` pour les changements triviaux.
 
 ## Codes de sortie
 

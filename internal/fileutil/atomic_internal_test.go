@@ -17,10 +17,14 @@ func restoreHooks(t *testing.T) {
 	origChmod := osChmod
 	origRename := osRename
 	origLink := osLink
+	origFileWrite := fileWrite
+	origFileClose := fileClose
 	t.Cleanup(func() {
 		osChmod = origChmod
 		osRename = origRename
 		osLink = origLink
+		fileWrite = origFileWrite
+		fileClose = origFileClose
 	})
 }
 
@@ -198,6 +202,178 @@ func TestAtomicWriteExclusive_LinkError_CleanupFails(t *testing.T) {
 		t.Fatal("expected error from link injection")
 	}
 	if !strings.Contains(err.Error(), "injected link error") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestAtomicWrite_WriteError(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileWrite = func(f *os.File, data []byte) (int, error) {
+		return 0, errors.New("injected write error")
+	}
+
+	err := AtomicWrite(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from write injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: write temp") {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		t.Errorf("temp file left behind: %s", e.Name())
+	}
+}
+
+func TestAtomicWrite_WriteError_CleanupFails(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileWrite = func(f *os.File, data []byte) (int, error) {
+		os.Remove(f.Name())
+		return 0, errors.New("injected write error")
+	}
+
+	err := AtomicWrite(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from write injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: write temp") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestAtomicWrite_CloseError(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileClose = func(f *os.File) error {
+		_ = f.Close()
+		return errors.New("injected close error")
+	}
+
+	err := AtomicWrite(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from close injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: close temp") {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		t.Errorf("temp file left behind: %s", e.Name())
+	}
+}
+
+func TestAtomicWrite_CloseError_CleanupFails(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileClose = func(f *os.File) error {
+		_ = f.Close()
+		os.Remove(f.Name())
+		return errors.New("injected close error")
+	}
+
+	err := AtomicWrite(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from close injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: close temp") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestAtomicWriteExclusive_WriteError(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileWrite = func(f *os.File, data []byte) (int, error) {
+		return 0, errors.New("injected write error")
+	}
+
+	err := AtomicWriteExclusive(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from write injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: write temp") {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		t.Errorf("temp file left behind: %s", e.Name())
+	}
+}
+
+func TestAtomicWriteExclusive_WriteError_CleanupFails(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileWrite = func(f *os.File, data []byte) (int, error) {
+		os.Remove(f.Name())
+		return 0, errors.New("injected write error")
+	}
+
+	err := AtomicWriteExclusive(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from write injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: write temp") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestAtomicWriteExclusive_CloseError(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileClose = func(f *os.File) error {
+		_ = f.Close()
+		return errors.New("injected close error")
+	}
+
+	err := AtomicWriteExclusive(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from close injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: close temp") {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		t.Errorf("temp file left behind: %s", e.Name())
+	}
+}
+
+func TestAtomicWriteExclusive_CloseError_CleanupFails(t *testing.T) {
+	restoreHooks(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.txt")
+
+	fileClose = func(f *os.File) error {
+		_ = f.Close()
+		os.Remove(f.Name())
+		return errors.New("injected close error")
+	}
+
+	err := AtomicWriteExclusive(path, []byte("data"), 0644)
+	if err == nil {
+		t.Fatal("expected error from close injection")
+	}
+	if !strings.Contains(err.Error(), "fileutil: close temp") {
 		t.Errorf("unexpected error: %v", err)
 	}
 }

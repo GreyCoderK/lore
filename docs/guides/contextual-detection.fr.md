@@ -1,10 +1,19 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - ../commands/decision.md
+  - ../commands/pending.md
+  - configuration.md
+---
 # Détection Contextuelle
 
-Comment le hook post-commit de Lore décide quoi faire avec chaque commit.
+Comment le hook post-commit de lore décide quoi faire avec chaque commit.
 
 ## Vue d'ensemble
 
-Quand le hook se déclenche après un commit, Lore évalue une chaîne de règles avant de poser des questions. La première règle qui correspond l'emporte.
+Quand le hook se déclenche après un commit, lore évalue une chaîne de règles avant de poser des questions. La première règle qui correspond l'emporte.
 
 ## Chaîne de Détection
 
@@ -23,7 +32,9 @@ flowchart TD
     G -->|Non| I{"Cherry-pick + doc existe ?"}
     I -->|Oui| C
     I -->|Non| J{"Amend + doc existe ?"}
-    J -->|Oui| K["Proposer édition du doc existant"]
+    J -->|Oui| K0["Question 0 : Documenter ? O/n"]
+    K0 -->|Non| C
+    K0 -->|Oui| K["Mettre à jour / Créer / Ignorer"]
     J -->|Non| L["Scoring Decision Engine"]
     L --> M{"Score ?"}
     M -->|">=60"| N["Questions complètes"]
@@ -68,7 +79,7 @@ hooks:
 
 Git redirige stdin vers `/dev/null` pour les hooks — même quand on commit depuis un terminal interactif. Cela signifie que `isatty(stdin)` retourne toujours `false` à l'intérieur d'un hook.
 
-Le hook de Lore résout cela en reconnectant stdin depuis le terminal :
+Le hook de lore résout cela en reconnectant stdin depuis le terminal :
 
 ```sh
 exec lore _hook-post-commit < /dev/tty
@@ -80,7 +91,7 @@ C'est pourquoi les questions interactives fonctionnent dans les terminaux (iTerm
 
 ## Détection Non-TTY
 
-Après reconnexion de stdin via `/dev/tty`, Lore vérifie si stdin est un vrai TTY :
+Après reconnexion de stdin via `/dev/tty`, lore vérifie si stdin est un vrai TTY :
 
 | Environnement | `/dev/tty` | `isatty(stdin)` | Comportement |
 |---------------|-----------|-----------------|-------------|
@@ -90,15 +101,15 @@ Après reconnexion de stdin via `/dev/tty`, Lore vérifie si stdin est un vrai T
 | **Pipe** (`git commit \| ...`) | Indisponible | `false` | Différé silencieusement |
 | **Cron/scripts** | Indisponible | `false` | Différé silencieusement |
 
-Quand stdin n'est pas un TTY, le commit est différé vers pending. Si un IDE est détecté (via `GIT_ASKPASS`), Lore envoie aussi une notification.
+Quand stdin n'est pas un TTY, le commit est différé vers pending. Si un IDE est détecté (via `GIT_ASKPASS`), lore envoie aussi une notification.
 
 ### Détection IDE pour les notifications
 
-Après le report, Lore détecte l'environnement IDE pour envoyer une notification. VS Code et ses forks sont identifiés via la variable `GIT_ASKPASS` (contenant "code", "cursor", "windsurf" ou "codium" dans le chemin). Un signal secondaire est `VSCODE_GIT_ASKPASS_NODE`.
+Après le report, lore détecte l'environnement IDE pour envoyer une notification. VS Code et ses forks sont identifiés via la variable `GIT_ASKPASS` (contenant "code", "cursor", "windsurf" ou "codium" dans le chemin). Un signal secondaire est `VSCODE_GIT_ASKPASS_NODE`.
 
 ## Notifications IDE
 
-Quand un commit est différé et qu'un IDE est détecté, Lore envoie une notification :
+Quand un commit est différé et qu'un IDE est détecté, lore envoie une notification :
 
 1. **VS Code IPC** — Notification native de l'extension (multi-instance)
 2. **Dialog OS** — `osascript` (macOS), `zenity`/`kdialog` (Linux), PowerShell (Windows)
@@ -112,7 +123,7 @@ Ajoutez `[doc-skip]` n'importe où dans votre message de commit :
 
 ```bash
 git commit -m "chore: update deps [doc-skip]"
-# → Lore ignore silencieusement, compte comme "couvert" dans les métriques
+# → lore ignore silencieusement, compte comme "couvert" dans les métriques
 ```
 
 ### Auto-skip du Decision Engine
@@ -129,7 +140,7 @@ Les commits avec ces types conventionnels sont scorés à 0 et ignorés silencie
 
 ## Dépannage
 
-### "Lore affiche un dialog au lieu des questions interactives"
+### "lore affiche un dialog au lieu des questions interactives"
 
 Votre hook est probablement ancien — il manque la redirection `< /dev/tty` qui reconnecte stdin depuis le terminal. Réinstallez :
 
@@ -145,7 +156,7 @@ grep "dev/tty" .git/hooks/post-commit
 # Devrait afficher : exec lore _hook-post-commit < /dev/tty
 ```
 
-### "Lore ne se déclenche pas après mon commit"
+### "lore ne se déclenche pas après mon commit"
 
 Vérifiez dans cet ordre :
 
@@ -155,14 +166,14 @@ Vérifiez dans cet ordre :
 4. **Score trop bas ?** `lore decision --explain HEAD` — peut-être auto-skip
 5. **Non-TTY ?** Vérifiez `lore pending` — le commit a peut-être été différé
 
-### "Lore pose trop de questions pour des commits triviaux"
+### "lore pose trop de questions pour des commits triviaux"
 
 Ajoutez des overrides dans `.lorerc` :
 
 ```yaml
 decision:
   always_skip: [docs, style, ci, build, chore]
-  threshold_full: 70    # Plus haut = moins de questions complètes
+  threshold_full: 70    # Défaut : 60. Augmenter pour réduire les questions complètes.
 ```
 
 Ou utilisez `[doc-skip]` dans vos messages de commit pour des cas ponctuels.

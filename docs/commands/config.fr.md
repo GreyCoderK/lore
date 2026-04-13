@@ -1,3 +1,13 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - ../guides/configuration.md
+  - angela-draft.md
+  - angela-polish.md
+  - doctor.md
+---
 # lore config
 
 Gérer les identifiants API et consulter la configuration.
@@ -10,9 +20,7 @@ lore config <set-key|delete-key|list-keys>
 
 ## Qu'est-ce que ça fait ?
 
-`lore config` gère les clés API qui alimentent les fonctions IA d'Angela. Pensez-y comme un gestionnaire de mots de passe spécifiquement pour vos fournisseurs IA — il stocke les clés de façon sécurisée dans le trousseau de votre OS pour qu'elles ne finissent jamais dans un fichier qu'on pourrait committer par accident.
-
-> **Analogie :** C'est comme la page de paramètres d'une app. On ne l'utilise pas tous les jours, mais quand on doit connecter un nouveau service, c'est là qu'on va.
+`lore config` gère les clés API qui alimentent les fonctions IA d'Angela. Les clés sont stockées de façon sécurisée dans le trousseau de votre OS — elles ne finissent jamais dans un fichier qu'on pourrait committer par accident.
 
 ## Scénario concret
 
@@ -24,7 +32,7 @@ lore config <set-key|delete-key|list-keys>
 > # ✓ Clé stockée de façon sécurisée
 > ```
 >
-> Maintenant `lore angela polish` fonctionne. Votre clé est dans le trousseau OS — jamais dans un fichier en clair.
+> `lore angela polish` fonctionne maintenant. Votre clé est dans le trousseau OS — jamais dans un fichier en clair.
 
 ![lore config](../assets/vhs/config.gif)
 <!-- Generate: vhs assets/vhs/config.tape -->
@@ -57,6 +65,11 @@ graph TD
     F --> G[Mode fichier 0600 — lecture propriétaire uniquement]
 ```
 
+- **macOS :** Trousseau d'accès (le même système qui stocke vos mots de passe WiFi)
+- **Linux :** secret-service via D-Bus (GNOME Keyring, KDE Wallet)
+- **Windows :** Gestionnaire d'identifiants Windows
+- **Fallback :** `.lorerc.local` avec `chmod 600` (lisible uniquement par vous)
+
 ## Exemples
 
 ### Configurer Anthropic (Claude)
@@ -73,10 +86,23 @@ lore config list-keys
 # ollama        stored
 ```
 
+### Configurer OpenAI (GPT)
+
+```bash
+lore config set-key openai
+# → Enter API key: [masqué]
+# → ✓ Clé stockée pour openai
+```
+
 ### Configurer Ollama (Local — Pas de clé nécessaire)
 
+```bash
+# Ollama tourne localement, pas de clé API requise
+# Configurez simplement l'endpoint dans .lorerc :
+```
+
 ```yaml
-# .lorerc (pas de clé API nécessaire !)
+# .lorerc
 ai:
   provider: "ollama"
   model: "llama3"
@@ -90,6 +116,15 @@ lore config delete-key anthropic
 # → ✓ Clé supprimée pour anthropic
 ```
 
+### Vérifier tous les fournisseurs
+
+```bash
+lore config list-keys
+# anthropic     stored
+# openai        not set
+# ollama        not set
+```
+
 ### CI/CD (Pas de trousseau)
 
 En CI, utilisez les variables d'environnement :
@@ -97,13 +132,14 @@ En CI, utilisez les variables d'environnement :
 ```bash
 export LORE_AI_API_KEY="sk-ant-..."
 export LORE_AI_PROVIDER="anthropic"
+# Les commandes Angela les utilisent automatiquement
 ```
 
 ## Questions fréquentes
 
 ### "Où exactement est stockée ma clé ?"
 
-Lancez `lore config list-keys`. Si ça dit "stored", la clé est dans votre trousseau OS. Si vous utilisez le fallback, elle est dans `.lorerc.local` (gitignore et chmod 600).
+Lancez `lore config list-keys`. Si le statut affiche "stored", la clé est dans votre trousseau OS. En cas de fallback, elle est dans `.lorerc.local` (gitignored, chmod 600).
 
 Backend keychain par plateforme :
 
@@ -121,28 +157,30 @@ Deux choses sont nécessaires :
 
 ```yaml
 ai:
-  provider: "anthropic"   # Dit à Angela QUEL fournisseur utiliser
+  provider: "anthropic"   # dit à Angela quel fournisseur utiliser
   model: "claude-sonnet-4-20250514"
 ```
 
+La clé seule ne suffit pas — lore doit aussi savoir vers quel fournisseur la router.
+
 ### "Puis-je avoir des clés différentes par projet ?"
 
-Oui. `.lorerc.local` est par projet (il vit dans la racine de votre projet, pas globalement).
+Oui. `.lorerc.local` est par projet (il vit dans la racine de votre projet, pas globalement). Différents projets peuvent utiliser différents fournisseurs et clés.
 
 ### "C'est sécurisé ?"
 
 - Trousseau OS : même sécurité que vos mots de passe sauvegardés
 - Fallback `.lorerc.local` : mode fichier `0600` (vous seul pouvez lire)
 - `.lorerc.local` est dans `.gitignore` — jamais committé
-- Les clés sont nettoyées des messages d'erreur
+- Les clés sont nettoyées des messages d'erreur (Angela ne divulgue jamais votre clé dans les sorties)
 
 ## Tips & Tricks
 
-- **Toujours utiliser `lore config set-key`** plutôt que d'éditer `.lorerc.local` manuellement — le trousseau est plus sécurisé.
-- **CI/CD :** Utilisez `LORE_AI_API_KEY` en variable d'env.
-- **Ollama = gratuit :** Pas de clé API, pas de coût. Idéal pour expérimenter.
-- **Rotation des clés :** `delete-key` puis `set-key` pour remplacer une clé expirée.
-- **Valider après setup :** Lancez `lore angela draft` pour confirmer que le fournisseur fonctionne.
+- **Préférez `lore config set-key`** plutôt qu'éditer `.lorerc.local` manuellement — le trousseau est plus sécurisé.
+- **CI/CD :** Utilisez la variable `LORE_AI_API_KEY` — pas de trousseau nécessaire en CI.
+- **Ollama = gratuit :** Pas de clé API, pas de coût. Idéal pour expérimenter avant de s'engager avec un fournisseur payant.
+- **Rotation des clés :** `delete-key` puis `set-key` pour remplacer une clé expirée ou compromise.
+- **Valider après setup :** Lancez `lore angela draft` sur un document pour confirmer que le fournisseur fonctionne.
 
 ## Codes de sortie
 

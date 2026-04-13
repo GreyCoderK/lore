@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - init.md
+  - ../guides/contextual-detection.md
+  - doctor.md
+---
 # lore hook
 
 Manage the Git post-commit hook that triggers Lore's documentation flow.
@@ -10,9 +19,9 @@ lore hook <install|uninstall>
 
 ## What Does This Do?
 
-The hook is the invisible engine of Lore. After every `git commit`, it runs automatically and triggers the question flow. `lore hook` lets you install or remove this hook manually.
+After every `git commit`, the post-commit hook runs automatically and triggers the question flow. `lore hook` lets you install or remove this hook manually.
 
-> **Analogy:** The hook is like a smoke detector. You install it once, forget about it, and it activates when needed. `lore hook install` mounts the detector. `lore hook uninstall` takes it down.
+> **Analogy:** The hook is like a smoke detector — install it once and it activates when needed. `lore hook install` mounts it; `lore hook uninstall` takes it down.
 
 Most users never need this command — `lore init` installs the hook automatically.
 
@@ -45,7 +54,7 @@ Installs the post-commit hook in `.git/hooks/post-commit` (or the `core.hooksPat
 
 ```bash
 #!/bin/bash
-# Your existing pre-existing hook code here
+# Your existing hook code here
 npm run lint-staged
 
 # LORE-START
@@ -57,9 +66,9 @@ fi
 # LORE-END
 ```
 
-The `< /dev/tty` redirect reconnects stdin from the terminal (Git closes stdin for hooks). The fallback ensures silent operation in CI/Docker where `/dev/tty` is unavailable.
+The `< /dev/tty` redirect reconnects stdin from the terminal, which Git closes for hooks. The fallback ensures silent operation in CI/Docker environments where `/dev/tty` is unavailable.
 
-The markers ensure Lore only touches its own section. Your other hooks are never modified.
+The markers ensure Lore only modifies its own section — your other hooks are never touched.
 
 ### `lore hook uninstall`
 
@@ -91,7 +100,7 @@ lore hook install
 
 ### "What is `_hook-post-commit`?"
 
-It's a hidden internal command that Lore uses. The hook file calls `lore _hook-post-commit` which then runs the Decision Engine, contextual detection, and question flow. Never call it directly.
+It is an internal command used by the hook file to run the Decision Engine, contextual detection, and question flow. Do not call it directly.
 
 ### "The hook isn't triggering after my commits"
 

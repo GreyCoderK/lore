@@ -56,6 +56,15 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams, storePtr *domain.L
 			}
 			*cfg = *loaded
 
+			// Detect operating mode (lore-native / hybrid / standalone) once,
+			// here, so sub-commands can rely on cfg.DetectedMode without
+			// re-probing the filesystem.
+			// ApplyModeOverrides promotes output.format to json on
+			// standalone + non-TTY so CI pipelines get machine-readable
+			// output without the user having to pass --format=json.
+			cfg.DetectedMode = config.DetectMode(".", cfg)
+			config.ApplyModeOverrides(cfg, cfg.DetectedMode, !config.IsNonInteractive())
+
 			// Re-init i18n with config language (overrides env var if set).
 			// Cascade: flag --language > env LORE_LANGUAGE > .lorerc.local > .lorerc > default "en"
 			if cfg.Language != "" && cfg.Language != lang {

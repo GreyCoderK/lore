@@ -1,3 +1,9 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related: []
+---
 # Angela en CI — Quality Gate Documentation
 
 Angela peut s'exécuter comme quality gate dans n'importe quel pipeline CI/CD, en analysant votre documentation Markdown pour détecter les problèmes structurels, les incohérences et les problèmes de cohérence — **sans nécessiter `lore init`**.
@@ -270,7 +276,7 @@ doc-review:
 
 ### Variables d'environnement
 
-Lore lit automatiquement les variables `LORE_AI_*` (via Viper auto-env). Pas besoin de fichier `.lorerc` en CI :
+lore lit automatiquement les variables `LORE_AI_*` (via Viper auto-env). Pas besoin de fichier `.lorerc` en CI :
 
 | Variable | Description | Exemple |
 |----------|-------------|---------|

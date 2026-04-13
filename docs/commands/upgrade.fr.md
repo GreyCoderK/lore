@@ -10,9 +10,7 @@ lore upgrade [flags]
 
 ## Qu'est-ce que ça fait ?
 
-Pensez à `lore upgrade` comme mettre à jour une app sur votre téléphone, mais pour votre CLI. Au lieu d'aller sur un site web, télécharger un nouveau binaire et remplacer l'ancien manuellement, cette commande gère tout : vérifier ce qui est nouveau, télécharger, vérifier l'intégrité, et remplacer le binaire.
-
-**En termes simples :** Vous lancez `lore upgrade`, et 5 secondes plus tard vous êtes sur la dernière version.
+`lore upgrade` gère la mise à jour en une seule commande : vérifier une nouvelle version, télécharger le bon binaire pour votre OS et architecture, vérifier son checksum, et remplacer le binaire actuel. Aucun téléchargement manuel ni réinstallation.
 
 ## Scénario concret
 
@@ -39,6 +37,14 @@ Pensez à `lore upgrade` comme mettre à jour une app sur votre téléphone, mai
 |------|------|--------|-------------|
 | `--version` | string | *(dernière)* | Cibler une version spécifique (ex : `v1.2.0` ou `v1.3.0-beta.1`) |
 
+## Flags globaux
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--language` | string | Langue d'affichage (`en`, `fr`) |
+| `--quiet` | bool | Supprimer les sorties non essentielles |
+| `--no-color` | bool | Désactiver la sortie colorée |
+
 ## Exemples
 
 ### Mettre à jour vers la dernière (le plus courant)
@@ -59,11 +65,10 @@ lore upgrade
 lore upgrade --version v1.1.0
 ```
 
-### Downgrade
+### Version spécifique (downgrade)
 
 ```bash
 lore upgrade --version v1.0.0
-# → Oui, ça marche dans les deux sens
 ```
 
 ### Déjà à jour
@@ -81,19 +86,31 @@ lore upgrade
 # →   brew upgrade lore
 ```
 
+### Build de développement
+
+```bash
+# Si compilé depuis les sources sans tags de version :
+lore upgrade
+# → Build de développement — la mise à jour n'est disponible que pour les binaires de release.
+```
+
 ## Questions fréquentes
 
-### "Puis-je downgrader ?"
+### "Puis-je revenir à une version antérieure ?"
 
-Oui. `lore upgrade --version v1.0.0` cible n'importe quelle version publiée.
+Oui. Utilisez `--version` pour cibler n'importe quelle release publiée :
+
+```bash
+lore upgrade --version v1.0.0
+```
 
 ### "C'est sûr ? Si le téléchargement échoue ?"
 
 L'upgrade est atomique : l'ancien binaire n'est remplacé qu'après que le nouveau est entièrement téléchargé et son checksum vérifié. En cas de problème, l'ancien reste en place.
 
-### "Ça appelle automatiquement ?"
+### "Est-ce que ça vérifie automatiquement ?"
 
-Non. `lore upgrade` ne s'exécute que quand **vous** l'appelez explicitement. Zéro appel réseau implicite. Utilisez `lore check-update` pour vérifier sans installer.
+Non. `lore upgrade` ne s'exécute que quand vous l'appelez explicitement — zéro appel réseau implicite. Utilisez `lore check-update` pour vérifier une nouvelle version sans installer.
 
 ### "Et les permissions ?"
 

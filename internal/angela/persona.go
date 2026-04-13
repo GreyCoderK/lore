@@ -6,7 +6,11 @@ package angela
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"unicode/utf8"
+
+	"github.com/greycoderk/lore/internal/config"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 // PersonaProfile represents an expert lens that Angela can activate
@@ -70,7 +74,7 @@ var registry = []PersonaProfile{
 						return &Suggestion{
 							Category: "persona",
 							Severity: "info",
-							Message:  "Section '## Why' reads like a list — consider a narrative",
+							Message:  i18n.T().Angela.PersonaWhyTooListy,
 						}
 					}
 					return nil
@@ -117,7 +121,7 @@ var registry = []PersonaProfile{
 							return &Suggestion{
 								Category: "persona",
 								Severity: "info",
-								Message:  "Found paragraph(s) > 5 lines — consider breaking into bullets",
+								Message:  i18n.T().Angela.PersonaLongParagraphs,
 							}
 						}
 					}
@@ -162,7 +166,7 @@ var registry = []PersonaProfile{
 						return &Suggestion{
 							Category: "persona",
 							Severity: "info",
-							Message:  "No verification criteria found — how will you know this works?",
+							Message:  i18n.T().Angela.PersonaMissingVerify,
 						}
 					}
 					return nil
@@ -209,7 +213,7 @@ var registry = []PersonaProfile{
 						return &Suggestion{
 							Category: "persona",
 							Severity: "info",
-							Message:  "Architecture content without explicit trade-offs — what was considered and rejected?",
+							Message:  i18n.T().Angela.PersonaNoTradeoffs,
 						}
 					}
 					return nil
@@ -254,7 +258,7 @@ var registry = []PersonaProfile{
 						return &Suggestion{
 							Category: "persona",
 							Severity: "info",
-							Message:  "User-facing change detected without UX impact discussion",
+							Message:  i18n.T().Angela.PersonaUxNoImpact,
 						}
 					}
 					return nil
@@ -306,7 +310,7 @@ var registry = []PersonaProfile{
 						return &Suggestion{
 							Category: "persona",
 							Severity: "info",
-							Message:  "Business content without explicit value statement — what's the outcome?",
+							Message:  i18n.T().Angela.PersonaBusinessNoValue,
 						}
 					}
 					return nil
@@ -389,7 +393,7 @@ func extractAllSections(body string) map[string]string {
 
 // ResolvePersonas selects up to 3 personas based on document type and content signals.
 // Type match = +10 points, each content signal found = +2 points.
-// Returns fallback [tech-writer] if no persona scores > 0 (AC-6).
+// Returns fallback [tech-writer] if no persona scores > 0.
 func ResolvePersonas(docType, body string) []ScoredPersona {
 	lower := strings.ToLower(body)
 	lowerType := strings.ToLower(docType)
@@ -418,7 +422,7 @@ func ResolvePersonas(docType, body string) []ScoredPersona {
 		}
 	}
 
-	// Fallback: tech-writer (AC-6)
+	// Fallback: tech-writer
 	if len(results) == 0 {
 		for _, p := range registry {
 			if p.Name == "tech-writer" {
@@ -568,6 +572,128 @@ func Profiles(scored []ScoredPersona) []PersonaProfile {
 		out[i] = sp.Profile
 	}
 	return out
+}
+
+// ─── Smart persona selection per document type ──────────────────
+
+// defaultPersonaMapping maps document types to an ordered list of
+// persona names. When `Selection == "auto"`, the first N entries
+// (up to Max) are selected. The order is intentional: highest-value
+// lens first so the Max cap keeps the best ones.
+//
+// The 12 mappings below are the MVP defaults. Post-MVP, users
+// will be able to override via `cfg.Angela.Personas.TypeMapping`.
+var defaultPersonaMapping = map[string][]string{
+	"decision":  {"storyteller", "architect", "business-analyst"},
+	"feature":   {"storyteller", "tech-writer", "qa-reviewer", "ux-designer"},
+	"bugfix":    {"qa-reviewer", "tech-writer"},
+	"refactor":  {"architect", "tech-writer"},
+	"tutorial":  {"tech-writer", "storyteller"},
+	"guide":     {"tech-writer", "ux-designer"},
+	"howto":     {"tech-writer", "qa-reviewer"},
+	"reference": {"tech-writer"},
+	"landing":   {"tech-writer", "business-analyst"},
+	"concept":   {"tech-writer", "storyteller"},
+	"blog-post": {"storyteller", "tech-writer"},
+}
+
+// registryByName indexes the persona registry by name for O(1) lookup.
+// Built via sync.Once to prevent data race under concurrent access.
+// sync.Once is safe here because `registry` is a compile-time constant;
+// no test needs to mutate it, so the index never needs to be rebuilt.
+var (
+	registryByName     map[string]PersonaProfile
+	registryByNameOnce sync.Once
+)
+
+func personaByName(name string) (PersonaProfile, bool) {
+	registryByNameOnce.Do(func() {
+		registryByName = make(map[string]PersonaProfile, len(registry))
+		for _, p := range registry {
+			registryByName[p.Name] = p
+		}
+	})
+	p, ok := registryByName[name]
+	return p, ok
+}
+
+// SelectPersonasForDoc returns the persona profiles to activate for a
+// given document, honoring the PersonasConfig selection mode and
+// free-form mode switch.
+//
+// Takes docType string (not full DocMeta) by design — only the type
+// field is needed for persona selection in the current scope. Expanding
+// to full DocMeta is deferred to post-MVP.
+//
+func SelectPersonasForDoc(docType string, cfg config.PersonasConfig) []PersonaProfile {
+	maxP := cfg.Max
+	if maxP <= 0 {
+		maxP = 3
+	}
+
+	switch strings.ToLower(strings.TrimSpace(cfg.Selection)) {
+	case "none":
+		return nil
+	case "all":
+		all := GetRegistry()
+		if len(all) > maxP {
+			all = all[:maxP]
+		}
+		return all
+	case "manual":
+		return resolveManualPersonas(cfg.ManualList, maxP)
+	default: // "auto" or empty
+		return selectAutoPersonas(docType, cfg.FreeFormMode, maxP)
+	}
+}
+
+// resolveManualPersonas returns profiles matching the names in list,
+// capped at max. Unknown names are silently skipped.
+func resolveManualPersonas(list []string, max int) []PersonaProfile {
+	var out []PersonaProfile
+	for _, name := range list {
+		if len(out) >= max {
+			break
+		}
+		if p, ok := personaByName(strings.TrimSpace(name)); ok {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// selectAutoPersonas implements the "auto" selection mode using the
+// type→persona mapping and the free-form mode switch.
+func selectAutoPersonas(docType, freeFormMode string, max int) []PersonaProfile {
+	lower := strings.ToLower(strings.TrimSpace(docType))
+	freeForm := isFreeFormType(lower)
+
+	if freeForm {
+		switch strings.ToLower(strings.TrimSpace(freeFormMode)) {
+		case "none":
+			// Free-form docs get zero personas.
+			return nil
+		case "minimal", "":
+			// Free-form docs get only tech-writer.
+			if p, ok := personaByName("tech-writer"); ok {
+				return []PersonaProfile{p}
+			}
+			return nil
+		// "full" falls through to the mapping below.
+		}
+	}
+
+	// Look up the type mapping. For strict types this is always used;
+	// for free-form types it's only reached when FreeFormMode == "full".
+	names, ok := defaultPersonaMapping[lower]
+	if !ok {
+		// Unknown type → fallback to tech-writer only.
+		if p, ok := personaByName("tech-writer"); ok {
+			return []PersonaProfile{p}
+		}
+		return nil
+	}
+	return resolveManualPersonas(names, max)
 }
 
 // AverageScore returns the average resolution score of the given scored personas.

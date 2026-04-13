@@ -1,12 +1,40 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - init.md
+  - new.md
+  - show.md
+  - list.md
+  - status.md
+  - delete.md
+  - pending.md
+  - doctor.md
+  - hook.md
+  - config.md
+  - release.md
+  - demo.md
+  - decision.md
+  - angela-draft.md
+  - angela-polish.md
+  - angela-review.md
+  - check-update.md
+  - upgrade.md
+  - completion.md
+  - ../guides/document-types.md
+  - ../guides/contextual-detection.md
+  - ../guides/configuration.md
+---
 # Vue d'ensemble des commandes
 
-Toutes les commandes Lore CLI en un coup d'œil.
+Toutes les commandes lore CLI en un coup d'œil.
 
 ## Commandes principales
 
 | Commande | Description |
 |----------|-------------|
-| [`lore init`](init.md) | Initialiser Lore dans le dépôt courant |
+| [`lore init`](init.md) | Initialiser lore dans le dépôt courant |
 | [`lore new`](new.md) | Créer une documentation à la demande |
 | [`lore show`](show.md) | Rechercher et afficher des documents |
 | [`lore list`](list.md) | Lister tous les documents du corpus |
@@ -25,7 +53,7 @@ Toutes les commandes Lore CLI en un coup d'œil.
 | [`lore demo`](demo.md) | Démonstration interactive |
 | [`lore decision`](decision.md) | Statut du moteur de décision |
 
-## Angela (IA)
+## Angela (assistée par l'IA)
 
 | Commande | Description |
 |----------|-------------|
@@ -46,7 +74,7 @@ Toutes les commandes Lore CLI en un coup d'œil.
 |----------|-------------|
 | [`lore completion`](completion.md) | Générer des scripts de complétion shell |
 
-## Guides Complémentaires
+## Guides connexes
 
 - [Types de Documents & Métadonnées](../guides/document-types.md) — Référence des types, statuts et front matter
 - [Détection Contextuelle](../guides/contextual-detection.md) — Comment le hook décide quoi faire

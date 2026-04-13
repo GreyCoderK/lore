@@ -1,16 +1,25 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - angela-draft.md
+  - angela-review.md
+  - config.md
+---
 # lore angela polish
 
 AI-assisted document rewrite with interactive diff review.
 
 ## Synopsis
 
-```
+```text
 lore angela polish <filename> [flags]
 ```
 
 ## What Does This Do?
 
-`lore angela polish` sends your document to an AI (Claude, GPT, or a local model) and gets back an improved version. You review each change individually — accept what you like, reject what you don't.
+`lore angela polish` sends your document to an AI (Claude, GPT, or a local model) and returns an improved version. Review each change individually — accept what you like, reject what you don't.
 
 > **Analogy:** It's like sending your essay to a professional editor. They send back tracked changes. You click "Accept" or "Reject" on each one. Your original is never lost.
 
@@ -18,7 +27,7 @@ lore angela polish <filename> [flags]
 
 ## Real World Scenario
 
-> Your "decision-database" doc is a quick brain dump from 2 weeks ago. Before sharing it with the team, you want it polished:
+> Your "decision-database" doc is a quick brain dump from two weeks ago. Before sharing it with the team, you want it polished:
 >
 > ```bash
 > lore angela polish decision-database-2026-02-10.md
@@ -36,10 +45,13 @@ lore angela polish <filename> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--dry-run` | bool | `false` | Preview changes without applying them |
+| `--dry-run` | bool | `false` | Preview changes without applying them (polished content to stdout, diff to stderr) |
 | `--yes` | bool | `false` | Accept all changes automatically |
 | `--for` | string | | Rewrite for a target audience (e.g., `"CTO"`, `"équipe commerciale"`) |
 | `--auto` / `-a` | bool | `false` | Auto-accept additions, auto-reject deletions, ask only for modifications |
+| `--interactive` / `-i` | bool | `false` | Review polish changes section-by-section in a TUI |
+| `--incremental` | bool | `false` | Re-polish only changed sections (skips unchanged sections) |
+| `--full` | bool | `false` | Force full polish even if `incremental` is enabled in config |
 
 ## How It Works (Step by Step)
 
@@ -49,7 +61,7 @@ lore angela polish <filename> [flags]
 lore angela polish decision-database-2026-02-10.md
 ```
 
-```
+```text
 [1/3] Preparing decision-database-2026-02-10.md…
       ~3012 tokens → | max ←: 8192 tokens | timeout: 60s
       Personas: 📖 Affoue (12), ✏️ Sialou (10), 🏗️ Doumbia (6)
@@ -59,13 +71,13 @@ lore angela polish decision-database-2026-02-10.md
 
 Angela runs **preflight checks** before spending any API credits:
 
-- **Token estimate** — how many tokens will be sent vs. max allowed
-- **Personas** — which virtual reviewers are activated (based on doc type + content)
-- **Quality score** — current document quality (0-100, grades A–F)
+- **Token estimate** — tokens to send vs. max allowed
+- **Personas** — which virtual reviewers activate (based on doc type and content)
+- **Quality score** — current document quality (0–100, grades A–F)
 - **Cost estimate** — estimated API cost in USD
-- **Abort** — if the input is larger than `max_output`, Angela stops and suggests increasing `angela.max_tokens` in `.lorerc`
+- **Abort** — if input exceeds `max_output`, Angela stops and suggests increasing `angela.max_tokens` in `.lorerc`
 
-If the document is large, Angela detects this and uses **multi-pass mode** (section-by-section polish with context summaries).
+For large documents, Angela automatically uses **multi-pass mode** (section-by-section polish with context summaries).
 
 ### Step 2/3: Calling AI
 
@@ -77,9 +89,9 @@ Angela sends your document to the AI with:
 - Language rules (all new content in the document's language)
 - Preservation rules (don't remove existing sections, code, tables)
 
-A spinner with timeout countdown shows progress. After the response:
+A spinner with a timeout countdown shows progress. After the response:
 
-```
+```text
       ✓ AI response received in 8.2s
       Tokens: 3012 → 4521 ← | Model: claude-sonnet-4-20250514
       Speed: 551 tok/s (fast)
@@ -88,14 +100,14 @@ A spinner with timeout countdown shows progress. After the response:
 
 ### Step 3/3: Review changes
 
-```
+```text
 [3/3] Computing diff…
       5 changes | Quality: 52/100 (C) → 78/100 (B) (+26)
 ```
 
 You review each change with its location in the document:
 
-```
+```text
 --- Change 1/5 ---
   @@ line 12 (4 lines) @@
  ## Why
@@ -120,7 +132,7 @@ Apply? [y]es / [n]o / [b]oth / [q]uit:
 
 Angela warns you before you decide on potentially destructive changes:
 
-```
+```text
 ⚠ Angela removes 24 lines (net -18). Consider [b]oth.
 ⚠ This change removes section: ## 4. Logique Métier
 ⚠ This change removes 2 code block(s).
@@ -140,9 +152,9 @@ Rewrite your document for a specific audience:
 lore angela polish doc.md --for "équipe commerciale"
 ```
 
-Angela asks whether to create a **new file** (original unchanged) or **overwrite** the original:
+Angela prompts you to create a **new file** (original unchanged) or **overwrite** the original:
 
-```
+```text
       Target audience: équipe commerciale
       [n]ew file (keep original) / [o]verwrite original?
 ```
@@ -171,7 +183,7 @@ Auto mode classifies each hunk and decides automatically where possible:
 | **Major deletion** (net > 15 lines) | Auto-reject | Prevents significant loss |
 | **Modification** | Ask interactively | Needs human judgment |
 
-```
+```text
   [auto] ✓ +mermaid diagram (addition)
   [auto] ✓ whitespace fix (cosmetic)
   [auto] ✗ -12 lines including ## Impact (deletion → rejected)
@@ -181,6 +193,71 @@ Auto mode classifies each hunk and decides automatically where possible:
   ...
 
   Auto: 2 accepted, 1 rejected, 2 reviewed
+```
+
+## Interactive TUI (`--interactive`)
+
+```bash
+lore angela polish decision-database.md --interactive
+```
+
+The TUI displays each section of your document side-by-side (original vs. AI version) and lets you decide per-section:
+
+```text
+Angela Polish — decision-database-2026-02-10.md
+Section 2/5: ## Why
+────────────────────────────────────────────────────────
+Original:
+  We picked PostgreSQL because it has transactions.
+
+AI version:
+  PostgreSQL was chosen for its ACID transaction guarantees.
+  The payment flow requires atomic operations across multiple
+  tables, and PostgreSQL's pgx driver provides excellent Go
+  integration.
+
+[a] accept  [r] reject  [b] both  [e] edit  [s] skip  [q] quit
+```
+
+| Key | Action |
+|-----|--------|
+| `a` | Accept the AI version for this section |
+| `r` | Reject — keep the original |
+| `b` | Keep both — original lines stay, AI version appended below |
+| `e` | Open `$EDITOR` to manually merge the two versions |
+| `s` | Skip (decide later) |
+| `q` | Quit — keep decisions made so far |
+
+Sections that were removed by the AI are shown with a warning and default to `reject` unless you explicitly accept.
+
+## Incremental Polish (`--incremental`)
+
+```bash
+lore angela polish decision-database.md --incremental
+```
+
+Incremental mode compares the current document against the last-polished version stored in `.lore/angela/polish-state/`. Only **changed sections** are sent to the AI — unchanged sections are kept as-is.
+
+This dramatically reduces API costs when you've only edited one or two sections of a large document:
+
+```text
+[1/3] Preparing decision-database-2026-02-10.md…
+      Incremental mode: 2/5 sections changed
+      ~480 tokens → (was 3012 without incremental)
+      Cost: ~$0.0008 (was ~$0.0042)
+```
+
+Enable permanently in `.lorerc`:
+
+```yaml
+angela:
+  incremental: true  # default for all polish runs
+```
+
+Use `--full` to override and re-polish the entire document regardless:
+
+```bash
+lore angela polish decision-database.md --full
 ```
 
 ## Quality Score
@@ -334,12 +411,12 @@ You can control the max tokens (and therefore cost) with `angela.max_tokens` in 
 
 ### "The AI output is low quality / hallucinated content"
 
-The quality of `polish` depends on **two things**:
+Polish quality depends on **two things**:
 
-1. **The AI model you use.** Small local models (llama3.2, phi3) may hallucinate content, invent sections unrelated to your document, or ignore instructions. Larger models (Claude Sonnet, GPT-4o, llama3.1:70b) follow the polish prompt much better.
-2. **What you wrote in the first place.** A one-line "just testing" document gives the AI nothing to work with — it will fill the void with invented content. The more context you provide (a real "Why", concrete details, actual trade-offs), the better the polish result.
+1. **The AI model.** Small local models (llama3.2, phi3) may hallucinate content, invent irrelevant sections, or ignore instructions. Larger models (Claude Sonnet, GPT-4o, llama3.1:70b) follow the polish prompt reliably.
+2. **What you wrote first.** A one-line placeholder gives the AI nothing to work with — it will invent content to fill the void. The more context you provide (a real "Why," concrete details, actual trade-offs), the better the result.
 
-> **Rule of thumb:** garbage in, garbage out. Write a solid first draft (even rough), then polish. Don't expect the AI to create content from nothing.
+> **Rule of thumb:** garbage in, garbage out. Write a solid first draft, however rough, then polish. Don't expect the AI to create content from nothing.
 
 ### "What if the AI makes bad suggestions?"
 
@@ -351,7 +428,7 @@ That's what the interactive review is for. Reject what you don't like. The AI is
 
 ### "Can I polish the same document multiple times?"
 
-Yes. You can re-polish as many times as you want. Each call sends the **current** version (including previous polish improvements) to the AI. Common workflow:
+Yes. Re-polish as many times as you need. Each call sends the **current** version (including any prior improvements) to the AI. Common workflow:
 
 1. `lore angela polish doc.md --yes` — first pass, auto-accept
 2. Edit the doc manually (add alternatives, impact, new context)
@@ -376,6 +453,36 @@ Angela uses 6 virtual reviewers. The top 3 are activated based on document type,
 | **Beda** (Business Analyst) | 📊 | Business value, requirements | Features, releases; `--for commercial/CEO` |
 
 With `--for`, matching personas get a +20 boost. For example, `--for "CTO"` boosts Architect and Business Analyst.
+
+## Hallucination Check
+
+After every polish (including incremental), Angela runs a local, zero-API verification to detect factual claims the AI may have invented.
+
+### How it works
+
+1. **Sentence diff** — Splits both original and polished text into sentences. Finds sentences in the polished version that don't appear in the original (new text added by AI).
+2. **Claim extraction** — Scans each new sentence for:
+   - **Metrics** — "200ms", "45%", "3 GB", "15 req/s"
+   - **Versions** — "v2.0", "15.3", "1.2.3"
+   - **Action numbers** — "reduced by 200", "cut 50" (large numbers preceded by action verbs)
+   - **Tech proper nouns** — PostgreSQL, Redis, Kubernetes, React, and 50+ others
+3. **Support check** — For each extracted claim, verifies that its core token appears somewhere in the original document or corpus summary. Claims that cannot be sourced are flagged as unsupported.
+
+### Output
+
+```text
+⚠ Hallucination check: 2 unsupported claims in polished version
+  metric     "200ms response time" — not found in original
+  proper-noun "PostgreSQL" — not found in original
+
+These claims may have been invented by the AI. Review before accepting.
+```
+
+If unsupported claims are detected:
+- With `--yes`: a warning is printed and the file is still written (you accepted all changes)
+- Without `--yes`: the review loop highlights the suspicious hunks so you can reject them
+
+The check is **deterministic** (no API call) and runs in under 10ms even on large documents.
 
 ## Post-Processing
 

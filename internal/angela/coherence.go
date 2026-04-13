@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/i18n"
 )
 
 // CheckCoherence validates a document against the existing corpus.
@@ -17,6 +18,7 @@ func CheckCoherence(doc string, meta domain.DocMeta, corpus []domain.DocMeta) []
 		return nil
 	}
 
+	t := i18n.T().Angela
 	var suggestions []Suggestion
 
 	// Skip tag-based duplicate detection for free-form types: in standalone
@@ -40,7 +42,7 @@ func CheckCoherence(doc string, meta domain.DocMeta, corpus []domain.DocMeta) []
 				suggestions = append(suggestions, Suggestion{
 					Category: "coherence",
 					Severity: "warning",
-					Message:  fmt.Sprintf("Possible duplicate: %s (same type, shared tags: %s)", other.Filename, sharedTags(meta.Tags, other.Tags)),
+					Message:  fmt.Sprintf(t.CoherencePossibleDup, other.Filename, sharedTags(meta.Tags, other.Tags)),
 				})
 			}
 		}
@@ -62,7 +64,7 @@ func CheckCoherence(doc string, meta domain.DocMeta, corpus []domain.DocMeta) []
 				suggestions = append(suggestions, Suggestion{
 					Category: "coherence",
 					Severity: "info",
-					Message:  fmt.Sprintf("Related document found: %s (shared tags: %s)", other.Filename, sharedTags(meta.Tags, other.Tags)),
+					Message:  fmt.Sprintf(t.CoherenceRelatedFound, other.Filename, sharedTags(meta.Tags, other.Tags)),
 				})
 			}
 		}
@@ -79,13 +81,13 @@ func CheckCoherence(doc string, meta domain.DocMeta, corpus []domain.DocMeta) []
 					suggestions = append(suggestions, Suggestion{
 						Category: "coherence",
 						Severity: "warning",
-						Message:  fmt.Sprintf("Same scope %q and type: %s — potential overlap, consider consolidating", meta.Scope, other.Filename),
+						Message:  fmt.Sprintf(t.CoherenceSameScopeOverlap, meta.Scope, other.Filename),
 					})
 				} else if !isAlreadyRelated(meta.Related, other.Filename) {
 					suggestions = append(suggestions, Suggestion{
 						Category: "coherence",
 						Severity: "info",
-						Message:  fmt.Sprintf("Same scope %q: %s [%s] — consider adding to related", meta.Scope, other.Filename, other.Type),
+						Message:  fmt.Sprintf(t.CoherenceSameScopeRelated, meta.Scope, other.Filename, other.Type),
 					})
 				}
 			}
@@ -108,7 +110,7 @@ func CheckCoherence(doc string, meta domain.DocMeta, corpus []domain.DocMeta) []
 				suggestions = append(suggestions, Suggestion{
 					Category: "coherence",
 					Severity: "info",
-					Message:  fmt.Sprintf("Document %q mentioned in body — consider adding to related", other.Filename),
+					Message:  fmt.Sprintf(t.CoherenceMentionedBody, other.Filename),
 				})
 			}
 		}

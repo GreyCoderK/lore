@@ -1,3 +1,12 @@
+---
+type: reference
+date: 2026-04-12
+status: published
+related:
+  - ../guides/contextual-detection.md
+  - ../guides/configuration.md
+  - status.md
+---
 # lore decision
 
 Understand how Lore decides which commits need documentation.
@@ -10,9 +19,9 @@ lore decision [flags]
 
 ## What Does This Do?
 
-Lore doesn't ask you to document every single commit. A `README.md` typo fix doesn't need a "why." But adding a new authentication system definitely does. The **Decision Engine** figures out which is which.
+Lore does not ask you to document every commit. A `README.md` typo fix doesn't need a "why," but adding a new authentication system does. The **Decision Engine** determines which is which.
 
-`lore decision` shows you the engine's scoring for any commit — so you can understand and tune its behavior.
+`lore decision` shows the engine's scoring for any commit so you can understand and tune its behavior.
 
 > **Analogy:** Think of the Decision Engine like a smart email filter. Just like Gmail decides "this is important" vs "this is spam," Lore's engine decides "this commit needs documentation" vs "this one can be skipped."
 
@@ -112,13 +121,13 @@ Prefill:
 
 ### What "Prefill" Means
 
-Lore tries to **pre-fill** the "What" and "Why" fields from your commit message:
+Lore **pre-fills** the "What" and "Why" fields from your commit message:
 
 - **What:** Extracted from the commit subject (first line)
-- **Why:** Extracted from the commit body (if you write one)
+- **Why:** Extracted from the commit body (if present)
 - **Why Confidence:** 0.0 = no body found, 1.0 = clear rationale in body
 
-> **Tip:** Write descriptive commit messages and Lore pre-fills answers for you!
+> **Tip:** Write descriptive commit messages and Lore pre-fills your answers automatically.
 
 ## Overrides (Bypass Scoring)
 
@@ -139,13 +148,13 @@ decision:
 
 ## Calibration Mode
 
-After 20+ commits, the engine learns your patterns. Check how well it's doing:
+After 20+ commits, the engine learns your patterns. Check its accuracy:
 
 ```bash
 lore decision --calibration
 ```
 
-Shows accuracy metrics: hit rate, false positives (asked when shouldn't have), false negatives (skipped when shouldn't have).
+Displays accuracy metrics: hit rate, false positives (prompted when it shouldn't have), and false negatives (skipped when it shouldn't have).
 
 ## Tuning Thresholds
 
@@ -180,7 +189,7 @@ If the engine asks too often, raise them.
 
 ### "The score seems wrong for my commit"
 
-Run `lore decision --explain HEAD` to see which signal contributed most. Common cause: commit message starts with `feat:` when it should be `docs:`, inflating the score. Fix the type prefix and the engine adapts.
+Run `lore decision --explain HEAD` to see which signal contributed most. A common cause is a commit message starting with `feat:` when it should be `docs:`, which inflates the score. Fix the type prefix and the engine adapts.
 
 ### "Can I override the score for one commit?"
 
@@ -188,7 +197,7 @@ Yes. Add `[doc-skip]` to your commit message for a one-time skip. Or use `always
 
 ### "How long until the engine learns my patterns?"
 
-Signal 5 (LKS History) activates after 20 commits. After 50+, accuracy improves noticeably. Before that, the 4 other signals are usually sufficient.
+Signal 5 (LKS History) activates after 20 commits. Accuracy improves noticeably after 50+. Until then, the other four signals are usually sufficient.
 
 ## See Also
 

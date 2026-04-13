@@ -1,40 +1,49 @@
+---
+type: guide
+date: 2026-04-12
+status: published
+related:
+  - guides/contextual-detection.md
+  - guides/configuration.fr.md
+  - commands/angela-polish.fr.md
+---
 # FAQ
 
 ## Général
 
-### Qu'est-ce que Lore ?
+### Qu'est-ce que lore ?
 
 Un outil CLI qui capture le *pourquoi* derrière vos changements de code au moment du commit. Trois questions, quatre-vingt-dix secondes, un document Markdown pour toujours.
 
-### Lore nécessite-t-il une connexion internet ?
+### lore nécessite-t-il une connexion internet ?
 
-Non. Tout fonctionne hors ligne par défaut. Les fonctions IA (Angela) sont optionnelles et nécessitent une clé API.
+Non. Tout fonctionne hors ligne par défaut. Les fonctions IA (Angela) sont opt-in et nécessitent une clé API.
 
-### Quelles langues Lore supporte-t-il ?
+### Quelles langues lore supporte-t-il ?
 
-L'interface CLI est bilingue : anglais et français. Configurez `language: "fr"` dans `.lorerc` pour le français.
+L'interface CLI est bilingue : anglais et français. Définissez `language: "fr"` dans `.lorerc` pour passer en français.
 
-### Lore fonctionne-t-il avec n'importe quel hébergeur Git ?
+### lore fonctionne-t-il avec n'importe quel hébergeur Git ?
 
-Oui. Lore fonctionne localement via des hooks Git. Compatible GitHub, GitLab, Bitbucket, ou tout hébergeur Git.
+Oui. lore fonctionne localement via des hooks Git et est compatible avec GitHub, GitLab, Bitbucket, ou tout hébergeur Git.
 
 ## Utilisation
 
-### Puis-je passer la documentation pour un commit ?
+### Puis-je ignorer la documentation pour un commit ?
 
-Oui. Appuyez sur Ctrl+C pendant les questions — les réponses partielles sont sauvées dans pending. Ou ajoutez `[doc-skip]` à votre message de commit.
+Oui. Appuyez sur Ctrl+C pendant les questions — les réponses partielles sont sauvées dans pending. Ou ajoutez `[doc-skip]` à votre message de commit pour un ignore silencieux.
 
 ### Que se passe-t-il lors des commits de merge ?
 
-Lore les ignore automatiquement — pas de documentation nécessaire.
+lore les ignore automatiquement — aucune documentation nécessaire.
 
 ### Que se passe-t-il en CI ou dans un environnement non-TTY ?
 
-Les commits sont différés silencieusement dans pending. Dans les terminaux VS Code, Lore envoie une notification. Utilisez `lore pending resolve` plus tard.
+Les commits sont différés silencieusement vers pending. Dans les terminaux VS Code, lore envoie une notification. Utilisez `lore pending resolve` plus tard.
 
 ### Pourquoi un dialog s'affiche au lieu des questions interactives ?
 
-Git redirige stdin vers `/dev/null` pour les hooks. Le hook de Lore reconnecte stdin depuis le terminal pour poser les questions de façon interactive.
+Git redirige stdin vers `/dev/null` pour les hooks. Le hook de lore reconnecte stdin depuis le terminal pour poser les questions de façon interactive.
 
 **Fix :** Réinstallez le hook :
 
@@ -65,9 +74,9 @@ Vérifiez que le hook contient la redirection stdin :
 
 > **Note :** Dans les environnements où le terminal n'est pas disponible (CI, Docker, pipes), les commits sont toujours différés vers pending — c'est voulu. Voir [Détection Contextuelle](guides/contextual-detection.md) pour les détails.
 
-### Comment Lore gère les notifications sur les différentes plateformes ?
+### Comment lore gère les notifications sur les différentes plateformes ?
 
-Quand un commit est différé (non-TTY), Lore peut envoyer une notification selon `notification.mode` dans `.lorerc` :
+Quand un commit est différé (non-TTY), lore envoie une notification selon `notification.mode` dans `.lorerc` :
 
 | Plateforme | Mode `dialog` | Mode `notify` |
 |------------|--------------|---------------|
@@ -95,7 +104,7 @@ Oui : `lore new --commit abc1234`
 
 ### L'IA est-elle obligatoire ?
 
-Non. Lore fonctionne entièrement sans IA. Angela est optionnelle.
+Non. lore fonctionne entièrement sans IA. Angela est opt-in.
 
 ### Quels fournisseurs IA sont supportés ?
 
@@ -113,7 +122,7 @@ Analyse structurelle locale : sections manquantes, conformité au guide de style
 
 ### Que fait Angela Polish ?
 
-Envoie votre document au fournisseur IA pour réécriture. Affiche un diff interactif — acceptez ou rejetez chaque changement individuellement. Un seul appel API par document. Produit des diagrammes mermaid, des tables et des détails concrets.
+Envoie votre document au fournisseur IA pour réécriture et affiche un diff interactif — acceptez ou rejetez chaque changement individuellement. Le résultat inclut des diagrammes Mermaid, des tables et des détails concrets.
 
 > **La qualité dépend du modèle.** Les petits modèles locaux (llama3.2) peuvent produire du texte générique. Les modèles plus grands (Claude Sonnet, GPT-4o, llama3.1:70b) produisent de bien meilleurs résultats avec diagrammes et tables. Voir l'[avertissement qualité](commands/angela-polish.fr.md#le-résultat-de-lia-est-de-mauvaise-qualité--contenu-inventé) dans la doc polish.
 
@@ -155,13 +164,13 @@ avec les sections : What, Why, Alternatives, Impact. Sois concis et technique :
 
 ### Où sont stockées mes données ?
 
-Tout est dans `.lore/` dans votre dépôt. Rien n'est envoyé nulle part sauf si vous utilisez explicitement Angela Polish avec un fournisseur IA.
+Tout est dans `.lore/` dans votre dépôt. Rien n'est envoyé nulle part, sauf si vous utilisez explicitement Angela polish avec un fournisseur IA.
 
-### Puis-je supprimer toutes les données Lore ?
+### Puis-je supprimer toutes les données lore ?
 
 `rm -rf .lore/` supprime tout. Votre historique Git et votre code ne sont pas touchés.
 
-### Quelle licence pour Lore ?
+### Quelle licence pour lore ?
 
 AGPL-3.0. Une licence commerciale est disponible pour usage propriétaire.
 
@@ -180,11 +189,11 @@ decision:
 
 Lancez `lore decision --explain HEAD` pour voir le scoring de n'importe quel commit.
 
-### Puis-je utiliser Lore dans un monorepo ?
+### Puis-je utiliser lore dans un monorepo ?
 
-Oui. `lore init` à la racine du repo. Les documents capturent le chemin complet des fichiers modifiés. Utilisez `lore show --type decision` + recherche par mot-clé pour trouver les décisions par service.
+Oui. Lancez `lore init` à la racine du repo. Les documents capturent le chemin complet des fichiers modifiés. Utilisez `lore show --type decision` avec une recherche par mot-clé pour trouver les décisions par service.
 
-### Puis-je utiliser un modèle IA custom avec Ollama ?
+### Puis-je utiliser un modèle IA personnalisé avec Ollama ?
 
 ```yaml
 # .lorerc
@@ -215,11 +224,11 @@ Angela Draft et Polish vérifieront ces règles.
 
 Votre corpus EST l'export — ce sont des fichiers Markdown dans `.lore/docs/`. Copiez-les n'importe où. Ils sont autonomes avec du front matter YAML. Pas de format propriétaire, pas de lock-in.
 
-### Comment migrer depuis les ADRs vers Lore ?
+### Comment migrer depuis les ADRs vers lore ?
 
-Vous ne migrez pas — ils sont complémentaires. Gardez vos ADRs pour les grandes décisions architecturales. Utilisez Lore pour le "pourquoi" quotidien derrière chaque commit.
+Vous ne migrez pas — ils sont complémentaires. Gardez vos ADRs pour les grandes décisions architecturales. Utilisez lore pour le "pourquoi" quotidien derrière chaque commit.
 
-### Puis-je utiliser Lore en CI/CD ?
+### Puis-je utiliser lore en CI/CD ?
 
 ```bash
 # Échouer le build si des docs sont en attente
@@ -238,9 +247,9 @@ Rare — chaque commit crée un nom de fichier unique. Si ça arrive, résolvez 
 
 ### Quel est l'impact sur les performances ?
 
-Négligeable. Le Decision Engine score en ~0.4ms. Le hook entier (y compris le rendu des questions) ajoute < 100ms à un commit quand il est auto-skip. Quand vous répondez aux questions, le temps est votre vitesse de frappe.
+Négligeable. Le Decision Engine score en ~0.4ms. Le hook entier (rendu des questions inclus) ajoute moins de 100ms quand il est auto-skippé. Quand vous répondez aux questions, le temps est borné par votre vitesse de frappe.
 
-### Comment désactiver Lore temporairement ?
+### Comment désactiver lore temporairement ?
 
 ```bash
 # Ignorer un commit
@@ -253,23 +262,23 @@ lore hook uninstall
 lore hook install
 ```
 
-### Pourquoi le logo Lore n'apparaît pas dans les notifications sur macOS ?
+### Pourquoi le logo lore n'apparaît pas dans les notifications sur macOS ?
 
-macOS `display notification` (osascript) ne supporte pas les icônes personnalisées. Installez `terminal-notifier` pour activer le logo Lore :
+macOS `display notification` (osascript) ne supporte pas les icônes personnalisées. Installez `terminal-notifier` pour activer le logo lore :
 
 ```bash
 brew install terminal-notifier
 ```
 
-Lore l'installe automatiquement si Homebrew est disponible. Après l'installation, le logo apparaît dans toutes les notifications toast. Les dialogues (le flow interactif de questions) affichent déjà le logo sans `terminal-notifier`.
+lore l'installe automatiquement si Homebrew est disponible. Après l'installation, le logo apparaît dans toutes les notifications toast. Les dialogues (le flow interactif de questions) affichent déjà le logo sans `terminal-notifier`.
 
 ### Le workflow amend ne pose pas de questions
 
 Deux causes courantes :
 
-1. **Vous utilisez une ancienne version de Lore.** Vérifiez avec `lore --version`. Le hook git utilise `lore` depuis votre `PATH` — assurez-vous qu'il résout vers la dernière version. Mettez à jour via `brew upgrade lore` ou `go install github.com/greycoderk/lore@latest`.
+1. **Vous utilisez une ancienne version de lore.** Vérifiez avec `lore --version`. Le hook git utilise `lore` depuis votre `PATH` — assurez-vous qu'il pointe vers la dernière version. Mettez à jour via `brew upgrade lore` ou `go install github.com/greycoderk/lore@latest`.
 
-2. **Le terminal n'est pas interactif.** Certains IDEs et environnements CI ne fournissent pas de TTY. Lore diffère alors le commit vers `.lore/pending/` automatiquement. Vérifiez avec `lore pending` et résolvez avec `lore pending resolve`.
+2. **Le terminal n'est pas interactif.** Certains IDEs et environnements CI ne fournissent pas de TTY. lore diffère alors le commit vers `.lore/pending/` automatiquement. Vérifiez avec `lore pending` et résolvez avec `lore pending resolve`.
 
 ---
 

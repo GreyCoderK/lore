@@ -8,7 +8,7 @@ var MilestoneThresholds = []int{3, 8, 21, 55}
 
 // IsFibonacciMilestone reports whether n is a Fibonacci number >= 3.
 // Uses the generate-and-check approach with seed (1, 2) producing: 3, 5, 8, 13, 21, 34, 55, 89...
-// Exported for use by the star prompt feature (Story 7f.3).
+// Exported for use by the star prompt feature.
 func IsFibonacciMilestone(n int) bool {
 	if n < 3 {
 		return false
