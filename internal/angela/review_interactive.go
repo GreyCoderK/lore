@@ -452,8 +452,8 @@ func (m ReviewInteractiveModel) viewDetail() string {
 	if len(f.Evidence) > 0 {
 		b.WriteString("Evidence:\n")
 		for _, ev := range f.Evidence {
-			b.WriteString(fmt.Sprintf("  %s:\n", TUIStyleDim.Render(ev.File)))
-			b.WriteString(fmt.Sprintf("    \"%s\"\n", ev.Quote))
+			fmt.Fprintf(&b, "  %s:\n", TUIStyleDim.Render(ev.File))
+			fmt.Fprintf(&b, "    \"%s\"\n", ev.Quote)
 		}
 		b.WriteString("\n")
 	}

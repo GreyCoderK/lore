@@ -416,8 +416,8 @@ func (m PolishInteractiveModel) viewConfirmWrite() string {
 	var b strings.Builder
 	b.WriteString(TUIStyleTitle.Render("Write confirmation"))
 	b.WriteString("\n\n")
-	b.WriteString(fmt.Sprintf("You accepted %d sections, rejected %d, edited %d.\n", accepted, rejected, edited))
-	b.WriteString(fmt.Sprintf("Write to %s? ", m.filename))
+	fmt.Fprintf(&b, "You accepted %d sections, rejected %d, edited %d.\n", accepted, rejected, edited)
+	fmt.Fprintf(&b, "Write to %s? ", m.filename)
 	b.WriteString(TUIStyleHelpKey.Render("[y]") + " Yes    " + TUIStyleHelpKey.Render("[n]") + " No")
 	return b.String()
 }
