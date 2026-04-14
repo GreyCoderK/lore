@@ -5,7 +5,33 @@ on:
 permissions:
   contents: write
 jobs:
+  verify-chocolatey:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: Build snapshot (no publish)
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          args: release --snapshot --clean --skip=publish
+      - name: Install .nupkg locally
+        shell: pwsh
+        run: |
+          $nupkg = Get-ChildItem dist -Recurse -Filter "lore-cli.*.nupkg" | Select-Object -First 1
+          if (-not $nupkg) { throw "No .nupkg found in dist/" }
+          choco install lore-cli -y -s "$($nupkg.Directory.FullName)" --no-progress
+      - name: Verify binary works
+        shell: pwsh
+        run: |
+          lore --version
+          lore --help
+
   release:
+    needs: verify-chocolatey
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5

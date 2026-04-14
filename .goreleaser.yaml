@@ -90,9 +90,16 @@ chocolateys:
     title: "Lore CLI"
     authors: "Museigen"
     project_url: "https://github.com/GreyCoderK/lore"
-    license_url: "https://github.com/GreyCoderK/lore/blob/main/LICENSE"
-    description: "A CLI tool that captures the why behind your code, one commit at a time"
+    license_url: "https://github.com/GreyCoderK/lore/blob/main/lore_cli/LICENSE"
+    icon_url: "https://raw.githubusercontent.com/GreyCoderK/lore/main/lore_cli/assets/logo.png"
+    summary: "Capture the why behind your code, one commit at a time"
+    description: "A CLI tool that hooks into your Git workflow to document decisions, trade-offs, and context that code alone can't convey. Every commit becomes an opportunity to build a searchable knowledge base."
     tags: "documentation cli git developer-tools"
+    release_notes: "https://github.com/GreyCoderK/lore/releases/tag/v{{ .Version }}"
+    package_source_url: "https://github.com/GreyCoderK/lore"
+    docs_url: "https://greycoderk.github.io/lore/"
+    bug_tracker_url: "https://github.com/GreyCoderK/lore/issues"
+    project_source_url: "https://github.com/GreyCoderK/lore"
     api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
 
 changelog:
