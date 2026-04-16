@@ -164,6 +164,7 @@ func runInit(ctx context.Context, cfg *config.Config, deps initDeps, streams dom
 	}
 
 	fmt.Fprintf(streams.Err, "\n%s\n", i18n.T().Cmd.InitTagline)
+	fmt.Fprintf(streams.Err, "\n%s\n", ui.Dim(i18n.T().Cmd.BadgeHintInit))
 
 	// Demo opt-in
 	if !noDemo {

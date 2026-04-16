@@ -53,13 +53,14 @@ All Lore CLI commands at a glance.
 | [`lore demo`](demo.md) | Interactive demo |
 | [`lore decision`](decision.md) | Decision engine status |
 
-## Angela (AI-Assisted)
+## Angela (AI-Assisted + Offline)
 
 | Command | Description |
 |---------|-------------|
-| [`lore angela draft`](angela-draft.md) | Zero-API structural analysis |
-| [`lore angela polish`](angela-polish.md) | AI-assisted rewrite with diff review |
-| [`lore angela review`](angela-review.md) | Corpus-wide coherence analysis |
+| [`lore angela draft`](angela-draft.md) | Zero-API structural analysis (offline) |
+| [`lore angela polish`](angela-polish.md) | AI-assisted rewrite + offline synthesizer enrichment |
+| [`lore angela review`](angela-review.md) | Corpus-wide coherence analysis (AI) |
+| [`lore angela consult`](angela-consult.md) | Ad-hoc single-persona consultation (offline) |
 
 ## Updates
 

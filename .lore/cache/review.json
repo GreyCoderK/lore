@@ -1,7 +1,30 @@
 {
   "version": 1,
-  "last_review": "2026-04-12T16:39:03.449118Z",
+  "last_review": "2026-04-16T17:50:16.08155Z",
   "doc_count": 5,
   "total_docs": 5,
-  "findings": []
+  "findings": [
+    {
+      "severity": "gap",
+      "title": "Multiple untitled documents lack proper content",
+      "description": "Two documents (feature-untitled-2026-04-09.md and note-untitled-2026-04-09.md) exist as placeholder templates without meaningful titles or content, creating gaps in documentation.",
+      "documents": [
+        "feature-untitled-2026-04-09.md",
+        "note-untitled-2026-04-09.md"
+      ],
+      "evidence": [
+        {
+          "file": "feature-untitled-2026-04-09.md",
+          "quote": "--- type: feature date: \"2026-04-09\" status: draft generated_by: manual --- #   ## What   ## Why"
+        },
+        {
+          "file": "note-untitled-2026-04-09.md",
+          "quote": "--- type: note date: \"2026-04-09\" status: draft generated_by: manual --- #"
+        }
+      ],
+      "confidence": 0.9,
+      "hash": "21ec76893d585f8f",
+      "diff_status": "new"
+    }
+  ]
 }

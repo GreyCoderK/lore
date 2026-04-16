@@ -72,6 +72,39 @@ type AngelaConfig struct {
 	Draft  DraftConfig  `yaml:"draft" mapstructure:"draft"`
 	Review ReviewConfig `yaml:"review" mapstructure:"review"`
 	Polish PolishConfig `yaml:"polish" mapstructure:"polish"`
+
+	// Synthesizers controls the Example Synthesizer family.
+	// Synthesizers enrich docs with literal recompositions of information
+	// already present (Postman examples, SQL queries, env templates). The
+	// framework enforces invariants I4 (zero-hallucination), I5 (security-
+	// first projection), I6 (idempotency), I7 (no silent merge).
+	Synthesizers SynthesizersConfig `yaml:"synthesizers" mapstructure:"synthesizers"`
+}
+
+// SynthesizersConfig activates and configures the Example Synthesizer family.
+type SynthesizersConfig struct {
+	// Enabled is the ordered list of synthesizer names to activate. Empty
+	// means the framework runs zero synthesizers - safe default pre-8-18.
+	// Post-8-18 default becomes ["api-postman"].
+	Enabled []string `yaml:"enabled" mapstructure:"enabled"`
+
+	// WellKnownServerFields is the list of field names treated as server-
+	// injected by default when a doc's Security section is missing (I5-bis
+	// degraded mode). Editable per-project; additions tighten the fail-safe
+	// filter.
+	//
+	// Matching is EXACT-STRING only - a listed name like "tenantId" does
+	// not filter a close-but-different field like "tenantIdFormatted". The
+	// design choice favors predictability (users see exactly what is
+	// filtered, no surprise) over recall. Projects that need substring
+	// filtering can either add every variant explicitly or declare a
+	// Security section in the doc and rely on I5 strict projection.
+	WellKnownServerFields []string `yaml:"well_known_server_fields" mapstructure:"well_known_server_fields"`
+
+	// PerSynthesizer carries synthesizer-specific options keyed by
+	// synthesizer Name. Unknown keys are ignored by design - lets config
+	// reference options for synthesizers that ship in later binaries.
+	PerSynthesizer map[string]map[string]any `yaml:"per_synthesizer" mapstructure:"per_synthesizer"`
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -508,4 +541,21 @@ func setAngelaDefaults(v *viper.Viper) {
 
 	v.SetDefault("angela.polish.audience.default", "")
 	v.SetDefault("angela.polish.audience.allowed", []string{})
+
+	// ─── Synthesizers  ───
+	// api-postman enabled by default (went green against the
+	// dogfood fixture with zero I4/I5 violations). Users opt out via
+	// --no-synthesizers or by clearing this list in .lorerc.
+	v.SetDefault("angela.synthesizers.enabled", []string{"api-postman"})
+
+	// Default well-known list per 2026-04-15 session decision. Extended per
+	// project via .lorerc; tightened globally in a future patch if new
+	// canonical names emerge.
+	v.SetDefault("angela.synthesizers.well_known_server_fields", []string{
+		"tenantId",
+		"authenticatedUsername",
+		"principalId",
+	})
+
+	v.SetDefault("angela.synthesizers.per_synthesizer", map[string]map[string]any{})
 }

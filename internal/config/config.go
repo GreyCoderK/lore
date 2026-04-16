@@ -216,12 +216,23 @@ func LoadFromDir(dir string) (*Config, error) {
 
 // RegisterFlags declares persistent CLI flags on the given command.
 // Called by cmd/root.go — no Viper dependency is exposed.
+//
+// Shell completion: --ai-provider and --language expose closed enums, so
+// they get explicit value-completion registered here. The boolean flags
+// don't need completion (cobra auto-completes --flag with no value).
 func RegisterFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().String("ai-provider", "", "AI provider (anthropic, openai, ollama)")
 	cmd.PersistentFlags().String("language", "", "Override display language (en, fr)")
 	cmd.PersistentFlags().Bool("quiet", false, "Suppress non-essential output")
 	cmd.PersistentFlags().Bool("verbose", false, "Show detailed output")
 	cmd.PersistentFlags().Bool("no-color", false, "Disable color output")
+
+	_ = cmd.RegisterFlagCompletionFunc("ai-provider", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		return []string{"anthropic", "openai", "ollama"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	_ = cmd.RegisterFlagCompletionFunc("language", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		return []string{"en", "fr"}, cobra.ShellCompDirectiveNoFileComp
+	})
 }
 
 // bindFlags binds Cobra flags to Viper keys internally.

@@ -16,6 +16,7 @@
   <a href="https://github.com/GreyCoderK/lore/releases"><img src="https://img.shields.io/github/v/release/GreyCoderK/lore" alt="GitHub Release"></a>
   <a href="https://app.codecov.io/gh/GreyCoderK/lore"><img src="https://img.shields.io/codecov/c/github/GreyCoderK/lore?label=coverage&color=d4a" alt="Coverage"></a>
   <a href="https://github.com/sponsors/GreyCoderK"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github-sponsors" alt="Sponsor"></a>
+  <a href="https://github.com/GreyCoderK/lore"><img src="https://img.shields.io/badge/lore-documented-d4a" alt="lore: documented"></a>
 </p>
 
 <p align="center">

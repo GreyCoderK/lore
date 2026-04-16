@@ -53,13 +53,14 @@ Toutes les commandes lore CLI en un coup d'œil.
 | [`lore demo`](demo.md) | Démonstration interactive |
 | [`lore decision`](decision.md) | Statut du moteur de décision |
 
-## Angela (assistée par l'IA)
+## Angela (IA + Hors-ligne)
 
 | Commande | Description |
 |----------|-------------|
-| [`lore angela draft`](angela-draft.md) | Analyse structurelle sans API |
-| [`lore angela polish`](angela-polish.md) | Réécriture assistée avec revue de diff |
-| [`lore angela review`](angela-review.md) | Analyse de cohérence du corpus |
+| [`lore angela draft`](angela-draft.md) | Analyse structurelle zéro-API (hors ligne) |
+| [`lore angela polish`](angela-polish.md) | Réécriture assistée par IA + enrichissement synthesizer hors ligne |
+| [`lore angela review`](angela-review.md) | Analyse de cohérence du corpus (IA) |
+| [`lore angela consult`](angela-consult.md) | Consultation ponctuelle d'un seul persona (hors ligne) |
 
 ## Mises à jour
 

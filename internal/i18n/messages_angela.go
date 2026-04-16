@@ -7,12 +7,15 @@ package i18n
 // NOTE: PromptDirective, Principles, and ContentSignals remain in English.
 type AngelaMessages struct {
 	// persona.go — DraftCheck messages (user-facing suggestions)
-	PersonaWhyTooListy     string
-	PersonaLongParagraphs  string
-	PersonaMissingVerify   string
-	PersonaNoTradeoffs     string
-	PersonaUxNoImpact      string
-	PersonaBusinessNoValue string
+	PersonaWhyTooListy       string
+	PersonaLongParagraphs    string
+	PersonaMissingVerify     string
+	PersonaNoTradeoffs       string
+	PersonaUxNoImpact        string
+	PersonaBusinessNoValue   string
+	PersonaAPINoExample      string // api-designer: endpoints listed without a request example
+	PersonaAPIMissingErrors  string // api-designer: endpoints without HTTP error responses
+	PersonaAPIMissingRequired string // api-designer: DTO fields without a required/optional column
 
 	// draft.go — completeness checks
 	DraftMissingWhat    string

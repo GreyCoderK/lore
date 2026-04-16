@@ -9,7 +9,7 @@ related:
 ---
 # lore angela polish
 
-AI-assisted document rewrite with interactive diff review.
+AI-assisted document rewrite with interactive diff review — plus an **offline synthesizer family** that auto-generates API examples, SQL queries, and other structured content from information already present in your doc. Works on lore-native projects **and** external Markdown directories (MkDocs, Docusaurus, Hugo, hand-rolled docs).
 
 ## Synopsis
 
@@ -52,6 +52,12 @@ lore angela polish <filename> [flags]
 | `--interactive` / `-i` | bool | `false` | Review polish changes section-by-section in a TUI |
 | `--incremental` | bool | `false` | Re-polish only changed sections (skips unchanged sections) |
 | `--full` | bool | `false` | Force full polish even if `incremental` is enabled in config |
+| `--synthesize` | bool | `false` | Apply Example Synthesizer proposals (offline, no AI) and write to doc |
+| `--synthesizer-dry-run` | bool | `false` | Preview synthesizer proposals without writing |
+| `--synthesizers` | strings | | Override enabled synthesizers for this run (e.g. `api-postman`) |
+| `--no-synthesizers` | bool | `false` | Disable all Example Synthesizers for this run |
+| `--set-status` | string | | Update frontmatter `status` after apply (e.g. `reviewed`, `published`) |
+| `--persona` | string | | Force a single persona lens for this run |
 
 ## How It Works (Step by Step)
 
@@ -143,6 +149,85 @@ Warnings trigger when:
 - **Section headings** (## or ###) are being deleted
 - **Code blocks** are being removed
 - **Table rows** (> 3) are being deleted
+
+## Example Synthesizer Family (`--synthesize`)
+
+The synthesizer family is an **offline** pipeline that auto-generates structured content blocks from information already present in your doc — no AI call, no API key, no cost. The first synthesizer, `api-postman`, generates HTTP+JSON Postman request examples from your endpoint tables and filter lists.
+
+### How it works
+
+1. The synthesizer reads your doc's `### Endpoints` table, `### Filtres` list (or `### Référence des champs` table), and `## Sécurité` section.
+2. It builds a JSON body with required fields as Postman variables (`{{month}}`), optional fields as `null`, and server-injected fields **excluded** (zero hallucination — every output field traces to a literal character span in your doc).
+3. It writes the block into your doc under a new sub-heading after `### Endpoints`.
+
+### Preview what would be generated
+
+```bash
+lore angela polish doc.md --synthesizer-dry-run
+```
+
+### Apply the blocks
+
+```bash
+lore angela polish doc.md --synthesize
+```
+
+### Apply + promote status
+
+```bash
+lore angela polish doc.md --synthesize --set-status reviewed
+```
+
+### Works on external docs too
+
+The synthesizer works on **any** Markdown file — even outside a lore-native project:
+
+```bash
+# External project with their own docs structure
+lore angela polish my-api-spec.md --synthesize
+```
+
+The synthesizer uses the permissive frontmatter parser, so docs from MkDocs, Docusaurus, or Hugo sites with partial or no YAML front matter are accepted. No `lore init` needed.
+
+### Security guarantees (Invariants I4–I7)
+
+| Invariant | What it guarantees |
+|-----------|-------------------|
+| **I4** zero-hallucination | Every field in the generated JSON body has a literal evidence span pointing at the source line where the field name appears |
+| **I5** security-first | Fields declared as server-injected in the doc's Security section are excluded by construction |
+| **I5-bis** fail-safe | When no Security section exists, the well-known list (`tenantId`, `authenticatedUsername`, `principalId` + project-specific names from `.lorerc`) filters likely server-injected fields AND emits a `missing-security-section` warning |
+| **I6** idempotency | Re-running `--synthesize` on an unchanged doc produces zero diff (signature-based caching in frontmatter) |
+| **I7** no silent merge | Changes to previously-accepted synthesized content always flow through diff review — the synthesizer never overwrites user edits |
+
+### Configuration (`.lorerc`)
+
+```yaml
+angela:
+  synthesizers:
+    enabled:
+      - api-postman           # activated by default since 8-18
+    well_known_server_fields:
+      - tenantId
+      - authenticatedUsername
+      - principalId
+    per_synthesizer:
+      review:
+        severity: info        # severity for review findings (info/warning/error)
+```
+
+## Status Lifecycle (`--set-status`)
+
+Update the frontmatter `status` field in a single command:
+
+```bash
+# Standalone status update (no AI, no synthesize)
+lore angela polish doc.md --set-status published
+
+# Combined with synthesize
+lore angela polish doc.md --synthesize --set-status reviewed
+```
+
+Re-running with a different value is always safe — the field is overwritten, never rejected. Common lifecycle: `draft → reviewed → published`.
 
 ## Audience Rewrite (`--for`)
 
@@ -441,7 +526,7 @@ Each re-polish is one API call. The AI sees the improved version, not the origin
 
 ## Personas
 
-Angela uses 6 virtual reviewers. The top 3 are activated based on document type, content, and audience:
+Angela uses 7 virtual reviewers. The top 3 are activated based on document type, content signals, and audience:
 
 | Persona | Icon | Focus | Activated by |
 |---------|------|-------|--------------|
@@ -451,8 +536,15 @@ Angela uses 6 virtual reviewers. The top 3 are activated based on document type,
 | **Doumbia** (Architect) | 🏗️ | Trade-offs, system design | Decisions, refactors; `--for CTO` |
 | **Gougou** (UX Designer) | 🎨 | User empathy, accessibility | Features; `--for design/ux` |
 | **Beda** (Business Analyst) | 📊 | Business value, requirements | Features, releases; `--for commercial/CEO` |
+| **Ouattara** (API Designer) | 🔌 | API examples, error responses, DTO completeness | Feature/API docs with endpoints; `--for api/postman/integration` |
 
 With `--for`, matching personas get a +20 boost. For example, `--for "CTO"` boosts Architect and Business Analyst.
+
+To force a single persona for this run:
+
+```bash
+lore angela polish doc.md --persona api-designer
+```
 
 ## Hallucination Check
 
@@ -513,5 +605,7 @@ After the AI responds, Angela applies local transforms (no API call):
 ## See Also
 
 - [lore angela draft](angela-draft.md) — Free analysis (run this first)
+- [lore angela consult](angela-consult.md) — Ad-hoc single-persona consultation
 - [lore angela review](angela-review.md) — Corpus-wide coherence check
+- [Angela in CI](../guides/angela-ci.md) — Use Angela as a CI quality gate (draft + synthesize + review pipeline)
 - [lore config](config.md) — Set up AI provider

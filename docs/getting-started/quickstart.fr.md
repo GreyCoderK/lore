@@ -74,7 +74,21 @@ Documents : 1 | En attente : 0 | Couverture : 100%
 
 > **Que vient-il de se passer ?** lore a analysé vos commits et vos documents. 1 commit, 1 document = 100% de couverture. Au fil de vos commits, ce tableau de bord suit l'état de la documentation dans le temps.
 
-## 5. Explorer davantage
+## 5. Ajouter un badge de couverture
+
+Montrez au monde que votre projet est documenté :
+
+```bash
+lore status --badge >> README.md
+```
+
+Cela génère un badge shields.io comme :
+
+![lore | documented 85%](https://img.shields.io/badge/lore-documented%2085%25-d4a)
+
+Les couleurs s'adaptent automatiquement : gris (< 50 %), vert (50-79 %), or (80 %+).
+
+## 6. Explorer davantage
 
 ```bash
 # Documenter un commit passé rétroactivement
@@ -85,6 +99,15 @@ lore list
 
 # Diagnostiquer
 lore doctor
+
+# Polish assisté par IA (avec clé API)
+lore angela polish decision-database-2026-02-10.md
+
+# Générer des exemples API depuis vos docs (hors ligne, gratuit)
+lore angela polish api-spec.md --synthesize
+
+# Consulter un expert spécifique sur votre doc
+lore angela consult api-designer api-spec.md
 ```
 
 ## Et ensuite ?
@@ -92,4 +115,6 @@ lore doctor
 - [Référence commandes](../commands/index.md) — Toutes les commandes en détail
 - [Configuration](../guides/configuration.md) — Personnaliser Lore
 - [Angela IA](../commands/angela-draft.md) — Documentation assistée par IA
+- [Angela Consult](../commands/angela-consult.md) — Consultation ponctuelle d'un seul persona
 - [Angela en CI](../guides/angela-ci.md) — Quality gate documentation dans tout pipeline CI (sans `lore init`)
+- [Complétion shell](completions.md) — Complétion par tabulation pour toutes les commandes et flags

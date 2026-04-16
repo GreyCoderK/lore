@@ -289,6 +289,11 @@ func (h *humanDraftReporter) Report(r DraftReport) error {
 		fmt.Fprintf(h.out, "Diff: %d new, %d persisting, %d resolved\n",
 			r.Diff.New, r.Diff.Persisting, r.Diff.Resolved)
 	}
+
+	// Badge hint when everything is clean — nudge the user to advertise it.
+	if r.Summary.TotalSuggestions == 0 {
+		fmt.Fprintf(h.out, "\n%s\n", ui.Dim(i18n.T().Cmd.BadgeHintDraftClean))
+	}
 	return nil
 }
 

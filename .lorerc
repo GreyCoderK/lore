@@ -4,10 +4,37 @@ language: "fr"
 
 ai:
   provider: "anthropic"       # anthropic, openai, ollama
-  model: "claude-sonnet-4-6"  # model name (e.g., claude-sonnet-4-20250514, llama3.2)
-  timeout: 60s
+  model: "claude-sonnet-4-20250514"  # model name (e.g., claude-opus-4-6, claude-sonnet-4-20250514, llama3.2)
+  timeout: 120s
 angela:
   max_tokens: 16000  # bumped for review on larger corpus
+
+  # Example Synthesizer family (story 8-17 / 8-18)
+  # Synthesizers recompose information already present in a doc into
+  # ready-to-use blocks (Postman examples, SQL queries, env templates...).
+  # Invariants I4–I7 enforce zero-hallucination output.
+  synthesizers:
+    # Names activated on this project. Order controls presentation order
+    # of review findings. Leave empty or use --no-synthesizers to disable.
+    enabled:
+      - api-postman
+
+    # Field names treated as server-injected by default when a doc has no
+    # Security section (I5-bis degraded mode). The api-postman synthesizer
+    # filters these out of the generated JSON body. Extend per-project.
+    well_known_server_fields:
+      - tenantId
+      - authenticatedUsername
+      - principalId
+     
+    # Per-synthesizer options. Keys match synthesizer.Name().
+    # Unknown keys are ignored by design so new options ship safely.
+    per_synthesizer:
+      review:
+        # Severity used when review emits a synthesizer finding.
+        # Per 2026-04-15 decision: info for MVP; escalate after dogfood.
+        # Valid: info | warning | error.
+        severity: info
 
 templates:
   dir: .lore/templates

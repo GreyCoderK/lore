@@ -1,12 +1,13 @@
 ---
 type: reference
-date: 2026-04-12
+date: "2026-04-12"
 status: published
 related:
-  - angela-draft.md
-  - angela-polish.md
-  - status.md
-  - ../guides/angela-ci.md
+    - angela-draft.md
+    - angela-polish.md
+    - status.md
+    - ../guides/angela-ci.md
+angela_mode: polish
 ---
 # lore angela review
 
@@ -14,90 +15,118 @@ Corpus-wide coherence analysis via AI.
 
 ## Synopsis
 
-```text
+```bash
 lore angela review [flags]
 ```
 
-## What Does This Do?
+## Why
 
-`lore angela review` is the "big picture" analysis. While `angela draft` checks one document, `review` checks your **entire corpus** for coherence — contradictions between documents, isolated docs with no connections, stale content, and coverage gaps.
+`lore angela review` catches contradictions that slip through document-by-document reviews. After 2 weeks of documenting, your team has 15 docs. Before the sprint review, you discover `auth-jwt.md` says "JWT for stateless auth" while `auth-session.md` says "sessions for state management." A new developer reads both and gets confused about your actual auth strategy.
 
-> **Analogy:** If `angela draft` is a teacher grading one essay, `angela review` is the dean reviewing the entire curriculum for consistency.
+This command analyzes your **entire corpus** for coherence issues that only surface when documents are viewed together: contradictions, isolated docs with no cross-references, stale content, and coverage gaps.
 
-## Description
+```mermaid
+    graph TD
+    A[15 documents] --> B[angela review]
+    B --> C{Coherence Check}
+    C -->|Found| D[1 contradiction: auth-jwt vs auth-session]
+    C -->|Found| E[2 isolated docs with no references]
+    C -->|Found| F[Coverage gap: no database decisions]
+    D --> G[Fix before sprint review]
+    E --> G
+    F --> G
+```
 
-Analyzes the entire documentation corpus for coherence: contradictions between documents, isolated documents, stale content, and coverage gaps. Combines local pre-analysis (signals) with a single AI API call.
+## How It Works
 
-**Requires** an AI provider configured.
+Two-step process: local pre-analysis + single AI call.
+
+### Step 1: Local Signals
+
+Angela computes these without any API calls:
+- **Contradictions** — Documents about the same topic with conflicting keywords
+- **Isolated docs** — No cross-references to/from other documents  
+- **Stale content** — Documents older than N days without updates
+
+### Step 2: AI Analysis
+
+Single API call with compressed document summaries. The AI validates local signals and finds semantic contradictions that keyword matching misses.
+
+```mermaid
+    sequenceDiagram
+    participant CLI as angela review
+    participant Local as Local Analysis
+    participant AI as AI Provider
+    participant Cache as Review Cache
+    
+    CLI->>Local: Extract signals from corpus
+    Local->>CLI: Contradictions, isolated docs, stale content
+    CLI->>AI: Single call with document summaries
+    AI->>CLI: Validated findings + semantic analysis
+    CLI->>Cache: Save state for lore status
+    CLI->>CLI: Display report
+```
+
+**Requires** an AI provider configured (`ai.provider` in `.lorerc`). For offline analysis, use `lore angela draft --all` instead.
 
 ## Real World Scenario
 
-> The team has been documenting for 2 weeks. 15 documents in the corpus. Before the sprint review, you want to check consistency:
->
-> ```bash
-> lore angela review
-> # 1 contradiction found: auth-jwt.md vs auth-session.md
-> # 2 isolated documents with no cross-references
-> ```
->
-> You catch the contradiction before it confuses a new team member.
+```bash
+# Before sprint review - check consistency across 15 docs
+lore angela review
 
-![lore angela review](../assets/vhs/angela-review.gif)
-<!-- Generate: vhs assets/vhs/angela-review.tape -->
+# Output:
+# 1 contradiction found: auth-jwt.md vs auth-session.md
+# 2 isolated documents with no cross-references
+# Coverage gap: no database layer decisions documented
+```
 
-**Requires** an AI provider configured (`ai.provider` in `.lorerc`). For offline corpus analysis without an API, use `lore angela draft --all` instead.
+You catch the auth contradiction before it confuses stakeholders. The isolated docs get linked. You add a database decision doc to fill the gap.
 
 ## Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--quiet` | bool | `false` | Suppress header and summary on stderr |
-| `--for` | string | | Adapt findings for a target audience (e.g., "CTO", "new developer") |
-| `--path` | string | `.lore/docs` | Path to a markdown directory (standalone mode — no `lore init` required) |
-| `--filter` | string | | Regex to filter documents by filename (e.g., `"commands/.*"`, `".*\.fr\.md$"`) |
-| `--all` | bool | `false` | Review all documents (disables 25+25 sampling on large corpora) |
-| `--interactive`, `-i` | bool | `false` | Launch interactive TUI to navigate and triage findings |
-| `--diff-only` | bool | `false` | Show only NEW + REGRESSED findings (hide PERSISTING). Ideal for CI gating |
+| `--for` | string | | Adapt findings for target audience ("CTO", "new developer") |
+| `--path` | string | `.lore/docs` | Path to markdown directory (standalone mode) |
+| `--filter` | string | | Regex filter by filename (`"commands/.*"`, `".*\.fr\.md$"`) |
+| `--all` | bool | `false` | Review all docs (disables 25+25 sampling on large corpora) |
+| `--interactive`, `-i` | bool | `false` | Launch TUI to navigate and triage findings |
+| `--diff-only` | bool | `false` | Show only NEW + REGRESSED findings (ideal for CI) |
+| `--synthesizers` | strings | | Override enabled synthesizers |
+| `--no-synthesizers` | bool | `false` | Disable all Example Synthesizers |
+| `--persona` | string | | Force single persona lens |
 
 ## Standalone Mode
 
-Like `angela draft`, `review` supports `--path` for standalone usage:
+Works without `lore init`:
 
 ```bash
 lore angela review --path ./docs
 ```
 
-In standalone mode, the review cache is not saved (no `.lore/` directory exists). See the [Angela in CI](../guides/angela-ci.md) guide for integration details.
+Review cache is not saved in standalone mode. See [Angela in CI](../guides/angela-ci.md) for integration patterns.
 
-## How It Works (Step by Step)
-
-### Step 1/2: Preparing
+## Process Flow
 
 ```text
 [1/2] Preparing summaries for 12 documents…
       12 docs | ~2450 input tokens | max output: 1500 tokens | timeout: 60s
       Estimated cost: ~$0.0018
-```
 
-Angela runs the same **preflight checks** as `angela polish`:
-
-- **Token estimate** — corpus size vs. max allowed output
-- **Cost estimate** — estimated API cost in USD
-- **Abort** — if input exceeds `max_output`, stops and suggests increasing `angela.max_tokens`
-- **Warnings** — context window, timeout, and cost alerts
-
-### Step 2/2: Calling AI
-
-A single API call reviews the entire corpus. A spinner shows progress:
-
-```text
+[2/2] Calling AI provider…
       ✓ AI response received in 4.3s
-      Tokens: 2450 → 890 ← | Model: claude-sonnet-4-20250514
-      Speed: 207 tok/s (fast)
-      Cost: ~$0.0015
+      Tokens: 2450 → 890 | Model: claude-sonnet-4-20250514
+      Speed: 207 tok/s | Cost: ~$0.0015
 ```
 
-## Output
+Angela runs **preflight checks** before the API call:
+- **Token estimate** — corpus size vs max allowed output
+- **Cost estimate** — USD cost projection
+- **Abort protection** — stops if input exceeds `max_output`
+
+## Output Format
 
 ```text
 Corpus Review — 12 documents analyzed
@@ -112,138 +141,78 @@ style                  Coverage gap                          —                
 
 ### Severity Types
 
-| Severity | Meaning |
-|----------|---------|
+| Severity | Impact |
+|----------|--------|
 | `contradiction` | Conflicting information between documents |
 | `gap` | Missing coverage or isolated documents |
 | `obsolete` | Stale content that may need updating |
-| `style` | Style inconsistencies across the corpus |
+| `style` | Style inconsistencies across corpus |
 
-With `--for`, findings include a **relevance** field:
+With `--for`, findings include relevance scoring:
 
 ```text
-contradiction [high]   Contradictory auth approach       auth-jwt.md, auth-session.md  ...
+contradiction [high]   Contradictory auth approach       auth-jwt.md, auth-session.md
+gap [medium]           Isolated document                 note-meeting-2026-03-01.md
 ```
 
-## Process Flow
+## Evidence Validation
 
-```mermaid
-graph TD
-    A[lore angela review] --> B[Load all documents]
-    B --> C[Prepare summaries]
-    C --> D[Preflight: tokens, cost, abort check]
-    D -->|Input > max_output| E[✗ Abort]
-    D -->|OK| F[Single API call with corpus context]
-    F --> G[Token stats + post-call analysis]
-    G --> H[Parse AI findings]
-    H --> I[Display report]
-    I --> J[Cache results for lore status]
-```
+Every AI finding **must** include verbatim quotes from source documents. Angela validates these quotes:
 
-## Local Signals (always computed)
-
-Pre-analysis without API calls:
-- **Contradictions** — Documents about the same topic with conflicting content
-- **Isolated docs** — No cross-references to/from other documents
-- **Stale content** — Documents older than N days without updates
-
-## Examples
-
-```bash
-# Full review (local signals + AI analysis)
-lore angela review
-
-# Review all docs (no 25+25 sampling — for large corpora)
-lore angela review --all
-
-# Filter: only review command docs
-lore angela review --filter "commands/.*"
-
-# Filter: only French docs
-lore angela review --filter "\.fr\.md$"
-
-# Combine: all Angela docs, adapted for CTO
-lore angela review --filter "angela" --all --for "CTO"
-
-# Standalone: review any markdown directory
-lore angela review --path ./docs --all
-
-# Quiet (for integration with lore status)
-lore angela review --quiet
-
-# Offline alternative: analyze all docs locally (no API needed)
-lore angela draft --all
-```
-
-## Tuning
-
-Control timeout and token limits via `.lorerc` or environment variables:
+| Mode | Behavior | Config |
+|------|----------|--------|
+| **strict** (default) | Drop findings without verifiable evidence | `angela.review.evidence.validation: strict` |
+| **lenient** | Keep findings but flag as unverified | `angela.review.evidence.validation: lenient` |
+| **off** | Show all findings as-is | `angela.review.evidence.validation: "off"` |
 
 ```yaml
 # .lorerc
-ai:
-  timeout: 120s             # default: 60s — increase for large corpora
-
 angela:
-  max_tokens: 8192          # default: auto-computed — increase if preflight aborts
+  review:
+    evidence:
+      required: true         # AI must provide evidence for every finding
+      min_confidence: 0.4    # reject findings below this threshold
+      validation: strict     # strict | lenient | off
 ```
 
-Or via env vars (useful in CI):
-
-```bash
-LORE_AI_TIMEOUT=120s LORE_ANGELA_MAX_TOKENS=8192 lore angela review --path ./docs --all
+When evidence fails validation:
+```text
+Rejected: "Database migration conflict" — quote not found in source
 ```
 
-All flags combine freely:
+## Differential State
 
-```bash
-lore angela review --path ./docs --filter "guides/.*" --all --for "CTO" --quiet
-```
-
-| Flag | Pipeline stage | Effect |
-|------|----------------|--------|
-| `--path` | Source | Which directory to scan |
-| `--filter` | Selection | Which files to keep (regex on filename) |
-| `--all` | Sampling | Send all docs, skip 25+25 sampling |
-| `--for` | AI prompt | Adapt findings for a target audience |
-| `--quiet` | Output | Suppress stderr messages |
-
-## Differential State (`--diff-only`)
-
-Angela tracks finding lifecycle across review runs to avoid alert fatigue:
+Angela tracks finding lifecycle across runs to prevent alert fatigue:
 
 | Status | Meaning |
 |--------|---------|
-| `NEW` | Finding appeared for the first time in this run |
-| `PERSISTING` | Finding existed in the previous run and still exists |
-| `REGRESSED` | Finding was previously resolved/ignored but has come back |
-| `RESOLVED` | Finding existed before but is now gone |
+| `NEW` | First appearance in this run |
+| `PERSISTING` | Existed before and still exists |
+| `RESOLVED` | Existed before but now gone |
+| `REGRESSED` | Was resolved but reappeared |
 
-With `--diff-only`, only `NEW` and `REGRESSED` findings are shown — `PERSISTING` findings are hidden (their count still appears in the summary). This is ideal for CI gates that should only fail on regressions:
+Use `--diff-only` for CI gates that only fail on new issues:
 
 ```bash
-# CI: only fail when new or regressed findings appear
-lore angela review --diff-only
+lore angela review --diff-only   # only NEW + REGRESSED
 ```
 
 ```text
-Corpus Review — 12 documents analyzed
-
-[NEW]        contradiction   auth-jwt.md ↔ auth-session.md   JWT chosen in one, sessions in another
-[REGRESSED]  gap             deployment.md                   Was resolved, but reappeared after last edit
+[NEW]        contradiction   auth-jwt.md ↔ auth-session.md   JWT vs sessions conflict
+[REGRESSED]  gap             deployment.md                   Reappeared after edit
 
 2 findings shown (1 NEW, 1 REGRESSED) | 3 PERSISTING hidden | 1 RESOLVED
 ```
 
-State is stored in `.lore/angela/review-state.json`.
+State persists in `.lore/angela/review-state.json`.
 
-## Interactive TUI (`--interactive`)
+## Interactive TUI
 
 ```bash
 lore angela review --interactive
 ```
 
-The TUI lets you navigate findings, deep-dive into any finding, and triage — without leaving the terminal:
+Navigate findings and triage without leaving the terminal:
 
 ```text
 Angela Review — 12 documents
@@ -255,54 +224,108 @@ Angela Review — 12 documents
 [↑/↓] navigate  [enter] deep dive  [i] ignore  [q] quit
 ```
 
-**Deep dive** opens an async AI analysis of the selected finding: the exact conflict, which document should be the source of truth, and what to fix. The result appears inline in the TUI.
-
 | Key | Action |
 |-----|--------|
 | `↑` / `↓` | Navigate findings |
-| `Enter` | Deep dive: async AI context for this finding |
+| `Enter` | Deep dive: async AI analysis of selected finding |
 | `i` | Ignore finding (persisted to state) |
 | `q` | Quit and save triage state |
 
-If no TTY is available, the TUI falls back to plain text output.
+**Deep dive** opens async AI analysis: exact conflict details, which document should be source of truth, specific fixes needed.
 
-## Tips & Tricks
+## Examples
 
-- **Before every release:** Run `lore angela review` to catch contradictions before they confuse readers.
-- **No API?** Use `lore angela draft --all` for free local analysis of every document.
-- **`--filter` for focused reviews:** Review only the docs you changed (`--filter "commands/angela"`).
-- **`--all` for thoroughness:** By default, corpora > 50 docs use 25+25 sampling. Use `--all` to review everything.
-- **`--interactive` for triage sessions:** Navigate, deep-dive, and ignore findings without leaving the terminal.
-- **Results are cached:** `lore status` shows review findings without re-running.
-- **Large corpora (> 50 docs):** Lore warns about token usage before the API call.
-- **Use Haiku for reviews:** `LORE_AI_MODEL=claude-haiku-4-5-20251001` is 10x cheaper than Sonnet and fast enough for coherence checks.
+```bash
+# Full review with AI analysis
+lore angela review
+
+# Review all docs (skip 25+25 sampling for large corpora)
+lore angela review --all
+
+# Filter: only command documentation
+lore angela review --filter "commands/.*"
+
+# Filter: only French documentation
+lore angela review --filter "\.fr\.md$"
+
+# Adapt findings for CTO audience
+lore angela review --for "CTO"
+
+# Standalone: any markdown directory
+lore angela review --path ./docs --all
+
+# CI mode: only new/regressed issues
+lore angela review --diff-only --quiet
+
+# Interactive triage session
+lore angela review --interactive
+
+# Offline alternative (no API calls)
+lore angela draft --all
+```
+
+## Tuning
+
+Control timeout and token limits:
+
+```yaml
+# .lorerc
+ai:
+  timeout: 120s             # default: 60s
+
+angela:
+  max_tokens: 8192          # default: auto-computed
+```
+
+Environment variables (useful in CI):
+```bash
+LORE_AI_TIMEOUT=120s LORE_ANGELA_MAX_TOKENS=8192 lore angela review
+```
+
+## Flag Combinations
+
+| Flag | Stage | Effect |
+|------|-------|--------|
+| `--path` | Source | Which directory to scan |
+| `--filter` | Selection | Which files to include (regex) |
+| `--all` | Sampling | Send all docs, skip sampling |
+| `--for` | AI prompt | Adapt findings for audience |
+| `--quiet` | Output | Suppress stderr |
+| `--diff-only` | Display | Show only NEW + REGRESSED |
+
+All flags combine freely:
+```bash
+lore angela review --path ./docs --filter "guides/.*" --all --for "CTO" --quiet
+```
+
+## Tips
+
+- **Before releases:** Run review to catch contradictions before they confuse users
+- **No API budget?** Use `lore angela draft --all` for free local analysis
+- **Focus reviews:** Use `--filter` to review only changed areas
+- **Large corpora:** Use `--all` to bypass 25+25 sampling (default for >50 docs)
+- **CI integration:** Use `--diff-only` to only fail on new/regressed issues
+- **Cost optimization:** Use `LORE_AI_MODEL=claude-haiku-4-5-20251001` for 10x cheaper reviews
+- **Results cached:** `lore status` shows latest findings without re-running
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
 | `0` | Success |
-| `1` | Error (no provider configured, corpus too small) |
+| `1` | Error (no AI provider, corpus too small) |
 
-## Common Questions
-
-### "How is this different from angela draft?"
+## angela draft vs angela review
 
 | | `angela draft` | `angela review` |
 |---|---|---|
-| **Scope** | One document | Entire corpus |
-| **Cost** | Free (zero-API) | 1 API call |
-| **Finds** | Missing sections, style issues | Contradictions, isolated docs, coverage gaps |
-
-### "How often should I run this?"
-
-Before every release, or every 1-2 weeks during active development. Results are cached — `lore status` shows the latest findings without re-running.
-
-### "My corpus has 200+ documents. Will this be expensive?"
-
-One API call regardless of corpus size. Lore compresses document summaries before sending. For corpora larger than 50 docs, Lore warns you about token usage before proceeding.
+| **Scope** | Single document | Entire corpus |
+| **Cost** | Free (zero API calls) | 1 API call |
+| **Finds** | Missing sections, style issues | Contradictions, isolated docs, gaps |
+| **Use case** | Document improvement | Corpus coherence |
 
 ## See Also
 
 - [lore angela draft](angela-draft.md) — Single document analysis
 - [lore status](status.md) — Shows cached review findings
+- [Angela in CI](../guides/angela-ci.md) — Integration patterns

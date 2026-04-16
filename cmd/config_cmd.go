@@ -36,13 +36,21 @@ func newConfigCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	return cmd
 }
 
+// credentialProviderCompletion returns the list of AI providers accepted
+// by `lore config set-key` / `delete-key`. Sourced from
+// credential.KnownProviders so the list stays in sync with the backend.
+func credentialProviderCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return credential.KnownProviders, cobra.ShellCompDirectiveNoFileComp
+}
+
 func newSetKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
-		Use:           "set-key <provider>",
-		Short:         i18n.T().Cmd.SetKeyShort,
-		Args:          cobra.ExactArgs(1),
-		SilenceUsage:  true,
-		SilenceErrors: false,
+		Use:               "set-key <provider>",
+		Short:             i18n.T().Cmd.SetKeyShort,
+		Args:              cobra.ExactArgs(1),
+		SilenceUsage:      true,
+		SilenceErrors:     false,
+		ValidArgsFunction: credentialProviderCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
 			if !credential.IsKnownProvider(provider) {
@@ -72,11 +80,12 @@ func newSetKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *c
 
 func newDeleteKeyCmd(store credential.CredentialStore, streams domain.IOStreams) *cobra.Command {
 	return &cobra.Command{
-		Use:           "delete-key <provider>",
-		Short:         i18n.T().Cmd.DeleteKeyShort,
-		Args:          cobra.ExactArgs(1),
-		SilenceUsage:  true,
-		SilenceErrors: false,
+		Use:               "delete-key <provider>",
+		Short:             i18n.T().Cmd.DeleteKeyShort,
+		Args:              cobra.ExactArgs(1),
+		SilenceUsage:      true,
+		SilenceErrors:     false,
+		ValidArgsFunction: credentialProviderCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			provider := args[0]
 			if !credential.IsKnownProvider(provider) {

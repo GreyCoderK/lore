@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_run": "2026-04-12T17:23:13.769701Z",
+  "last_run": "2026-04-16T18:02:19.305964Z",
   "findings": {
     "1e80b56f40435932": {
       "finding": {
@@ -28,6 +28,33 @@
       "status": "active",
       "first_seen": "2026-04-12T16:39:43.93743Z",
       "last_seen": "2026-04-12T16:39:43.93743Z"
+    },
+    "21ec76893d585f8f": {
+      "finding": {
+        "severity": "gap",
+        "title": "Multiple untitled documents lack proper content",
+        "description": "Two documents (feature-untitled-2026-04-09.md and note-untitled-2026-04-09.md) exist as placeholder templates without meaningful titles or content, creating gaps in documentation.",
+        "documents": [
+          "feature-untitled-2026-04-09.md",
+          "note-untitled-2026-04-09.md"
+        ],
+        "evidence": [
+          {
+            "file": "feature-untitled-2026-04-09.md",
+            "quote": "--- type: feature date: \"2026-04-09\" status: draft generated_by: manual --- #   ## What   ## Why"
+          },
+          {
+            "file": "note-untitled-2026-04-09.md",
+            "quote": "--- type: note date: \"2026-04-09\" status: draft generated_by: manual --- #"
+          }
+        ],
+        "confidence": 0.9,
+        "hash": "21ec76893d585f8f",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-16T17:50:16.066605Z",
+      "last_seen": "2026-04-16T17:50:16.066605Z"
     },
     "5ee2eee435b32654": {
       "finding": {
@@ -218,6 +245,28 @@
       "status": "active",
       "first_seen": "2026-04-12T17:23:13.769678Z",
       "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "bd76c472b1a47944": {
+      "finding": {
+        "severity": "gap",
+        "title": "Missing Angela persona documentation",
+        "description": "commands/angela-consult.md mentions Ouattar persona but no document explains what personas are available or how they work.",
+        "documents": [
+          "commands/angela-consult.md"
+        ],
+        "evidence": [
+          {
+            "file": "commands/angela-consult.md",
+            "quote": "You want Ouattar"
+          }
+        ],
+        "confidence": 0.8,
+        "hash": "bd76c472b1a47944",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-16T18:02:19.305964Z",
+      "last_seen": "2026-04-16T18:02:19.305964Z"
     },
     "e3fce20750ea02e5": {
       "finding": {

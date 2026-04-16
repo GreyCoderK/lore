@@ -120,8 +120,8 @@ func Diagnose(docsDir string) (*DiagnosticReport, error) {
 				report.Issues = append(report.Issues, Issue{
 					Category: "broken-ref",
 					File:     d.Name,
-					Detail:   fmt.Sprintf("related reference %q not found", ref),
-					AutoFix:  false,
+					Detail:   fmt.Sprintf("related reference %q not found — file deleted?", ref),
+					AutoFix:  true, // fix = remove the dead reference from related[]
 				})
 			}
 		}
@@ -173,6 +173,15 @@ func Fix(docsDir string, report *DiagnosticReport) (*FixReport, error) {
 			} else {
 				fix.Fixed++
 				fix.Details = append(fix.Details, fmt.Sprintf("removed orphan %s", issue.File))
+			}
+
+		case "broken-ref":
+			if err := fixBrokenRef(docsDir, issue.File, issue.Detail); err != nil {
+				fix.Errors++
+				fix.Details = append(fix.Details, fmt.Sprintf("error fixing ref in %s: %v", issue.File, err))
+			} else {
+				fix.Fixed++
+				fix.Details = append(fix.Details, fmt.Sprintf("removed dead reference from %s", issue.File))
 			}
 
 		case "stale-index":
@@ -289,6 +298,63 @@ func fixMissingFrontMatter(docsDir, filename string) error {
 		return fmt.Errorf("storage: doctor: write %s: %w", filename, err)
 	}
 	return nil
+}
+
+// fixBrokenRef removes a dead reference from the related[] field of a document.
+// The detail string from the issue contains the quoted reference name. This
+// function re-reads the file, filters the broken ref, and rewrites via Marshal.
+func fixBrokenRef(docsDir, filename, detail string) error {
+	if err := validateFilename(filename); err != nil {
+		return fmt.Errorf("storage: doctor: %w", err)
+	}
+	fullPath := filepath.Join(docsDir, filename)
+	if err := validateResolvedPath(docsDir, fullPath); err != nil {
+		return fmt.Errorf("storage: doctor: %w", err)
+	}
+
+	data, err := os.ReadFile(fullPath)
+	if err != nil {
+		return fmt.Errorf("storage: doctor: read %s: %w", filename, err)
+	}
+
+	meta, body, err := Unmarshal(data)
+	if err != nil {
+		// Try permissive if strict fails
+		meta, body, err = UnmarshalPermissive(data)
+		if err != nil {
+			return fmt.Errorf("storage: doctor: parse %s: %w", filename, err)
+		}
+	}
+
+	// Extract the broken ref name from the detail message.
+	// Detail format: `related reference "some-ref" not found — file deleted?`
+	brokenRef := ""
+	if start := strings.Index(detail, `"`); start >= 0 {
+		rest := detail[start+1:]
+		if end := strings.Index(rest, `"`); end >= 0 {
+			brokenRef = rest[:end]
+		}
+	}
+	if brokenRef == "" {
+		return fmt.Errorf("storage: doctor: cannot extract ref name from %q", detail)
+	}
+
+	// Filter out the broken ref (match with and without .md)
+	var cleaned []string
+	for _, ref := range meta.Related {
+		norm := strings.TrimSuffix(ref, ".md")
+		if norm == brokenRef || ref == brokenRef {
+			continue
+		}
+		cleaned = append(cleaned, ref)
+	}
+	meta.Related = cleaned
+
+	out, err := Marshal(meta, body)
+	if err != nil {
+		return fmt.Errorf("storage: doctor: marshal %s: %w", filename, err)
+	}
+	return os.WriteFile(fullPath, out, 0644)
 }
 
 // isIndexStale checks whether the README.md content matches the current docs.

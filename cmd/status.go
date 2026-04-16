@@ -82,10 +82,13 @@ func renderDashboard(streams domain.IOStreams, info *status.StatusInfo) error {
 	}
 	_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusHookLabel, hookVal)
 
-	// Docs
+	// Docs + coverage percentage
 	docsVal := fmt.Sprintf(i18n.T().Cmd.StatusDocsDocumented, info.DocCount)
 	if info.PendingCount > 0 {
 		docsVal += fmt.Sprintf(i18n.T().Cmd.StatusDocsPending, info.PendingCount)
+	}
+	if info.Coverage != nil && info.Coverage.Eligible > 0 {
+		docsVal += fmt.Sprintf(i18n.T().Cmd.StatusCoverage, info.Coverage.Coverage)
 	}
 	_, _ = fmt.Fprintf(w, "%-10s%s\n", i18n.T().Cmd.StatusDocsLabel, docsVal)
 
@@ -138,8 +141,9 @@ func renderDashboard(streams domain.IOStreams, info *status.StatusInfo) error {
 			i18n.T().Cmd.StatusHealthLabel, ui.Error("\u2717"), fmt.Sprintf(i18n.T().Cmd.StatusHealthIssues, info.HealthIssues))
 	}
 
-	// Tagline
+	// Tagline + badge hint
 	_, _ = fmt.Fprintf(w, "\n%s\n", ui.Dim(i18n.T().Cmd.StatusTagline))
+	_, _ = fmt.Fprintf(w, "%s\n", ui.Dim(i18n.T().Cmd.BadgeHintStatus))
 
 	return nil
 }

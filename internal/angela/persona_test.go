@@ -16,10 +16,10 @@ import (
 
 // --- Registry tests (AC-1, AC-7) ---
 
-func TestGetRegistry_Has6Profiles(t *testing.T) {
+func TestGetRegistry_Has7Profiles(t *testing.T) {
 	reg := GetRegistry()
-	if len(reg) != 6 {
-		t.Fatalf("expected 6 personas in Registry, got %d", len(reg))
+	if len(reg) != 7 {
+		t.Fatalf("expected 7 personas in Registry, got %d", len(reg))
 	}
 }
 
@@ -40,6 +40,7 @@ func TestGetRegistry_ExpectedNames(t *testing.T) {
 		"architect":        false,
 		"ux-designer":      false,
 		"business-analyst": false,
+		"api-designer":     false,
 	}
 	for _, p := range GetRegistry() {
 		if _, ok := expected[p.Name]; !ok {
@@ -555,8 +556,6 @@ func TestDescribePersonas_MultiplePersonas(t *testing.T) {
 		t.Errorf("expected 2 comma separators for 3 personas, got %q", got)
 	}
 }
-
-// ─── Story 8-11: SelectPersonasForDoc tests (AC-9) ──────────────
 
 func autoCfg() config.PersonasConfig {
 	return config.PersonasConfig{Selection: "auto", Max: 3, FreeFormMode: "minimal"}

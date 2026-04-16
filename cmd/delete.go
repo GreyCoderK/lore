@@ -29,9 +29,10 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		Short: i18n.T().Cmd.DeleteShort,
 		Example: `  lore delete decision-auth-strategy-2026-03-07.md
   lore delete decision-auth-strategy-2026-03-07.md --force`,
-		Args:         cobra.ExactArgs(1),
-		SilenceUsage:   true,
-		SilenceErrors: true,
+		Args:              cobra.ExactArgs(1),
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		ValidArgsFunction: docsFileCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := requireLoreDir(streams); err != nil {
 				return err

@@ -54,6 +54,11 @@ lore angela draft [fichier] [flags]
 | `--dry-run` | bool | `false` | Prévisualiser les corrections autofix sous forme de diff unifié sans écrire |
 | `--diff-only` | bool | `false` | Afficher uniquement les findings NEW et RESOLVED (masquer PERSISTING) — utile en CI |
 | `--reset-state` | bool | `false` | Supprimer le fichier d'état draft et traiter tous les findings actuels comme NEW |
+| `--persona` | string | | Forcer un seul persona (ex : `--persona api-designer`). Raccourci pour `--personas manual --manual-personas <name>` |
+| `--personas` | string | `auto` | Mode de sélection des personas : `auto`, `manual`, `all`, `none` |
+| `--manual-personas` | strings | | Noms de personas pour `--personas manual` (ex : `storyteller,architect`) |
+| `--synthesizers` | strings | | Surcharger les synthesizers activés pour ce run (ex : `api-postman`) |
+| `--no-synthesizers` | bool | `false` | Désactiver tous les Example Synthesizers pour ce run |
 
 ## Mode autonome
 
@@ -204,7 +209,7 @@ graph TD
 
 ### "C'est quoi les 'personas' ?"
 
-Angela utilise 6 relecteurs virtuels avec des perspectives différentes. Les 3 meilleurs s'activent selon le type de document et son contenu :
+Angela utilise 7 relecteurs virtuels avec des perspectives différentes. Les 3 meilleurs s'activent selon le type de document et son contenu :
 
 | Persona | Icône | Focus |
 |---------|-------|-------|
@@ -214,8 +219,44 @@ Angela utilise 6 relecteurs virtuels avec des perspectives différentes. Les 3 m
 | **Doumbia** (Architect) | 🏗️ | Compromis, conception système |
 | **Gougou** (UX Designer) | 🎨 | Empathie utilisateur, accessibilité |
 | **Beda** (Business Analyst) | 📊 | Valeur business, exigences |
+| **Ouattara** (API Designer) | 🔌 | Contrats API, exemples HTTP, complétude des DTO |
 
-Chaque persona exécute des vérifications locales et produit des suggestions typées. Par exemple, Affoue vérifie que la section "Why" raconte une histoire plutôt que de lister des bullets. Kouame vérifie que les affirmations ont des critères de vérification.
+Chaque persona exécute des vérifications locales et produit des suggestions typées. Par exemple, Affoue vérifie que la section "Why" raconte une histoire plutôt que de lister des bullets. Kouame vérifie que les affirmations ont des critères de vérification. Ouattara vérifie que les endpoints disposent d'exemples de requêtes HTTP, de réponses d'erreur, et que les champs DTO possèdent une colonne requis/optionnel.
+
+Pour forcer un persona spécifique :
+
+```bash
+lore angela draft doc.md --persona api-designer
+```
+
+Pour consulter un seul persona de façon ponctuelle (après un polish par exemple) :
+
+```bash
+lore angela consult api-designer doc.md
+```
+
+### "C'est quoi `pending_enrichment` ?"
+
+Quand les synthesizers activés détectent qu'un document pourrait être enrichi avec du contenu auto-généré (comme des exemples HTTP Postman à partir des sections endpoint/filtre), draft émet une suggestion `synthesizer` :
+
+```text
+info     synthesizer    pending_enrichment: api-postman peut générer 3 bloc(s) ready-to-use
+                        — lance `lore angela polish --synthesizer-dry-run` pour prévisualiser
+```
+
+Il s'agit d'une information — le synthesizer a détecté des opportunités mais n'a encore rien généré. Pour prévisualiser :
+
+```bash
+lore angela polish doc.md --synthesizer-dry-run
+```
+
+Pour appliquer les blocs directement (hors ligne, sans IA) :
+
+```bash
+lore angela polish doc.md --synthesize
+```
+
+Voir [lore angela polish](angela-polish.md) pour tous les détails sur la famille de synthesizers.
 
 ## TUI interactif (`--interactive`)
 
@@ -337,5 +378,7 @@ lore angela draft decision-database.md --reset-state
 ## Voir aussi
 
 - [lore angela polish](angela-polish.md) — Réécriture assistée par IA (étape suivante)
+- [lore angela consult](angela-consult.md) — Consultation ponctuelle d'un seul persona
 - [lore angela review](angela-review.md) — Revue de cohérence corpus via IA
+- [Angela en CI](../guides/angela-ci.md) — Utiliser Angela comme quality gate en CI
 - [Types de documents](../guides/document-types.md) — Quelles sections chaque type attend

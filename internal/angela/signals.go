@@ -58,3 +58,16 @@ var signalsBusinessAnalyst = []string{
 	// FR
 	"exigence", "partie-prenante", "métier", "client", "besoin",
 }
+
+// signalsAPIDesigner activates on API / integration content. Keywords
+// cover both the Postman/REST family (active today via the api-postman
+// synthesizer) and future synthesizer domains (webhook, OpenAPI) so the
+// persona scales without rewrites when new synthesizers ship.
+var signalsAPIDesigner = []string{
+	// EN
+	"endpoint", "rest", "http", "request", "response", "payload",
+	"dto", "postman", "curl", "json", "bearer", "jwt", "token",
+	"pagination", "filter", "export", "webhook", "openapi", "swagger",
+	// FR
+	"requête", "réponse", "filtre", "jeton", "authentification", "contrat",
+}

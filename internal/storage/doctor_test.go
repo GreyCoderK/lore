@@ -105,8 +105,8 @@ func TestDiagnose_BrokenReferences(t *testing.T) {
 	for _, issue := range report.Issues {
 		if issue.Category == "broken-ref" {
 			found = true
-			if issue.AutoFix {
-				t.Error("broken-ref should NOT be auto-fixable")
+			if !issue.AutoFix {
+				t.Error("broken-ref should be auto-fixable (removes dead reference from related[])")
 			}
 			if !strings.Contains(issue.Detail, "nonexistent-doc") {
 				t.Errorf("expected detail to mention nonexistent-doc, got: %q", issue.Detail)

@@ -10,7 +10,7 @@ related:
 ---
 # lore angela draft
 
-Zero-API structural analysis of your documents — no internet required.
+Zero-API structural analysis of your documents — no internet required. Works on any Markdown directory (MkDocs, Docusaurus, Hugo, hand-rolled) as a **CI quality gate** or a local pre-flight check before pushing a PR. No `lore init` needed in standalone mode.
 
 ## Synopsis
 
@@ -56,6 +56,11 @@ lore angela draft [filename] [flags]
 | `--dry-run` | bool | `false` | Preview autofix changes as a unified diff without writing |
 | `--diff-only` | bool | `false` | Show only NEW and RESOLVED findings (hide PERSISTING) — useful for CI |
 | `--reset-state` | bool | `false` | Delete the draft state file and treat all current findings as NEW |
+| `--persona` | string | | Force a single persona lens (e.g. `--persona api-designer`). Shorthand for `--personas manual --manual-personas <name>` |
+| `--personas` | string | `auto` | Persona selection mode: `auto`, `manual`, `all`, `none` |
+| `--manual-personas` | strings | | Persona names for `--personas manual` (e.g. `storyteller,architect`) |
+| `--synthesizers` | strings | | Override enabled synthesizers for this run (e.g. `api-postman`) |
+| `--no-synthesizers` | bool | `false` | Disable all Example Synthesizers for this run |
 
 ## Standalone Mode
 
@@ -201,7 +206,7 @@ graph TD
 
 ### "What are 'personas'?"
 
-Angela uses 6 virtual reviewers, each with a distinct perspective. The top 3 activate based on document type and content:
+Angela uses 7 virtual reviewers, each with a distinct perspective. The top 3 activate based on document type and content signals:
 
 | Persona | Icon | Focus |
 |---------|------|-------|
@@ -211,8 +216,44 @@ Angela uses 6 virtual reviewers, each with a distinct perspective. The top 3 act
 | **Doumbia** (Architect) | 🏗️ | Trade-offs, system design |
 | **Gougou** (UX Designer) | 🎨 | User empathy, accessibility |
 | **Beda** (Business Analyst) | 📊 | Business value, requirements |
+| **Ouattara** (API Designer) | 🔌 | API contracts, HTTP examples, DTO completeness |
 
-Each persona runs local checks and produces typed suggestions. For example, Affoue checks that the "Why" section tells a story rather than just listing bullets. Kouame checks that claims have verification criteria.
+Each persona runs local checks and produces typed suggestions. For example, Affoue checks that the "Why" section tells a story rather than just listing bullets. Kouame checks that claims have verification criteria. Ouattara checks that endpoints have HTTP request examples, error responses, and that DTO fields have a required/optional column.
+
+To force a specific persona:
+
+```bash
+lore angela draft doc.md --persona api-designer
+```
+
+To consult a single persona ad-hoc (after a polish for example):
+
+```bash
+lore angela consult api-designer doc.md
+```
+
+### "What is `pending_enrichment`?"
+
+When enabled synthesizers detect that a doc could be enriched with auto-generated content (like Postman HTTP examples from endpoint/filter sections), draft emits a `synthesizer` suggestion:
+
+```text
+info     synthesizer    pending_enrichment: api-postman peut générer 3 bloc(s) ready-to-use
+                        — lance `lore angela polish --synthesizer-dry-run` pour prévisualiser
+```
+
+This is informational — the synthesizer detected opportunities but hasn't generated anything yet. To preview:
+
+```bash
+lore angela polish doc.md --synthesizer-dry-run
+```
+
+To apply the blocks directly (offline, no AI):
+
+```bash
+lore angela polish doc.md --synthesize
+```
+
+See [lore angela polish](angela-polish.md) for full details on the synthesizer family.
 
 ## Interactive Fix-it TUI (`--interactive`)
 
@@ -334,5 +375,7 @@ lore angela draft decision-database.md --reset-state
 ## See Also
 
 - [lore angela polish](angela-polish.md) — AI-assisted rewrite (next step)
+- [lore angela consult](angela-consult.md) — Ad-hoc single-persona consultation
 - [lore angela review](angela-review.md) — Corpus-wide coherence via AI
+- [Angela in CI](../guides/angela-ci.md) — Use Angela as a CI quality gate
 - [Document Types](../guides/document-types.md) — What sections each type expects

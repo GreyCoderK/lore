@@ -284,6 +284,24 @@ var catalogFR = &Messages{
 
 		AngelaPolishModified:   "document modifié pendant la revue. Annulation pour éviter la perte de données",
 
+		// Badge hints
+		BadgeHintStatus:        "Astuce : lore status --badge pour le badge README",
+		BadgeHintInit:          "Ajoutez le badge couverture à votre README : lore status --badge",
+		BadgeHintDraftClean:    "Tout est propre ! Affichez-le : lore status --badge >> README.md",
+
+		// Synthesizer cmd
+		SynthDryRunFooter:      "Dry-run — aucun fichier modifié. Pour appliquer, lance `lore angela polish --synthesize`.",
+		SynthApplyDone:         "%d proposition(s) appliquée(s), fichier mis à jour (frontmatter signature persistée)",
+		SynthApplyStatusChange: " — status %s → %s",
+		SynthApplyNone:         "aucune proposition — signature fraîche ou aucun synthesizer applicable",
+		SynthDryRunHeader:      "%d proposition(s) depuis les synthesizers activés",
+		SynthDryRunProposal:    "Proposition %d/%d — synthesizer: %s — candidate: %s",
+		ConsultHeader:          "Consultation : %s %s — %s",
+		ConsultNoSuggestion:    "Aucune suggestion — %s ne voit rien à ajouter sur ce doc en l'état.",
+		ConsultListTitle:       "Personas disponibles :",
+		ConsultListUsage:       "Usage : lore angela consult <persona-name> <filename>",
+		StatusCoverage:         " — couverture %d%%",
+
 		// decision.go
 		DecisionShort:           "Afficher le scoring du Decision Engine pour un commit",
 		DecisionDiffWarn:        "Attention : diff indisponible : %v",
@@ -431,8 +449,11 @@ Pour charger les complétions :
 		PersonaMissingVerify:   "Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
 		PersonaNoTradeoffs:     "Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
 		PersonaUxNoImpact:      "Changement visible par l'utilisateur détecté sans discussion d'impact UX",
-		PersonaBusinessNoValue: "Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
-		DraftMissingWhat:       `La section "## What" est manquante`,
+		PersonaBusinessNoValue:    "Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
+		PersonaAPINoExample:       "Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
+		PersonaAPIMissingErrors:   "Endpoints sans réponses d'erreur documentées — ajoute une section « Error Responses » avec au moins 400, 401, 403, 404, 500",
+		PersonaAPIMissingRequired: "Champs DTO sans colonne « Requis » — marque chaque champ ✅ (requis) ou — (optionnel)",
+		DraftMissingWhat:          `La section "## What" est manquante`,
 		DraftMissingWhy:        `La section "## Why" est manquante`,
 		DraftMissingAltWarn:    `La section "## Alternatives" est manquante`,
 		DraftMissingAltInfo:    `La section "## Alternatives" est manquante`,

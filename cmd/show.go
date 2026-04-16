@@ -35,8 +35,9 @@ func newShowCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		Example: `  lore show auth
   lore show --feature auth --after 2026-02
   lore show --all`,
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		ValidArgsFunction: docsFileCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Check .lore/ exists
 			if err := requireLoreDir(streams); err != nil {
@@ -91,6 +92,8 @@ func newShowCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd.Flags().BoolVar(&flagBugfix, "bugfix", false, "Shorthand for --type bugfix")
 	cmd.Flags().BoolVar(&flagRefactor, "refactor", false, "Shorthand for --type refactor")
 	cmd.Flags().BoolVar(&flagNote, "note", false, "Shorthand for --type note")
+
+	_ = cmd.RegisterFlagCompletionFunc("type", docTypeFlagCompletion)
 
 	return cmd
 }

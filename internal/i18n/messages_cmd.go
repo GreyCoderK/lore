@@ -280,6 +280,24 @@ type CmdMessages struct {
 	AngelaReviewRejectedLine  string // args: title, reason
 	AngelaPolishModified    string
 
+	// Badge hints (status, init, draft)
+	BadgeHintStatus        string // shown at end of lore status dashboard
+	BadgeHintInit          string // shown after lore init
+	BadgeHintDraftClean    string // shown when draft --all finds zero suggestions
+
+	// Synthesizer cmd strings
+	SynthDryRunFooter      string // --synthesizer-dry-run footer
+	SynthApplyDone         string // args: count, filename
+	SynthApplyStatusChange string // args: old, new
+	SynthApplyNone         string // args: filename
+	SynthDryRunHeader      string // args: filename, count
+	SynthDryRunProposal    string // args: i, total, name, key
+	ConsultHeader          string // args: file, icon, name, expertise
+	ConsultNoSuggestion    string // arg: name
+	ConsultListTitle       string
+	ConsultListUsage       string
+	StatusCoverage         string // arg: percent
+
 	// decision.go
 	DecisionShort          string
 	DecisionDiffWarn       string // arg: error

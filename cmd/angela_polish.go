@@ -113,17 +113,26 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 	var flagHallucinationStrictness string
 	var flagForce bool
 	var flagInteractive bool
+	var flagSynthesizers []string
+	var flagNoSynthesizers bool
+	var flagSynthesizerDryRun bool
+	var flagSynthesize bool
+	var flagSetStatus string
+	var flagPersona string
 
 	cmd := &cobra.Command{
-		Use:          "polish <filename>",
-		Short:        i18n.T().Cmd.AngelaPolishShort,
-		Args:         cobra.ExactArgs(1),
-		SilenceUsage: true,
+		Use:               "polish <filename>",
+		Short:             i18n.T().Cmd.AngelaPolishShort,
+		Args:              cobra.ExactArgs(1),
+		SilenceUsage:      true,
+		ValidArgsFunction: docsFileCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Mutual exclusion: --interactive and --dry-run.
 			if flagInteractive && flagDryRun {
 				return fmt.Errorf("angela: polish: --interactive and --dry-run are mutually exclusive")
 			}
+
+			applySynthesizerFlags(cfg, flagSynthesizers, flagNoSynthesizers, cmd.Flags().Changed("synthesizers"))
 
 			filename := args[0]
 
@@ -143,6 +152,29 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 					return fmt.Errorf(i18n.T().Cmd.AngelaPolishNotFound, filename)
 				}
 				return fmt.Errorf("angela: polish: %w", err)
+			}
+
+			// Synthesizer dry-run — offline preview of the blocks that would
+			// be proposed by synthesizers. Short-circuits
+			// before the AI polish path: no provider, no credentials, no
+			// mutation. This is exactly what pending_enrichment points to.
+			if flagSynthesizerDryRun {
+				return runSynthesizerDryRun(cfg, streams, docPath)
+			}
+			// Synthesizer apply — write the proposed blocks into the doc.
+			// Still offline: no AI provider, no credentials. Writes via
+			// storage.Marshal + atomic file replacement.
+			if flagSynthesize {
+				return runSynthesizerApply(cfg, streams, docPath, flagSetStatus)
+			}
+
+			// --set-status without --synthesize: just promote the status
+			// field in-place. Useful when the user wants to flip
+			// draft → reviewed → published without running anything else.
+			// Re-running polish with a different status is always allowed:
+			// the field is overwritten every time, never rejected.
+			if flagSetStatus != "" {
+				return runStatusSet(streams, docPath, flagSetStatus)
 			}
 
 			// Instantiate provider — nil = no provider.
@@ -202,6 +234,13 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 				// Personas
 				docMeta, _, _ := storage.Unmarshal(raw)
 				scored := angela.ResolvePersonasForAudience(docMeta.Type, string(raw), flagFor)
+				if flagPersona != "" {
+					// --persona shortcut: narrow to the single chosen persona
+					// so the polish prompt is fed exactly one lens. Unknown
+					// names produce an empty set — caller gets no persona
+					// lens rather than a silent fallback.
+					scored = filterScoredToPersona(scored, flagPersona)
+				}
 				_, _ = fmt.Fprintf(streams.Err, "      "+ta.UIPersonas+"\n", angela.DescribePersonas(scored))
 
 				// Quality
@@ -576,6 +615,21 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 	cmd.Flags().BoolVar(&flagForce, "force", false, "Bypass hallucination reject mode (escape hatch)")
 	// Interactive section-level polish.
 	cmd.Flags().BoolVarP(&flagInteractive, "interactive", "i", false, "Review polish changes section-by-section in a TUI")
+
+	// Synthesizer flags. The flags are declared on every angela
+	// sub-command so users can override per-run; the framework only acts on
+	// docs whose synthesizers are registered.
+	cmd.Flags().StringSliceVar(&flagSynthesizers, "synthesizers", nil, "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")")
+	cmd.Flags().BoolVar(&flagNoSynthesizers, "no-synthesizers", false, "Disable all Example Synthesizers for this run")
+	cmd.Flags().BoolVar(&flagSynthesizerDryRun, "synthesizer-dry-run", false, "Detect synthesizer opportunities and report without writing (polish only)")
+	cmd.Flags().BoolVar(&flagSynthesize, "synthesize", false, "Apply Example Synthesizer proposals (api-postman, …) and write to the doc — offline, no AI call")
+	cmd.Flags().StringVar(&flagSetStatus, "set-status", "", "Update the frontmatter `status` after the run (e.g. draft, reviewed, published). Always overwrites — re-running with a new value is safe.")
+
+	cmd.Flags().StringVar(&flagPersona, "persona", "", "Run polish with this single persona's lens only (shortcut)")
+
+	_ = cmd.RegisterFlagCompletionFunc("synthesizers", synthesizerFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("set-status", statusFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("persona", personaFlagCompletion)
 
 	// Restore subcommand for polish backups.
 	cmd.AddCommand(newAngelaPolishRestoreCmd(cfg, streams))

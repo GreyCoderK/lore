@@ -1,0 +1,136 @@
+---
+type: note
+date: 2026-04-16
+status: published
+related:
+  - angela-draft.md
+  - angela-polish.md
+  - angela-review.md
+---
+# lore angela consult
+
+Ad-hoc single-persona consultation — offline, no AI, no write.
+
+## Synopsis
+
+```text
+lore angela consult <persona> [filename]
+lore angela consult                        # lists available personas
+```
+
+## What Does This Do?
+
+`lore angela consult` invokes a single persona's draft-check lens on a document **as it is right now**. Useful after a polish or manual edit when you want a specific expert's opinion without re-running the full draft pipeline.
+
+> **Analogy:** You've just rewritten your doc. Before merging, you call Ouattara over to your desk and say: "What do you think about the API examples?" He gives you 30 seconds of focused feedback. That's `consult`.
+
+**No AI call. No file modification. No API key needed.** Runs in < 50ms.
+
+## Real World Scenario
+
+> You polished your API feature doc with Angela. The polish improved the narrative, but you're not sure the API contract is complete. You want Ouattara's opinion:
+>
+> ```bash
+> lore angela consult api-designer feature-account-statement.md
+> ```
+>
+> Ouattara finds: endpoints without error responses, DTO fields missing a required column. You fix those manually, then the doc is ready.
+
+## Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `persona` | Yes (or omit for listing) | Persona identifier (e.g. `api-designer`, `storyteller`) |
+| `filename` | Yes (when persona given) | Document to analyze |
+
+## Available Personas
+
+Run without arguments to see the list:
+
+```bash
+lore angela consult
+```
+
+```text
+Personas disponibles :
+
+  📖 storyteller           Affoue
+                            Narrative clarity and authentic storytelling
+
+  ✏️ tech-writer            Sialou
+                            Technical writing precision and clarity
+
+  🔍 qa-reviewer            Kouame
+                            Quality assurance and validation criteria
+
+  🏗️ architect              Doumbia
+                            System design, trade-offs, and scalability
+
+  🎨 ux-designer            Gougou
+                            User empathy, mental models, and accessibility
+
+  📊 business-analyst       Beda
+                            Requirements traceability and business value
+
+  🔌 api-designer           Ouattara
+                            API contracts, synthesizer-ready docs, HTTP semantics
+```
+
+## Examples
+
+```bash
+# Ask Ouattara about API completeness
+lore angela consult api-designer feature-auth.md
+
+# Ask Affoue about narrative quality
+lore angela consult storyteller decision-database.md
+
+# Ask Kouame about verification criteria
+lore angela consult qa-reviewer bugfix-login.md
+
+# Works on external docs too (no lore init needed)
+lore angela consult tech-writer --path ./external-docs/ api-guide.md
+```
+
+## Output
+
+```text
+→ .lore/docs/feature-auth.md
+  Consultation : 🔌 Ouattara — API contracts, synthesizer-ready docs, HTTP semantics
+
+  warning  persona        [🔌 Ouattara] Endpoints listed without an HTTP request example
+  info     persona        [🔌 Ouattara] Endpoints without documented error responses
+
+2 suggestion(s).
+```
+
+When no issues are found:
+
+```text
+→ .lore/docs/feature-account-statement.md
+  Consultation : 🔌 Ouattara — API contracts, synthesizer-ready docs, HTTP semantics
+
+  Aucune suggestion — Ouattara ne voit rien à ajouter sur ce doc en l'état.
+```
+
+## Shell Completion
+
+Tab completion works on both arguments:
+
+- `lore angela consult <TAB>` → lists persona names
+- `lore angela consult api-designer <TAB>` → lists files in `.lore/docs/`
+
+## When to Use
+
+| Situation | Command |
+|-----------|---------|
+| Pre-merge quality check on a specific dimension | `consult <persona> doc.md` |
+| Post-polish second opinion | `consult api-designer doc.md` |
+| Quick expertise-specific feedback | `consult architect adr-0042.md` |
+| Discover what each persona checks | `consult` (no args) |
+
+## See Also
+
+- [lore angela draft](angela-draft.md) — Full structural analysis (all personas)
+- [lore angela polish](angela-polish.md) — AI rewrite + synthesizer enrichment
+- [lore angela review](angela-review.md) — Corpus-wide coherence check

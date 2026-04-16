@@ -98,12 +98,23 @@ func Preflight(doc string, systemPrompt string, model string, maxOutputTokens in
 		}
 	}
 
-	// Check timeout vs expected generation time
+	// Check timeout vs expected generation time.
+	//
+	// The estimation uses the EXPECTED output size, not max_tokens. For
+	// polish operations the AI returns roughly the same size as the input
+	// (with edits); max_tokens is a safety ceiling, not a prediction.
+	// Using max_tokens directly caused false warnings on docs where the
+	// configured ceiling (e.g. 16000) far exceeded the actual expected
+	// output (e.g. 5000 for a 4000-token doc).
 	if speed, ok := modelSpeedTokPerSec[model]; ok {
-		estimatedSeconds := float64(maxOutputTokens) / speed
-		if timeout > 0 && estimatedSeconds > timeout.Seconds()*0.8 {
+		expectedOutput := inputTokens*2 + 500 // generous: 2× input + margin
+		if expectedOutput > maxOutputTokens {
+			expectedOutput = maxOutputTokens
+		}
+		estimatedSeconds := float64(expectedOutput) / speed
+		if timeout > 0 && estimatedSeconds > timeout.Seconds()*0.9 {
 			r.Warnings = append(r.Warnings, fmt.Sprintf(
-				t.UITimeoutWarning, timeout, model, speed, estimatedSeconds, maxOutputTokens))
+				t.UITimeoutWarning, timeout, model, speed, estimatedSeconds, expectedOutput))
 		}
 	}
 

@@ -122,6 +122,17 @@ type DocMeta struct {
 	GeneratedBy string   `yaml:"generated_by,omitempty"`
 	AngelaMode  string   `yaml:"angela_mode,omitempty"`
 
+	// Synthesized records the signatures of every Example Synthesizer
+	// that has produced output for this doc. The map key is
+	// the synthesizer Name (e.g. "api-postman"), and the value carries the
+	// fields defined by synthesizer.Signature (hash, at, version, sections,
+	// evidence_count, warnings).
+	//
+	// Stored as map[string]map[string]any to keep the domain package free
+	// of dependencies on internal/angela. Converted to/from typed
+	// synthesizer.Signature inside the synthesizer package.
+	Synthesized map[string]map[string]any `yaml:"synthesized,omitempty"`
+
 	Filename string `yaml:"-"` // populated at runtime by ListDocs, not serialized
 }
 

@@ -322,8 +322,122 @@ var registry = []PersonaProfile{
 - Quantify value when possible: time saved, errors prevented, users impacted
 - If this was driven by a requirement, name it (compliance, SLA, customer request)
 - Add ## Impact section if missing: who benefits and how?`,
-		DocTypes:        []string{"feature", "release"},
-		ContentSignals:  signalsBusinessAnalyst,
+		DocTypes:       []string{"feature", "release"},
+		ContentSignals: signalsBusinessAnalyst,
+	},
+	{
+		// Ouattara is the persona of the Example Synthesizer family (story
+		// 8-17/8-18). Today his draft checks cover the api-postman
+		// domain (REST endpoints). When new synthesizers ship (sql-query,
+		// env-vars, state-diagram), their domain-specific DraftChecks are
+		// APPENDED here — the persona grows append-only with the family.
+		//
+		// Identifier stays "api-designer" for .lorerc backward compat. The
+		// DisplayName "Ouattara" signals that the scope spans the whole
+		// synthesizer family, not just Postman.
+		Name:        "api-designer",
+		DisplayName: "Ouattara",
+		Icon:        "🔌",
+		Expertise:   "API contracts, synthesizer-ready docs, HTTP semantics",
+		Principles: []string{
+			"A request example is worth a thousand words",
+			"Every field must be typed, required-flagged, and described",
+			"Errors are part of the contract, not an afterthought",
+		},
+		DraftChecks: []DraftCheck{
+			{
+				Label: "Endpoints without request examples",
+				Check: func(body string, sections map[string]string) *Suggestion {
+					lower := strings.ToLower(body)
+					hasEndpoint := strings.Contains(lower, "post /") ||
+						strings.Contains(lower, "get /") ||
+						strings.Contains(lower, "put /") ||
+						strings.Contains(lower, "patch /") ||
+						strings.Contains(lower, "delete /") ||
+						strings.Contains(lower, "endpoint") ||
+						strings.Contains(lower, "route")
+					hasExample := strings.Contains(body, "```http") ||
+						strings.Contains(body, "```json") ||
+						strings.Contains(lower, "curl") ||
+						strings.Contains(lower, "postman") ||
+						strings.Contains(lower, "example")
+					if hasEndpoint && !hasExample {
+						return &Suggestion{
+							Category: "persona",
+							Severity: "warning",
+							Message:  i18n.T().Angela.PersonaAPINoExample,
+						}
+					}
+					return nil
+				},
+			},
+			{
+				Label: "Missing error responses",
+				Check: func(body string, sections map[string]string) *Suggestion {
+					lower := strings.ToLower(body)
+					hasEndpoint := strings.Contains(lower, "post /") ||
+						strings.Contains(lower, "get /") ||
+						strings.Contains(lower, "endpoint")
+					hasErrors := strings.Contains(lower, "400") ||
+						strings.Contains(lower, "401") ||
+						strings.Contains(lower, "403") ||
+						strings.Contains(lower, "404") ||
+						strings.Contains(lower, "422") ||
+						strings.Contains(lower, "500") ||
+						strings.Contains(lower, "error") ||
+						strings.Contains(lower, "erreur")
+					if hasEndpoint && !hasErrors {
+						return &Suggestion{
+							Category: "persona",
+							Severity: "info",
+							Message:  i18n.T().Angela.PersonaAPIMissingErrors,
+						}
+					}
+					return nil
+				},
+			},
+			{
+				Label: "DTO fields without required flag",
+				Check: func(body string, sections map[string]string) *Suggestion {
+					lower := strings.ToLower(body)
+					hasDTO := strings.Contains(lower, "dto") ||
+						strings.Contains(lower, "request body") ||
+						strings.Contains(lower, "corps de la requête") ||
+						strings.Contains(lower, "payload") ||
+						strings.Contains(lower, "champ")
+					hasRequiredCol := strings.Contains(lower, "requis") ||
+						strings.Contains(lower, "required") ||
+						strings.Contains(lower, "mandatory") ||
+						strings.Contains(lower, "obligatoire") ||
+						strings.Contains(body, "✅") ||
+						strings.Contains(body, "✗") ||
+						strings.Contains(body, "✓")
+					if hasDTO && !hasRequiredCol {
+						return &Suggestion{
+							Category: "persona",
+							Severity: "info",
+							Message:  i18n.T().Angela.PersonaAPIMissingRequired,
+						}
+					}
+					return nil
+				},
+			},
+		},
+		PromptDirective: `SYNTHESIZER-FAMILY LENS (Ouattara):
+- Every endpoint MUST have a complete HTTP example block (method + URL + Authorization header + Content-Type + body):
+  ` + "```http\nPOST /api/resource\nAuthorization: Bearer {{jwt}}\nContent-Type: application/json\n\n{ ... }\n```" + `
+- DTO field tables MUST have columns: Field | Type | Required | Description
+  Mark required fields ✅, optional fields —. Never leave the Required column empty.
+- Add a dedicated "## Error Responses" section listing at minimum:
+  400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error
+  Each with a JSON body example showing the error shape your API actually returns.
+- Server-injected fields (e.g. corporateCode from JWT) must be flagged explicitly:
+  "Ignored — resolved server-side from the JWT principal"
+- Authentication: describe the scheme (Bearer JWT, API key, Basic) and where the token comes from.
+- If pagination is used: document page/size defaults, max allowed size, and the response envelope shape.
+- Flag any field whose behavior differs between endpoints (e.g., a filter ignored during export).`,
+		DocTypes:       []string{"feature", "reference", "api"},
+		ContentSignals: signalsAPIDesigner,
 	},
 }
 
@@ -478,9 +592,20 @@ var audiencePersonaBoosts = map[string][]string{
 	"qa":         {"qa-reviewer", "tech-writer"},
 
 	// Design
-	"design":     {"ux-designer", "storyteller"},
-	"ux":         {"ux-designer", "storyteller"},
-	"ergonomie":  {"ux-designer", "storyteller"},
+	"design":    {"ux-designer", "storyteller"},
+	"ux":        {"ux-designer", "storyteller"},
+	"ergonomie": {"ux-designer", "storyteller"},
+
+	// API / integration — synthesizer family
+	"api":         {"api-designer", "tech-writer"},
+	"postman":     {"api-designer", "tech-writer"},
+	"intégration": {"api-designer", "architect"},
+	"integration": {"api-designer", "architect"},
+	"swagger":     {"api-designer", "tech-writer"},
+	"openapi":     {"api-designer", "tech-writer"},
+	"webhook":     {"api-designer", "architect"},
+	"rest":        {"api-designer", "tech-writer"},
+	"http":        {"api-designer", "tech-writer"},
 }
 
 // ResolvePersonasForAudience selects personas optimized for a target audience.
@@ -591,10 +716,11 @@ var defaultPersonaMapping = map[string][]string{
 	"tutorial":  {"tech-writer", "storyteller"},
 	"guide":     {"tech-writer", "ux-designer"},
 	"howto":     {"tech-writer", "qa-reviewer"},
-	"reference": {"tech-writer"},
+	"reference": {"tech-writer", "api-designer"},
 	"landing":   {"tech-writer", "business-analyst"},
 	"concept":   {"tech-writer", "storyteller"},
 	"blog-post": {"storyteller", "tech-writer"},
+	"api":       {"api-designer", "tech-writer", "qa-reviewer"},
 }
 
 // registryByName indexes the persona registry by name for O(1) lookup.

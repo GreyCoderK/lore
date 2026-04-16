@@ -281,6 +281,24 @@ var catalogEN = &Messages{
 
 		AngelaPolishModified:   "document modified during review. Aborting to prevent data loss",
 
+		// Badge hints
+		BadgeHintStatus:        "Tip: lore status --badge for a README badge",
+		BadgeHintInit:          "Add a coverage badge to your README: lore status --badge",
+		BadgeHintDraftClean:    "All clean! Show it off: lore status --badge >> README.md",
+
+		// Synthesizer cmd
+		SynthDryRunFooter:      "Dry-run — no file modified. To apply, run `lore angela polish --synthesize`.",
+		SynthApplyDone:         "%d proposal(s) applied, file updated (frontmatter signature persisted)",
+		SynthApplyStatusChange: " — status %s → %s",
+		SynthApplyNone:         "no proposals — signature fresh or no applicable synthesizer",
+		SynthDryRunHeader:      "%d proposal(s) from enabled synthesizers",
+		SynthDryRunProposal:    "Proposal %d/%d — synthesizer: %s — candidate: %s",
+		ConsultHeader:          "Consultation: %s %s — %s",
+		ConsultNoSuggestion:    "No suggestions — %s has nothing to add to this doc as-is.",
+		ConsultListTitle:       "Available personas:",
+		ConsultListUsage:       "Usage: lore angela consult <persona-name> <filename>",
+		StatusCoverage:         " — coverage %d%%",
+
 		// decision.go
 		DecisionShort:           "Show Decision Engine scoring for a commit",
 		DecisionDiffWarn:        "Warning: diff unavailable: %v",
@@ -428,8 +446,11 @@ To load completions:
 		PersonaMissingVerify:   "No verification criteria found — how will you know this works?",
 		PersonaNoTradeoffs:     "Architecture content without explicit trade-offs — what was considered and rejected?",
 		PersonaUxNoImpact:      "User-facing change detected without UX impact discussion",
-		PersonaBusinessNoValue: "Business content without explicit value statement — what's the outcome?",
-		DraftMissingWhat:       `Section "## What" is missing`,
+		PersonaBusinessNoValue:    "Business content without explicit value statement — what's the outcome?",
+		PersonaAPINoExample:       "Endpoints listed without an HTTP request example — add a ```http block with method, URL, headers, and body",
+		PersonaAPIMissingErrors:   "Endpoints without documented error responses — add an \"Error Responses\" section covering at least 400, 401, 403, 404, 500",
+		PersonaAPIMissingRequired: "DTO fields without a \"Required\" column — mark each field ✅ (required) or — (optional)",
+		DraftMissingWhat:          `Section "## What" is missing`,
 		DraftMissingWhy:        `Section "## Why" is missing`,
 		DraftMissingAltWarn:    `Section "## Alternatives" is missing`,
 		DraftMissingAltInfo:    `Section "## Alternatives" is missing`,

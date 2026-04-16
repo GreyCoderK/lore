@@ -32,6 +32,8 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 	var flagAll bool
 	var flagDiffOnly bool
 	var flagInteractive bool
+	var flagSynthesizers []string
+	var flagNoSynthesizers bool
 
 	cmd := &cobra.Command{
 		Use:           "review",
@@ -39,6 +41,8 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 		Args:          cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			applySynthesizerFlags(cfg, flagSynthesizers, flagNoSynthesizers, cmd.Flags().Changed("synthesizers"))
+
 			// Resolve docs directory: --path (standalone) or .lore/docs (normal)
 			docsDir, standalone := resolveDocsDir(flagPath)
 			if !standalone {
@@ -316,6 +320,10 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 	cmd.Flags().BoolVar(&flagDiffOnly, "diff-only", false, "Show only NEW + REGRESSED findings (and counts of PERSISTING/RESOLVED). Ideal for CI.")
 	// Interactive TUI mode.
 	cmd.Flags().BoolVarP(&flagInteractive, "interactive", "i", false, "Launch interactive TUI to navigate and triage findings")
+	cmd.Flags().StringSliceVar(&flagSynthesizers, "synthesizers", nil, "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")")
+	cmd.Flags().BoolVar(&flagNoSynthesizers, "no-synthesizers", false, "Disable all Example Synthesizers for this run")
+
+	_ = cmd.RegisterFlagCompletionFunc("synthesizers", synthesizerFlagCompletion)
 
 	// Lifecycle subcommands.
 	cmd.AddCommand(newAngelaReviewResolveCmd(cfg, streams))

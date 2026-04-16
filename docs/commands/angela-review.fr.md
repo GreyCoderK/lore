@@ -56,6 +56,9 @@ Analyse le corpus de documentation complet pour la cohérence : contradictions e
 | `--all` | bool | `false` | Analyser tous les documents (désactive l'échantillonnage 25+25 sur les gros corpus) |
 | `--interactive`, `-i` | bool | `false` | Lancer le TUI interactif pour naviguer et trier les findings |
 | `--diff-only` | bool | `false` | Afficher uniquement les findings NEW + REGRESSED (masquer PERSISTING). Idéal pour les gates CI |
+| `--synthesizers` | strings | | Surcharger les synthesizers activés |
+| `--no-synthesizers` | bool | `false` | Désactiver tous les Example Synthesizers |
+| `--persona` | string | | Forcer un seul persona |
 
 ## Mode autonome
 
@@ -121,6 +124,31 @@ Avec `--for`, les résultats incluent un champ **pertinence** :
 
 ```text
 contradiction [high]   Approche auth contradictoire     auth-jwt.md, auth-session.md  ...
+```
+
+## Validation des preuves
+
+Chaque finding IA **doit** inclure des citations verbatim des documents sources. Angela valide ces citations :
+
+| Mode | Comportement | Configuration |
+|------|-------------|---------------|
+| **strict** (défaut) | Supprime les findings sans preuve vérifiable | `angela.review.evidence.validation: strict` |
+| **lenient** | Conserve les findings mais les marque comme non vérifiés | `angela.review.evidence.validation: lenient` |
+| **off** | Affiche tous les findings tels quels | `angela.review.evidence.validation: "off"` |
+
+```yaml
+# .lorerc
+angela:
+  review:
+    evidence:
+      required: true         # l'IA doit fournir des preuves pour chaque finding
+      min_confidence: 0.4    # rejeter les findings sous ce seuil
+      validation: strict     # strict | lenient | off
+```
+
+Quand la validation de la preuve échoue :
+```text
+Rejeté : "Conflit de migration base de données" — citation introuvable dans la source
 ```
 
 ## Flux

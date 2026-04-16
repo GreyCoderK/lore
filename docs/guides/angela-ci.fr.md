@@ -58,7 +58,75 @@ flowchart LR
 | Mode | Clé API | Coût | Ce qu'il vérifie |
 |------|---------|------|------------------|
 | `draft` | Non | Gratuit | Structure, style, cohérence, personas |
+| `synthesize` | Non | Gratuit | Génère automatiquement des exemples API, requêtes SQL depuis le contenu du doc (hors ligne) |
 | `review` | Oui | ~0,01-0,05 $ | Contradictions corpus-wide, lacunes, obsolescence |
+
+### Pipeline CI en 3 étapes recommandé
+
+```mermaid
+    flowchart LR
+    A[Push / PR] --> B[Étape 1 : draft]
+    B --> C[Étape 2 : synthesize]
+    C --> D[Étape 3 : review]
+    B -.->|GRATUIT, hors ligne| B
+    C -.->|GRATUIT, hors ligne| C
+    D -.->|Coût API, optionnel| D
+```
+
+Les étapes 1 et 2 sont entièrement hors ligne — pas de clé API, pas de coût. L'étape 3 (review) est optionnelle et uniquement nécessaire pour les vérifications de cohérence corpus-wide (pré-release, audits périodiques).
+
+### GitHub Actions (pipeline 3 étapes)
+
+```yaml
+# .github/workflows/docs.yml
+name: Documentation Quality
+on: [push, pull_request]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Étape 1 : Vérification structurelle hors ligne (gratuit)
+      - uses: GreyCoderK/lore@v1
+        with:
+          mode: draft
+          path: ./docs
+          fail_on: error
+
+      # Étape 2 : Génération automatique d'exemples API depuis le contenu existant (gratuit)
+      - run: |
+          for f in docs/*.md; do
+            lore angela polish "$(basename $f)" --synthesize --set-status reviewed || true
+          done
+
+      # Étape 3 : Revue de cohérence IA (optionnel, uniquement sur les tags)
+      - if: startsWith(github.ref, 'refs/tags/v')
+        uses: GreyCoderK/lore@v1
+        with:
+          mode: review
+          path: ./docs
+          api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+
+### Docs externes pré-planifiées (sans lore init)
+
+Angela fonctionne sur **n'importe quel répertoire Markdown** — votre équipe peut planifier la documentation en dehors de lore (dans un wiki, un export Confluence, un export Notion, ou un site MkDocs fait main) et bénéficier quand même de l'analyse et de l'enrichissement synthesizer d'Angela :
+
+```bash
+# Projet externe — pas de répertoire .lore/ nécessaire
+lore angela draft --all --path ./external-wiki/
+
+# Générer des exemples Postman depuis des specs API dans un arbre de docs externe
+lore angela polish api-endpoints.md --synthesize --path ./swagger-docs/
+```
+
+En mode autonome :
+- Les fichiers avec front matter YAML reçoivent l'analyse complète
+- Les fichiers sans front matter reçoivent des métadonnées synthétiques (type=note)
+- Le synthesizer détecte les endpoints, filtres et sections sécurité que le doc ait été créé par lore ou non
+- Pas besoin de `.lorerc` — les valeurs par défaut s'appliquent
 
 ### Mode Draft (recommandé pour la CI)
 

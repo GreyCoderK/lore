@@ -110,6 +110,9 @@ func newPendingResolveCmd(_ *config.Config, streams domain.IOStreams) *cobra.Com
 	cmd.Flags().StringVar(&flagAlternatives, "alternatives", "", t.PendingFlagAlt)
 	cmd.Flags().StringVar(&flagImpact, "impact", "", t.PendingFlagImpact)
 
+	_ = cmd.RegisterFlagCompletionFunc("type", docTypeFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("commit", gitRefFlagCompletion)
+
 	return cmd
 }
 

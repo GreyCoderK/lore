@@ -50,6 +50,12 @@ lore angela polish <fichier> [flags]
 | `--interactive` / `-i` | bool | `false` | Passer en revue les changements section par section dans un TUI |
 | `--incremental` | bool | `false` | Re-polir uniquement les sections modifiées (ignore les sections inchangées) |
 | `--full` | bool | `false` | Forcer un polish complet même si `incremental` est activé dans la config |
+| `--synthesize` | bool | `false` | Appliquer les propositions du Example Synthesizer (hors ligne, sans IA) et écrire dans le doc |
+| `--synthesizer-dry-run` | bool | `false` | Prévisualiser les propositions du synthesizer sans écrire |
+| `--synthesizers` | strings | | Surcharger les synthesizers activés pour ce run (ex : `api-postman`) |
+| `--no-synthesizers` | bool | `false` | Désactiver tous les Example Synthesizers pour ce run |
+| `--set-status` | string | | Mettre à jour le `status` du frontmatter après application (ex : `reviewed`, `published`) |
+| `--persona` | string | | Forcer un seul persona pour ce run |
 
 ## Comment ça marche (étape par étape)
 
@@ -141,6 +147,85 @@ Les avertissements se déclenchent quand :
 - **Titres de section** (## ou ###) supprimés
 - **Blocs de code** supprimés
 - **Lignes de tableau** (> 3) supprimées
+
+## Famille Example Synthesizer (`--synthesize`)
+
+La famille de synthesizers est un pipeline **hors ligne** qui génère automatiquement des blocs de contenu structuré à partir des informations déjà présentes dans votre document — sans appel IA, sans clé API, sans coût. Le premier synthesizer, `api-postman`, génère des exemples de requêtes HTTP+JSON Postman à partir de vos tables d'endpoints et listes de filtres.
+
+### Comment ça marche
+
+1. Le synthesizer lit la table `### Endpoints` de votre doc, la liste `### Filtres` (ou la table `### Référence des champs`), et la section `## Sécurité`.
+2. Il construit un body JSON avec les champs requis en variables Postman (`{{month}}`), les champs optionnels à `null`, et les champs injectés par le serveur **exclus** (zéro hallucination — chaque champ en sortie est traçable jusqu'à un span littéral dans votre doc).
+3. Il écrit le bloc dans votre doc sous un nouveau sous-titre après `### Endpoints`.
+
+### Prévisualiser ce qui serait généré
+
+```bash
+lore angela polish doc.md --synthesizer-dry-run
+```
+
+### Appliquer les blocs
+
+```bash
+lore angela polish doc.md --synthesize
+```
+
+### Appliquer + promouvoir le statut
+
+```bash
+lore angela polish doc.md --synthesize --set-status reviewed
+```
+
+### Fonctionne aussi sur les docs externes
+
+Le synthesizer fonctionne sur **n'importe quel** fichier Markdown — même en dehors d'un projet lore natif :
+
+```bash
+# Projet externe avec sa propre structure de docs
+lore angela polish my-api-spec.md --synthesize
+```
+
+Le synthesizer utilise le parser de frontmatter permissif : les docs provenant de sites MkDocs, Docusaurus ou Hugo avec un front matter YAML partiel ou absent sont acceptés. Pas besoin de `lore init`.
+
+### Garanties de sécurité (Invariants I4–I7)
+
+| Invariant | Ce qu'il garantit |
+|-----------|-------------------|
+| **I4** zéro-hallucination | Chaque champ du body JSON généré possède un span d'évidence littéral pointant vers la ligne source où le nom du champ apparaît |
+| **I5** sécurité-d'abord | Les champs déclarés comme injectés par le serveur dans la section Sécurité du doc sont exclus par construction |
+| **I5-bis** fail-safe | Quand aucune section Sécurité n'existe, la liste bien connue (`tenantId`, `authenticatedUsername`, `principalId` + noms spécifiques au projet depuis `.lorerc`) filtre les champs probablement injectés par le serveur ET émet un warning `missing-security-section` |
+| **I6** idempotence | Relancer `--synthesize` sur un doc inchangé produit zéro diff (cache basé sur la signature dans le frontmatter) |
+| **I7** pas de merge silencieux | Les modifications de contenu synthétisé précédemment accepté passent toujours par la revue de diff — le synthesizer n'écrase jamais les éditions utilisateur |
+
+### Configuration (`.lorerc`)
+
+```yaml
+angela:
+  synthesizers:
+    enabled:
+      - api-postman           # activé par défaut depuis 8-18
+    well_known_server_fields:
+      - tenantId
+      - authenticatedUsername
+      - principalId
+    per_synthesizer:
+      review:
+        severity: info        # sévérité des findings de review (info/warning/error)
+```
+
+## Cycle de vie des statuts (`--set-status`)
+
+Mettez à jour le champ `status` du frontmatter en une seule commande :
+
+```bash
+# Mise à jour de statut seule (sans IA, sans synthesize)
+lore angela polish doc.md --set-status published
+
+# Combiné avec synthesize
+lore angela polish doc.md --synthesize --set-status reviewed
+```
+
+Relancer avec une valeur différente est toujours sûr — le champ est écrasé, jamais rejeté. Cycle de vie courant : `draft → reviewed → published`.
 
 ## Réécriture pour audience (`--for`)
 
@@ -437,7 +522,7 @@ Chaque re-polish est un appel API. L'IA voit la version améliorée, pas l'origi
 
 ## Personas
 
-Angela utilise 6 relecteurs virtuels. Les 3 meilleurs s'activent selon le type de document, le contenu et l'audience :
+Angela utilise 7 relecteurs virtuels. Les 3 meilleurs s'activent selon le type de document, le contenu et l'audience :
 
 | Persona | Icône | Focus | Activé par |
 |---------|-------|-------|------------|
@@ -447,8 +532,15 @@ Angela utilise 6 relecteurs virtuels. Les 3 meilleurs s'activent selon le type d
 | **Doumbia** (Architect) | 🏗️ | Compromis, conception système | Décisions, refactors ; `--for CTO` |
 | **Gougou** (UX Designer) | 🎨 | Empathie utilisateur, accessibilité | Features ; `--for design/ux` |
 | **Beda** (Business Analyst) | 📊 | Valeur business, exigences | Features, releases ; `--for commercial/CEO` |
+| **Ouattara** (API Designer) | 🔌 | Exemples API, réponses d'erreur, complétude des DTO | Feature/API docs avec endpoints ; `--for api/postman/integration` |
 
 Avec `--for`, les personas correspondantes reçoivent un boost de +20. Par exemple, `--for "CTO"` booste Architect et Business Analyst.
+
+Pour forcer un seul persona pour ce run :
+
+```bash
+lore angela polish doc.md --persona api-designer
+```
 
 ## Vérification des hallucinations
 
@@ -509,5 +601,7 @@ Après la réponse IA, Angela applique des transformations locales (sans appel A
 ## Voir aussi
 
 - [lore angela draft](angela-draft.md) — Analyse gratuite (lancez d'abord)
+- [lore angela consult](angela-consult.md) — Consultation ponctuelle d'un seul persona
 - [lore angela review](angela-review.md) — Vérification cohérence corpus
+- [Angela en CI](../guides/angela-ci.md) — Utiliser Angela comme quality gate en CI (pipeline draft + synthesize + review)
 - [lore config](config.md) — Configurer le fournisseur IA

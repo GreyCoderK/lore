@@ -1,8 +1,0 @@
-commit: e460082b4ef9caafe9ca48d94044ae8ff4c2740b
-date: "2026-04-10T07:17:21Z"
-message: enable chocolatey and embedded logo
-answers:
-    type: ""
-    what: ""
-status: deferred
-reason: non-tty

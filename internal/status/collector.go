@@ -66,6 +66,7 @@ type StatusInfo struct {
 	HealthIssues     int
 	AngelaSuggestions int // total suggestions across all docs
 	AngelaDocsNeedReview int // docs with at least 1 suggestion
+	Coverage         *CoverageResult // doc coverage (nil when git is unavailable)
 }
 
 // CollectStatus gathers all status information from the repository.
@@ -137,6 +138,12 @@ func CollectStatus(cfg *config.Config, git domain.GitAdapter, loreDir string) (*
 				info.PendingCount++
 			}
 		}
+	}
+
+	// Documentation coverage (commit-level).
+	if git.IsInsideWorkTree() {
+		cov := CalculateCoverage(filepath.Join(loreDir, "docs"), git)
+		info.Coverage = &cov
 	}
 
 	// Angela mode — check env > keychain > plaintext config

@@ -86,19 +86,33 @@ func TestPreflight_UnknownModel_CostNegative(t *testing.T) {
 }
 
 func TestPreflight_TightTimeout_Warning(t *testing.T) {
-	// claude-sonnet-4-20250514 speed is 80 tok/s. With 8192 max tokens, estimated = 102.4s.
-	// Timeout of 90s → 102.4 > 90*0.8=72 → should warn.
-	doc := "Short doc."
-	r := Preflight(doc, "", "claude-sonnet-4-20250514", 8192, 90*time.Second)
+	// claude-sonnet-4-20250514 speed is 80 tok/s.
+	// A ~12K char doc → ~3400 input tokens → expectedOutput = 3400*2+500 = 7300.
+	// estimatedSeconds = 7300/80 = 91.25s → threshold = 90*0.9 = 81 → 91.25 > 81 → warn.
+	doc := strings.Repeat("A long document with substantial content. ", 300) // ~12600 chars → ~3600 tokens
+	r := Preflight(doc, "", "claude-sonnet-4-20250514", 16000, 90*time.Second)
 	found := false
 	for _, w := range r.Warnings {
-		if strings.Contains(strings.ToLower(w), "timeout") || strings.Contains(w, "90") {
+		if strings.Contains(strings.ToLower(w), "timeout") {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Errorf("expected timeout warning, got warnings: %v", r.Warnings)
+		t.Errorf("expected timeout warning for large doc with tight timeout, got warnings: %v", r.Warnings)
+	}
+}
+
+func TestPreflight_SmallDocNoTimeoutWarning(t *testing.T) {
+	// A small doc (~10 chars → ~3 tokens) with generous timeout should
+	// NOT trigger a timeout warning, even when max_tokens is large.
+	// This was the false-positive bug that prompted the fix.
+	doc := "Short doc."
+	r := Preflight(doc, "", "claude-opus-4-6", 16000, 280*time.Second)
+	for _, w := range r.Warnings {
+		if strings.Contains(strings.ToLower(w), "timeout") {
+			t.Errorf("small doc with generous timeout should NOT warn, got: %s", w)
+		}
 	}
 }
 

@@ -46,6 +46,9 @@ func newReleaseCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd.Flags().StringVar(&versionFlag, "version", "", "Version label for release notes")
 	cmd.Flags().BoolVar(&quietFlag, "quiet", false, "Output only the release notes file path")
 
+	_ = cmd.RegisterFlagCompletionFunc("from", gitRefFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("to", gitRefFlagCompletion)
+
 	return cmd
 }
 

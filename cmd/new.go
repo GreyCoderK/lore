@@ -24,9 +24,10 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		Example: `  lore new
   lore new feature "add auth middleware" "JWT for stateless auth"
   lore new --commit abc1234`,
-		Args:         cobra.MaximumNArgs(3),
-		SilenceUsage:  true, // N4 fix: prevent cobra from printing usage on RunE errors
-		SilenceErrors: true,
+		Args:              cobra.MaximumNArgs(3),
+		SilenceUsage:      true, // N4 fix: prevent cobra from printing usage on RunE errors
+		SilenceErrors:     true,
+		ValidArgsFunction: newPositionalCompletion,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Check if Lore is initialized
 			if err := requireLoreDir(streams); err != nil {
@@ -79,5 +80,17 @@ func newNewCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&commitRef, "commit", "", i18n.T().Cmd.NewCommitFlagDesc)
+	_ = cmd.RegisterFlagCompletionFunc("commit", gitRefFlagCompletion)
 	return cmd
+}
+
+// newPositionalCompletion powers `lore new <TAB>`. The first positional
+// arg is the document type (decision/feature/bugfix/...); the next two
+// are free-form "what" and "why" strings that have no sensible
+// completion, so we suppress file completion there.
+func newPositionalCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) == 0 {
+		return domain.DocTypeNames(), cobra.ShellCompDirectiveNoFileComp
+	}
+	return nil, cobra.ShellCompDirectiveNoFileComp
 }

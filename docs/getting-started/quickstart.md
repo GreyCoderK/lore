@@ -1,5 +1,29 @@
 ---
 type: guide
+date: "2026-04-12"
+status: published
+related:
+    - ../commands/index.md
+    - ../guides/configuration.md
+    - ../commands/angela-draft.md
+    - ../guides/angela-ci.md
+angela_mode: polish
+---
+
+```mermaid
+    sequenceDiagram
+    participant Git
+    participant Hook as post-commit hook
+    participant Lore
+    participant User
+    Git->>Hook: commit done (stdin closed)
+    Hook->>Lore: exec lore _hook < /dev/tty
+    Lore->>User: Type? What? Why?
+    User->>Lore: answers (3 questions)
+    Lore->>Lore: save .lore/docs/feature-*.md
+```
+---
+type: guide
 date: 2026-04-12
 status: published
 related:
@@ -17,7 +41,7 @@ Go from zero to your first captured "why" in 5 minutes.
 ```bash
 cd your-project
 lore init
-```
+```json
 
 This creates the `.lore/` directory and installs a post-commit git hook.
 
@@ -68,13 +92,33 @@ API was getting 10K req/min from one client, causing latency for everyone.
 lore status
 ```
 
-```
+```yaml
 Documents: 1 | Pending: 0 | Coverage: 100%
 ```
 
+| Metric | Value | Meaning |
+|--------|--------|---------|
+| Documents | 1 | Total .lore/docs/*.md files |
+| Pending | 0 | Commits without documentation |
+| Coverage | 100% | Documented commits / total commits |
+
 > **What just happened?** lore scanned your commits and documents. 1 commit, 1 document = 100% coverage. As you keep committing, this dashboard tracks documentation health over time.
 
-## 5. Explore more
+## 5. Add a coverage badge
+
+Show the world your project is documented:
+
+```bash
+lore status --badge >> README.md
+```
+
+This generates a shields.io badge like:
+
+![lore | documented 85%](https://img.shields.io/badge/lore-documented%2085%25-d4a)
+
+Colors adapt automatically: gray (< 50%), green (50–79%), gold (80%+).
+
+## 6. Explore more
 
 ```bash
 # Document a past commit retroactively
@@ -85,6 +129,15 @@ lore list
 
 # Run diagnostics
 lore doctor
+
+# AI-assisted polish (with API key)
+lore angela polish decision-database-2026-02-10.md
+
+# Generate API examples from your docs (offline, free)
+lore angela polish api-spec.md --synthesize
+
+# Ask a specific expert about your doc
+lore angela consult api-designer api-spec.md
 ```
 
 ## What's next?
@@ -92,4 +145,6 @@ lore doctor
 - [Commands Reference](../commands/index.md) — All commands in detail
 - [Configuration](../guides/configuration.md) — Customize Lore
 - [Angela AI](../commands/angela-draft.md) — AI-assisted documentation
+- [Angela Consult](../commands/angela-consult.md) — Single-persona ad-hoc consultation
 - [Angela in CI](../guides/angela-ci.md) — Use Angela as a documentation quality gate in CI (no `lore init` required)
+- [Shell Completion](completions.md) — Tab completion for all commands and flags

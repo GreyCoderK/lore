@@ -14,6 +14,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/greycoderk/lore/internal/angela"
+	"github.com/greycoderk/lore/internal/angela/synthesizer"
 	"github.com/greycoderk/lore/internal/cli"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
@@ -37,6 +38,7 @@ func newAngelaCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	cmd.AddCommand(newAngelaDraftCmd(cfg, streams, &flagPath))
 	cmd.AddCommand(newAngelaPolishCmd(cfg, streams))
 	cmd.AddCommand(newAngelaReviewCmd(cfg, streams, &flagPath))
+	cmd.AddCommand(newAngelaConsultCmd(cfg, streams, &flagPath))
 
 	return cmd
 }
@@ -55,9 +57,12 @@ type draftFlags struct {
 	resetState     bool     // delete state file and treat all findings as NEW
 	personas       string   // "auto" | "manual" | "all" | "none"
 	manualPersonas []string // persona names for --personas manual
+	persona        string   // shortcut: forces manual mode with a single persona
 	interactive    bool     // interactive fix-it TUI
 	autofix        string   // "safe" or "aggressive"
 	dryRun         bool     // show diff without writing
+	synthesizers     []string // override enabled synthesizers
+	noSynthesizers   bool     // disable all synthesizers for this run
 }
 
 // resolveDraftFlags merges CLI flags with config defaults and returns
@@ -105,15 +110,24 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 	var flags draftFlags
 
 	cmd := &cobra.Command{
-		Use:           "draft [filename]",
-		Short:         i18n.T().Cmd.AngelaDraftShort,
-		Args:          cobra.MaximumNArgs(1),
-		SilenceUsage:  true,
+		Use:               "draft [filename]",
+		Short:             i18n.T().Cmd.AngelaDraftShort,
+		Args:              cobra.MaximumNArgs(1),
+		SilenceUsage:      true,
+		ValidArgsFunction: docsFileCompletion,
 		// SilenceErrors prevents cobra from printing "Error: exit code 1"
 		// when runDraftAll returns a *cli.ExitCodeError for gating purposes.
 		// The exit code is still propagated to the process via root.go.
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// --persona <name> is sugar for --personas manual --manual-personas <name>.
+			// It wins over --personas/--manual-personas so operators can
+			// "just consult Ouattara" with minimal typing.
+			if flags.persona != "" {
+				flags.personas = "manual"
+				flags.manualPersonas = []string{flags.persona}
+			}
+
 			// CLI flags override persona config.
 			if flags.personas != "" {
 				cfg.Angela.Personas.Selection = flags.personas
@@ -121,6 +135,8 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 			if len(flags.manualPersonas) > 0 {
 				cfg.Angela.Personas.ManualList = flags.manualPersonas
 			}
+
+			applySynthesizerFlags(cfg, flags.synthesizers, flags.noSynthesizers, cmd.Flags().Changed("synthesizers"))
 
 			// --interactive and --autofix are mutually exclusive.
 			if flags.interactive && flags.autofix != "" {
@@ -224,8 +240,17 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 			// for scoring/display; the actual personas passed to AnalyzeDraft
 			// come from SelectPersonasForDoc which honors config selection
 			// mode + free-form mode.
+			//
+			// We ALSO union any content-signal-driven personas (scored) not
+			// already in the type-driven list so lenses like api-designer
+			// (Ouattara) fire on feature docs whose API content triggers
+			// signals, even when the feature type mapping doesn't include
+			// api-designer by default. Each persona's DraftChecks gate
+			// internally on relevant content, so the union adds no noise
+			// on docs that don't match.
 			scored := angela.ResolvePersonas(meta.Type, content)
 			personas := angela.SelectPersonasForDoc(meta.Type, cfg.Angela.Personas)
+			personas = unionSignalDrivenPersonas(personas, scored)
 
 			// Run analysis (with persona draft checks)
 			suggestions := angela.AnalyzeDraft(content, meta, guide, corpus, personas)
@@ -234,6 +259,13 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 
 			// Include style guide parse warnings
 			suggestions = append(suggestions, guide.Warnings...)
+
+			// Synthesizer family: emit pending_enrichment
+			// suggestions when an enabled synthesizer has fresh candidates
+			// the doc doesn't yet expose. Purely offline (I1).
+			suggestions = append(suggestions, angela.SynthesizerDraftSuggestions(
+				filename, []byte(content), synthesizer.DefaultRegistry, cfg.Angela.Synthesizers,
+			)...)
 
 			// No suggestions
 			if len(suggestions) == 0 {
@@ -353,11 +385,19 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 	cmd.Flags().BoolVar(&flags.resetState, "reset-state", false, "Delete the draft state file and treat all current findings as NEW")
 	cmd.Flags().StringVar(&flags.personas, "personas", "", "Persona selection mode: auto | manual | all | none")
 	cmd.Flags().StringSliceVar(&flags.manualPersonas, "manual-personas", nil, "Persona names for --personas manual (e.g. storyteller,architect)")
+	cmd.Flags().StringVar(&flags.persona, "persona", "", "Shortcut: run with this single persona only (sugar for --personas manual --manual-personas <name>)")
+	_ = cmd.RegisterFlagCompletionFunc("persona", personaFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("manual-personas", personaFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("personas", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		return []string{"auto", "manual", "all", "none"}, cobra.ShellCompDirectiveNoFileComp
+	})
 	// Interactive fix-it TUI
 	cmd.Flags().BoolVarP(&flags.interactive, "interactive", "i", false, "Launch interactive fix-it TUI to walk through findings")
 	// Autofix mode
 	cmd.Flags().StringVar(&flags.autofix, "autofix", "", "Apply mechanical fixes: safe | aggressive")
 	cmd.Flags().BoolVar(&flags.dryRun, "dry-run", false, "Preview autofix changes without writing")
+	cmd.Flags().StringSliceVar(&flags.synthesizers, "synthesizers", nil, "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")")
+	cmd.Flags().BoolVar(&flags.noSynthesizers, "no-synthesizers", false, "Disable all Example Synthesizers for this run")
 	return cmd
 }
 
@@ -606,8 +646,11 @@ func runDraftAll(cfg *config.Config, streams domain.IOStreams, flagPath *string,
 			}
 		}
 		if preOverride == nil {
-			// Smart persona selection per doc type.
+			// Smart persona selection per doc type, unioned with
+			// content-signal-driven personas (see unionSignalDrivenPersonas).
+			scored := angela.ResolvePersonas(meta.Type, content)
 			personas := angela.SelectPersonasForDoc(meta.Type, cfg.Angela.Personas)
+			personas = unionSignalDrivenPersonas(personas, scored)
 			preOverride = angela.AnalyzeDraft(content, meta, guide, corpus, personas)
 			preOverride = append(preOverride, angela.CheckCoherence(content, meta, corpus)...)
 			score = angela.ScoreDocument(content, meta)
