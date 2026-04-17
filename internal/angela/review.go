@@ -50,6 +50,17 @@ type ReviewFinding struct {
 	Confidence  float64    `json:"confidence,omitempty"` // AI self-assessment 0.0-1.0
 	Hash        string     `json:"hash,omitempty"`       // stable identity for differential tracking
 	DiffStatus  string     `json:"diff_status,omitempty"` // "new" | "persisting" | "regressed" | "resolved"
+
+	// Personas lists the persona names that flagged this finding. Populated
+	// only when the review was run with persona injection (story 8-19).
+	// When multiple personas flag the same issue, the AI emits a single
+	// finding with all names here. Empty in baseline (no-persona) reviews.
+	Personas []string `json:"personas,omitempty"`
+
+	// AgreementCount is len(Personas) when personas are active. Kept as a
+	// distinct field so JSON consumers (CI scripts, dashboards) can filter
+	// by agreement strength without parsing the array. Zero in baseline reviews.
+	AgreementCount int `json:"agreement_count,omitempty"`
 }
 
 // Evidence is a verbatim citation from a specific corpus document used to
@@ -162,15 +173,26 @@ type ReviewOpts struct {
 	// config instead of hard-coding the default. When zero, the package
 	// default is used.
 	ConfigMaxTokens int
+
+	// Personas, when non-empty, activates persona-aware review (story 8-19).
+	// The prompt injects BuildPersonaPrompt(Personas) and instructs the AI
+	// to attribute each finding to the persona(s) that flagged it. Activation
+	// is strictly opt-in: the cmd layer populates this only when the user
+	// explicitly opted in (--persona flag, --use-configured-personas, or
+	// interactive confirmation). nil/empty = baseline review (pre-8-19).
+	Personas []PersonaProfile
 }
 
 // BuildReviewPrompt is retained for test compatibility; production uses BuildReviewPromptWithVHS.
+// This wrapper always passes nil personas (baseline behavior).
 func BuildReviewPrompt(docs []DocSummary, styleGuide string, signals *CorpusSignals, audience ...string) (string, string) {
-	return BuildReviewPromptWithVHS(docs, styleGuide, signals, nil, audience...)
+	return BuildReviewPromptWithVHS(docs, styleGuide, signals, nil, nil, audience...)
 }
 
 // BuildReviewPromptWithVHS constructs the AI prompt including VHS cross-reference signals.
-func BuildReviewPromptWithVHS(docs []DocSummary, styleGuide string, signals *CorpusSignals, vhs *VHSSignals, audience ...string) (string, string) {
+// When personas is non-empty, persona directives are injected into the user content and the
+// AI is instructed to attribute each finding to the persona(s) that flagged it (story 8-19).
+func BuildReviewPromptWithVHS(docs []DocSummary, styleGuide string, signals *CorpusSignals, vhs *VHSSignals, personas []PersonaProfile, audience ...string) (string, string) {
 	// System prompt: stable across calls (cacheable)
 	var sys strings.Builder
 	sys.WriteString(`You are Angela, a senior technical editor reviewing a Lore documentation corpus.
@@ -251,6 +273,40 @@ OUTPUT FORMAT:
 - Return ONLY the JSON. No markdown, no explanation, no wrapping.
 `)
 
+	// If personas are active, add persona-aware directives to the system prompt.
+	// The directives instruct the AI to attribute each finding to the persona(s)
+	// that flagged it, and to aggregate findings when multiple personas concur.
+	// Single-pass persona injection (parity with BuildPolishPrompt) — no
+	// fan-out × N API calls.
+	if len(personas) > 0 {
+		sys.WriteString(`
+
+═══════════════════════════════════════
+PERSONA-AWARE REVIEW
+═══════════════════════════════════════
+
+The user activated persona lenses for this review. For each persona, surface
+findings that matter TO THAT PERSONA SPECIFICALLY, based on the persona's
+principles and expertise.
+
+ADDITIONAL RULES FOR PERSONA-AWARE REVIEW:
+- Attribute each finding to the persona(s) whose expertise flagged it
+- Add a "personas" field (array of persona names) to every finding
+- Add an "agreement_count" integer field equal to len(personas)
+- When MULTIPLE personas would flag the same issue, emit ONE finding listing
+  all of them in "personas" — this is a signal of cross-lens agreement
+- Each persona must use only its OWN principles — do not fabricate a persona's
+  concern to inflate agreement. Agreement must be earned.
+- The EVIDENCE RULE above still applies fully: every persona-attributed finding
+  must carry a verifiable quote. A persona's expertise does NOT excuse missing
+  evidence (invariant I4 — zero hallucination).
+
+OUTPUT FORMAT UPDATE: findings now include "personas" and "agreement_count":
+  {"findings": [{severity, title, description, documents, evidence, confidence,
+                 personas, agreement_count}]}
+`)
+	}
+
 	// If an audience is specified, adapt findings for that audience
 	if len(audience) > 0 && audience[0] != "" {
 		sys.WriteString(`
@@ -274,6 +330,16 @@ ADDITIONAL RULES FOR AUDIENCE REVIEW:
 
 	// User content: varies per call
 	var usr strings.Builder
+
+	// Inject persona directives (story 8-19). Placed FIRST so the AI sees the
+	// lens before it ingests the corpus, and so the personas section
+	// short-circuits any attempt by corpus content to redefine the lens.
+	// BuildPersonaReviewPrompt (vs BuildPersonaPrompt) uses each persona's
+	// ReviewDirective, which is review-specific (corpus coherence) rather
+	// than the draft/polish-oriented PromptDirective. Follow-up 2026-04-17.
+	if len(personas) > 0 {
+		usr.WriteString(BuildPersonaReviewPrompt(personas))
+	}
 
 	if styleGuide != "" {
 		usr.WriteString("PROJECT STYLE GUIDE (between markers):\n")
@@ -317,7 +383,7 @@ func Review(ctx context.Context, provider domain.AIProvider, docs []DocSummary, 
 		o = opts[0]
 	}
 	signals := AnalyzeCorpusSignals(docs)
-	systemPrompt, userContent := BuildReviewPromptWithVHS(docs, styleGuide, signals, o.VHSSignals, o.Audience)
+	systemPrompt, userContent := BuildReviewPromptWithVHS(docs, styleGuide, signals, o.VHSSignals, o.Personas, o.Audience)
 	if len(userContent) > maxAIInputSize {
 		return nil, fmt.Errorf("angela: review corpus too large for AI processing (%d bytes, max %d)", len(userContent), maxAIInputSize)
 	}

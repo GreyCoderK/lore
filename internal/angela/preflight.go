@@ -23,6 +23,33 @@ type PreflightResult struct {
 	AbortReason          string // human-readable reason for abort
 }
 
+// ModelContextLimit returns the context window size (in tokens) for a known
+// model, or (0, false) when the model is not registered. Exported so cmd-side
+// formatters can share this canonical table instead of duplicating it.
+func ModelContextLimit(model string) (int, bool) {
+	v, ok := modelContextLimits[model]
+	return v, ok
+}
+
+// ModelOutputSpeed returns the typical output speed (tokens/second) for a
+// known model, or (0, false) when the model is not registered.
+func ModelOutputSpeed(model string) (float64, bool) {
+	v, ok := modelSpeedTokPerSec[model]
+	return v, ok
+}
+
+// ExpectedOutputTokens returns the heuristic "expected" output token count for
+// a given input size and output ceiling. Kept as a single source of truth so
+// cost estimators outside this package don't have to re-invent the formula
+// (which would drift over time).
+func ExpectedOutputTokens(inputTokens, maxOutput int) int {
+	expected := inputTokens*2 + 500
+	if expected > maxOutput {
+		expected = maxOutput
+	}
+	return expected
+}
+
 // modelContextLimits maps known models to their max context window size.
 var modelContextLimits = map[string]int{
 	"claude-opus-4-6":           200000,
@@ -107,10 +134,7 @@ func Preflight(doc string, systemPrompt string, model string, maxOutputTokens in
 	// configured ceiling (e.g. 16000) far exceeded the actual expected
 	// output (e.g. 5000 for a 4000-token doc).
 	if speed, ok := modelSpeedTokPerSec[model]; ok {
-		expectedOutput := inputTokens*2 + 500 // generous: 2× input + margin
-		if expectedOutput > maxOutputTokens {
-			expectedOutput = maxOutputTokens
-		}
+		expectedOutput := ExpectedOutputTokens(inputTokens, maxOutputTokens)
 		estimatedSeconds := float64(expectedOutput) / speed
 		if timeout > 0 && estimatedSeconds > timeout.Seconds()*0.9 {
 			r.Warnings = append(r.Warnings, fmt.Sprintf(

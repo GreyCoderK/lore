@@ -16,13 +16,22 @@ import (
 // PersonaProfile represents an expert lens that Angela can activate
 // for document review. Personas are Go values — no external files.
 type PersonaProfile struct {
-	Name            string
-	DisplayName     string
-	Icon            string
-	Expertise       string
-	Principles      []string
-	DraftChecks     []DraftCheck
+	Name        string
+	DisplayName string
+	Icon        string
+	Expertise   string
+	Principles  []string
+	DraftChecks []DraftCheck
+	// PromptDirective is the AI instruction block used for DRAFT/POLISH.
+	// It is written for the "one document, make it better" task.
 	PromptDirective string
+	// ReviewDirective is the AI instruction block used for REVIEW (story 8-19).
+	// Review is corpus-wide coherence analysis — each persona must tell the
+	// AI what THEIR lens looks for across the set of docs (contradictions,
+	// gaps, stylistic drift, etc.), NOT how to fix a single doc. When empty,
+	// BuildPersonaReviewPrompt falls back to PromptDirective with a warning
+	// footer so the regression is surfaced in the prompt itself.
+	ReviewDirective string
 	DocTypes        []string // explicit type activation
 	ContentSignals  []string // keyword content activation (EN + FR)
 }
@@ -87,6 +96,12 @@ var registry = []PersonaProfile{
 - Convert bullet-list-only sections into 2-3 sentence narratives that flow. Lists are scaffolding, not the story
 - Add a "before this change" vs "after this change" framing when relevant
 - Use one concrete analogy if it genuinely clarifies (avoid forced analogies)`,
+		ReviewDirective: `STORYTELLING LENS (Affoue) — REVIEW MODE:
+- Flag NARRATIVE CONTRADICTIONS across documents: two decisions with incompatible "why" stories for the same scope
+- Flag ORPHAN DECISIONS: feature docs whose causal story points to a decision doc that does not exist
+- Flag TEMPORAL GAPS: decisions referenced by features but older than the feature implementation without a superseding record
+- Do NOT flag a single doc's prose quality — that is polish's job, not review's
+- Prefer one strong narrative-coherence finding over five micro-nits`,
 		DocTypes:        []string{"decision", "note"},
 		ContentSignals:  signalsStoryteller,
 	},
@@ -135,6 +150,12 @@ var registry = []PersonaProfile{
 - Add a mermaid diagram if the doc describes any process, flow, or architecture — this is mandatory, not optional
 - Add code blocks with language tags for commands, config, or API examples
 - Structure: scannable headers → key info in first sentence of each section → details after`,
+		ReviewDirective: `TECHNICAL WRITING LENS (Sialou) — REVIEW MODE:
+- Flag TERMINOLOGY DRIFT across documents: the same concept named differently (e.g. "rate limiter" in doc A, "throttler" in doc B)
+- Flag STRUCTURAL INCONSISTENCY: docs of the same type with different required sections or header conventions
+- Flag MISSING DIAGRAMS CROSS-CORPUS: a technology mentioned in 3+ docs but never diagrammed anywhere
+- Do NOT flag a single doc's terseness — that's polish's domain
+- Every finding must cite verbatim quotes from at least two docs`,
 		DocTypes:        []string{"feature", "refactor", "release"},
 		ContentSignals:  signalsTechWriter,
 	},
@@ -178,6 +199,12 @@ var registry = []PersonaProfile{
 - List edge cases and failure modes explicitly — what happens when X fails? what about Y?
 - If the doc claims something works, specify how to test it: exact command, expected result
 - Flag any undocumented assumptions (e.g., "requires Redis" but Redis setup isn't mentioned)`,
+		ReviewDirective: `QA LENS (Kouame) — REVIEW MODE:
+- Flag UNVERIFIED CLAIMS across the corpus: docs that assert a behavior without any doc in the corpus describing how to verify it
+- Flag CONTRADICTORY CLAIMS about the same behavior in different docs (doc A says "returns 200", doc B says "returns 204" for the same endpoint)
+- Flag DOCUMENTATION/TEST DRIFT: a feature doc references a test file or command that no other doc in the corpus mentions
+- Do NOT demand that every doc gain a verification section — that's polish's domain
+- Evidence quotes must pair docs that genuinely contradict, not docs that merely differ in scope`,
 		DocTypes:        []string{"bugfix", "feature"},
 		ContentSignals:  signalsQAReviewer,
 	},
@@ -225,6 +252,12 @@ var registry = []PersonaProfile{
 - Make trade-offs explicit: what did we gain? what did we sacrifice? why is that acceptable?
 - Add a mermaid architecture diagram showing component relationships or data flow
 - Quantify impact when possible: latency, throughput, resource usage, complexity cost`,
+		ReviewDirective: `ARCHITECTURE LENS (Doumbia) — REVIEW MODE:
+- Flag ARCHITECTURAL CONTRADICTIONS across decisions: two decision docs that reach incompatible conclusions on the same layer or component
+- Flag SCOPE CONFLICTS: feature docs that implement something outside the boundaries declared by the governing decision doc
+- Flag OBSOLETE DECISIONS: a newer decision that supersedes an older one without the old doc being marked as such
+- Flag MISSING DECISION RECORDS: technical patterns adopted in 3+ features but lacking an owning decision doc
+- Do NOT suggest adding "Alternatives Considered" sections to individual docs — that's polish's job`,
 		DocTypes:        []string{"decision", "refactor"},
 		ContentSignals:  signalsArchitect,
 	},
@@ -270,6 +303,12 @@ var registry = []PersonaProfile{
 - Describe the before/after user experience concretely: "Before: user sees X. After: user sees Y"
 - Flag accessibility concerns: does this work on all platforms? in CI? in non-TTY?
 - If there's a UI change, describe exactly what the user sees (terminal output, dialog, etc.)`,
+		ReviewDirective: `UX LENS (Gougou) — REVIEW MODE:
+- Flag USER-JOURNEY GAPS across features: a flow that starts in one doc and ends without any doc describing the next step
+- Flag INCOMPATIBLE UX PROMISES: two features that deliver conflicting experiences to the same user persona (e.g., one claims non-interactive CI support, another demands a TTY)
+- Flag MISSING ACCESSIBILITY CROSS-REFERENCES: accessibility claims in one doc with no supporting design or test references anywhere else in the corpus
+- Do NOT demand a "User Impact" section in every single doc — that's polish's responsibility
+- Evidence quotes must prove the UX contradiction is real, not inferred from tone`,
 		DocTypes:        []string{"feature"},
 		ContentSignals:  signalsUXDesigner,
 	},
@@ -322,6 +361,12 @@ var registry = []PersonaProfile{
 - Quantify value when possible: time saved, errors prevented, users impacted
 - If this was driven by a requirement, name it (compliance, SLA, customer request)
 - Add ## Impact section if missing: who benefits and how?`,
+		ReviewDirective: `BUSINESS LENS (Beda) — REVIEW MODE:
+- Flag VALUE/SCOPE CONTRADICTIONS: two docs that promise incompatible outcomes to the same stakeholder
+- Flag UNTRACEABLE REQUIREMENTS: features or releases that cite compliance/SLA/customer requirements with no requirements doc anywhere in the corpus
+- Flag ORPHAN BUSINESS OUTCOMES: decision or feature docs with impact claims that never reconnect to a release or retrospective doc
+- Do NOT ask for an Impact section in every doc — that's polish's beat
+- Every finding must quote the contradictory or missing business claim verbatim`,
 		DocTypes:       []string{"feature", "release"},
 		ContentSignals: signalsBusinessAnalyst,
 	},
@@ -436,6 +481,12 @@ var registry = []PersonaProfile{
 - Authentication: describe the scheme (Bearer JWT, API key, Basic) and where the token comes from.
 - If pagination is used: document page/size defaults, max allowed size, and the response envelope shape.
 - Flag any field whose behavior differs between endpoints (e.g., a filter ignored during export).`,
+		ReviewDirective: `SYNTHESIZER-FAMILY LENS (Ouattara) — REVIEW MODE:
+- Flag CROSS-DOC API CONTRADICTIONS: the same endpoint documented with different methods, fields, or error codes in different docs
+- Flag INCONSISTENT AUTH CLAIMS: endpoints documented with incompatible auth schemes in different docs (Bearer vs API key vs public)
+- Flag SERVER-INJECTED-FIELD DIVERGENCE: a field declared server-injected in one doc but treated as client-provided elsewhere (this pairs with invariant I5)
+- Flag MISSING OR DUPLICATE ERROR-RESPONSE TABLES across the API corpus
+- Do NOT add HTTP blocks or error tables yourself — that's polish + synthesizer territory (stories 8-17/8-18)`,
 		DocTypes:       []string{"feature", "reference", "api"},
 		ContentSignals: signalsAPIDesigner,
 	},
@@ -743,6 +794,13 @@ func personaByName(name string) (PersonaProfile, bool) {
 	return p, ok
 }
 
+// PersonaByName is the exported variant of personaByName for callers outside
+// the angela package (e.g. cmd formatters that need to resolve persona names
+// carried on ReviewFinding.Personas to a full PersonaProfile for display).
+func PersonaByName(name string) (PersonaProfile, bool) {
+	return personaByName(name)
+}
+
 // SelectPersonasForDoc returns the persona profiles to activate for a
 // given document, honoring the PersonasConfig selection mode and
 // free-form mode switch.
@@ -866,15 +924,62 @@ func BuildPersonaPrompt(personas []PersonaProfile) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "YOUR EXPERT TEAM FOR THIS REVIEW:\nAngela activates %d expert lens(es) for this document:\n\n", len(personas))
 
+	// Persona fields are sanitized before injection. Today personas come
+	// from a compile-time registry, but the cmd layer already accepts
+	// persona names from `.lorerc` and future work may extend config-driven
+	// persona content — close the asymmetry with `BuildPolishPrompt` now,
+	// since audience/style-guide are already sanitized there and here.
 	for _, p := range personas {
-		fmt.Fprintf(&sb, "%s %s — %s\n", p.Icon, p.DisplayName, p.Expertise)
+		fmt.Fprintf(&sb, "%s %s — %s\n",
+			sanitizeShortField(p.Icon),
+			sanitizeShortField(p.DisplayName),
+			sanitizeShortField(p.Expertise),
+		)
 	}
 	sb.WriteString("\n")
 
 	for _, p := range personas {
-		sb.WriteString(p.PromptDirective)
+		sb.WriteString(sanitizePromptContent(p.PromptDirective))
 		sb.WriteString("\n\n")
 	}
 
+	return sb.String()
+}
+
+// BuildPersonaReviewPrompt builds the persona-lens block for the REVIEW
+// command. Each persona's directive MUST be review-specific: corpus-wide
+// coherence concerns, not per-document polish fixes. When a persona has no
+// ReviewDirective populated, we fall back to PromptDirective with an explicit
+// WARNING line so the mis-targeted instructions do not silently degrade
+// review quality.
+func BuildPersonaReviewPrompt(personas []PersonaProfile) string {
+	if len(personas) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "YOUR EXPERT REVIEW TEAM:\nAngela activates %d expert lens(es) for this corpus review:\n\n", len(personas))
+
+	// Same sanitization policy as BuildPersonaPrompt.
+	for _, p := range personas {
+		fmt.Fprintf(&sb, "%s %s — %s\n",
+			sanitizeShortField(p.Icon),
+			sanitizeShortField(p.DisplayName),
+			sanitizeShortField(p.Expertise),
+		)
+	}
+	sb.WriteString("\n")
+
+	for _, p := range personas {
+		if strings.TrimSpace(p.ReviewDirective) != "" {
+			sb.WriteString(sanitizePromptContent(p.ReviewDirective))
+		} else {
+			// Fallback with explicit warning so the AI doesn't silently apply
+			// draft-oriented instructions to a corpus-review task.
+			fmt.Fprintf(&sb, "WARNING: persona %q has no review-specific directive; using draft directive as fallback — findings may drift toward polish concerns.\n",
+				sanitizeShortField(p.Name))
+			sb.WriteString(sanitizePromptContent(p.PromptDirective))
+		}
+		sb.WriteString("\n\n")
+	}
 	return sb.String()
 }

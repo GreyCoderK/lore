@@ -104,4 +104,42 @@ type AngelaMessages struct {
 	UILowOutput         string
 	UILocalModelTip     string
 	UIReviewPreflight   string // args: docCount, inputTokens, maxOutput, timeout
+
+	// Preview report (lore angela review --preview)
+	UIReviewPreviewHeader           string // "Review preview" + separator rule
+	UIReviewPreviewCorpus           string // args: count (int), size (string like "245 KB")
+	UIReviewPreviewModel            string // arg: model name
+	UIReviewPreviewPersonasBaseline string // "baseline (no personas)"
+	UIReviewPreviewPersonasList     string // args: count (int), pluralSuffix (string "s" or ""), comma-separated names
+	UIReviewPreviewAudienceNone     string // "(none)"
+	UIReviewPreviewAudience         string // arg: audience
+	UIReviewPreviewTokens           string // args: input tokens (string formatted), max output tokens (string formatted)
+	UIReviewPreviewContextWindow    string // arg: pct (float)
+	UIReviewPreviewCost             string // arg: USD amount (string formatted)
+	UIReviewPreviewCostUnknown      string // "unknown (model pricing not registered)"
+	UIReviewPreviewExpectedTime     string // arg: seconds (int)
+	UIReviewPreviewWarningsHeader   string // just "Warnings:" heading, no args
+	UIReviewPreviewAbort            string // arg: abort reason
+
+	// Persona opt-in prompt & UX
+	UIPersonaConfiguredHeader        string // args: count (int), pluralSuffix (string), comma-separated names
+	UIPersonaCostDeltaBaselineLabel  string // arg: rendered line (string)
+	UIPersonaCostDeltaAugmentedLabel string // args: count (int), pluralSuffix, rendered line
+	UIPersonaAddContext              string // explanation line, no args
+	UIPersonaPromptQuestion          string // "   Use them for this review? [y/N] "
+	UIPersonaNonTTYInfo              string // args: icon (string), comma-separated names
+	UIPersonaCostBaselineZero        string // "~$0 (zero-token baseline)"
+	UIPersonaCostDeltaUndefined      string // arg: USD amount — used when baseline cost is 0
+	UIPersonaCostDeltaPct            string // arg: percent (int) — like "(+18%)"
+	UIPersonaCostSameRoughly         string // "(~same cost)"
+	UIPersonaCostUnknown             string // "(cost unknown — model pricing not registered)"
+	UIPersonaInputTokens             string // arg: formatted token count — "~%s input tokens"
+	UIPersonaCostInline              string // arg: USD — " · ~$%s"
+
+	// Review report header + per-finding + TUI
+	UIReviewAngleHeader              string // args: count (int), pluralSuffix
+	UIReviewAnglePersonaRow          string // args: icon, displayName, expertise
+	UIReviewFlaggedBy                string // arg: comma-separated "icon name" pairs
+	UIReviewAgreementConcur          string // args: concurrentCount (int), poolSize (int)
+	UIReviewAgreementLineFormat      string // arg: agreement tag — "(%d/%d)"
 }

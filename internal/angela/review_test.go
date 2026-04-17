@@ -6,6 +6,7 @@ package angela
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -506,5 +507,345 @@ func TestPrepareDocSummaries_PatternFilter_TooFewDocs_Error(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "2") {
 		t.Errorf("error should mention minimum of 2, got: %q", err)
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Review adaptive prompt — persona injection + agreement count
+// ─────────────────────────────────────────────────────────────────────────────
+
+// personaFixture returns two fake personas for tests. We construct them
+// explicitly rather than pulling from GetRegistry() so the test assertions
+// remain stable if the registry ordering or content changes.
+func personaFixture() []PersonaProfile {
+	return []PersonaProfile{
+		{
+			Name:            "security-senior",
+			DisplayName:     "Security Senior",
+			Icon:            "🔒",
+			Expertise:       "Authentication, authorization, data protection",
+			PromptDirective: "As Security Senior, flag missing auth flows and data exposure risks.",
+			ReviewDirective: "SECURITY REVIEW LENS: flag cross-doc auth contradictions and security-section gaps.",
+		},
+		{
+			Name:            "dx-lead",
+			DisplayName:     "DX Lead",
+			Icon:            "🧭",
+			Expertise:       "Onboarding clarity and developer ergonomics",
+			PromptDirective: "As DX Lead, flag jargon and missing context for new contributors.",
+			ReviewDirective: "DX REVIEW LENS: flag onboarding gaps across the corpus and jargon inconsistencies.",
+		},
+	}
+}
+
+// TestBuildReviewPromptWithVHS_InjectsPersonas (AC-1, AC-2).
+// When personas is non-nil and non-empty, the persona directive block must
+// appear in the user content, and the system prompt must instruct the AI to
+// attribute findings via "personas" and "agreement_count" fields.
+func TestBuildReviewPromptWithVHS_InjectsPersonas(t *testing.T) {
+	docs := []DocSummary{
+		{Filename: "decision-api.md", Type: "decision", Summary: "Pick REST vs gRPC."},
+	}
+	personas := personaFixture()
+
+	sys, usr := BuildReviewPromptWithVHS(docs, "", nil, nil, personas)
+
+	// System prompt — persona-aware block
+	if !strings.Contains(sys, "PERSONA-AWARE REVIEW") {
+		t.Error("system prompt missing PERSONA-AWARE REVIEW section")
+	}
+	if !strings.Contains(sys, "personas") || !strings.Contains(sys, "agreement_count") {
+		t.Error("system prompt must instruct AI to emit personas and agreement_count fields")
+	}
+	if !strings.Contains(sys, "invariant I4") {
+		t.Error("system prompt must call out I4 (zero hallucination) alongside persona rule")
+	}
+
+	// User content — persona names + review-specific directives must appear.
+	// The review prompt uses BuildPersonaReviewPrompt, so we assert the
+	// review-specific header AND the ReviewDirective text, NOT the draft
+	// PromptDirective (which is explicitly not what review should inject).
+	if !strings.Contains(usr, "YOUR EXPERT REVIEW TEAM") {
+		t.Error("user content must include review-specific persona team header")
+	}
+	if !strings.Contains(usr, "Security Senior") {
+		t.Error("user content must include first persona display name")
+	}
+	if !strings.Contains(usr, "DX Lead") {
+		t.Error("user content must include second persona display name")
+	}
+	if !strings.Contains(usr, "SECURITY REVIEW LENS") {
+		t.Error("user content must include first persona REVIEW directive, not draft directive")
+	}
+	if !strings.Contains(usr, "DX REVIEW LENS") {
+		t.Error("user content must include second persona REVIEW directive, not draft directive")
+	}
+	// The draft-oriented PromptDirective text must NOT leak into the review
+	// prompt — that was the whole point of the follow-up fix.
+	if strings.Contains(usr, "flag missing auth flows and data exposure risks") {
+		t.Error("review prompt leaked the DRAFT-oriented PromptDirective; must use ReviewDirective")
+	}
+}
+
+// TestBuildReviewPromptWithVHS_NilPersonas_NoLeak (AC-5 prompt side).
+// When personas is nil, neither the persona directive block NOR the output
+// schema extension for personas must appear — this guarantees baseline
+// prompt identity with the pre-8-19 behavior.
+func TestBuildReviewPromptWithVHS_NilPersonas_NoLeak(t *testing.T) {
+	docs := []DocSummary{
+		{Filename: "decision-api.md", Type: "decision", Summary: "Pick REST vs gRPC."},
+	}
+
+	sys, usr := BuildReviewPromptWithVHS(docs, "", nil, nil, nil)
+
+	if strings.Contains(sys, "PERSONA-AWARE REVIEW") {
+		t.Error("nil personas must NOT activate PERSONA-AWARE REVIEW block in system prompt")
+	}
+	if strings.Contains(sys, "agreement_count") {
+		t.Error("nil personas must NOT mention agreement_count in system prompt")
+	}
+	if strings.Contains(usr, "YOUR EXPERT TEAM FOR THIS REVIEW") {
+		t.Error("nil personas must NOT emit BuildPersonaPrompt header in user content")
+	}
+	if strings.Contains(usr, "YOUR EXPERT REVIEW TEAM") {
+		t.Error("nil personas must NOT emit BuildPersonaReviewPrompt header in user content")
+	}
+}
+
+// TestRegistryPersonas_AllCarryReviewDirective guards against adding a new
+// persona to the registry without a review-specific directive. Without it,
+// BuildPersonaReviewPrompt falls back to the draft-oriented PromptDirective
+// with a WARNING line — acceptable as a graceful degradation, but the repo
+// convention is that every registry persona ships a review directive.
+func TestRegistryPersonas_AllCarryReviewDirective(t *testing.T) {
+	for _, p := range GetRegistry() {
+		if strings.TrimSpace(p.ReviewDirective) == "" {
+			t.Errorf("persona %q (registry) is missing ReviewDirective — add one or rely on the fallback-with-warning path explicitly",
+				p.Name)
+		}
+	}
+}
+
+// TestBuildPersonaReviewPrompt_MissingDirective_FallsBackWithWarning pins the
+// fallback contract: a persona without ReviewDirective must produce the
+// draft directive but precede it with an explicit WARNING line so the AI
+// (and anyone reading the prompt) sees that this is a mis-targeted lens.
+func TestBuildPersonaReviewPrompt_MissingDirective_FallsBackWithWarning(t *testing.T) {
+	personas := []PersonaProfile{{
+		Name:            "no-review-directive-persona",
+		DisplayName:     "Missing Review",
+		Icon:            "❓",
+		Expertise:       "Has draft directive only",
+		PromptDirective: "DRAFT-ONLY DIRECTIVE TEXT",
+		// ReviewDirective: intentionally empty
+	}}
+	got := BuildPersonaReviewPrompt(personas)
+	if !strings.Contains(got, "WARNING") {
+		t.Errorf("fallback path must emit a WARNING line; got:\n%s", got)
+	}
+	if !strings.Contains(got, "DRAFT-ONLY DIRECTIVE TEXT") {
+		t.Errorf("fallback path must include the PromptDirective; got:\n%s", got)
+	}
+}
+
+func TestBuildPersonaReviewPrompt_EmptyInput_ReturnsEmpty(t *testing.T) {
+	if got := BuildPersonaReviewPrompt(nil); got != "" {
+		t.Errorf("nil input must yield empty string, got %q", got)
+	}
+	if got := BuildPersonaReviewPrompt([]PersonaProfile{}); got != "" {
+		t.Errorf("empty slice must yield empty string, got %q", got)
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Golden-file baseline guard: the system prompt produced for a no-persona
+// review must remain byte-identical to a committed snapshot. Any change to
+// the system prompt — including an innocuous whitespace refactor — breaks
+// this test, forcing a deliberate decision (re-bless the golden or revert).
+//
+// The primary value is preventing silent drift that would invalidate
+// upstream prompt-cache hits and violate the "zero-regression vs pre-
+// persona" promise on the persona-aware review path.
+//
+// To re-bless after an intentional change:
+//
+//	LORE_UPDATE_GOLDEN=1 go test ./internal/angela/ -run TestSystemPromptBaseline_GoldenFile
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestSystemPromptBaseline_GoldenFile(t *testing.T) {
+	// Fixed, minimal inputs so the golden stays small and reviewable.
+	docs := []DocSummary{
+		{Filename: "decision-api.md", Type: "decision", Date: "2026-03-01", Summary: "[Why] Choose REST | [What] HTTP 1.1"},
+		{Filename: "feature-login.md", Type: "feature", Date: "2026-03-02", Summary: "[Why] Secure access | [What] JWT"},
+	}
+	sys, _ := BuildReviewPromptWithVHS(docs, "", nil, nil, nil)
+
+	goldenPath := "testdata/review-system-prompt-baseline.golden"
+
+	if os.Getenv("LORE_UPDATE_GOLDEN") == "1" {
+		if err := os.WriteFile(goldenPath, []byte(sys), 0644); err != nil {
+			t.Fatalf("failed to write golden: %v", err)
+		}
+		t.Logf("golden updated: %s", goldenPath)
+		return
+	}
+
+	want, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("golden not found; re-run with LORE_UPDATE_GOLDEN=1 to create it: %v", err)
+	}
+	if string(want) != sys {
+		t.Errorf("baseline system prompt drifted from golden file.\nTo re-bless an intentional change: LORE_UPDATE_GOLDEN=1 go test -run TestSystemPromptBaseline_GoldenFile ./internal/angela/")
+	}
+}
+
+// TestReview_NoPersonas_Baseline (AC-5).
+// Review with nil personas produces findings with zero-valued Personas and
+// AgreementCount. Both must be omitted from JSON (json:",omitempty").
+func TestReview_NoPersonas_Baseline(t *testing.T) {
+	response := `{"findings":[{
+		"severity":"gap",
+		"title":"Missing onboarding",
+		"description":"No doc explains setup.",
+		"documents":["README.md"],
+		"confidence":0.8
+	}]}`
+	provider := newMockProviderWith(response, nil)
+
+	report, err := Review(context.Background(), provider, []DocSummary{{Filename: "README.md"}}, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(report.Findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d", len(report.Findings))
+	}
+	f := report.Findings[0]
+	if len(f.Personas) != 0 {
+		t.Errorf("baseline review must produce zero-length Personas, got %v", f.Personas)
+	}
+	if f.AgreementCount != 0 {
+		t.Errorf("baseline review must produce AgreementCount=0, got %d", f.AgreementCount)
+	}
+}
+
+// TestReview_AgreementCount_Aggregation (AC-3).
+// When the AI returns a finding with multiple personas, AgreementCount in the
+// parsed result must equal len(Personas). The test exercises the JSON round-trip.
+func TestReview_AgreementCount_Aggregation(t *testing.T) {
+	response := `{"findings":[{
+		"severity":"gap",
+		"title":"No auth documented",
+		"description":"Missing auth section.",
+		"documents":["feature-login.md"],
+		"evidence":[{"file":"feature-login.md","quote":"POST /login"}],
+		"confidence":0.9,
+		"personas":["security-senior","dx-lead"],
+		"agreement_count":2
+	}]}`
+	provider := newMockProviderWith(response, nil)
+
+	report, err := Review(context.Background(), provider,
+		[]DocSummary{{Filename: "feature-login.md", Summary: "POST /login"}}, "",
+		ReviewOpts{Personas: personaFixture()},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(report.Findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d", len(report.Findings))
+	}
+	f := report.Findings[0]
+	if len(f.Personas) != 2 {
+		t.Errorf("expected 2 personas on finding, got %d", len(f.Personas))
+	}
+	if f.AgreementCount != 2 {
+		t.Errorf("expected AgreementCount=2, got %d", f.AgreementCount)
+	}
+}
+
+// TestReview_PersonaOrderInvariant (AC-6).
+// Given a deterministic stub (same response regardless of prompt), two runs
+// with persona lists in reversed order must produce the same set of findings
+// (by title). Order of the Personas slice INSIDE a finding can differ — what
+// matters is the set equality.
+func TestReview_PersonaOrderInvariant(t *testing.T) {
+	response := `{"findings":[
+		{"severity":"gap","title":"A","description":"x","documents":["d.md"],
+		 "evidence":[{"file":"d.md","quote":"x"}],"confidence":0.8,
+		 "personas":["security-senior"],"agreement_count":1},
+		{"severity":"style","title":"B","description":"y","documents":["d.md"],
+		 "evidence":[{"file":"d.md","quote":"x"}],"confidence":0.8,
+		 "personas":["dx-lead"],"agreement_count":1}
+	]}`
+
+	personas := personaFixture()
+	reversed := []PersonaProfile{personas[1], personas[0]}
+	docs := []DocSummary{{Filename: "d.md", Summary: "x"}}
+
+	r1, err1 := Review(context.Background(), newMockProviderWith(response, nil), docs, "",
+		ReviewOpts{Personas: personas})
+	r2, err2 := Review(context.Background(), newMockProviderWith(response, nil), docs, "",
+		ReviewOpts{Personas: reversed})
+	if err1 != nil || err2 != nil {
+		t.Fatalf("review errors: %v, %v", err1, err2)
+	}
+
+	titles := func(rep *ReviewReport) map[string]bool {
+		out := map[string]bool{}
+		for _, f := range rep.Findings {
+			out[f.Title] = true
+		}
+		return out
+	}
+	t1, t2 := titles(r1), titles(r2)
+	if len(t1) != len(t2) {
+		t.Fatalf("finding count differs: %d vs %d", len(t1), len(t2))
+	}
+	for k := range t1 {
+		if !t2[k] {
+			t.Errorf("finding title %q in run1 but not run2 — order invariance violated", k)
+		}
+	}
+}
+
+// TestReview_AdaptivePrompt_HonorsI4 (AC-4).
+// A persona-attributed finding with an empty or missing quote must be
+// rejected by the evidence validator just like a non-persona finding.
+// Persona activation does NOT loosen I4.
+func TestReview_AdaptivePrompt_HonorsI4(t *testing.T) {
+	// Finding has personas attributed but evidence is empty (no quote) — I4 violation.
+	response := `{"findings":[{
+		"severity":"gap",
+		"title":"Halucinated persona finding",
+		"description":"Persona sees missing MFA but evidence is empty.",
+		"documents":["feature-login.md"],
+		"evidence":[{"file":"feature-login.md","quote":""}],
+		"confidence":0.9,
+		"personas":["security-senior"],
+		"agreement_count":1
+	}]}`
+	provider := newMockProviderWith(response, nil)
+	reader := &mockCorpusReader{
+		docs:    []domain.DocMeta{{Filename: "feature-login.md", Type: "feature"}},
+		content: map[string]string{"feature-login.md": "POST /login returns token"},
+	}
+
+	report, err := Review(context.Background(), provider,
+		[]DocSummary{{Filename: "feature-login.md", Summary: "POST /login"}}, "",
+		ReviewOpts{
+			Personas: personaFixture(),
+			Reader:   reader,
+			Evidence: EvidenceValidation{Required: true, Mode: EvidenceModeStrict},
+		},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// I4: the finding must be rejected despite being persona-attributed.
+	if len(report.Findings) != 0 {
+		t.Errorf("I4 violated: persona-attributed finding with empty quote accepted; got %d findings", len(report.Findings))
+	}
+	if len(report.Rejected) == 0 {
+		t.Error("I4: evidence-less persona finding must land in Rejected slice")
 	}
 }

@@ -58,7 +58,11 @@ Analyse le corpus de documentation complet pour la cohérence : contradictions e
 | `--diff-only` | bool | `false` | Afficher uniquement les findings NEW + REGRESSED (masquer PERSISTING). Idéal pour les gates CI |
 | `--synthesizers` | strings | | Surcharger les synthesizers activés |
 | `--no-synthesizers` | bool | `false` | Désactiver tous les Example Synthesizers |
-| `--persona` | string | | Forcer un seul persona |
+| `--persona` | strings (répétable) | | Activer une ou plusieurs lentilles persona pour cette review (`--persona architect --persona qa-reviewer`). Multi-persona reste à **1 seul appel API** — les personas sont injectées dans le prompt, pas dispatchées en fan-out. |
+| `--no-personas` | bool | `false` | Forcer une review baseline sans persona, même si `.lorerc` en configure. Mutuellement exclusif avec `--persona` et `--use-configured-personas`. |
+| `--use-configured-personas` | bool | `false` | Activer les personas de `.lorerc` sans le prompt de confirmation interactif. Mutuellement exclusif avec `--persona` et `--no-personas`. |
+| `--preview` | bool | `false` | Afficher l'estimation de coût + les personas prévues, puis sortir **sans appeler l'IA**. Zéro appel API, zéro écriture de state. Dry-run sûr pour la gouvernance budget/CI. Mutuellement exclusif avec `--interactive`. |
+| `--format` | `text`\|`json` | `text` | Format de sortie pour `--preview`. Nécessite `--preview` ; erreur sinon. |
 
 ## Mode autonome
 
@@ -197,6 +201,13 @@ lore angela review --path ./docs --all
 # Silencieux (pour intégration avec lore status)
 lore angela review --quiet
 
+# Estimer le coût avant d'engager le run (zéro appel API)
+lore angela review --preview
+lore angela review --preview --format=json
+
+# Findings multi-angles en un seul appel API (personas opt-in)
+lore angela review --persona architect --persona qa-reviewer
+
 # Alternative hors ligne : analyser tous les docs localement (pas d'API)
 lore angela draft --all
 ```
@@ -262,6 +273,78 @@ Corpus Review — 12 documents analysés
 ```
 
 L'état est stocké dans `.lore/angela/review-state.json`.
+
+## Lentilles persona (opt-in)
+
+Activer une ou plusieurs lentilles persona pour cette review. Chaque finding peut être flagué par une ou plusieurs personas ; plusieurs personas concordant sur un même finding font monter son signal `agreement_count`.
+
+```bash
+# Activation par flag (non-interactif, CI-safe)
+lore angela review --persona architect --persona qa-reviewer
+
+# Utiliser les personas listées dans .lorerc sans la confirmation TTY
+lore angela review --use-configured-personas
+
+# Forcer baseline même si .lorerc configure des personas
+lore angela review --no-personas
+```
+
+Les personas **ne s'activent jamais silencieusement**. Quand `.lorerc` configure des personas et qu'aucun flag n'est passé :
+
+- **TTY** : Angela affiche un y/N avec le delta coût baseline vs avec-personas.
+- **Non-TTY / CI** : Angela émet un log informatif et lance la review baseline. Passez `--use-configured-personas` pour opt-in explicite en CI.
+
+Le rapport texte ajoute un en-tête `Review angle: N persona(s) active` et une ligne `Flagged by: …` par finding (Icône + Nom). La validation des preuves est forcée à `strict` dès qu'au moins une persona est active — les findings persona-attribués ne peuvent pas contourner l'invariant I4 (zero-hallucination).
+
+## Mode preview (sans appel API)
+
+`--preview` exécute l'estimation tokens/coût localement puis sort. Zéro appel HTTP, zéro écriture de state.
+
+```bash
+lore angela review --preview
+```
+
+```text
+Review preview
+──────────────
+Corpus:           68 documents (245 KB)
+Model:            claude-sonnet-4-6
+Personas:         baseline (no personas)
+Audience:         (none)
+Estimated tokens: 1,240 input → 4,000 output max
+Context window:   ~2.5% used
+Estimated cost:   $0.0037
+Expected time:    ~15s
+```
+
+Format machine pour les gates CI :
+
+```bash
+lore angela review --preview --format=json
+```
+
+```json
+{
+  "schema_version": "1",
+  "mode": "preview",
+  "corpus_documents": 68,
+  "corpus_bytes": 245000,
+  "model": "claude-sonnet-4-6",
+  "personas": [],
+  "audience": "",
+  "estimated_input_tokens": 1240,
+  "max_output_tokens": 4000,
+  "context_window_used_pct": 2.5,
+  "estimated_cost_usd": 0.0037,
+  "expected_seconds": 15,
+  "warnings": [],
+  "should_abort": false
+}
+```
+
+- `estimated_cost_usd` et `expected_seconds` valent `null` quand le modèle n'est pas dans la table de pricing — **pas** `-1` ni `0`. Les scripts doivent vérifier `null` avant agrégation.
+- `schema_version` est incrémenté uniquement sur les changements breaking (renommage / suppression / changement de sémantique). Ajouter un champ optionnel n'incrémente pas.
+- Combiner avec `--persona` reflète la taille de prompt augmentée dans l'estimation : `lore angela review --preview --persona architect`.
 
 ## TUI interactif (`--interactive`)
 

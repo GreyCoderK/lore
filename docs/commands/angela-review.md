@@ -7,7 +7,6 @@ related:
     - angela-polish.md
     - status.md
     - ../guides/angela-ci.md
-angela_mode: polish
 ---
 # lore angela review
 
@@ -96,7 +95,11 @@ You catch the auth contradiction before it confuses stakeholders. The isolated d
 | `--diff-only` | bool | `false` | Show only NEW + REGRESSED findings (ideal for CI) |
 | `--synthesizers` | strings | | Override enabled synthesizers |
 | `--no-synthesizers` | bool | `false` | Disable all Example Synthesizers |
-| `--persona` | string | | Force single persona lens |
+| `--persona` | strings (repeatable) | | Activate persona lenses for this review (`--persona architect --persona qa-reviewer`). Multi-persona stays at **1 API call** — personas are injected into the prompt, not fanned out. |
+| `--no-personas` | bool | `false` | Force baseline review without personas, even if `.lorerc` configures them. Mutually exclusive with `--persona` and `--use-configured-personas`. |
+| `--use-configured-personas` | bool | `false` | Activate personas from `.lorerc` without the interactive confirmation prompt. Mutually exclusive with `--persona` and `--no-personas`. |
+| `--preview` | bool | `false` | Print cost estimate + planned personas, then exit **without calling the AI**. Zero API call, zero state write. Safe dry-run for CI/budget governance. Mutually exclusive with `--interactive`. |
+| `--format` | `text`\|`json` | `text` | Output format for `--preview`. Requires `--preview`; errors out otherwise. |
 
 ## Standalone Mode
 
@@ -206,6 +209,78 @@ lore angela review --diff-only   # only NEW + REGRESSED
 
 State persists in `.lore/angela/review-state.json`.
 
+## Persona Lenses (opt-in)
+
+Activate one or more persona lenses for this review. Each finding may be flagged by one or more personas; concurrent personas raise the finding's `agreement_count` signal.
+
+```bash
+# Flag-driven activation (non-interactive, CI-safe)
+lore angela review --persona architect --persona qa-reviewer
+
+# Use the personas listed in .lorerc without the TTY confirmation prompt
+lore angela review --use-configured-personas
+
+# Force baseline regardless of .lorerc
+lore angela review --no-personas
+```
+
+Personas **never activate silently**. When `.lorerc` lists personas and no flag is set:
+
+- **TTY**: Angela shows a y/N confirmation with a baseline vs with-personas cost delta.
+- **Non-TTY / CI**: Angela emits an informational note and runs the baseline review. Pass `--use-configured-personas` to opt in explicitly in CI.
+
+The text report adds a `Review angle: N persona(s) active` header and a per-finding `Flagged by: …` line (Icon + DisplayName). Evidence validation is forced to `strict` when at least one persona is active — persona-attributed findings cannot bypass I4 (zero-hallucination).
+
+## Preview Mode (no API call)
+
+`--preview` runs the token/cost estimate locally then exits. Zero HTTP call, zero state write.
+
+```bash
+lore angela review --preview
+```
+
+```text
+Review preview
+──────────────
+Corpus:           68 documents (245 KB)
+Model:            claude-sonnet-4-6
+Personas:         baseline (no personas)
+Audience:         (none)
+Estimated tokens: 1,240 input → 4,000 output max
+Context window:   ~2.5% used
+Estimated cost:   $0.0037
+Expected time:    ~15s
+```
+
+Machine-readable mode for CI budget gates:
+
+```bash
+lore angela review --preview --format=json
+```
+
+```json
+{
+  "schema_version": "1",
+  "mode": "preview",
+  "corpus_documents": 68,
+  "corpus_bytes": 245000,
+  "model": "claude-sonnet-4-6",
+  "personas": [],
+  "audience": "",
+  "estimated_input_tokens": 1240,
+  "max_output_tokens": 4000,
+  "context_window_used_pct": 2.5,
+  "estimated_cost_usd": 0.0037,
+  "expected_seconds": 15,
+  "warnings": [],
+  "should_abort": false
+}
+```
+
+- `estimated_cost_usd` and `expected_seconds` are `null` when the model pricing or speed is not registered — **not** `-1` or `0` sentinels. Scripts should check for `null` before aggregating.
+- `schema_version` is bumped only on breaking changes (rename/remove/semantic change). Adding an optional field does not bump it.
+- Combining with `--persona` reflects the persona-augmented prompt size in the estimate: `lore angela review --preview --persona architect`.
+
 ## Interactive TUI
 
 ```bash
@@ -259,6 +334,13 @@ lore angela review --diff-only --quiet
 
 # Interactive triage session
 lore angela review --interactive
+
+# Estimate cost before committing to a run (zero API call)
+lore angela review --preview
+lore angela review --preview --format=json
+
+# Multi-angle findings in one API call (personas are opt-in)
+lore angela review --persona architect --persona qa-reviewer
 
 # Offline alternative (no API calls)
 lore angela draft --all

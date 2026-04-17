@@ -280,6 +280,14 @@ type CmdMessages struct {
 	AngelaReviewRejectedLine  string // args: title, reason
 	AngelaPolishModified    string
 
+	// Error messages for angela review command
+	AngelaReviewErrFormatRequiresPreview    string // static error, no args
+	AngelaReviewErrMutuallyExclusive        string // arg: comma-separated flag names
+	AngelaReviewErrUnknownPersonas          string // arg: comma-separated names
+	AngelaReviewErrUnknownConfiguredPersona string // arg: comma-separated names
+	AngelaReviewErrUseConfiguredNoManual    string // static error, no args
+	AngelaReviewErrUnknownFormat            string // arg: format value
+
 	// Badge hints (status, init, draft)
 	BadgeHintStatus        string // shown at end of lore status dashboard
 	BadgeHintInit          string // shown after lore init

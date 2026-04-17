@@ -1269,7 +1269,7 @@ func TestBuildReviewPromptWithVHS_VHSSignals(t *testing.T) {
 		{Filename: "feature-demo.md", Type: "feature", Summary: "Demo feature."},
 	}
 	vhs := &VHSSignals{} // empty but non-nil
-	_, usr := BuildReviewPromptWithVHS(docs, "", nil, vhs)
+	_, usr := BuildReviewPromptWithVHS(docs, "", nil, vhs, nil)
 	if usr == "" {
 		t.Error("expected non-empty user content for VHS review")
 	}
@@ -1345,7 +1345,7 @@ func TestBuildReviewPromptWithVHS_WithStyleGuide(t *testing.T) {
 	docs := []DocSummary{
 		{Filename: "decision-api.md", Type: "decision", Summary: "API decision."},
 	}
-	_, usr := BuildReviewPromptWithVHS(docs, "Use consistent terminology.", nil, nil)
+	_, usr := BuildReviewPromptWithVHS(docs, "Use consistent terminology.", nil, nil, nil)
 	if !strings.Contains(usr, "Use consistent terminology.") {
 		t.Errorf("expected style guide in user content, got: %s", usr[:min(200, len(usr))])
 	}

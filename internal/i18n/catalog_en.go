@@ -281,6 +281,14 @@ var catalogEN = &Messages{
 
 		AngelaPolishModified:   "document modified during review. Aborting to prevent data loss",
 
+		// Error messages for angela review command
+		AngelaReviewErrFormatRequiresPreview:    "angela: review: --format requires --preview (text-report --format is a later follow-up)",
+		AngelaReviewErrMutuallyExclusive:        "angela: review: mutually exclusive flags: %s",
+		AngelaReviewErrUnknownPersonas:          "angela: review: unknown persona(s): %s",
+		AngelaReviewErrUnknownConfiguredPersona: "angela: review: unknown persona(s) in .lorerc: %s",
+		AngelaReviewErrUseConfiguredNoManual:    "angela: review: --use-configured-personas requires angela.review.personas.selection=manual with a non-empty manual_list in .lorerc",
+		AngelaReviewErrUnknownFormat:            "angela: review: unknown --format %q; valid values: text, json",
+
 		// Badge hints
 		BadgeHintStatus:        "Tip: lore status --badge for a README badge",
 		BadgeHintInit:          "Add a coverage badge to your README: lore status --badge",
@@ -526,6 +534,44 @@ To load completions:
 		UILowOutput:         "Note: AI produced very little output — document may already be well-written",
 		UILocalModelTip:     "Tip: small local models may produce generic output — try llama3.1:8b or larger",
 		UIReviewPreflight:   "%d docs | ~%d input tokens | max output: %d tokens | timeout: %s",
+
+		// Preview report (lore angela review --preview)
+		UIReviewPreviewHeader:           "Review preview\n──────────────\n",
+		UIReviewPreviewCorpus:           "Corpus:           %d documents (%s)\n",
+		UIReviewPreviewModel:            "Model:            %s\n",
+		UIReviewPreviewPersonasBaseline: "Personas:         baseline (no personas)\n",
+		UIReviewPreviewPersonasList:     "Personas:         %d persona%s: [%s]\n",
+		UIReviewPreviewAudienceNone:     "Audience:         (none)\n",
+		UIReviewPreviewAudience:         "Audience:         %s\n",
+		UIReviewPreviewTokens:           "Estimated tokens: %s input → %s output max\n",
+		UIReviewPreviewContextWindow:    "Context window:   ~%.1f%% used\n",
+		UIReviewPreviewCost:             "Estimated cost:   $%s\n",
+		UIReviewPreviewCostUnknown:      "Estimated cost:   unknown (model pricing not registered)\n",
+		UIReviewPreviewExpectedTime:     "Expected time:    ~%ds\n",
+		UIReviewPreviewWarningsHeader:   "\nWarnings:\n",
+		UIReviewPreviewAbort:            "\nABORT: %s\n",
+
+		// Persona opt-in prompt & UX
+		UIPersonaConfiguredHeader:        "\nℹ  %d persona%s configured in .lorerc: [%s]\n",
+		UIPersonaCostDeltaBaselineLabel:  "   Baseline review:         %s\n",
+		UIPersonaCostDeltaAugmentedLabel: "   Review with %d persona%s: %s\n",
+		UIPersonaAddContext:              "   Personas add context (richer findings, same API call count).\n",
+		UIPersonaPromptQuestion:          "   Use them for this review? [y/N] ",
+		UIPersonaNonTTYInfo:              "      %s personas configured but not activated (non-interactive context, no --persona/--use-configured-personas flag): [%s]\n",
+		UIPersonaCostBaselineZero:        " · ~$0 (zero-token baseline)",
+		UIPersonaCostDeltaUndefined:      " · ~$%s (delta undefined)",
+		UIPersonaCostDeltaPct:            " (+%d%%)",
+		UIPersonaCostSameRoughly:         " (~same cost)",
+		UIPersonaCostUnknown:             " (cost unknown — model pricing not registered)",
+		UIPersonaInputTokens:             "~%s input tokens",
+		UIPersonaCostInline:              " · ~$%s",
+
+		// Review report header + per-finding + TUI
+		UIReviewAngleHeader:              "Review angle: %d persona%s active\n",
+		UIReviewAnglePersonaRow:          "  %s %-18s %s\n",
+		UIReviewFlaggedBy:                "Flagged by: %s",
+		UIReviewAgreementConcur:          "Agreement: %d/%d personas concur",
+		UIReviewAgreementLineFormat:      " (%d/%d)",
 	},
 
 	Decision: DecisionMessages{

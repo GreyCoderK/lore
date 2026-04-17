@@ -35,6 +35,22 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 	var flagSynthesizers []string
 	var flagNoSynthesizers bool
 
+	// Persona opt-in flags. Mutually exclusive.
+	// - flagPersonaNames: --persona repeatable; activates listed personas.
+	// - flagNoPersonas: --no-personas; hard-disable even if .lorerc configures them.
+	// - flagUseConfiguredPersonas: --use-configured-personas; skip interactive
+	//   prompt and use the configured list directly (useful for TTY scripts).
+	var flagPersonaNames []string
+	var flagNoPersonas bool
+	var flagUseConfiguredPersonas bool
+
+	// --preview prints a cost estimate + planned personas then exits without
+	// any API call. --format selects text (default) or json for the preview
+	// report. The flags are scoped to --preview for now; the full --format
+	// flow on review itself is a later follow-up.
+	var flagPreview bool
+	var flagFormat string
+
 	cmd := &cobra.Command{
 		Use:           "review",
 		Short:         i18n.T().Cmd.AngelaReviewShort,
@@ -42,6 +58,19 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			applySynthesizerFlags(cfg, flagSynthesizers, flagNoSynthesizers, cmd.Flags().Changed("synthesizers"))
+
+			// --preview / --interactive mutual exclusion is declared via
+			// cmd.MarkFlagsMutuallyExclusive below; cobra raises the error
+			// at flag-parse time before RunE runs.
+
+			// --format is preview-only. Silently ignoring it hid CI mistakes
+			// where an operator expected JSON for machine parsing but got the
+			// regular text report instead. Fail loud so the mistake is caught
+			// at review time, not by a downstream parser that blows up on the
+			// first line.
+			if cmd.Flags().Changed("format") && !flagPreview {
+				return fmt.Errorf("%s", i18n.T().Cmd.AngelaReviewErrFormatRequiresPreview)
+			}
 
 			// Resolve docs directory: --path (standalone) or .lore/docs (normal)
 			docsDir, standalone := resolveDocsDir(flagPath)
@@ -70,6 +99,49 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 				return err
 			}
 
+			// Preview short-circuit. Runs Preflight locally and exits with status
+			// 0 WITHOUT instantiating the AI provider (zero-HTTP contract) and
+			// without writing any state (no-side-effect contract). Personas are
+			// resolved here too so the preview cost reflects the real payload
+			// a non-preview run would send.
+			if flagPreview {
+				personasForPreview, perr := resolveReviewPersonasForPreview(
+					cfg, flagPersonaNames, flagNoPersonas, flagUseConfiguredPersonas,
+				)
+				if perr != nil {
+					return perr
+				}
+				corpusBytes := 0
+				for _, s := range summaries {
+					corpusBytes += len(s.Summary) + len(s.Filename) + 50
+				}
+				previewTimeout := cfg.AI.Timeout
+				if previewTimeout <= 0 {
+					previewTimeout = 60 * time.Second
+				}
+				// Resolve style guide upstream so the preview prompt matches
+				// what the real review would produce.
+				var previewStyleGuide string
+				if cfg.Angela.StyleGuide != nil {
+					guide := angela.ParseStyleGuide(cfg.Angela.StyleGuide)
+					previewStyleGuide = angela.FormatStyleGuideRules(guide)
+				}
+				previewInputs := reviewPreviewInputs{
+					Summaries:      summaries,
+					StyleGuide:     previewStyleGuide,
+					VHSSignals:     nil, // VHS probe is cheap but off the hot preview path
+					CorpusBytes:    corpusBytes,
+					CorpusDocCount: totalCount,
+					Model:          cfg.AI.Model,
+					MaxTokens:      angela.ResolveMaxTokens("review", 0, cfg.Angela.MaxTokens),
+					Timeout:        previewTimeout,
+					Personas:       personasForPreview,
+					Audience:       flagFor,
+					Format:         flagFormat,
+				}
+				return runReviewPreview(streams, cfg, previewInputs)
+			}
+
 			// Instantiate provider
 			store := credential.NewStore()
 			provider, err := ai.NewProvider(cfg, store, streams.Err)
@@ -86,6 +158,57 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 			}
 
 			ta := i18n.T().Angela
+
+			// ─────────────────────────────────────────────────────────────
+			// Resolve persona opt-in BEFORE preflight + step 1/2 so the
+			// activated persona list feeds into the cost estimate shown on
+			// the preflight line (and into --preview output).
+			// ─────────────────────────────────────────────────────────────
+			personaDecision, err := decideReviewPersonas(
+				cfg, flagPersonaNames, flagNoPersonas, flagUseConfiguredPersonas,
+				ui.IsTerminal(streams),
+			)
+			if err != nil {
+				return err
+			}
+			var activePersonas []angela.PersonaProfile
+			switch personaDecision.Resolution {
+			case personaFromFlag, personaFromConfig:
+				activePersonas = personaDecision.Personas
+			case personaPromptRequired:
+				// Compute corpus bytes once for the preflight calls inside the prompt.
+				corpusBytesForPrompt := 0
+				for _, s := range summaries {
+					corpusBytesForPrompt += len(s.Summary) + len(s.Filename) + 50
+				}
+				timeoutForPrompt := cfg.AI.Timeout
+				if timeoutForPrompt <= 0 {
+					timeoutForPrompt = 60 * time.Second
+				}
+				ok, perr := promptPersonaConfirmation(streams, personaPromptInputs{
+					CorpusBytes: corpusBytesForPrompt,
+					Model:       cfg.AI.Model,
+					MaxTokens:   angela.ResolveMaxTokens("review", 0, cfg.Angela.MaxTokens),
+					Timeout:     timeoutForPrompt,
+					Candidates:  personaDecision.Candidates,
+				})
+				if perr != nil {
+					return perr
+				}
+				if ok {
+					profiles, unknown := resolvePersonaNames(personaDecision.Candidates)
+					if len(unknown) > 0 {
+						return fmt.Errorf(i18n.T().Cmd.AngelaReviewErrUnknownConfiguredPersona, strings.Join(unknown, ", "))
+					}
+					activePersonas = profiles
+				}
+			case personaNonTTYInfo:
+				if !flagQuiet {
+					renderNonTTYPersonaInfo(streams, personaDecision.Candidates)
+				}
+			case personaBaseline:
+				// nothing to do
+			}
 
 			// Cap audience length to prevent prompt bloat
 			if len(flagFor) > 200 {
@@ -153,15 +276,30 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 			// Thread the evidence validation config and the corpus reader
 			// through ReviewOpts so Review() can validate findings
 			// against the real document content before sorting.
+			evidence := angela.EvidenceValidation{
+				Required:      cfg.Angela.Review.Evidence.Required,
+				MinConfidence: cfg.Angela.Review.Evidence.MinConfidence,
+				Mode:          cfg.Angela.Review.Evidence.Validation,
+			}
+			// CRITICAL invariant I4 enforcement: persona-attributed findings
+			// must pass through the evidence validator. If the user opts into
+			// personas but has not enabled evidence validation in .lorerc, a
+			// default .lorerc would let hallucinated persona-attributed
+			// findings through. Force the validator ON with strict mode
+			// whenever personas are active, regardless of config defaults.
+			// The user can still loosen MinConfidence via config.
+			if len(activePersonas) > 0 {
+				evidence.Required = true
+				if strings.EqualFold(evidence.Mode, angela.EvidenceModeOff) || evidence.Mode == "" {
+					evidence.Mode = angela.EvidenceModeStrict
+				}
+			}
 			opts := angela.ReviewOpts{
-				Audience: flagFor,
-				Reader:   corpusStore,
-				Evidence: angela.EvidenceValidation{
-					Required:      cfg.Angela.Review.Evidence.Required,
-					MinConfidence: cfg.Angela.Review.Evidence.MinConfidence,
-					Mode:          cfg.Angela.Review.Evidence.Validation,
-				},
-				ConfigMaxTokens: cfg.Angela.MaxTokens,
+				Audience:        flagFor,
+				Reader:           corpusStore,
+				Evidence:         evidence,
+				ConfigMaxTokens:  cfg.Angela.MaxTokens,
+				Personas:         activePersonas, // story 8-19 — nil unless user opted in
 			}
 			report, err := angela.Review(cmd.Context(), provider, summaries, styleGuideStr, opts)
 			if err != nil {
@@ -322,8 +460,32 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 	cmd.Flags().BoolVarP(&flagInteractive, "interactive", "i", false, "Launch interactive TUI to navigate and triage findings")
 	cmd.Flags().StringSliceVar(&flagSynthesizers, "synthesizers", nil, "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")")
 	cmd.Flags().BoolVar(&flagNoSynthesizers, "no-synthesizers", false, "Disable all Example Synthesizers for this run")
+	// Persona opt-in flags (mutually exclusive).
+	cmd.Flags().StringSliceVar(&flagPersonaNames, "persona", nil,
+		"Activate persona lenses for this review (repeatable; e.g. --persona architect --persona qa-reviewer). Default: no personas.")
+	cmd.Flags().BoolVar(&flagNoPersonas, "no-personas", false,
+		"Force baseline review without personas, even if .lorerc configures them. Mutually exclusive with --persona and --use-configured-personas.")
+	cmd.Flags().BoolVar(&flagUseConfiguredPersonas, "use-configured-personas", false,
+		"Activate personas from .lorerc without the interactive confirmation prompt. Mutually exclusive with --persona and --no-personas.")
+	// Preview flags.
+	cmd.Flags().BoolVar(&flagPreview, "preview", false,
+		"Print cost estimate + planned personas then exit without calling the AI. Safe dry-run for CI/budget governance.")
+	cmd.Flags().StringVar(&flagFormat, "format", "",
+		"Output format for --preview: text (default) | json. Ignored without --preview.")
 
 	_ = cmd.RegisterFlagCompletionFunc("synthesizers", synthesizerFlagCompletion)
+	// Persona name completion on --persona (matches draft/polish).
+	_ = cmd.RegisterFlagCompletionFunc("persona", personaFlagCompletion)
+	// Fixed completion set for --format.
+	_ = cmd.RegisterFlagCompletionFunc("format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"text", "json"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	// Mutual exclusions declared declaratively so a refactor cannot silently
+	// drop them. Cobra enforces these at flag-parse time, before RunE runs.
+	cmd.MarkFlagsMutuallyExclusive("persona", "no-personas")
+	cmd.MarkFlagsMutuallyExclusive("persona", "use-configured-personas")
+	cmd.MarkFlagsMutuallyExclusive("no-personas", "use-configured-personas")
+	cmd.MarkFlagsMutuallyExclusive("preview", "interactive")
 
 	// Lifecycle subcommands.
 	cmd.AddCommand(newAngelaReviewResolveCmd(cfg, streams))
@@ -350,6 +512,20 @@ func formatReviewReport(streams domain.IOStreams, report *angela.ReviewReport, t
 			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaReviewHdrPartial+"\n\n", report.DocCount, totalCorpus)
 		} else {
 			_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.AngelaReviewHdrFull+"\n\n", report.DocCount)
+		}
+		// When any finding is persona-attributed, surface the active persona
+		// lenses up-front so the reader understands the review angle before
+		// scanning findings. The set is built from the union of Personas
+		// across findings (so the order is stable even if configured personas
+		// returned zero findings for this run).
+		if active := activePersonasInReport(report); len(active) > 0 {
+			ta := i18n.T().Angela
+			_, _ = fmt.Fprintf(streams.Err, ta.UIReviewAngleHeader,
+				len(active), pluralS(len(active)))
+			for _, p := range active {
+				_, _ = fmt.Fprintf(streams.Err, ta.UIReviewAnglePersonaRow, p.Icon, p.DisplayName, p.Expertise)
+			}
+			_, _ = fmt.Fprintln(streams.Err)
 		}
 	}
 
@@ -385,6 +561,14 @@ func formatReviewReport(streams domain.IOStreams, report *angela.ReviewReport, t
 		// description
 		if f.Description != "" {
 			_, _ = fmt.Fprintf(streams.Out, " %s %22s %s\n", " ", "", f.Description)
+		}
+		// Persona attribution line per finding so the reader sees which lens
+		// flagged the issue without leaving the text report. Resolved names
+		// carry Icon + DisplayName; unknown names fall back to the raw
+		// identifier.
+		if len(f.Personas) > 0 {
+			_, _ = fmt.Fprintf(streams.Out, " %s %22s %s\n",
+				" ", "", fmt.Sprintf(i18n.T().Angela.UIReviewFlaggedBy, formatFlaggedByLine(f.Personas)))
 		}
 		_, _ = fmt.Fprintln(streams.Out)
 	}

@@ -484,3 +484,235 @@ func TestReviewInteractive_EditorHintWhenNoEditor(t *testing.T) {
 		t.Errorf("expected $EDITOR hint, got: %s", m.deepDiveText)
 	}
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Persona-aware interactive TUI
+// ─────────────────────────────────────────────────────────────────────────────
+
+// testFindingsWithPersonas returns findings where AgreementCount is varied so
+// sort ordering can be asserted deterministically.
+//
+// Input order:
+//   - "Low-agreement gap"        agreement=1 severity=gap
+//   - "Triple-agreement style"   agreement=3 severity=style
+//   - "Double-agreement contradiction"  agreement=2 severity=contradiction
+//
+// Expected sort (agreement DESC, severity ASC):
+//   - Triple-agreement style       (3)
+//   - Double-agreement contradiction (2)
+//   - Low-agreement gap            (1)
+func testFindingsWithPersonas() []ReviewFinding {
+	return []ReviewFinding{
+		{
+			Severity:       "gap",
+			Title:          "Low-agreement gap",
+			Personas:       []string{"dx-lead"},
+			AgreementCount: 1,
+			Hash:           "low-gap",
+			DiffStatus:     ReviewDiffNew,
+		},
+		{
+			Severity:       "style",
+			Title:          "Triple-agreement style",
+			Personas:       []string{"security-senior", "dx-lead", "tech-writer"},
+			AgreementCount: 3,
+			Hash:           "triple-style",
+			DiffStatus:     ReviewDiffNew,
+		},
+		{
+			Severity:       "contradiction",
+			Title:          "Double-agreement contradiction",
+			Personas:       []string{"security-senior", "dx-lead"},
+			AgreementCount: 2,
+			Hash:           "double-contra",
+			DiffStatus:     ReviewDiffNew,
+		},
+	}
+}
+
+// TestInteractiveReview_PersonaSorting (AC-8).
+// When any finding carries personas, the model must sort by AgreementCount DESC,
+// severity ASC — NOT preserve the input order.
+func TestInteractiveReview_PersonaSorting(t *testing.T) {
+	m := NewReviewInteractiveModel(testFindingsWithPersonas(), nil, "", "", nil, nil)
+
+	if len(m.findings) != 3 {
+		t.Fatalf("expected 3 findings, got %d", len(m.findings))
+	}
+	wantTitles := []string{
+		"Triple-agreement style",           // agreement=3
+		"Double-agreement contradiction",   // agreement=2
+		"Low-agreement gap",                // agreement=1
+	}
+	for i, want := range wantTitles {
+		if m.findings[i].Title != want {
+			t.Errorf("position %d: got %q, want %q", i, m.findings[i].Title, want)
+		}
+	}
+}
+
+// TestInteractiveReview_PersonaSorting_SecondaryKey asserts severity tie-break.
+// Two findings with identical agreement must sort by severity rank ASC.
+func TestInteractiveReview_PersonaSorting_SecondaryKey(t *testing.T) {
+	findings := []ReviewFinding{
+		{Severity: "style", Title: "A-style", Personas: []string{"x"}, AgreementCount: 1, Hash: "a"},
+		{Severity: "contradiction", Title: "B-contradiction", Personas: []string{"y"}, AgreementCount: 1, Hash: "b"},
+		{Severity: "gap", Title: "C-gap", Personas: []string{"z"}, AgreementCount: 1, Hash: "c"},
+	}
+	m := NewReviewInteractiveModel(findings, nil, "", "", nil, nil)
+
+	// Same agreement=1 across all three → severity order: contradiction, gap, style.
+	want := []string{"B-contradiction", "C-gap", "A-style"}
+	for i, w := range want {
+		if m.findings[i].Title != w {
+			t.Errorf("position %d: got %q, want %q", i, m.findings[i].Title, w)
+		}
+	}
+}
+
+// TestInteractiveReview_NoPersonas_BaselineRendering asserts that findings
+// without persona data preserve the caller's input order (no silent reorder).
+func TestInteractiveReview_NoPersonas_BaselineRendering(t *testing.T) {
+	inputs := testFindings()
+	// Capture input order snapshot BEFORE the constructor (defensive copy).
+	wantOrder := make([]string, len(inputs))
+	for i, f := range inputs {
+		wantOrder[i] = f.Title
+	}
+
+	m := NewReviewInteractiveModel(inputs, nil, "", "", nil, nil)
+
+	if len(m.findings) != len(wantOrder) {
+		t.Fatalf("finding count changed: got %d, want %d", len(m.findings), len(wantOrder))
+	}
+	for i, w := range wantOrder {
+		if m.findings[i].Title != w {
+			t.Errorf("position %d reordered: got %q, want %q (baseline reviews must not reorder)",
+				i, m.findings[i].Title, w)
+		}
+	}
+}
+
+// TestInteractiveReview_PersonaTagRendering ensures the browse view shows the
+// persona tag column only when personas are active, and that it carries the
+// abbreviated persona name.
+func TestInteractiveReview_PersonaTagRendering(t *testing.T) {
+	m := NewReviewInteractiveModel(testFindingsWithPersonas(), nil, "", "", nil, nil)
+	out := m.viewBrowse()
+
+	// Triple-agreement finding uses [sec+dx-+tec] (3 personas truncated to 3 chars)
+	// and shows (3/3) agreement. The abbreviation is lowercased-first-3 of each name.
+	if !strings.Contains(out, "sec") || !strings.Contains(out, "(3/3)") {
+		t.Errorf("browse view must show persona abbreviations and agreement; got:\n%s", out)
+	}
+}
+
+func TestInteractiveReview_DetailViewShowsPersonas(t *testing.T) {
+	m := NewReviewInteractiveModel(testFindingsWithPersonas(), nil, "", "", nil, nil)
+	// After sort, position 0 is "Triple-agreement style" with 3 personas
+	// (two of which are not in the real registry — they must surface the
+	// unknown-persona fallback hint).
+	out := m.viewDetail()
+	if !strings.Contains(out, "Flagged by:") {
+		t.Errorf("detail view must include 'Flagged by:' block; got:\n%s", out)
+	}
+	if !strings.Contains(out, "security-senior") {
+		t.Errorf("detail view must list persona names (even when unknown); got:\n%s", out)
+	}
+	if !strings.Contains(out, "unknown persona") {
+		t.Errorf("detail view must hint unknown persona fallback; got:\n%s", out)
+	}
+	if !strings.Contains(out, "Agreement:") {
+		t.Errorf("detail view must include agreement line for multi-persona findings; got:\n%s", out)
+	}
+}
+
+func TestFormatPersonaTag_EmptyReturnsEmpty(t *testing.T) {
+	f := ReviewFinding{Title: "no persona"}
+	if got := formatPersonaTag(f); got != "" {
+		t.Errorf("no personas must yield empty tag, got %q", got)
+	}
+}
+
+func TestFormatPersonaTag_SinglePersona_NoAgreementSuffix(t *testing.T) {
+	f := ReviewFinding{Personas: []string{"security-senior"}, AgreementCount: 1}
+	got := formatPersonaTag(f)
+	if !strings.Contains(got, "sec") {
+		t.Errorf("tag must include abbreviation, got %q", got)
+	}
+	if strings.Contains(got, "/") {
+		t.Errorf("single-persona tag must NOT show agreement suffix, got %q", got)
+	}
+}
+
+// TestInteractiveReview_DetailViewShowsPersonaLens asserts the follow-up to AC-8:
+// the detail view must expose each flagging persona's Icon + DisplayName + Expertise
+// so the reader can understand WHY a finding was surfaced, not just WHO flagged it.
+func TestInteractiveReview_DetailViewShowsPersonaLens(t *testing.T) {
+	// Pick a real persona from the registry and use its name in the finding.
+	reg := GetRegistry()
+	if len(reg) == 0 {
+		t.Fatal("empty persona registry")
+	}
+	p := reg[0]
+	findings := []ReviewFinding{{
+		Severity:       "gap",
+		Title:          "Test finding",
+		Personas:       []string{p.Name},
+		AgreementCount: 1,
+		Hash:           "h1",
+	}}
+	m := NewReviewInteractiveModel(findings, nil, "", "", nil, nil)
+	out := m.viewDetail()
+
+	if !strings.Contains(out, "Flagged by:") {
+		t.Errorf("detail view must include 'Flagged by:' block; got:\n%s", out)
+	}
+	if !strings.Contains(out, p.DisplayName) {
+		t.Errorf("detail view must include persona DisplayName %q; got:\n%s", p.DisplayName, out)
+	}
+	if !strings.Contains(out, p.Expertise) {
+		t.Errorf("detail view must include persona Expertise %q; got:\n%s", p.Expertise, out)
+	}
+}
+
+// TestInteractiveReview_DetailView_UnknownPersonaFallback asserts that when
+// the AI returns a persona name not in the registry, the detail view does not
+// crash — it shows the raw identifier with a (unknown persona) hint so the
+// reader can spot AI hallucination on the Personas field.
+func TestInteractiveReview_DetailView_UnknownPersonaFallback(t *testing.T) {
+	findings := []ReviewFinding{{
+		Severity:       "gap",
+		Title:          "Test",
+		Personas:       []string{"not-a-registered-persona"},
+		AgreementCount: 1,
+		Hash:           "h1",
+	}}
+	m := NewReviewInteractiveModel(findings, nil, "", "", nil, nil)
+	out := m.viewDetail()
+	if !strings.Contains(out, "not-a-registered-persona") {
+		t.Errorf("unknown persona must appear in fallback; got:\n%s", out)
+	}
+	if !strings.Contains(out, "unknown persona") {
+		t.Errorf("unknown persona must carry hint; got:\n%s", out)
+	}
+}
+
+// TestPersonaByName_ExportedMatchesInternal verifies the exported accessor
+// returns the same profiles as the package-internal lookup, preventing drift.
+func TestPersonaByName_ExportedMatchesInternal(t *testing.T) {
+	for _, p := range GetRegistry() {
+		a, okA := personaByName(p.Name)
+		b, okB := PersonaByName(p.Name)
+		if okA != okB {
+			t.Errorf("exported vs internal ok mismatch for %q: %v vs %v", p.Name, okA, okB)
+		}
+		if a.Name != b.Name || a.DisplayName != b.DisplayName {
+			t.Errorf("exported vs internal profile mismatch for %q", p.Name)
+		}
+	}
+	// Unknown name returns false.
+	if _, ok := PersonaByName("definitely-not-a-persona"); ok {
+		t.Error("unknown name must return ok=false")
+	}
+}
