@@ -231,6 +231,8 @@ var catalogEN = &Messages{
 		AngelaDraftAllSummary:    "%d/%d documents need attention. %d total suggestions.",
 		AngelaDraftAllVerboseHint: "Run with --verbose (-v) to see every suggestion.",
 		AngelaDraftAllWarningsHeader: "warnings",
+		AngelaDraftDiffSummary:    "Diff: %d new, %d persisting, %d resolved",
+		AngelaDraftResolvedHeader: "Resolved since last run:",
 
 		// angela_polish.go
 		AngelaPolishShort:       "Improve a document with AI assistance",

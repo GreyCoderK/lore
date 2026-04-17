@@ -270,7 +270,7 @@ func (h *humanDraftReporter) Report(r DraftReport) error {
 	// the summary so the user sees what cleared up. The list is
 	// already sorted deterministically by AnnotateAndDiff.
 	if len(r.Resolved) > 0 {
-		fmt.Fprintf(h.out, "\nResolved since last run:\n")
+		fmt.Fprintf(h.out, "\n%s\n", t.AngelaDraftResolvedHeader)
 		for _, rs := range r.Resolved {
 			fmt.Fprintf(h.out, "       - %-8s %-14s %s  (%s)\n",
 				rs.Suggestion.Severity, rs.Suggestion.Category, rs.Suggestion.Message, rs.File)
@@ -286,7 +286,7 @@ func (h *humanDraftReporter) Report(r DraftReport) error {
 	// Differential summary line. Only printed when the
 	// runner populated r.Diff (differential mode active).
 	if r.Diff != nil {
-		fmt.Fprintf(h.out, "Diff: %d new, %d persisting, %d resolved\n",
+		fmt.Fprintf(h.out, t.AngelaDraftDiffSummary+"\n",
 			r.Diff.New, r.Diff.Persisting, r.Diff.Resolved)
 	}
 

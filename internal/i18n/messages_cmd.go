@@ -231,6 +231,8 @@ type CmdMessages struct {
 	AngelaDraftAllSummary    string // args: needAttention, total, suggestions
 	AngelaDraftAllVerboseHint string // hint about --verbose flag when warnings exist
 	AngelaDraftAllWarningsHeader string // shown before inline warning list
+	AngelaDraftDiffSummary    string // args: new, persisting, resolved — differential mode summary line
+	AngelaDraftResolvedHeader string // header shown before the resolved-since-last-run list
 
 	// angela_polish.go
 	AngelaPolishShort       string
