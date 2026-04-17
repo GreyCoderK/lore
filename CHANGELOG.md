@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Work in progress for the next release._
 
+## [1.2.2] — 2026-04-17 — Release workflow: remove impossible pre-release install check
+
+### Fixed
+
+- **`verify-chocolatey` job no longer tries `choco install lore-cli`** on
+  the pre-release snapshot. goreleaser's generated `chocolateyInstall.ps1`
+  downloads the Windows binary from
+  `https://github.com/GreyCoderK/lore/releases/download/<tag>/lore_Windows_x86_64.zip`,
+  which **does not exist yet** during pre-release validation — the real
+  release job that uploads the asset comes *after*. A `choco install`
+  pre-release therefore always 404s, blocking the `release` job that
+  `needs: verify-chocolatey`.
+
+  New behavior: the job now only verifies that the snapshot build
+  produced a `lore-cli.*.nupkg` AND that the nupkg's `.nuspec` parses
+  with id `lore-cli` and a non-empty version. The real install path is
+  exercised after publishing via goreleaser's chocolatey push
+  (`CHOCOLATEY_API_KEY`), and downstream `choco install lore-cli` calls
+  from users.
+
+### Context
+
+v1.2.0 and v1.2.1 tags exist on GitHub but neither produced a GitHub
+release because the `verify-chocolatey` gate failed (first with missing
+`--pre`, then with the 404 described above). v1.2.2 is the first 1.2.x
+patch that successfully completes the release workflow end-to-end.
+
 ## [1.2.1] — 2026-04-17 — CI reliability fixes (Windows CRLF root cause)
 
 ### Fixed
