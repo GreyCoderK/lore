@@ -326,9 +326,9 @@ func generateRandomFixture(rng *rand.Rand, idx int) randomFixture {
 	var b strings.Builder
 	b.WriteString("---\n")
 	b.WriteString("type: feature\n")
-	b.WriteString(fmt.Sprintf(`date: "2026-04-%02d"`, 1+(idx%28)))
+	fmt.Fprintf(&b, `date: "2026-04-%02d"`, 1+(idx%28))
 	b.WriteString("\nstatus: draft\n---\n\n")
-	b.WriteString(fmt.Sprintf("# Feature %d\n\n", idx))
+	fmt.Fprintf(&b, "# Feature %d\n\n", idx)
 	b.WriteString("## Endpoints\n\n")
 
 	// Pool of user-facing field names + a separate pool of server-injected

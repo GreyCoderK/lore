@@ -695,7 +695,52 @@ func TestSystemPromptBaseline_GoldenFile(t *testing.T) {
 		t.Fatalf("golden not found; re-run with LORE_UPDATE_GOLDEN=1 to create it: %v", err)
 	}
 	if string(want) != sys {
-		t.Errorf("baseline system prompt drifted from golden file.\nTo re-bless an intentional change: LORE_UPDATE_GOLDEN=1 go test -run TestSystemPromptBaseline_GoldenFile ./internal/angela/")
+		// Surface the exact mismatch so CI can pinpoint the drift without
+		// re-running locally. Shows first differing byte offset + 40-byte
+		// hex windows around it for both sides.
+		firstDiff := -1
+		n := len(want)
+		if len(sys) < n {
+			n = len(sys)
+		}
+		for i := 0; i < n; i++ {
+			if want[i] != sys[i] {
+				firstDiff = i
+				break
+			}
+		}
+		if firstDiff < 0 {
+			firstDiff = n // length differs past the shorter end
+		}
+		lo := firstDiff - 20
+		if lo < 0 {
+			lo = 0
+		}
+		hiW := firstDiff + 20
+		if hiW > len(want) {
+			hiW = len(want)
+		}
+		hiS := firstDiff + 20
+		if hiS > len(sys) {
+			hiS = len(sys)
+		}
+		t.Errorf(`baseline system prompt drifted from golden file.
+  golden size: %d
+  actual size: %d
+  first diff at offset: %d
+  golden hex window [%d..%d]:
+    %x
+  actual hex window [%d..%d]:
+    %x
+  golden snippet: %q
+  actual snippet: %q
+To re-bless an intentional change: LORE_UPDATE_GOLDEN=1 go test -run TestSystemPromptBaseline_GoldenFile ./internal/angela/`,
+			len(want), len(sys), firstDiff,
+			lo, hiW, want[lo:hiW],
+			lo, hiS, []byte(sys)[lo:hiS],
+			string(want[lo:hiW]),
+			sys[lo:hiS],
+		)
 	}
 }
 
