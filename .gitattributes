@@ -1,0 +1,28 @@
+# Force LF line endings across all platforms.
+#
+# WHY: the repo builds + ships binaries on Linux/macOS/Windows CI runners.
+# Windows git defaults to `core.autocrlf=true` and converts LF → CRLF on
+# checkout for text files, which breaks:
+#   - //go:embed scripts (embedded bytes differ → idempotent installs drift)
+#   - golden-file tests (generated Go output is LF, golden would be CRLF)
+#   - any test that hashes/compares file contents verbatim
+#
+# This attribute ensures every checkout sees the same bytes the blob holds.
+
+* text=auto eol=lf
+
+# Explicitly mark binary assets so normalization leaves them untouched.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.db binary
+*.tar binary
+*.gz binary
+*.zip binary
+
+# Shell scripts and golden fixtures are explicitly LF — they're either
+# executed by /bin/sh on POSIX or compared byte-for-byte by Go tests.
+*.sh text eol=lf
+*.golden text eol=lf

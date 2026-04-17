@@ -21,8 +21,13 @@ const (
 )
 
 // hookBlock returns the lore hook block content read from the embedded script.
+// CRLF is normalized to LF so the block is byte-deterministic regardless of
+// how the script file was checked out (Windows runners with autocrlf=true
+// would otherwise embed \r\n, which breaks idempotent reinstalls).
 func hookBlock() string {
-	return strings.TrimRight(readHookScript(), "\n")
+	s := readHookScript()
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	return strings.TrimRight(s, "\n")
 }
 
 // checkCoreHooksPath returns the configured core.hooksPath, or empty string if not set.
@@ -53,7 +58,10 @@ func installHook(workDir, hooksDir, hookType string) (domain.InstallResult, erro
 
 	// Check if already installed (idempotent: replace content between markers)
 	if data, err := os.ReadFile(hookPath); err == nil {
-		content := string(data)
+		// Normalize CRLF to LF on read so replaceMarkerBlock's index arithmetic
+		// (which advances past trailing "\n") stays correct even if the file
+		// was previously written or edited with CRLF line endings.
+		content := strings.ReplaceAll(string(data), "\r\n", "\n")
 		if strings.Contains(content, loreStartMarker) || strings.Contains(content, loreEndMarker) {
 			// Replace existing block between markers
 			newContent, err := replaceMarkerBlock(content, hookBlock())
