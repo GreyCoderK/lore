@@ -23,7 +23,8 @@ jobs:
         run: |
           $nupkg = Get-ChildItem dist -Recurse -Filter "lore-cli.*.nupkg" | Select-Object -First 1
           if (-not $nupkg) { throw "No .nupkg found in dist/" }
-          choco install lore-cli -y -s "$($nupkg.Directory.FullName)" --no-progress
+          # --pre accepts the snapshot version (e.g. 1.2.0-SNAPSHOT-abc) produced by `release --snapshot`.
+          choco install lore-cli -y -s "$($nupkg.Directory.FullName)" --no-progress --pre
       - name: Verify binary works
         shell: pwsh
         run: |
