@@ -193,7 +193,7 @@ func findingsForWarnings(
 }
 
 // convertEvidence bridges synthesizer.Evidence (rich span info) to the
-// review's Evidence (file + quote + line) used by story 8-7's validator.
+// review's Evidence (file + quote + line) used by the evidence validator.
 // The Snippet field maps to Quote; ColStart/ColEnd are dropped because the
 // review evidence model is line-granular.
 func convertEvidence(evs []synthesizer.Evidence) []Evidence {
@@ -214,8 +214,8 @@ func convertEvidence(evs []synthesizer.Evidence) []Evidence {
 //  1. cfg.PerSynthesizer["review"]["severity"] (global override)
 //  2. "info" (default per 2026-04-15 decision)
 //
-// Per-synthesizer overrides will land in story 8-18+ when named synthesizers
-// can declare their own severity; for v1 framework, global is enough.
+// Per-synthesizer overrides (each synthesizer declaring its own severity)
+// are a future extension; the current framework uses the global override.
 func resolveSynthesizerSeverity(cfg config.SynthesizersConfig) string {
 	if review, ok := cfg.PerSynthesizer["review"]; ok {
 		if sev, ok := review["severity"].(string); ok && sev != "" {

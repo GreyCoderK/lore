@@ -24,7 +24,7 @@ import (
 
 // cfgWithConfiguredReviewPersonas builds a Config with manual persona selection
 // for `angela.review.personas`. Any other selection mode must NOT opt the user
-// in silently (story 8-19 rule).
+// in silently (persona injection is opt-in).
 func cfgWithConfiguredReviewPersonas(names ...string) *config.Config {
 	c := &config.Config{}
 	c.Angela.Review.Personas.Selection = "manual"

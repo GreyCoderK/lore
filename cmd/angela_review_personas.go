@@ -69,12 +69,12 @@ func (e errPersonaFlagConflict) Error() string {
 	return fmt.Sprintf(i18n.T().Cmd.AngelaReviewErrMutuallyExclusive, strings.Join(e.flags, ", "))
 }
 
-// decideReviewPersonas is a pure function that applies the 8-19 opt-in
-// decision matrix given flag state, config, and TTY context. It does NOT
-// perform I/O — the caller handles the prompt (for personaPromptRequired)
-// and the info log (for personaNonTTYInfo).
+// decideReviewPersonas is a pure function that applies the opt-in decision
+// matrix given flag state, config, and TTY context. It does NOT perform I/O
+// — the caller handles the prompt (for personaPromptRequired) and the info
+// log (for personaNonTTYInfo).
 //
-// Decision matrix (story 8-19 AC-7..AC-12):
+// Decision matrix:
 //
 //	| config personas | --persona | --no-personas | --use-configured | TTY | Result                |
 //	| any             | set       | —             | —                | any | personaFromFlag       |

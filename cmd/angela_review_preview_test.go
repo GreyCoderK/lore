@@ -297,9 +297,9 @@ func TestResolveReviewPersonasForPreview_UseConfigured_NoPrompt(t *testing.T) {
 }
 
 func TestResolveReviewPersonasForPreview_TTY_Configured_NoPrompt_Baseline(t *testing.T) {
-	// Preview mode intentionally skips the TTY prompt path (story 8-20 design
-	// note). Having configured personas without any activation flag yields
-	// baseline — the preview does NOT open a y/N dialog.
+	// Preview mode intentionally skips the TTY prompt path. Having configured
+	// personas without any activation flag yields baseline — the preview does
+	// NOT open a y/N dialog.
 	name := firstRegistryPersonaName(t)
 	cfg := cfgWithConfiguredReviewPersonas(name)
 	p, err := resolveReviewPersonasForPreview(cfg, nil, false, false)

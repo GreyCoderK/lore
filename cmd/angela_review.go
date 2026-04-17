@@ -299,7 +299,7 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 				Reader:           corpusStore,
 				Evidence:         evidence,
 				ConfigMaxTokens:  cfg.Angela.MaxTokens,
-				Personas:         activePersonas, // story 8-19 — nil unless user opted in
+				Personas:         activePersonas, // nil unless user opted in
 			}
 			report, err := angela.Review(cmd.Context(), provider, summaries, styleGuideStr, opts)
 			if err != nil {

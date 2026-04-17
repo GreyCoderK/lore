@@ -25,7 +25,7 @@ type PersonaProfile struct {
 	// PromptDirective is the AI instruction block used for DRAFT/POLISH.
 	// It is written for the "one document, make it better" task.
 	PromptDirective string
-	// ReviewDirective is the AI instruction block used for REVIEW (story 8-19).
+	// ReviewDirective is the AI instruction block used for REVIEW.
 	// Review is corpus-wide coherence analysis — each persona must tell the
 	// AI what THEIR lens looks for across the set of docs (contradictions,
 	// gaps, stylistic drift, etc.), NOT how to fix a single doc. When empty,

@@ -52,7 +52,7 @@ type ReviewFinding struct {
 	DiffStatus  string     `json:"diff_status,omitempty"` // "new" | "persisting" | "regressed" | "resolved"
 
 	// Personas lists the persona names that flagged this finding. Populated
-	// only when the review was run with persona injection (story 8-19).
+	// only when the review was run with persona injection.
 	// When multiple personas flag the same issue, the AI emits a single
 	// finding with all names here. Empty in baseline (no-persona) reviews.
 	Personas []string `json:"personas,omitempty"`
@@ -174,12 +174,12 @@ type ReviewOpts struct {
 	// default is used.
 	ConfigMaxTokens int
 
-	// Personas, when non-empty, activates persona-aware review (story 8-19).
+	// Personas, when non-empty, activates persona-aware review.
 	// The prompt injects BuildPersonaPrompt(Personas) and instructs the AI
 	// to attribute each finding to the persona(s) that flagged it. Activation
 	// is strictly opt-in: the cmd layer populates this only when the user
 	// explicitly opted in (--persona flag, --use-configured-personas, or
-	// interactive confirmation). nil/empty = baseline review (pre-8-19).
+	// interactive confirmation). nil/empty = baseline review.
 	Personas []PersonaProfile
 }
 
@@ -191,7 +191,7 @@ func BuildReviewPrompt(docs []DocSummary, styleGuide string, signals *CorpusSign
 
 // BuildReviewPromptWithVHS constructs the AI prompt including VHS cross-reference signals.
 // When personas is non-empty, persona directives are injected into the user content and the
-// AI is instructed to attribute each finding to the persona(s) that flagged it (story 8-19).
+// AI is instructed to attribute each finding to the persona(s) that flagged it.
 func BuildReviewPromptWithVHS(docs []DocSummary, styleGuide string, signals *CorpusSignals, vhs *VHSSignals, personas []PersonaProfile, audience ...string) (string, string) {
 	// System prompt: stable across calls (cacheable)
 	var sys strings.Builder
@@ -331,9 +331,9 @@ ADDITIONAL RULES FOR AUDIENCE REVIEW:
 	// User content: varies per call
 	var usr strings.Builder
 
-	// Inject persona directives (story 8-19). Placed FIRST so the AI sees the
-	// lens before it ingests the corpus, and so the personas section
-	// short-circuits any attempt by corpus content to redefine the lens.
+	// Inject persona directives. Placed FIRST so the AI sees the lens before
+	// it ingests the corpus, and so the personas section short-circuits any
+	// attempt by corpus content to redefine the lens.
 	// BuildPersonaReviewPrompt (vs BuildPersonaPrompt) uses each persona's
 	// ReviewDirective, which is review-specific (corpus coherence) rather
 	// than the draft/polish-oriented PromptDirective. Follow-up 2026-04-17.

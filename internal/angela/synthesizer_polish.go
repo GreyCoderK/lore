@@ -16,9 +16,9 @@ import (
 // user. It carries the rendered Block plus the signature that should be
 // written to the doc's frontmatter once the user accepts.
 //
-// Polish never modifies docs without proposing first - story 8-15 routes
-// these proposals through the interactive diff in interactive mode, or the
-// dry-run reporter in --synthesizer-dry-run mode (I7 - no silent merge).
+// Polish never modifies docs without proposing first: proposals are routed
+// through the interactive diff in interactive mode, or the dry-run reporter
+// in --synthesizer-dry-run mode (I7 — no silent merge).
 type SynthesizerProposal struct {
 	Doc              *synthesizer.Doc
 	SynthesizerName  string
@@ -96,10 +96,10 @@ func SynthesizerProposalsForDoc(
 
 // ApplySynthesizerProposal returns the modified doc body and frontmatter
 // after applying p. The caller is responsible for persisting both via
-// storage.Marshal + the write pipeline (atomic write, backup per 8-6).
+// storage.Marshal + the write pipeline (atomic write, backup).
 //
-// The function does NOT mutate p.Doc - it works on copies so callers can
-// preview the result safely (used by story 8-15 dry-run path).
+// The function does NOT mutate p.Doc — it works on copies so callers can
+// preview the result safely (used by the dry-run path).
 func ApplySynthesizerProposal(p SynthesizerProposal) (string, domain.DocMeta, error) {
 	if p.Doc == nil {
 		return "", domain.DocMeta{}, fmt.Errorf("synthesizer proposal: nil doc")
