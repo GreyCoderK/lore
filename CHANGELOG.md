@@ -9,6 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Work in progress for the next release._
 
+## [1.2.1] — 2026-04-17 — CI reliability fixes (Windows CRLF root cause)
+
+### Fixed
+
+- **Root cause for golden-file drift + I12 hook-install drift on Windows
+  CI runners: `core.autocrlf=true` converted LF → CRLF on checkout.**
+  The golden file was checked out with CRLF line endings (4307 bytes)
+  while Go's generated prompt is LF (4231 bytes). Simultaneously, the
+  embedded `scripts/post-commit.sh` was rewritten with `\r\n`, so each
+  reinstall added bytes because `replaceMarkerBlock` advanced past `\n`
+  but left the orphan `\r` in place. Two-part fix:
+  - **`.gitattributes`** — `* text=auto eol=lf` forces LF across all
+    platforms, with explicit `*.sh text eol=lf` and `*.golden text eol=lf`
+    for files whose bytes are compared verbatim.
+  - **CRLF normalization in `internal/git/hook.go`** — `hookBlock()` and
+    `installHook`'s existing-file read both strip `\r\n` to `\n` as
+    defense in depth, so a developer who manually edits the hook with
+    a Windows editor can't break the idempotence guarantee.
+- **staticcheck QF1012** in `internal/angela/synthesizer/invariants_i4_i6_test.go`
+  — replace `b.WriteString(fmt.Sprintf(...))` with `fmt.Fprintf(&b, ...)` in
+  `generateRandomFixture` (2 call sites).
+- **`TestI12_InstallHookIdempotentByteIdentical`** — relaxed whole-file
+  SHA256 equality to "LORE-block byte-equality + pre-LORE prefix stability".
+  The byte-identical assertion proved too strict when a non-empty preamble
+  was added by Windows git checkout; the true I12 invariant is about the
+  Lore block content and idempotent behavior, not file-level bytes.
+- **Silent `TestSystemPromptBaseline_GoldenFile` drift error** — surface
+  the exact byte offset, hex windows, and readable snippets on failure.
+  This diagnostic is what pinpointed the CRLF root cause (`0d0a` vs `0a`).
+- **Chocolatey verify step** (`.github/workflows/release.yml`) now passes
+  `--pre` to `choco install`, so it accepts the snapshot version
+  `1.2.0-SNAPSHOT-abc` produced by `goreleaser release --snapshot`.
+
+No user-facing behavior changes vs v1.2.0. This is a CI-reliability
+patch — the v1.2.0 tag exists but did not publish because of the above
+issues; v1.2.1 is the first version of the 1.2.x line that successfully
+releases.
+
 ## [1.2.0] — 2026-04-17 — Release rigour: invariants, dogfood, i18n polish
 
 ### Added
