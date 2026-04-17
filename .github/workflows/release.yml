@@ -68,7 +68,14 @@ jobs:
         run: go test ./...
       - uses: goreleaser/goreleaser-action@v7
         with:
-          args: release --clean
+          # NOTE: --skip=chocolatey until the first lore-cli submission clears
+          # manual moderation on community.chocolatey.org. Until then, any
+          # push returns 403 Forbidden and fails the whole release workflow
+          # even though GitHub, Homebrew, Linux packages, etc. all published
+          # successfully. Re-enable by removing --skip=chocolatey once the
+          # initial moderation is approved (typically 1–7 days). Users can
+          # still download binaries from GitHub Releases in the meantime.
+          args: release --clean --skip=chocolatey
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
