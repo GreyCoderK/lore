@@ -81,13 +81,18 @@ func newRootCmd(cfg *config.Config, streams domain.IOStreams, storePtr *domain.L
 				ui.SetColorEnabled(false)
 			}
 
-			// Open store (graceful degradation if unavailable)
-			storePath := filepath.Join(domain.LoreDir, "store.db")
-			s, sErr := store.Open(storePath)
-			if sErr != nil {
-				_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.StoreUnavailWarn+"\n", sErr)
-			} else {
-				*storePtr = s
+			// Open store only in lore-native mode. Hybrid/standalone
+			// modes have no `.lore/` directory, so attempting to open
+			// `.lore/store.db` would surface a SQLite "cantopen" error
+			// that leaks implementation details to the user.
+			if cfg.DetectedMode == config.ModeLoreNative {
+				storePath := filepath.Join(domain.LoreDir, "store.db")
+				s, sErr := store.Open(storePath)
+				if sErr != nil {
+					_, _ = fmt.Fprintf(streams.Err, i18n.T().Cmd.StoreUnavailWarn+"\n", sErr)
+				} else {
+					*storePtr = s
+				}
 			}
 
 			return nil
