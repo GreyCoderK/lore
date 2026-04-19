@@ -7,6 +7,7 @@ related:
   - angela-review.md
   - ../guides/angela-ci.md
   - ../guides/document-types.md
+angela_mode: polish
 ---
 # lore angela draft
 

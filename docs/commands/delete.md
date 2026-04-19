@@ -5,6 +5,7 @@ status: published
 related:
   - list.md
   - doctor.md
+angela_mode: polish
 ---
 # lore delete
 

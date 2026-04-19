@@ -1,29 +1,5 @@
 ---
 type: guide
-date: "2026-04-12"
-status: published
-related:
-    - ../commands/index.md
-    - ../guides/configuration.md
-    - ../commands/angela-draft.md
-    - ../guides/angela-ci.md
-angela_mode: polish
----
-
-```mermaid
-    sequenceDiagram
-    participant Git
-    participant Hook as post-commit hook
-    participant Lore
-    participant User
-    Git->>Hook: commit done (stdin closed)
-    Hook->>Lore: exec lore _hook < /dev/tty
-    Lore->>User: Type? What? Why?
-    User->>Lore: answers (3 questions)
-    Lore->>Lore: save .lore/docs/feature-*.md
-```
----
-type: guide
 date: 2026-04-12
 status: published
 related:
@@ -31,6 +7,7 @@ related:
   - ../guides/configuration.md
   - ../commands/angela-draft.md
   - ../guides/angela-ci.md
+angela_mode: polish
 ---
 # Quickstart (5 minutes)
 
@@ -41,7 +18,7 @@ Go from zero to your first captured "why" in 5 minutes.
 ```bash
 cd your-project
 lore init
-```json
+```
 
 This creates the `.lore/` directory and installs a post-commit git hook.
 
@@ -52,7 +29,7 @@ git add .
 git commit -m "Add rate limiting to API"
 ```
 
-lore's hook triggers automatically:
+Lore's hook triggers automatically:
 
 ```
 [1/3] Type [feature]:
@@ -66,7 +43,7 @@ Three questions. Ninety seconds. Done.
 ![lore interactive](../assets/vhs/interactive.gif)
 <!-- Generate: vhs assets/vhs/interactive.tape -->
 
-> **What just happened?** lore's post-commit hook detected your commit, asked 3 questions, and saved a Markdown file in `.lore/docs/`. The file contains YAML front matter (type, date, commit hash) and your "why" — permanently linked to that commit.
+> **What just happened?** Lore's post-commit hook detected your commit, asked 3 questions, and saved a Markdown file in `.lore/docs/`. The file contains YAML front matter (type, date, commit hash) and your "why" — permanently linked to that commit.
 
 ## 3. View your document
 
@@ -102,7 +79,7 @@ Documents: 1 | Pending: 0 | Coverage: 100%
 | Pending | 0 | Commits without documentation |
 | Coverage | 100% | Documented commits / total commits |
 
-> **What just happened?** lore scanned your commits and documents. 1 commit, 1 document = 100% coverage. As you keep committing, this dashboard tracks documentation health over time.
+> **What just happened?** Lore scanned your commits and documents. 1 commit, 1 document = 100% coverage. As you keep committing, this dashboard tracks documentation health over time.
 
 ## 5. Add a coverage badge
 

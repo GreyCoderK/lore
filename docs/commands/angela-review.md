@@ -5,6 +5,7 @@ status: published
 related:
     - angela-draft.md
     - angela-polish.md
+    - angela-personas.md
     - status.md
     - ../guides/angela-ci.md
 ---

@@ -5,6 +5,7 @@ status: published
 related:
   - quickstart.md
   - completions.md
+angela_mode: polish
 ---
 # Installation
 
@@ -63,7 +64,7 @@ Add this to your `~/.bashrc` or `~/.zshrc` to make it permanent.
 
 ### Windows
 
-lore runs **natively on Windows** — no WSL required.
+Lore runs **natively on Windows** — no WSL required.
 
 **Chocolatey (recommended):**
 ```powershell

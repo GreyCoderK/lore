@@ -5,10 +5,11 @@ status: published
 related:
   - upgrade.md
   - ../getting-started/installation.md
+angela_mode: polish
 ---
 # lore check-update
 
-Check if a newer version of lore is available.
+Check if a newer version of Lore is available.
 
 ## Synopsis
 

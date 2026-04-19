@@ -5,6 +5,7 @@ status: published
 related:
   - ../getting-started/completions.md
   - index.md
+angela_mode: polish
 ---
 # lore completion
 

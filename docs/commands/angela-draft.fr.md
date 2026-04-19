@@ -7,6 +7,7 @@ related:
   - angela-review.md
   - ../guides/angela-ci.md
   - ../guides/document-types.md
+angela_mode: polish
 ---
 # lore angela draft
 
@@ -100,7 +101,7 @@ Angela sélectionne un profil d'analyse selon le champ `type` du front matter :
 
 Le profil libre rend Angela utilisable sans risque sur n'importe quel site
 mkdocs / docusaurus / astro / diátaxis sans générer de faux warnings sur
-les sections lore manquantes. Un tutoriel bien écrit peut légitimement
+les sections Lore manquantes. Un tutoriel bien écrit peut légitimement
 atteindre 95/100 (A) sur le profil libre ; avant cette séparation, il
 plafonnait à F.
 

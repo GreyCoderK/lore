@@ -5,10 +5,11 @@ status: published
 related:
   - ../commands/completion.md
   - installation.md
+angela_mode: polish
 ---
 # Shell Completions
 
-Enable tab completion for all lore commands, subcommands, and flags.
+Enable tab completion for all `lore` commands, subcommands, and flags.
 
 ## Why Set This Up?
 
@@ -124,4 +125,4 @@ Use the fpath method (Zsh) or the file method (Fish) instead of `eval`. `eval` r
 ## See Also
 
 - [lore completion command](../commands/completion.md) — Technical reference
-- [Installation](installation.md) — Make sure lore is installed first
+- [Installation](installation.md) — Make sure Lore is installed first

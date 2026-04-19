@@ -4,7 +4,7 @@ date: 2026-04-12
 status: published
 related:
   - roadmap.md
-  - comparaison.fr.md
+  - comparison.fr.md
 ---
 # Philosophie
 
@@ -97,4 +97,4 @@ Le corpus que vous construisez aujourd'hui prend de la valeur avec chaque future
 ## Voir aussi
 
 - [Roadmap](roadmap.md) — Où va lore
-- [Comparaison](comparaison.fr.md) — lore vs alternatives
+- [Comparaison](comparison.fr.md) — lore vs alternatives

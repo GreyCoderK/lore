@@ -1,7 +1,147 @@
 {
   "version": 1,
-  "last_run": "2026-04-16T18:02:19.305964Z",
+  "last_run": "2026-04-17T23:38:01.587823Z",
   "findings": {
+    "0e8f0d6716808ec8": {
+      "finding": {
+        "severity": "style",
+        "title": "Terminology drift: 'Lore' vs 'lore' capitalization inconsistency",
+        "description": "The tool name appears as both 'Lore' and 'lore' across documents, creating confusion about proper capitalization.",
+        "documents": [
+          "index.md",
+          "index.fr.md",
+          "getting-started/quickstart.md",
+          "getting-started/quickstart.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "index.md",
+            "quote": "What makes Lore different"
+          },
+          {
+            "file": "getting-started/quickstart.md",
+            "quote": "Initialize Lore"
+          },
+          {
+            "file": "getting-started/quickstart.fr.md",
+            "quote": "Le hook de lore se déclenche automatiquement"
+          },
+          {
+            "file": "index.fr.md",
+            "quote": "Le hook lore se déclenche"
+          }
+        ],
+        "confidence": 0.8,
+        "hash": "0e8f0d6716808ec8",
+        "diff_status": "new",
+        "personas": [
+          "Sialou"
+        ],
+        "agreement_count": 1
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T23:07:19.255987Z",
+      "last_seen": "2026-04-17T23:07:19.255987Z"
+    },
+    "100d400e2274eab9": {
+      "finding": {
+        "severity": "gap",
+        "title": "Incomplete user journey for Angela AI features",
+        "description": "The corpus describes Angela's capabilities and commands but lacks documentation of the complete user journey from setup through to successful AI-assisted documentation.",
+        "documents": [
+          "commands/angela-polish.md",
+          "commands/config.md",
+          "guides/angela-ci.md"
+        ],
+        "evidence": [
+          {
+            "file": "commands/angela-polish.md",
+            "quote": "sends your document to an AI (Claude, GPT, or a local model) and returns an improved version"
+          },
+          {
+            "file": "commands/config.md",
+            "quote": "manages the API keys that power Angela's AI features"
+          },
+          {
+            "file": "guides/angela-ci.md",
+            "quote": "Your documentation breaks silently. A developer adds an API endpoint but forgets to update the authentication section."
+          }
+        ],
+        "confidence": 0.8,
+        "hash": "100d400e2274eab9",
+        "diff_status": "new",
+        "personas": [
+          "Gougou"
+        ],
+        "agreement_count": 1
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T23:35:59.101879Z",
+      "last_seen": "2026-04-17T23:35:59.101879Z"
+    },
+    "15e4b526b2a4fb48": {
+      "finding": {
+        "severity": "style",
+        "title": "Inconsistent command reference formatting",
+        "description": "Command references use different formatting patterns - some with backticks, some with markdown links, creating visual inconsistency.",
+        "documents": [
+          "commands/index.md",
+          "guides/configuration.md",
+          "getting-started/completions.md"
+        ],
+        "evidence": [
+          {
+            "file": "commands/index.md",
+            "quote": "[`lore init`](init.md)"
+          },
+          {
+            "file": "guides/configuration.md",
+            "quote": "lore captures the **git branch**"
+          },
+          {
+            "file": "getting-started/completions.md",
+            "quote": "[lore completion command](../commands/completion.md)"
+          }
+        ],
+        "confidence": 0.5,
+        "hash": "15e4b526b2a4fb48",
+        "diff_status": "new",
+        "personas": [
+          "Sialou"
+        ],
+        "agreement_count": 1
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T23:07:19.255987Z",
+      "last_seen": "2026-04-17T23:07:19.255987Z"
+    },
+    "1d9ff3657243b5cf": {
+      "finding": {
+        "severity": "style",
+        "title": "Inconsistent terminology for AI provider",
+        "description": "The corpus uses both 'fournisseur' and 'provider' inconsistently in French documents when referring to AI providers.",
+        "documents": [
+          "commands/config.fr.md",
+          "guides/configuration.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "commands/config.fr.md",
+            "quote": "set-key \u003cfournisseur\u003e"
+          },
+          {
+            "file": "guides/configuration.fr.md",
+            "quote": "LORE_AI_PROVIDER"
+          }
+        ],
+        "confidence": 0.7,
+        "hash": "1d9ff3657243b5cf",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T22:49:22.11006Z",
+      "last_seen": "2026-04-17T22:49:22.11006Z"
+    },
     "1e80b56f40435932": {
       "finding": {
         "severity": "style",
@@ -56,6 +196,94 @@
       "first_seen": "2026-04-16T17:50:16.066605Z",
       "last_seen": "2026-04-16T17:50:16.066605Z"
     },
+    "24af438a52724951": {
+      "finding": {
+        "severity": "contradiction",
+        "title": "Contradictory guidance on command completion",
+        "description": "The French and English versions of the completion guide provide different keystrokes for the same completion example.",
+        "documents": [
+          "getting-started/completions.fr.md",
+          "getting-started/completions.md"
+        ],
+        "evidence": [
+          {
+            "file": "getting-started/completions.fr.md",
+            "quote": "lore an\u003cTAB\u003e      → lore angela lore"
+          },
+          {
+            "file": "getting-started/completions.md",
+            "quote": "lore an\u003cTAB\u003e      → lore angela lore"
+          }
+        ],
+        "confidence": 0.85,
+        "hash": "24af438a52724951",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T22:49:22.11006Z",
+      "last_seen": "2026-04-17T22:49:22.11006Z"
+    },
+    "2d4125ec816f69b2": {
+      "finding": {
+        "severity": "gap",
+        "title": "Missing verification procedures for documented behaviors",
+        "description": "Documents assert specific behaviors like rate limiting and JWT authentication but no document in the corpus describes how to verify or test these claims.",
+        "documents": [
+          "getting-started/quickstart.md",
+          "guides/document-types.md"
+        ],
+        "evidence": [
+          {
+            "file": "getting-started/quickstart.md",
+            "quote": "API was getting 10K req/min from one client, causing latency for everyone."
+          },
+          {
+            "file": "guides/document-types.md",
+            "quote": "JWT gives us stateless auth that scales horizontally without session storage."
+          }
+        ],
+        "confidence": 0.8,
+        "hash": "2d4125ec816f69b2",
+        "diff_status": "new",
+        "personas": [
+          "Kouame"
+        ],
+        "agreement_count": 1
+      },
+      "status": "ignored",
+      "first_seen": "2026-04-17T23:35:59.101879Z",
+      "last_seen": "2026-04-17T23:35:59.101879Z",
+      "resolved_at": "2026-04-17T23:38:01.587822Z",
+      "ignore_reason": "false positive: rate limiting / JWT mentions in quickstart.md are illustrative user-documentation content, not behaviors Lore claims for itself"
+    },
+    "3228e3ed5ceeb0ed": {
+      "finding": {
+        "severity": "contradiction",
+        "title": "Duplicate comparison guide with different filenames",
+        "description": "There are two separate comparison guides with different French filenames but similar content scope.",
+        "documents": [
+          "guides/comparaison.fr.md",
+          "guides/comparaison.md",
+          "guides/comparison.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/comparaison.fr.md",
+            "quote": "Comparaison rapide"
+          },
+          {
+            "file": "guides/comparison.md",
+            "quote": "Quick Comparison"
+          }
+        ],
+        "confidence": 0.8,
+        "hash": "3228e3ed5ceeb0ed",
+        "diff_status": "new"
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T22:49:22.11006Z",
+      "last_seen": "2026-04-17T22:49:22.11006Z"
+    },
     "5ee2eee435b32654": {
       "finding": {
         "severity": "gap",
@@ -83,6 +311,38 @@
       "first_seen": "2026-04-12T16:39:43.93743Z",
       "last_seen": "2026-04-12T16:40:23.832389Z"
     },
+    "6620f2e6b43b2473": {
+      "finding": {
+        "severity": "gap",
+        "title": "Missing Angela persona documentation",
+        "description": "Multiple commands reference Angela personas and consult functionality, but no document in the corpus explains what personas are available or how they work.",
+        "documents": [
+          "commands/angela-consult.md",
+          "commands/angela-consult.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "commands/angela-consult.md",
+            "quote": "lore angela consult                        # lists available personas"
+          },
+          {
+            "file": "commands/angela-consult.fr.md",
+            "quote": "lore angela consult                            # liste les personas disponibles"
+          }
+        ],
+        "confidence": 0.8,
+        "hash": "6620f2e6b43b2473",
+        "diff_status": "new",
+        "personas": [
+          "Gougou",
+          "Kouame"
+        ],
+        "agreement_count": 2
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T22:52:01.79921Z",
+      "last_seen": "2026-04-17T22:52:01.79921Z"
+    },
     "699241651b33f38b": {
       "finding": {
         "severity": "gap",
@@ -109,6 +369,77 @@
       "status": "active",
       "first_seen": "2026-04-12T17:23:13.769678Z",
       "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "7404d0d0363f7b93": {
+      "finding": {
+        "severity": "gap",
+        "title": "Missing API documentation for core endpoints",
+        "description": "Multiple documents reference API endpoints and authentication schemes but no document in the corpus provides comprehensive API documentation or error response tables.",
+        "documents": [
+          "getting-started/quickstart.md",
+          "guides/document-types.md",
+          "commands/angela-personas.md"
+        ],
+        "evidence": [
+          {
+            "file": "getting-started/quickstart.md",
+            "quote": "API was getting 10K req/min from one client, causing latency for everyone."
+          },
+          {
+            "file": "guides/document-types.md",
+            "quote": "The API was completely open. JWT gives us stateless auth that scales horizontally without session storage."
+          },
+          {
+            "file": "commands/angela-personas.md",
+            "quote": "lore angela consult api-designer docs/features/login.md"
+          }
+        ],
+        "confidence": 0.9,
+        "hash": "7404d0d0363f7b93",
+        "diff_status": "new",
+        "personas": [
+          "Ouattara"
+        ],
+        "agreement_count": 1
+      },
+      "status": "ignored",
+      "first_seen": "2026-04-17T23:35:59.101879Z",
+      "last_seen": "2026-04-17T23:35:59.101879Z",
+      "resolved_at": "2026-04-17T23:38:01.562659Z",
+      "ignore_reason": "false positive: Lore is a CLI without API endpoints; the referenced endpoints are example content showing what a user would document about their own API"
+    },
+    "7e3056ea416902d5": {
+      "finding": {
+        "severity": "contradiction",
+        "title": "Inconsistent comparison table structures",
+        "description": "guides/comparison.md and guides/comparaison.md have identical comparison tables but guides/comparaison.fr.md has a different table structure with different columns and tools.",
+        "documents": [
+          "guides/comparison.md",
+          "guides/comparaison.md",
+          "guides/comparaison.fr.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/comparison.md",
+            "quote": "| | **Lore** | Swimm | Confluence | GitBook | ADRs | Nothing |"
+          },
+          {
+            "file": "guides/comparaison.fr.md",
+            "quote": "| | **Lore** | Swimm | Confluence | GitBook | ADRs | Rien |"
+          }
+        ],
+        "confidence": 0.9,
+        "hash": "7e3056ea416902d5",
+        "diff_status": "new",
+        "personas": [
+          "Sialou",
+          "Gougou"
+        ],
+        "agreement_count": 2
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T22:52:01.79921Z",
+      "last_seen": "2026-04-17T22:52:01.79921Z"
     },
     "83dc86353fc086ad": {
       "finding": {
@@ -245,6 +576,72 @@
       "status": "active",
       "first_seen": "2026-04-12T17:23:13.769678Z",
       "last_seen": "2026-04-12T17:23:13.769678Z"
+    },
+    "b440835e700b2b33": {
+      "finding": {
+        "severity": "contradiction",
+        "title": "Conflicting AI requirement claims",
+        "description": "FAQ states AI is optional while angela-ci guide implies AI features are core functionality.",
+        "documents": [
+          "faq.md",
+          "guides/angela-ci.md"
+        ],
+        "evidence": [
+          {
+            "file": "faq.md",
+            "quote": "No. lore works fully without AI. Angela is opt-in."
+          },
+          {
+            "file": "guides/angela-ci.md",
+            "quote": "Your documentation breaks silently. A developer adds an API endpoint but forgets to update the authentication section."
+          }
+        ],
+        "confidence": 0.7,
+        "hash": "b440835e700b2b33",
+        "diff_status": "new",
+        "personas": [
+          "Gougou",
+          "Kouame"
+        ],
+        "agreement_count": 2
+      },
+      "status": "active",
+      "first_seen": "2026-04-17T23:07:19.255987Z",
+      "last_seen": "2026-04-17T23:07:19.255987Z"
+    },
+    "b7b7097d41c82316": {
+      "finding": {
+        "severity": "contradiction",
+        "title": "Conflicting authentication implementation approaches",
+        "description": "The corpus shows contradictory information about authentication - one section mentions JWT for stateless auth while another references session-based approaches.",
+        "documents": [
+          "guides/document-types.md",
+          "commands/new.md"
+        ],
+        "evidence": [
+          {
+            "file": "guides/document-types.md",
+            "quote": "JWT gives us stateless auth that scales horizontally without session storage."
+          },
+          {
+            "file": "commands/new.md",
+            "quote": "We need ACID transactions for the payment flow, and PostgreSQL's Go driver (pgx) is excellent."
+          }
+        ],
+        "confidence": 0.7,
+        "hash": "b7b7097d41c82316",
+        "diff_status": "new",
+        "personas": [
+          "Ouattara",
+          "Kouame"
+        ],
+        "agreement_count": 2
+      },
+      "status": "ignored",
+      "first_seen": "2026-04-17T23:35:59.101879Z",
+      "last_seen": "2026-04-17T23:35:59.101879Z",
+      "resolved_at": "2026-04-17T23:38:01.530045Z",
+      "ignore_reason": "false positive: document-types.md and new.md show illustrative example docs (JWT decision, session feature); these are user-content examples, not contradictory claims about Lore itself"
     },
     "bd76c472b1a47944": {
       "finding": {

@@ -4,7 +4,8 @@ date: 2026-04-12
 status: published
 related:
   - roadmap.md
-  - comparaison.md
+  - comparison.md
+angela_mode: polish
 ---
 # Philosophy
 
@@ -20,7 +21,7 @@ This is not a tooling problem. It's a **knowledge preservation** problem. And it
 
 ### 1. Zero Friction — 90 Seconds or Nothing
 
-If documentation takes more than 90 seconds, developers stop doing it. That is not a character flaw — it's human nature. lore doesn't ask for an essay. It asks 3 questions:
+If documentation takes more than 90 seconds, developers stop doing it. That is not a character flaw — it's human nature. Lore doesn't ask for an essay. It asks 3 questions:
 
 - **Type** — What kind of change? (one selection)
 - **What** — Pre-filled from your commit message (just press Enter)
@@ -50,7 +51,7 @@ The name **Lore** carries a double meaning:
 - In English: *lore* — ancestral knowledge passed from generation to generation
 - In French: *l'or* — gold, treasure, something precious
 
-Every commit contains gold — the reasoning behind a choice, the alternatives considered, the context that made the decision obvious at the time. Most teams let that gold evaporate. lore extracts it.
+Every commit contains gold — the reasoning behind a choice, the alternatives considered, the context that made the decision obvious at the time. Most teams let that gold evaporate. Lore extracts it.
 
 > **The insight:** A codebase with documented "whys" is fundamentally different from one without. New team members onboard faster. Code reviews have context. Refactors don't repeat past mistakes. The knowledge compounds.
 
@@ -67,14 +68,14 @@ These principles translate into concrete, non-negotiable architectural choices:
 
 ## What Lore Is Not
 
-- **Not a wiki replacement** — Wikis are for long-form documentation. lore is for commit-time decisions.
-- **Not an ADR tool** — ADRs capture big, rare architectural decisions. lore captures the daily "why." They are complementary.
-- **Not a commit linter** — Conventional Commits standardize the "what." lore captures the "why." They work together.
-- **Not a surveillance tool** — lore doesn't track who documents or who doesn't. It's a personal practice that benefits the team.
+- **Not a wiki replacement** — Wikis are for long-form documentation. Lore is for commit-time decisions.
+- **Not an ADR tool** — ADRs capture big, rare architectural decisions. Lore captures the daily "why." They are complementary.
+- **Not a commit linter** — Conventional Commits standardize the "what." Lore captures the "why." They work together.
+- **Not a surveillance tool** — Lore doesn't track who documents or who doesn't. It's a personal practice that benefits the team.
 
 ## About Angela
 
-The AI companion inside lore is named **Angela**.
+The AI companion inside Lore is named **Angela**.
 
 Angela is the embedded reviewer who reads your documentation, knows your project's style, and checks consistency before you publish — like a colleague who has read every document your team ever wrote.
 
@@ -90,11 +91,16 @@ Every time Angela reviews a document, every time she catches a contradiction, ev
 
 ## The Vision
 
-Today, lore captures the "why." Tomorrow, lore understands it, connects it, and shares it.
+Today, Lore captures the "why." Tomorrow, Lore understands it, connects it, and shares it.
 
 The corpus you build today grows more valuable with every future feature. Angela will grow. The "why" you capture now is the foundation for everything that comes next.
 
+## Ready to Start?
+
+- [Quickstart](../getting-started/quickstart.md) — Capture your first "why" in 5 minutes
+- [Installation](../getting-started/installation.md) — Get Lore on your system
+
 ## See Also
 
-- [Roadmap](roadmap.md) — Where lore is heading
-- [How lore Compares](comparaison.md) — lore vs alternatives
+- [Roadmap](roadmap.md) — Where Lore is heading
+- [How Lore Compares](comparison.md) — Lore vs alternatives

@@ -6,6 +6,7 @@ related:
   - new.md
   - ../guides/contextual-detection.md
   - doctor.md
+angela_mode: polish
 ---
 # lore pending
 

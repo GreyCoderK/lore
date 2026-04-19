@@ -6,14 +6,15 @@ related:
   - ../commands/decision.md
   - ../commands/pending.md
   - configuration.md
+angela_mode: polish
 ---
 # Contextual Detection
 
-How lore's post-commit hook decides what to do with each commit.
+How Lore's post-commit hook decides what to do with each commit.
 
 ## Overview
 
-When the hook fires after a commit, lore evaluates a chain of rules before asking any questions. The first matching rule wins.
+When the hook fires after a commit, Lore evaluates a chain of rules before asking any questions. The first matching rule wins.
 
 ## Detection Chain
 
@@ -79,7 +80,7 @@ hooks:
 
 Git redirects stdin to `/dev/null` for hooks — even when you commit from an interactive terminal. This means `isatty(stdin)` always returns `false` inside a hook.
 
-lore's hook solves this by reconnecting stdin from the terminal:
+Lore's hook solves this by reconnecting stdin from the terminal:
 
 ```sh
 exec lore _hook-post-commit < /dev/tty
@@ -91,7 +92,7 @@ This is why interactive questions work in terminal emulators (iTerm2, Terminal.a
 
 ## Non-TTY Detection
 
-After reconnecting stdin via `/dev/tty`, lore checks whether stdin is a real TTY:
+After reconnecting stdin via `/dev/tty`, Lore checks whether stdin is a real TTY:
 
 | Environment | `/dev/tty` | `isatty(stdin)` | Behavior |
 |-------------|-----------|-----------------|----------|
@@ -101,15 +102,15 @@ After reconnecting stdin via `/dev/tty`, lore checks whether stdin is a real TTY
 | **Pipe** (`git commit \| ...`) | Not available | `false` | Silent defer to pending |
 | **Cron/scripts** | Not available | `false` | Silent defer to pending |
 
-When stdin is not a TTY, the commit is deferred to pending. If an IDE is detected (via `GIT_ASKPASS`), lore also sends a notification.
+When stdin is not a TTY, the commit is deferred to pending. If an IDE is detected (via `GIT_ASKPASS`), Lore also sends a notification.
 
 ### IDE Detection for Notifications
 
-After deferring, lore detects the IDE environment to send a notification. VS Code and its forks are identified via the `GIT_ASKPASS` environment variable (containing "code", "cursor", "windsurf", or "codium" in the path). A secondary signal is `VSCODE_GIT_ASKPASS_NODE`.
+After deferring, Lore detects the IDE environment to send a notification. VS Code and its forks are identified via the `GIT_ASKPASS` environment variable (containing "code", "cursor", "windsurf", or "codium" in the path). A secondary signal is `VSCODE_GIT_ASKPASS_NODE`.
 
 ## IDE Notifications
 
-When a commit is deferred and an IDE is detected, lore sends a notification:
+When a commit is deferred and an IDE is detected, Lore sends a notification:
 
 1. **VS Code IPC** — Native extension notification (multi-instance aware)
 2. **OS Dialog** — `osascript` (macOS), `zenity`/`kdialog` (Linux), PowerShell (Windows)

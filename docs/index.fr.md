@@ -7,7 +7,7 @@ related:
   - getting-started/quickstart.md
   - commands/index.md
   - guides/philosophy.md
-  - guides/comparaison.fr.md
+  - guides/comparison.fr.md
   - guides/configuration.md
   - guides/document-types.md
   - guides/contextual-detection.md
@@ -22,6 +22,7 @@ related:
   - guides/document-types.fr.md
   - faq.fr.md
   - contributing/architecture.fr.md
+angela_mode: polish
 ---
 # Lore
 
@@ -52,7 +53,7 @@ $ git commit -m "feat: add JWT auth middleware"
   ✓ Capturé : feature-add-jwt-auth-2026-03-16.md
 ```
 
-lore s'intègre dans votre workflow Git et pose **3 questions** après chaque commit. Les réponses deviennent un fichier Markdown dans votre repo — cherchable, versionnable, portable. Pas de wiki. Pas de SaaS. Zéro friction.
+Lore s'intègre dans votre workflow Git et pose **3 questions** après chaque commit. Les réponses deviennent un fichier Markdown dans votre repo — cherchable, versionnable, portable. Pas de wiki. Pas de SaaS. Zéro friction.
 
 ## Comment ça marche
 
@@ -87,7 +88,7 @@ graph LR
 
 - :material-head-question: **[Philosophie](guides/philosophy.md)**
 
-    Pourquoi lore existe et les principes qui le guident
+    Pourquoi Lore existe et les principes qui le guident
 
 </div>
 
@@ -111,7 +112,7 @@ graph LR
 
 ## Angela — Votre compagne IA de documentation
 
-Angela est la revieweuse embarquée de lore — une collègue qui a lu chaque document que votre équipe a jamais écrit :
+Angela est la revieweuse embarquée de Lore — une collègue qui a lu chaque document que votre équipe a jamais écrit :
 
 - **`lore angela draft`** — Analyse gratuite, hors ligne : sections manquantes, style, documents liés
 - **`lore angela polish`** — Réécriture assistée par IA avec revue de diff interactive
@@ -125,8 +126,8 @@ Angela fonctionne aussi comme **quality gate CI standalone** sur n'importe quel 
 
 ## En savoir plus
 
-- [Comparaison](guides/comparaison.fr.md) — Comparaison détaillée avec les alternatives
-- [Configuration](guides/configuration.md) — Personnalisez lore pour votre workflow
+- [Comparaison](guides/comparison.fr.md) — Comparaison détaillée avec les alternatives
+- [Configuration](guides/configuration.md) — Personnalisez Lore pour votre workflow
 - [Types de documents](guides/document-types.md) — decision, feature, bugfix, refactor, note
 - [Détection contextuelle](guides/contextual-detection.md) — Comment le hook décide quoi faire
 - [Roadmap](guides/roadmap.md) — Où va lore

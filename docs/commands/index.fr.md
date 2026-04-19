@@ -25,6 +25,7 @@ related:
   - ../guides/document-types.md
   - ../guides/contextual-detection.md
   - ../guides/configuration.md
+angela_mode: polish
 ---
 # Vue d'ensemble des commandes
 

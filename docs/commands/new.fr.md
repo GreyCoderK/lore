@@ -119,6 +119,7 @@ date: 2026-03-16
 status: draft
 commit: abc1234567890abcdef
 generated_by: manual
+angela_mode: polish
 ---
 # Switch to PostgreSQL
 

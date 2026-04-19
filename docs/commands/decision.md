@@ -6,6 +6,7 @@ related:
   - ../guides/contextual-detection.md
   - ../guides/configuration.md
   - status.md
+angela_mode: polish
 ---
 # lore decision
 

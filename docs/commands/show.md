@@ -6,6 +6,7 @@ related:
   - list.md
   - status.md
   - ../guides/configuration.md
+angela_mode: polish
 ---
 # lore show
 

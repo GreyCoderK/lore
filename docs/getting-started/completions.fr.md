@@ -8,14 +8,14 @@ related:
 ---
 # Complétions Shell
 
-Activez la complétion par tabulation pour toutes les commandes, sous-commandes et flags de lore.
+Activez la complétion par tabulation pour toutes les commandes, sous-commandes et flags de `lore`.
 
 ## Pourquoi configurer ceci ?
 
 Sans complétions, vous tapez les commandes complètes de mémoire. Avec les complétions, vous tapez quelques lettres et appuyez sur Tab :
 
 ```
-lore an<TAB>     → lore angela
+lore an<TAB>      → lore angela
 lore angela <TAB> → draft  polish  review
 lore show --<TAB> → --all  --after  --type  --quiet  --feature ...
 ```

@@ -5,6 +5,7 @@ status: published
 related:
   - ../getting-started/completions.md
   - index.md
+angela_mode: polish
 ---
 # lore completion
 
@@ -146,9 +147,9 @@ echo $SHELL
 
 On macOS, the default shell is Zsh since Catalina. On most Linux distros, it's Bash.
 
-### "Do I need to re-run this after upgrading lore?"
+### "Do I need to re-run this after upgrading Lore?"
 
-Only if new commands were added. The completion script reflects lore's command list at generation time. After `lore upgrade`, regenerate:
+Only if new commands were added. The completion script reflects Lore's command list at generation time. After `lore upgrade`, regenerate:
 
 ```bash
 eval "$(lore completion zsh)"

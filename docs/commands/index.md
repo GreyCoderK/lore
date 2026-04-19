@@ -25,6 +25,7 @@ related:
   - ../guides/document-types.md
   - ../guides/contextual-detection.md
   - ../guides/configuration.md
+angela_mode: polish
 ---
 # Commands Overview
 
@@ -62,12 +63,14 @@ All Lore CLI commands at a glance.
 | [`lore angela review`](angela-review.md) | Corpus-wide coherence analysis (AI) |
 | [`lore angela consult`](angela-consult.md) | Ad-hoc single-persona consultation (offline) |
 
+See also: [Angela Personas](angela-personas.md) — reference for the 7 expert lenses.
+
 ## Updates
 
 | Command | Description |
 |---------|-------------|
 | [`lore check-update`](check-update.md) | Check if a newer version is available |
-| [`lore upgrade`](upgrade.md) | Upgrade lore to the latest version |
+| [`lore upgrade`](upgrade.md) | Upgrade Lore to the latest version |
 
 ## Utilities
 

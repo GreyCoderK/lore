@@ -88,10 +88,17 @@ func seedDraftCorpus(t *testing.T, docs map[string]string) string {
 // runBinary executes the compiled lore binary with args and returns
 // (stdout, stderr, exit code). Never fatals on non-zero exit — the
 // caller asserts the code.
+//
+// The working directory is set to a fresh t.TempDir() so any state the
+// binary writes (e.g. `.angela-state/draft-state.json` for differential
+// tracking) lands in an ephemeral location and does NOT pollute the
+// repo root. A regression here — running with cwd=repo root — would
+// leak runtime artifacts into git status.
 func runBinary(t *testing.T, args ...string) (string, string, int) {
 	t.Helper()
 	bin := loreBinaryPath(t)
 	cmd := exec.Command(bin, args...)
+	cmd.Dir = t.TempDir()
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

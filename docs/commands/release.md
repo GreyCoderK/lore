@@ -6,6 +6,7 @@ related:
   - list.md
   - angela-review.md
   - status.md
+angela_mode: polish
 ---
 # lore release
 

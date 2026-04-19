@@ -10,7 +10,7 @@ related:
 ---
 # Configuration
 
-lore utilise un système de configuration en cascade.
+Lore utilise un système de configuration en cascade.
 
 ## Fichiers de configuration
 
@@ -340,7 +340,7 @@ Pas besoin de `lore config set-key` — Ollama n'a pas d'authentification.
 
 ```bash
 ollama list                                               # vérifier que le modèle est installé
-lore doctor --config                                     # vérifier que le provider est détecté
+lore doctor --config                                     # vérifier que le fournisseur est détecté
 lore angela polish <votre-doc>.md --dry-run              # tester polish
 lore angela review                                       # tester review
 ```
@@ -358,7 +358,7 @@ lore angela review                                       # tester review
 
 ### Tester le code path OpenAI via Ollama (gratuit)
 
-Ollama expose une API compatible OpenAI sur `/v1/chat/completions`. Cela permet de tester le provider `openai` sans payer de crédits OpenAI :
+Ollama expose une API compatible OpenAI sur `/v1/chat/completions`. Cela permet de tester le fournisseur `openai` sans payer de crédits OpenAI :
 
 ```yaml
 # .lorerc.local
@@ -375,9 +375,9 @@ ollama serve &
 lore angela polish <votre-doc>.md --dry-run
 ```
 
-> **Note :** Cela fonctionne uniquement pour le provider `openai`. Le provider `anthropic` utilise un format de requête différent qu'Ollama ne supporte pas.
+> **Note :** Cela fonctionne uniquement pour le fournisseur `openai`. Le fournisseur `anthropic` utilise un format de requête différent qu'Ollama ne supporte pas.
 
-### Comparaison des providers
+### Comparaison des fournisseurs
 
 | | **Anthropic** | **OpenAI** | **Ollama** |
 |---|---|---|---|

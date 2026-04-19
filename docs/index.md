@@ -7,7 +7,7 @@ related:
   - getting-started/quickstart.md
   - commands/index.md
   - guides/philosophy.md
-  - guides/comparaison.md
+  - guides/comparison.md
   - guides/configuration.md
   - guides/document-types.md
   - guides/contextual-detection.md
@@ -15,6 +15,7 @@ related:
   - faq.md
   - contributing/architecture.md
   - guides/angela-ci.md
+angela_mode: polish
 ---
 # Lore
 
@@ -45,7 +46,7 @@ $ git commit -m "feat: add JWT auth middleware"
   ✓ Captured: feature-add-jwt-auth-2026-03-16.md
 ```
 
-lore hooks into your Git workflow and asks **3 questions** after every commit. The answers become a Markdown file in your repo — searchable, versionable, portable. No wiki. No SaaS. No friction.
+Lore hooks into your Git workflow and asks **3 questions** after every commit. The answers become a Markdown file in your repo — searchable, versionable, portable. No wiki. No SaaS. No friction.
 
 ## How it works
 
@@ -80,7 +81,7 @@ graph LR
 
 - :material-head-question: **[Philosophy](guides/philosophy.md)**
 
-    Why lore exists and the principles behind it
+    Why Lore exists and the principles behind it
 
 </div>
 
@@ -104,7 +105,7 @@ graph LR
 
 ## Angela — Your AI Documentation Companion
 
-Angela is lore's embedded reviewer — a colleague who has read every document your team ever wrote:
+Angela is Lore's embedded reviewer — a colleague who has read every document your team ever wrote:
 
 - **`lore angela draft`** — Free, offline analysis: missing sections, style issues, related documents
 - **`lore angela polish`** — AI-assisted rewrite with interactive diff review
@@ -118,10 +119,10 @@ Angela also works as a **standalone CI quality gate** on any Markdown directory 
 
 ## Learn More
 
-- [How lore Compares](guides/comparaison.md) — Detailed comparison with alternatives
-- [Configuration](guides/configuration.md) — Customize lore for your workflow
+- [How Lore Compares](guides/comparison.md) — Detailed comparison with alternatives
+- [Configuration](guides/configuration.md) — Customize Lore for your workflow
 - [Document Types](guides/document-types.md) — decision, feature, bugfix, refactor, note
 - [Contextual Detection](guides/contextual-detection.md) — How the hook decides what to do
-- [Roadmap](guides/roadmap.md) — Where lore is heading
+- [Roadmap](guides/roadmap.md) — Where Lore is heading
 - [FAQ](faq.md) — Common questions
 - [Architecture](contributing/architecture.md) — For contributors

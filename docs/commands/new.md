@@ -7,6 +7,7 @@ related:
   - show.md
   - ../guides/document-types.md
   - ../getting-started/quickstart.md
+angela_mode: polish
 ---
 # lore new
 

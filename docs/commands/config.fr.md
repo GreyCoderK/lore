@@ -7,6 +7,7 @@ related:
   - angela-draft.md
   - angela-polish.md
   - doctor.md
+angela_mode: polish
 ---
 # lore config
 

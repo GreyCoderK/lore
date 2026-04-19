@@ -1,6 +1,6 @@
 # lore upgrade
 
-Met lore à jour vers la dernière version — ou une version spécifique.
+Met Lore à jour vers la dernière version — ou une version spécifique.
 
 ## Synopsis
 
@@ -23,13 +23,13 @@ lore upgrade [flags]
 
 ## Comment ça marche
 
-1. **Détecte comment lore a été installé** — Homebrew ? `go install` ? Binaire direct ?
+1. **Détecte comment Lore a été installé** — Homebrew ? `go install` ? Binaire direct ?
 2. **Vérifie GitHub Releases** pour la version la plus récente
 3. **Télécharge** l'archive correcte pour votre OS et architecture
 4. **Vérifie le checksum SHA256** pour l'intégrité
 5. **Remplace** le binaire actuel par le nouveau
 
-> Si lore détecte une installation via **Homebrew** ou **go install**, il ne fait pas de self-update — il vous dit la bonne commande (`brew upgrade lore` ou `go install ...`).
+> Si Lore détecte une installation via **Homebrew** ou **go install**, il ne fait pas de self-update — il vous dit la bonne commande (`brew upgrade lore` ou `go install ...`).
 
 ## Flags
 
@@ -114,7 +114,7 @@ Non. `lore upgrade` ne s'exécute que quand vous l'appelez explicitement — zé
 
 ### "Et les permissions ?"
 
-Si lore est installé dans un dossier système (ex : `/usr/local/bin`), vous pourriez avoir besoin de `sudo lore upgrade`.
+Si Lore est installé dans un dossier système (ex : `/usr/local/bin`), vous pourriez avoir besoin de `sudo lore upgrade`.
 
 ## Tips & Tricks
 

@@ -78,6 +78,7 @@ nav:
     - lore angela draft: commands/angela-draft.md
     - lore angela polish: commands/angela-polish.md
     - lore angela review: commands/angela-review.md
+    - Angela Personas: commands/angela-personas.md
     - lore decision: commands/decision.md
     - lore completion: commands/completion.md
     - lore upgrade: commands/upgrade.md
@@ -87,9 +88,9 @@ nav:
     - Configuration: guides/configuration.md
     - Document Types & Metadata: guides/document-types.md
     - Contextual Detection: guides/contextual-detection.md
-    - How Lore Compares: guides/comparaison.md
+    - How Lore Compares: guides/comparison.md
     - Angela in CI: guides/angela-ci.md
-    - Examples: guides/exemples.md
+    - Examples: guides/examples.md
   - Roadmap: guides/roadmap.md
   - Contributing:
     - Architecture: contributing/architecture.md

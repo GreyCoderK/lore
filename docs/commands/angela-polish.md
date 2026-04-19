@@ -5,11 +5,13 @@ status: published
 related:
   - angela-draft.md
   - angela-review.md
+  - angela-personas.md
   - config.md
+angela_mode: polish
 ---
 # lore angela polish
 
-AI-assisted document rewrite with interactive diff review — plus an **offline synthesizer family** that auto-generates API examples, SQL queries, and other structured content from information already present in your doc. Works on lore-native projects **and** external Markdown directories (MkDocs, Docusaurus, Hugo, hand-rolled docs).
+AI-assisted document rewrite with interactive diff review — plus an **offline synthesizer family** that auto-generates API examples, SQL queries, and other structured content from information already present in your doc. Works on Lore-native projects **and** external Markdown directories (MkDocs, Docusaurus, Hugo, hand-rolled docs).
 
 ## Synopsis
 
@@ -180,7 +182,7 @@ lore angela polish doc.md --synthesize --set-status reviewed
 
 ### Works on external docs too
 
-The synthesizer works on **any** Markdown file — even outside a lore-native project:
+The synthesizer works on **any** Markdown file — even outside a Lore-native project:
 
 ```bash
 # External project with their own docs structure

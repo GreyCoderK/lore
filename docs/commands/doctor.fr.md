@@ -5,6 +5,7 @@ status: published
 related:
   - status.md
   - ../guides/configuration.md
+angela_mode: polish
 ---
 # lore doctor
 

@@ -6,6 +6,7 @@ related:
   - init.md
   - ../getting-started/quickstart.md
   - ../guides/philosophy.md
+angela_mode: polish
 ---
 # lore demo
 

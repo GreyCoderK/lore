@@ -7,10 +7,11 @@ related:
   - ../faq.md
   - ../commands/config.md
   - ../commands/doctor.md
+angela_mode: polish
 ---
 # Configuration
 
-lore uses a cascading configuration system.
+Lore uses a cascading configuration system.
 
 ## Config Files
 
@@ -70,7 +71,7 @@ output:
 
 ## Branch Awareness
 
-Since the Angela Enhancement Sprint, lore captures the **git branch** and **conventional commit scope** at commit time and stores them in the document front matter:
+Since the Angela Enhancement Sprint, Lore captures the **git branch** and **conventional commit scope** at commit time and stores them in the document front matter:
 
 ```yaml
 ---
@@ -90,7 +91,7 @@ Branch and scope use `omitempty` in YAML output, so documents created on a detac
 
 ### Impact on the amend workflow
 
-When you run `git commit --amend` and a document already exists for the pre-amend commit, lore asks `Document this change? [Y/n]` (Question 0) and then offers `[U]pdate / [C]reate / [S]kip`. Configurable via `.lorerc`:
+When you run `git commit --amend` and a document already exists for the pre-amend commit, Lore asks `Document this change? [Y/n]` (Question 0) and then offers `[U]pdate / [C]reate / [S]kip`. Configurable via `.lorerc`:
 
 ```yaml
 hooks:
@@ -210,7 +211,7 @@ Best quality for technical documentation. Requires API credits purchased separat
 
 > **Important:** A Claude.ai chat subscription (Pro, Team) does NOT include API credits. The API is a separate product billed at [console.anthropic.com](https://console.anthropic.com). You need credits even if you pay for Claude.ai.
 
-**Step 2 — Configure lore:**
+**Step 2 — Configure Lore:**
 
 ```yaml
 # .lorerc
@@ -253,7 +254,7 @@ lore angela review                                       # 1 API call, corpus an
 
 > **Note:** An OpenAI API account is separate from a ChatGPT subscription. The API uses prepaid credits — no recurring billing unless you enable auto-recharge.
 
-**Step 2 — Configure lore:**
+**Step 2 — Configure Lore:**
 
 ```yaml
 # .lorerc
@@ -325,7 +326,7 @@ Other recommended models:
 | `codellama` | 3.8GB | Best for code-heavy docs | Fast |
 | `gemma2` | 5.4GB | Good for technical writing | Medium |
 
-**Step 3 — Configure lore:**
+**Step 3 — Configure Lore:**
 
 ```yaml
 # .lorerc
@@ -422,7 +423,7 @@ lore doctor --config
 # ✗ unknown key "ai.providr" — did you mean "ai.provider"?
 ```
 
-lore uses Levenshtein distance to suggest corrections for typos.
+Lore uses Levenshtein distance to suggest corrections for typos.
 
 ## See Also
 

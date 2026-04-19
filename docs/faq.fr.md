@@ -6,6 +6,7 @@ related:
   - guides/contextual-detection.md
   - guides/configuration.fr.md
   - commands/angela-polish.fr.md
+angela_mode: polish
 ---
 # FAQ
 
@@ -15,17 +16,17 @@ related:
 
 Un outil CLI qui capture le *pourquoi* derrière vos changements de code au moment du commit. Trois questions, quatre-vingt-dix secondes, un document Markdown pour toujours.
 
-### lore nécessite-t-il une connexion internet ?
+### Lore nécessite-t-il une connexion internet ?
 
 Non. Tout fonctionne hors ligne par défaut. Les fonctions IA (Angela) sont opt-in et nécessitent une clé API.
 
-### Quelles langues lore supporte-t-il ?
+### Quelles langues Lore supporte-t-il ?
 
 L'interface CLI est bilingue : anglais et français. Définissez `language: "fr"` dans `.lorerc` pour passer en français.
 
-### lore fonctionne-t-il avec n'importe quel hébergeur Git ?
+### Lore fonctionne-t-il avec n'importe quel hébergeur Git ?
 
-Oui. lore fonctionne localement via des hooks Git et est compatible avec GitHub, GitLab, Bitbucket, ou tout hébergeur Git.
+Oui. Lore fonctionne localement via des hooks Git et est compatible avec GitHub, GitLab, Bitbucket, ou tout hébergeur Git.
 
 ## Utilisation
 
@@ -35,21 +36,21 @@ Oui. Appuyez sur Ctrl+C pendant les questions — les réponses partielles sont 
 
 ### Que se passe-t-il lors des commits de merge ?
 
-lore les ignore automatiquement — aucune documentation nécessaire.
+Lore les ignore automatiquement — aucune documentation nécessaire.
 
 ### Que se passe-t-il en CI ou dans un environnement non-TTY ?
 
-Les commits sont différés silencieusement vers pending. Dans les terminaux VS Code, lore envoie une notification. Utilisez `lore pending resolve` plus tard.
+Les commits sont différés silencieusement vers pending. Dans les terminaux VS Code, Lore envoie une notification. Utilisez `lore pending resolve` plus tard.
 
 ### Pourquoi un dialog s'affiche au lieu des questions interactives ?
 
-Git redirige stdin vers `/dev/null` pour les hooks. Le hook de lore reconnecte stdin depuis le terminal pour poser les questions de façon interactive.
+Git redirige stdin vers `/dev/null` pour les hooks. Le hook de Lore reconnecte stdin depuis le terminal pour poser les questions de façon interactive.
 
 **Fix :** Réinstallez le hook :
 
 ```bash
-lore hook uninstall
-lore hook install
+Lore hook uninstall
+Lore hook install
 ```
 
 Vérifiez que le hook contient la redirection stdin :
@@ -74,9 +75,9 @@ Vérifiez que le hook contient la redirection stdin :
 
 > **Note :** Dans les environnements où le terminal n'est pas disponible (CI, Docker, pipes), les commits sont toujours différés vers pending — c'est voulu. Voir [Détection Contextuelle](guides/contextual-detection.md) pour les détails.
 
-### Comment lore gère les notifications sur les différentes plateformes ?
+### Comment Lore gère les notifications sur les différentes plateformes ?
 
-Quand un commit est différé (non-TTY), lore envoie une notification selon `notification.mode` dans `.lorerc` :
+Quand un commit est différé (non-TTY), Lore envoie une notification selon `notification.mode` dans `.lorerc` :
 
 | Plateforme | Mode `dialog` | Mode `notify` |
 |------------|--------------|---------------|
@@ -104,7 +105,7 @@ Oui : `lore new --commit abc1234`
 
 ### L'IA est-elle obligatoire ?
 
-Non. lore fonctionne entièrement sans IA. Angela est opt-in.
+Non. Lore fonctionne entièrement sans IA. Angela est opt-in.
 
 ### Quels fournisseurs IA sont supportés ?
 
@@ -189,7 +190,7 @@ decision:
 
 Lancez `lore decision --explain HEAD` pour voir le scoring de n'importe quel commit.
 
-### Puis-je utiliser lore dans un monorepo ?
+### Puis-je utiliser Lore dans un monorepo ?
 
 Oui. Lancez `lore init` à la racine du repo. Les documents capturent le chemin complet des fichiers modifiés. Utilisez `lore show --type decision` avec une recherche par mot-clé pour trouver les décisions par service.
 
@@ -226,9 +227,9 @@ Votre corpus EST l'export — ce sont des fichiers Markdown dans `.lore/docs/`. 
 
 ### Comment migrer depuis les ADRs vers lore ?
 
-Vous ne migrez pas — ils sont complémentaires. Gardez vos ADRs pour les grandes décisions architecturales. Utilisez lore pour le "pourquoi" quotidien derrière chaque commit.
+Vous ne migrez pas — ils sont complémentaires. Gardez vos ADRs pour les grandes décisions architecturales. Utilisez Lore pour le "pourquoi" quotidien derrière chaque commit.
 
-### Puis-je utiliser lore en CI/CD ?
+### Puis-je utiliser Lore en CI/CD ?
 
 ```bash
 # Échouer le build si des docs sont en attente
@@ -238,7 +239,7 @@ Vous ne migrez pas — ils sont complémentaires. Gardez vos ADRs pour les grand
 [ $(lore doctor --quiet) -eq 0 ] || exit 1
 
 # Générer le badge de couverture
-lore status --badge >> $GITHUB_STEP_SUMMARY
+Lore status --badge >> $GITHUB_STEP_SUMMARY
 ```
 
 ### Comment gérer les conflits de merge dans `.lore/docs/` ?
@@ -249,28 +250,28 @@ Rare — chaque commit crée un nom de fichier unique. Si ça arrive, résolvez 
 
 Négligeable. Le Decision Engine score en ~0.4ms. Le hook entier (rendu des questions inclus) ajoute moins de 100ms quand il est auto-skippé. Quand vous répondez aux questions, le temps est borné par votre vitesse de frappe.
 
-### Comment désactiver lore temporairement ?
+### Comment désactiver Lore temporairement ?
 
 ```bash
 # Ignorer un commit
 git commit -m "chore: deps [doc-skip]"
 
 # Désactiver le hook entièrement
-lore hook uninstall
+Lore hook uninstall
 
 # Réactiver plus tard
-lore hook install
+Lore hook install
 ```
 
-### Pourquoi le logo lore n'apparaît pas dans les notifications sur macOS ?
+### Pourquoi le logo Lore n'apparaît pas dans les notifications sur macOS ?
 
-macOS `display notification` (osascript) ne supporte pas les icônes personnalisées. Installez `terminal-notifier` pour activer le logo lore :
+macOS `display notification` (osascript) ne supporte pas les icônes personnalisées. Installez `terminal-notifier` pour activer le logo Lore :
 
 ```bash
 brew install terminal-notifier
 ```
 
-lore l'installe automatiquement si Homebrew est disponible. Après l'installation, le logo apparaît dans toutes les notifications toast. Les dialogues (le flow interactif de questions) affichent déjà le logo sans `terminal-notifier`.
+Lore l'installe automatiquement si Homebrew est disponible. Après l'installation, le logo apparaît dans toutes les notifications toast. Les dialogues (le flow interactif de questions) affichent déjà le logo sans `terminal-notifier`.
 
 ### Le workflow amend ne pose pas de questions
 
@@ -278,7 +279,7 @@ Deux causes courantes :
 
 1. **Vous utilisez une ancienne version de lore.** Vérifiez avec `lore --version`. Le hook git utilise `lore` depuis votre `PATH` — assurez-vous qu'il pointe vers la dernière version. Mettez à jour via `brew upgrade lore` ou `go install github.com/greycoderk/lore@latest`.
 
-2. **Le terminal n'est pas interactif.** Certains IDEs et environnements CI ne fournissent pas de TTY. lore diffère alors le commit vers `.lore/pending/` automatiquement. Vérifiez avec `lore pending` et résolvez avec `lore pending resolve`.
+2. **Le terminal n'est pas interactif.** Certains IDEs et environnements CI ne fournissent pas de TTY. Lore diffère alors le commit vers `.lore/pending/` automatiquement. Vérifiez avec `lore pending` et résolvez avec `lore pending resolve`.
 
 ---
 

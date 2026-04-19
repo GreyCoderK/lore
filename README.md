@@ -156,6 +156,8 @@ Lore is also complementary to ADRs — it captures the daily *why* that feeds in
 | `lore angela review` | Corpus-wide coherence analysis |
 | `lore angela review --filter "guides/.*"` | Review filtered subset |
 | `lore angela review --all` | Review all docs (no sampling) |
+| `lore angela review --persona <id>` | Multi-persona coherence — `tech-writer`, `architect`, etc. |
+| `lore angela consult <persona> <file>` | Offline single-persona draft-check on one doc |
 | `lore decision` | Decision engine status and calibration |
 | `lore completion <shell>` | Generate shell completions (bash/zsh/fish) |
 
@@ -177,6 +179,30 @@ Angela works as a **documentation quality gate** in any CI pipeline — no `lore
 ```
 
 Works on **any Markdown directory** — with or without YAML front matter. See the [Angela in CI guide](https://greycoderk.github.io/lore/guides/angela-ci/) for details.
+
+### Personas
+
+Angela evaluates your documentation through **7 expert lenses** — each with its own priorities and blind spots:
+
+| Icon | ID | Focus |
+|---|---|---|
+| ✏️ | `tech-writer` | Rédactionnel, précision, clarté |
+| 🎨 | `ux-designer` | Mental models, onboarding, accessibilité |
+| 🔌 | `api-designer` | Contrats d'API, headers, body, exemples HTTP |
+| 🔍 | `qa-reviewer` | Edge cases, validation, failure modes |
+| 🏗️ | `architect` | Trade-offs, scalabilité, design |
+| 📊 | `business-analyst` | Traçabilité, valeur business |
+| 📖 | `storyteller` | Narration, onboarding long-form |
+
+Personas activate in three modes:
+
+```bash
+lore angela consult tech-writer docs/features/login.md       # single-lens offline
+lore angela polish docs/features/login.md --persona ux-designer    # steer the AI rewrite
+lore angela review --persona tech-writer --persona qa-reviewer     # multi-persona corpus review
+```
+
+Full reference: [docs/commands/angela-personas.md](docs/commands/angela-personas.md) (also available in [FR](docs/commands/angela-personas.fr.md)).
 
 ## How It Works
 

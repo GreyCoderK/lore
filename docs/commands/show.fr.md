@@ -66,6 +66,7 @@ date: 2026-02-15
 commit: b2c3d4e
 branch: feature/jwt-auth
 scope: auth
+angela_mode: polish
 ---
 # Add JWT auth middleware
 

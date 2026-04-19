@@ -5,7 +5,9 @@ status: published
 related:
   - angela-draft.md
   - angela-review.md
+  - angela-personas.fr.md
   - config.md
+angela_mode: polish
 ---
 # lore angela polish
 
@@ -178,7 +180,7 @@ lore angela polish doc.md --synthesize --set-status reviewed
 
 ### Fonctionne aussi sur les docs externes
 
-Le synthesizer fonctionne sur **n'importe quel** fichier Markdown — même en dehors d'un projet lore natif :
+Le synthesizer fonctionne sur **n'importe quel** fichier Markdown — même en dehors d'un projet Lore natif :
 
 ```bash
 # Projet externe avec sa propre structure de docs

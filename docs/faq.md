@@ -6,26 +6,27 @@ related:
   - guides/contextual-detection.md
   - guides/configuration.md
   - commands/angela-polish.md
+angela_mode: polish
 ---
 # FAQ
 
 ## General
 
-### What is lore?
+### What is Lore?
 
 A CLI tool that captures the *why* behind your code changes at commit-time. Three questions, ninety seconds, a Markdown document that lasts forever.
 
-### Does lore require an internet connection?
+### Does Lore require an internet connection?
 
 No. Everything works offline by default. AI features (Angela) are opt-in and require an API key.
 
-### What languages does lore support?
+### What languages does Lore support?
 
 The CLI interface is bilingual: English and French. Set `language: "fr"` in `.lorerc` to switch to French.
 
-### Does lore work with any Git hosting?
+### Does Lore work with any Git hosting?
 
-Yes. lore operates locally via Git hooks and works with GitHub, GitLab, Bitbucket, or any Git host.
+Yes. Lore operates locally via Git hooks and works with GitHub, GitLab, Bitbucket, or any Git host.
 
 ## Usage
 
@@ -35,15 +36,15 @@ Yes. Press Ctrl+C during the questions — partial answers are saved to pending.
 
 ### What happens during merge commits?
 
-lore skips merge commits automatically — no documentation needed.
+Lore skips merge commits automatically — no documentation needed.
 
 ### What happens in CI or non-TTY environments?
 
-Commits are deferred to pending silently. In VS Code terminals, lore sends a notification. Use `lore pending resolve` later.
+Commits are deferred to pending silently. In VS Code terminals, Lore sends a notification. Use `lore pending resolve` later.
 
 ### Why do I get a dialog instead of interactive questions?
 
-Git redirects stdin to `/dev/null` for hooks. The lore hook reconnects stdin from the terminal so questions can be asked interactively.
+Git redirects stdin to `/dev/null` for hooks. The Lore hook reconnects stdin from the terminal so questions can be asked interactively.
 
 **Fix:** Reinstall the hook:
 
@@ -74,9 +75,9 @@ Verify the hook contains the stdin redirect:
 
 > **Note:** In environments where the terminal is unavailable (CI, Docker, pipes), commits are always deferred to pending — this is by design. See [Contextual Detection](guides/contextual-detection.md) for details.
 
-### How does lore handle notifications on different platforms?
+### How does Lore handle notifications on different platforms?
 
-When a commit is deferred (non-TTY), lore sends a notification based on `notification.mode` in `.lorerc`:
+When a commit is deferred (non-TTY), Lore sends a notification based on `notification.mode` in `.lorerc`:
 
 | Platform | `dialog` mode | `notify` mode |
 |----------|--------------|---------------|
@@ -104,7 +105,7 @@ Yes: `lore new --commit abc1234`
 
 ### Is AI required?
 
-No. lore works fully without AI. Angela is opt-in.
+No. Lore works fully without AI. Angela is opt-in.
 
 ### What AI providers are supported?
 
@@ -166,11 +167,11 @@ with sections: What, Why, Alternatives, Impact. Be concise and technical:
 
 All data lives in `.lore/` inside your repository. Nothing is sent anywhere unless you explicitly use Angela polish with an AI provider.
 
-### Can I delete all lore data?
+### Can I delete all Lore data?
 
 `rm -rf .lore/` removes everything. Your Git history and code remain untouched.
 
-### What license is lore under?
+### What license is Lore under?
 
 AGPL-3.0. A commercial license is available for proprietary use.
 
@@ -189,7 +190,7 @@ decision:
 
 Run `lore decision --explain HEAD` to see the scoring for any commit.
 
-### Can I use lore in a monorepo?
+### Can I use Lore in a monorepo?
 
 Yes. Run `lore init` at the repo root. Documents capture the full path of changed files. Use `lore show --type decision` with keyword search to find decisions per service.
 
@@ -224,11 +225,11 @@ Angela Draft and Polish will check against these rules.
 
 Your corpus is the export — Markdown files in `.lore/docs/`. Copy them anywhere. They are self-contained with YAML front matter. No proprietary format, no lock-in.
 
-### How do I migrate from ADRs to lore?
+### How do I migrate from ADRs to Lore?
 
-You don't — they are complementary. Keep your ADRs for big architectural decisions. Use lore for the daily "why" behind every commit. Over time, your ADRs become the summaries and your lore corpus becomes the detailed history.
+You don't — they are complementary. Keep your ADRs for big architectural decisions. Use Lore for the daily "why" behind every commit. Over time, your ADRs become the summaries and your Lore corpus becomes the detailed history.
 
-### Can I use lore in CI/CD?
+### Can I use Lore in CI/CD?
 
 ```bash
 # Fail build if pending docs exist
@@ -249,7 +250,7 @@ This is rare — each commit generates a unique filename. If it happens, resolve
 
 Negligible. The Decision Engine scores in ~0.4ms. The entire hook (including question rendering) adds less than 100ms when auto-skipped. When you answer questions, the time is bounded by your typing speed.
 
-### How do I disable lore temporarily?
+### How do I disable Lore temporarily?
 
 ```bash
 # Skip one commit
@@ -262,23 +263,23 @@ lore hook uninstall
 lore hook install
 ```
 
-### Why don't I see the lore logo in notifications on macOS?
+### Why don't I see the Lore logo in notifications on macOS?
 
-macOS `display notification` (osascript) does not support custom icons. Install `terminal-notifier` to enable the lore logo:
+macOS `display notification` (osascript) does not support custom icons. Install `terminal-notifier` to enable the Lore logo:
 
 ```bash
 brew install terminal-notifier
 ```
 
-lore auto-installs it if Homebrew is available. After installation, the logo appears in all toast notifications. Dialogs (the interactive question flow) already show the logo without `terminal-notifier`.
+Lore auto-installs it if Homebrew is available. After installation, the logo appears in all toast notifications. Dialogs (the interactive question flow) already show the logo without `terminal-notifier`.
 
 ### The amend workflow isn't asking me any questions
 
 Two common causes:
 
-1. **You are running an old version of lore.** Check `lore --version`. The git hook uses `lore` from your `PATH` — make sure it resolves to the latest version. Update via `brew upgrade lore` or `go install github.com/greycoderk/lore@latest`.
+1. **You are running an old version of Lore.** Check `lore --version`. The git hook uses `lore` from your `PATH` — make sure it resolves to the latest version. Update via `brew upgrade lore` or `go install github.com/greycoderk/lore@latest`.
 
-2. **The terminal is not interactive.** Some IDEs and CI environments do not provide a TTY. lore then defers the commit to `.lore/pending/` automatically. Check with `lore pending` and resolve with `lore pending resolve`.
+2. **The terminal is not interactive.** Some IDEs and CI environments do not provide a TTY. Lore then defers the commit to `.lore/pending/` automatically. Check with `lore pending` and resolve with `lore pending resolve`.
 
 ---
 

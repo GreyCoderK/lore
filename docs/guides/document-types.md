@@ -6,14 +6,15 @@ related:
   - ../commands/new.md
   - ../commands/show.md
   - ../commands/list.md
+angela_mode: polish
 ---
 # Document Types & Metadata
 
-Complete reference for lore document types, statuses, and front matter metadata.
+Complete reference for Lore document types, statuses, and front matter metadata.
 
 ## Document Types
 
-Every lore document has a `type` in its front matter. The type determines the question flow and how documents are grouped in reports.
+Every Lore document has a `type` in its front matter. The type determines the question flow and how documents are grouped in reports.
 
 | Type | Purpose | When to use |
 |------|---------|-------------|

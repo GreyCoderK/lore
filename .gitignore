@@ -13,3 +13,9 @@ site/
 
 # Corpus symlink (local only, breaks in CI)
 docs/lore-corpus
+
+# Angela runtime state — written by `lore angela draft --all` for
+# differential tracking. Regenerated on every run; never belongs in
+# the repo (caught the hard way when a binary integration test
+# running with cwd=repo root leaked these under cmd/).
+.angela-state/

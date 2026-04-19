@@ -4,6 +4,9 @@ date: "2026-04-12"
 status: published
 angela_mode: polish
 ---
+# Angela in CI — Documentation Quality Gate
+
+Angela runs as a quality gate in any CI/CD pipeline, analyzing your Markdown documentation for structural issues, inconsistencies, and coherence problems — **without requiring `lore init`**. The draft mode is entirely offline (no API key, no cost); the review mode is opt-in and requires an AI provider, reserved for pre-release corpus-wide coherence checks.
 
 ## Why Use Angela in CI
 
@@ -37,15 +40,6 @@ Blog posts, tutorials, guides, concept pages, landing pages, and any custom type
 **Translation pairs** (e.g. `installation.md` and `installation.fr.md`) are detected automatically and will not be flagged as duplicates. Supported locale codes: `fr`, `en`, `es`, `de`, `it`, `pt`, `zh`, `ja`, `ko`, `ru`, `ar`, `nl`, `pl`.
 
 **Partial front matter is preserved**: a document with only `type: decision` and `date:` (no `status`) keeps its declared type — it will not be silently downgraded to `note`.
----
-type: guide
-date: 2026-04-12
-status: published
-related: []
----
-# Angela in CI — Documentation Quality Gate
-
-Angela runs as a quality gate in any CI/CD pipeline, analyzing your Markdown documentation for structural issues, inconsistencies, and coherence problems — **without requiring `lore init`**.
 
 ## Quick Start
 

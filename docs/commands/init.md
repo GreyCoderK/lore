@@ -7,6 +7,7 @@ related:
   - hook.md
   - ../getting-started/quickstart.md
   - ../guides/configuration.md
+angela_mode: polish
 ---
 # lore init
 

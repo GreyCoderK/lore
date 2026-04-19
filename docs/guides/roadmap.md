@@ -5,10 +5,11 @@ status: published
 related:
   - philosophy.md
   - ../contributing/architecture.md
+angela_mode: polish
 ---
 # Roadmap
 
-Where lore is heading — from capture to intelligence.
+Where Lore is heading — from capture to intelligence.
 
 ## The Big Picture
 
@@ -19,11 +20,11 @@ graph LR
     C --> D["...<br/>More to come"]
 ```
 
-> **Today, lore captures.** Tomorrow, lore understands, connects, and shares.
+> **Today, Lore captures.** Tomorrow, Lore understands, connects, and shares.
 
 ## What's Done (Circles 1 + 2 + 2b)
 
-The MVP is complete. lore captures the "why" at commit-time and makes it searchable:
+The MVP is complete. Lore captures the "why" at commit-time and makes it searchable:
 
 - **Capture** — Post-commit hook, 3 questions, Express mode, contextual detection
 - **Search** — `lore show`, `lore list`, `lore status`
@@ -78,5 +79,5 @@ The CLI will always be free. The corpus will always be yours. And the "why" you 
 
 ## See Also
 
-- [Philosophy](philosophy.md) — Why lore exists
-- [Architecture](../contributing/architecture.md) — How lore is built
+- [Philosophy](philosophy.md) — Why Lore exists
+- [Architecture](../contributing/architecture.md) — How Lore is built

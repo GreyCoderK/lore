@@ -5,10 +5,11 @@ status: published
 related:
   - check-update.md
   - ../getting-started/installation.md
+angela_mode: polish
 ---
 # lore upgrade
 
-Upgrade lore to the latest version — or a specific one.
+Upgrade Lore to the latest version — or a specific one.
 
 ## Synopsis
 
@@ -39,7 +40,7 @@ When you run `lore upgrade`:
 4. **Verifies the SHA256 checksum** to confirm file integrity
 5. **Replaces** the current binary with the new one
 
-> If lore was installed via **Homebrew** or **go install**, it will not self-update. Instead, it prints the correct command (`brew upgrade lore` or `go install ...`) to avoid conflicts with your package manager.
+> If Lore was installed via **Homebrew** or **go install**, it will not self-update. Instead, it prints the correct command (`brew upgrade lore` or `go install ...`) to avoid conflicts with your package manager.
 
 ## Flags
 
@@ -127,7 +128,7 @@ No. `lore upgrade` only runs when you explicitly call it — zero implicit netwo
 
 ### "What about permissions?"
 
-If lore is installed in a system directory (e.g. `/usr/local/bin`), you may need `sudo`:
+If Lore is installed in a system directory (e.g. `/usr/local/bin`), you may need `sudo`:
 
 ```bash
 sudo lore upgrade

@@ -1,56 +1,78 @@
 {
   "version": 2,
-  "last_run": "2026-04-16T18:02:00.077468Z",
+  "last_run": "2026-04-17T23:25:08.546259Z",
   "entries": {
-    "commands/angela-consult.md": {
-      "content_hash": "sha256:a759a8a783ada3d81d889a016ea767495a2a14b010cd293f31e7655acc1a2f9c",
-      "last_analyzed": "2026-04-16T18:01:59.50074Z",
+    "commands/angela-consult.fr.md": {
+      "content_hash": "sha256:1f85c95dbd14394488ba481c874d504a20eeae33674846297b75eee4eff6c581",
+      "last_analyzed": "2026-04-17T23:25:08.503579Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
+        },
+        {
+          "category": "persona",
+          "severity": "warning",
+          "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
+          "diff_status": "persisting"
         }
       ],
-      "score": 90,
+      "score": 100,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-consult.md": {
+      "content_hash": "sha256:b477b2fa90ac92cbef13197c87b84b220f98703a473f8f34f98fd55b0afba12c",
+      "last_analyzed": "2026-04-17T23:25:08.503656Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
+          "diff_status": "persisting"
+        }
+      ],
+      "score": 100,
       "grade": "A",
       "profile": "free-form",
       "analyzer_schema_version": 1
     },
     "commands/angela-draft.fr.md": {
-      "content_hash": "sha256:b0a64e3b5bb35bc93be88b6df45815cf3183d0669515acaebb755b68c77f90da",
-      "last_analyzed": "2026-04-16T18:01:59.516564Z",
+      "content_hash": "sha256:1166ebbb3ec624b04cd4e118c76b5275d7a1617ae447ec7071969dbfadbd0519",
+      "last_analyzed": "2026-04-17T23:25:08.503737Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"faq.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/document-types.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -60,37 +82,37 @@
     },
     "commands/angela-draft.md": {
       "content_hash": "sha256:83a43ef633816d2d41ac20b62bb493b8e8968901f3024c4a97e9e49cda6ae3ea",
-      "last_analyzed": "2026-04-16T18:01:59.534054Z",
+      "last_analyzed": "2026-04-17T23:25:08.503814Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"faq.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/document-types.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -98,21 +120,77 @@
       "profile": "free-form",
       "analyzer_schema_version": 1
     },
-    "commands/angela-polish.fr.md": {
-      "content_hash": "sha256:0e4706171c5e383640ad878d4640eb99146f817873c6d1df89baf17fbc9ff737",
-      "last_analyzed": "2026-04-16T18:01:59.55811Z",
+    "commands/angela-personas.fr.md": {
+      "content_hash": "sha256:b31fca3d173497912f6b430867148b092961dff17cbace5a21712bacb30267ad",
+      "last_analyzed": "2026-04-17T23:25:08.503887Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Le document \"commands/angela-consult.fr.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "diff_status": "persisting"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Le document \"commands/angela-consult.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "diff_status": "persisting"
+        }
+      ],
+      "score": 90,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-personas.md": {
+      "content_hash": "sha256:c3425727f0807c92481b40b7e34d44c9f1478acaf8f35bd0251ff239c7e6d93a",
+      "last_analyzed": "2026-04-17T23:25:08.503959Z",
+      "suggestions": [
+        {
           "category": "persona",
-          "severity": "warning",
-          "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
-          "diff_status": "new"
+          "severity": "info",
+          "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
+          "diff_status": "persisting"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Le document \"commands/angela-consult.fr.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "diff_status": "persisting"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Le document \"commands/angela-consult.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "diff_status": "persisting"
+        }
+      ],
+      "score": 90,
+      "grade": "A",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
+    "commands/angela-polish.fr.md": {
+      "content_hash": "sha256:ad5d0791581d6d2b3fa3ceb30cf4415e212625c435125148eb6bfa72a92f31fd",
+      "last_analyzed": "2026-04-17T23:25:08.504045Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
+          "diff_status": "persisting"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -121,20 +199,20 @@
       "analyzer_schema_version": 1
     },
     "commands/angela-polish.md": {
-      "content_hash": "sha256:f01c51c578fe68adac67e1efbbb19c198a577783274f80c93fb36de1fc146758",
-      "last_analyzed": "2026-04-16T18:01:59.584797Z",
+      "content_hash": "sha256:a7526ac31363c060b42f9c3c256e88371f7ba3715b9f8835463ab6e7d8229487",
+      "last_analyzed": "2026-04-17T23:25:08.504122Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -143,26 +221,20 @@
       "analyzer_schema_version": 1
     },
     "commands/angela-review.fr.md": {
-      "content_hash": "sha256:f9fd4dd34e4c308d91e84f2e2548bafb9632a469332ff7d334c77aeeed77e75a",
-      "last_analyzed": "2026-04-16T18:01:59.601124Z",
+      "content_hash": "sha256:8bcd39183708b149bb382b9b8d695fbbbf23bc72a177d16e9c0b172ad6966ddf",
+      "last_analyzed": "2026-04-17T23:25:08.504197Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
-        },
-        {
-          "category": "persona",
-          "severity": "warning",
-          "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -171,20 +243,20 @@
       "analyzer_schema_version": 1
     },
     "commands/angela-review.md": {
-      "content_hash": "sha256:18fcddc8a3c3a4a0f09ce6aa1398ee5362ab625979565ab46cf608efb7b042c7",
-      "last_analyzed": "2026-04-16T18:01:59.618698Z",
+      "content_hash": "sha256:b2c52dce8b69a22592c8147501edfa0e79545ac29a5a4e7aabb0406f937aeb41",
+      "last_analyzed": "2026-04-17T23:25:08.504268Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -194,19 +266,19 @@
     },
     "commands/check-update.fr.md": {
       "content_hash": "sha256:933fb640143982c14c224a74d07f51adcac784effdfda883ad876f8e43108d0d",
-      "last_analyzed": "2026-04-16T18:01:59.624569Z",
+      "last_analyzed": "2026-04-17T23:25:08.504345Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/installation.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -216,25 +288,25 @@
     },
     "commands/check-update.md": {
       "content_hash": "sha256:ef46005c09852304148b72fcc0b9a6569e7bb502d989c56f7d7998361bdac499",
-      "last_analyzed": "2026-04-16T18:01:59.629599Z",
+      "last_analyzed": "2026-04-17T23:25:08.504415Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/installation.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -244,19 +316,19 @@
     },
     "commands/completion.fr.md": {
       "content_hash": "sha256:ef018918586e995d5801dabe980d3f8eb00f0573d091eb5b2d20bb35e2427aed",
-      "last_analyzed": "2026-04-16T18:01:59.635889Z",
+      "last_analyzed": "2026-04-17T23:25:08.504484Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/completions.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -266,19 +338,19 @@
     },
     "commands/completion.md": {
       "content_hash": "sha256:5849ea3e4e3ec11c94fc4bc33ad17bbda34d15b0d140d740f143e52238b4f487",
-      "last_analyzed": "2026-04-16T18:01:59.641582Z",
+      "last_analyzed": "2026-04-17T23:25:08.504557Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/completions.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -288,25 +360,25 @@
     },
     "commands/config.fr.md": {
       "content_hash": "sha256:4b6ac153aa7e333dd95f919f980046ae78257633eb082283ad91cc7d236a0835",
-      "last_analyzed": "2026-04-16T18:01:59.65119Z",
+      "last_analyzed": "2026-04-17T23:25:08.504628Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "warning",
           "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -316,19 +388,19 @@
     },
     "commands/config.md": {
       "content_hash": "sha256:90088fe7a458e191e131c7f9953f283cb61654d698b0c3d556be2057d5a95167",
-      "last_analyzed": "2026-04-16T18:01:59.659181Z",
+      "last_analyzed": "2026-04-17T23:25:08.504696Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -338,31 +410,31 @@
     },
     "commands/decision.fr.md": {
       "content_hash": "sha256:d650f5ada1a1819d446bc60de7b7ec3dce87bec3aaba4176d1f9f4f47d6c1b28",
-      "last_analyzed": "2026-04-16T18:01:59.669732Z",
+      "last_analyzed": "2026-04-17T23:25:08.50477Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔌 Ouattara] Champs DTO sans colonne « Requis » — marque chaque champ ✅ (requis) ou — (optionnel)",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -372,25 +444,25 @@
     },
     "commands/decision.md": {
       "content_hash": "sha256:53a1b25fce75c7f62082b898d6df76f47cef4e73eaca769005a22756e2c1d406",
-      "last_analyzed": "2026-04-16T18:01:59.678953Z",
+      "last_analyzed": "2026-04-17T23:25:08.50484Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -400,19 +472,19 @@
     },
     "commands/delete.fr.md": {
       "content_hash": "sha256:e977ba6fc9cf2492b04a8ee78eb623415046238f17441474f2fb597290d24be8",
-      "last_analyzed": "2026-04-16T18:01:59.68421Z",
+      "last_analyzed": "2026-04-17T23:25:08.504907Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -422,13 +494,13 @@
     },
     "commands/delete.md": {
       "content_hash": "sha256:df109c4089bf6a0c3f01d5e1c91c92b056ce4ae826d355a00f86ed5958061953",
-      "last_analyzed": "2026-04-16T18:01:59.689181Z",
+      "last_analyzed": "2026-04-17T23:25:08.504974Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -438,25 +510,25 @@
     },
     "commands/demo.fr.md": {
       "content_hash": "sha256:8cd8780d0c6bb0360081667e6f57bbb0e1197c9158f43e7d65fc9aea6c1aee5e",
-      "last_analyzed": "2026-04-16T18:01:59.695475Z",
+      "last_analyzed": "2026-04-17T23:25:08.505073Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/philosophy.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -466,25 +538,25 @@
     },
     "commands/demo.md": {
       "content_hash": "sha256:1820b2ba3636bfc1d0d20b5ae062eeaf8d620519623c38cae1c675788c550c09",
-      "last_analyzed": "2026-04-16T18:01:59.701594Z",
+      "last_analyzed": "2026-04-17T23:25:08.505192Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/philosophy.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -494,25 +566,25 @@
     },
     "commands/doctor.fr.md": {
       "content_hash": "sha256:fa81cc513a5a669adb33d97b6b5c67b859e65ed019377839cde06182af1ad939",
-      "last_analyzed": "2026-04-16T18:01:59.709841Z",
+      "last_analyzed": "2026-04-17T23:25:08.505344Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -522,25 +594,25 @@
     },
     "commands/doctor.md": {
       "content_hash": "sha256:a6f4e138e77718e29a4a398d2cd48ae1d6855735774676a527c33617c0b65908",
-      "last_analyzed": "2026-04-16T18:01:59.717657Z",
+      "last_analyzed": "2026-04-17T23:25:08.505438Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -550,25 +622,25 @@
     },
     "commands/hook.fr.md": {
       "content_hash": "sha256:dc9a69483bde9fc38ca6053ff9f4c2c62764beee4510d0db6acd75faa6f2a098",
-      "last_analyzed": "2026-04-16T18:01:59.723802Z",
+      "last_analyzed": "2026-04-17T23:25:08.505501Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -578,19 +650,19 @@
     },
     "commands/hook.md": {
       "content_hash": "sha256:d6abdd45bc4bc93f37baf8fd5ddf8a158be8760b7ba7763651fc93609f9ae712",
-      "last_analyzed": "2026-04-16T18:01:59.730032Z",
+      "last_analyzed": "2026-04-17T23:25:08.505561Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -599,32 +671,32 @@
       "analyzer_schema_version": 1
     },
     "commands/index.fr.md": {
-      "content_hash": "sha256:87f72206ff4ca91b65ed0d5debd077ff692a35ff792acad5a573cf22e57cff00",
-      "last_analyzed": "2026-04-16T18:01:59.733039Z",
+      "content_hash": "sha256:b0c704db59c861b4303d851b555b7df1dec06e2d2c2f7963e749b4333ef7bf58",
+      "last_analyzed": "2026-04-17T23:25:08.505621Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/document-types.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 75,
@@ -634,31 +706,31 @@
     },
     "commands/index.md": {
       "content_hash": "sha256:ee8d8bf37e34fd71c44b1a537e29f2c05042958a799ed342c06cd8e95256315d",
-      "last_analyzed": "2026-04-16T18:01:59.736052Z",
+      "last_analyzed": "2026-04-17T23:25:08.505679Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/document-types.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 75,
@@ -668,37 +740,37 @@
     },
     "commands/init.fr.md": {
       "content_hash": "sha256:b1134aeb3f3476935333b822989daef98d86d4b95dfc45df5d2d2a5576bd4eef",
-      "last_analyzed": "2026-04-16T18:01:59.742666Z",
+      "last_analyzed": "2026-04-17T23:25:08.505738Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -708,31 +780,31 @@
     },
     "commands/init.md": {
       "content_hash": "sha256:332e2f1e314c04ad73f05d71ba97eb98809ec34516cd8ab52d4496d73c2087e2",
-      "last_analyzed": "2026-04-16T18:01:59.749016Z",
+      "last_analyzed": "2026-04-17T23:25:08.505796Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -742,31 +814,31 @@
     },
     "commands/list.fr.md": {
       "content_hash": "sha256:3c04dc18613704dac0dde6867852b870ee591c9d9e7b613401008437fc0e7e75",
-      "last_analyzed": "2026-04-16T18:01:59.753628Z",
+      "last_analyzed": "2026-04-17T23:25:08.505853Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -776,25 +848,25 @@
     },
     "commands/list.md": {
       "content_hash": "sha256:333da55c9d1b2dc96cf9303a28346f491a1c0eddc1d571a8a510eada92fc61b5",
-      "last_analyzed": "2026-04-16T18:01:59.758335Z",
+      "last_analyzed": "2026-04-17T23:25:08.50591Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -804,31 +876,31 @@
     },
     "commands/new.fr.md": {
       "content_hash": "sha256:f921b91bd8544a3c75ce668ce11ce7150ed823fd582fdc69e1467171b1e10454",
-      "last_analyzed": "2026-04-16T18:01:59.766373Z",
+      "last_analyzed": "2026-04-17T23:25:08.506024Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "warning",
           "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/document-types.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -838,25 +910,25 @@
     },
     "commands/new.md": {
       "content_hash": "sha256:b1f088de6ec02aece8a0aa56693ca7ec4573ea34db2f38532dd6b2ea19c8665f",
-      "last_analyzed": "2026-04-16T18:01:59.774694Z",
+      "last_analyzed": "2026-04-17T23:25:08.506087Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/document-types.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -866,37 +938,37 @@
     },
     "commands/pending.fr.md": {
       "content_hash": "sha256:3bddf3472ae679a3b9f2e3edc376d83e4f586b7627c407b24bb2aeee55758b05",
-      "last_analyzed": "2026-04-16T18:01:59.782064Z",
+      "last_analyzed": "2026-04-17T23:25:08.506156Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "warning",
           "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔌 Ouattara] Champs DTO sans colonne « Requis » — marque chaque champ ✅ (requis) ou — (optionnel)",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -906,25 +978,25 @@
     },
     "commands/pending.md": {
       "content_hash": "sha256:6da9c842503c699e5077489e526f68d1860da4786a96175df684bd6655b4f3a5",
-      "last_analyzed": "2026-04-16T18:01:59.789687Z",
+      "last_analyzed": "2026-04-17T23:25:08.506223Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -934,13 +1006,13 @@
     },
     "commands/release.fr.md": {
       "content_hash": "sha256:0132e6a0facb5909b3b1a22e9f8a316a8e854afbf7a065c2f773e5333408b4ee",
-      "last_analyzed": "2026-04-16T18:01:59.796178Z",
+      "last_analyzed": "2026-04-17T23:25:08.506288Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -950,13 +1022,13 @@
     },
     "commands/release.md": {
       "content_hash": "sha256:c93517e344ef3366e39168137ae87cfe41dec47fc751aa3b03d712862db4aa2b",
-      "last_analyzed": "2026-04-16T18:01:59.803052Z",
+      "last_analyzed": "2026-04-17T23:25:08.506354Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -966,25 +1038,25 @@
     },
     "commands/show.fr.md": {
       "content_hash": "sha256:95d3db1b7b059f7fe4e64140315b568418706f54ecab5ae3b6eb34c11718dc50",
-      "last_analyzed": "2026-04-16T18:01:59.809248Z",
+      "last_analyzed": "2026-04-17T23:25:08.506422Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.fr.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -994,19 +1066,19 @@
     },
     "commands/show.md": {
       "content_hash": "sha256:fe3772b432a1016118d6fac53421b83d589e7ad1ed3ade24a8eb406f11329a26",
-      "last_analyzed": "2026-04-16T18:01:59.815443Z",
+      "last_analyzed": "2026-04-17T23:25:08.506502Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1016,13 +1088,13 @@
     },
     "commands/status.fr.md": {
       "content_hash": "sha256:2252111f34b376fd34df0de02cc493255162eab738a635ba8b0e99b38611cbfe",
-      "last_analyzed": "2026-04-16T18:01:59.821722Z",
+      "last_analyzed": "2026-04-17T23:25:08.506573Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -1032,13 +1104,13 @@
     },
     "commands/status.md": {
       "content_hash": "sha256:1add97957ec593d26698ee5a3db2976633e2ffb534be452d8ed1ad3222e97186",
-      "last_analyzed": "2026-04-16T18:01:59.829004Z",
+      "last_analyzed": "2026-04-17T23:25:08.506643Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -1048,25 +1120,25 @@
     },
     "commands/upgrade.fr.md": {
       "content_hash": "sha256:5d00276e819de456217f41965263e864792192c94d2b7b4c31ef30b1f0e807fb",
-      "last_analyzed": "2026-04-16T18:01:59.83439Z",
+      "last_analyzed": "2026-04-17T23:25:08.506725Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/installation.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1076,25 +1148,25 @@
     },
     "commands/upgrade.md": {
       "content_hash": "sha256:d32637f121b64d442d448dc1dfd71c37bbb19f42fe0bcb73cc514e221d043d9d",
-      "last_analyzed": "2026-04-16T18:01:59.840301Z",
+      "last_analyzed": "2026-04-17T23:25:08.506799Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/installation.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1103,26 +1175,26 @@
       "analyzer_schema_version": 1
     },
     "contributing/architecture.fr.md": {
-      "content_hash": "sha256:2c9577348833ea7a73fd9d5c97496ec3c95cafa4645a59eaab4c6e8f8edec637",
-      "last_analyzed": "2026-04-16T18:01:59.846429Z",
+      "content_hash": "sha256:1933df0915f16aec74e58c4b5de18501fcf2fb79f81cd1c6bdc4bca5076210f7",
+      "last_analyzed": "2026-04-17T23:25:08.506872Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -1131,26 +1203,26 @@
       "analyzer_schema_version": 1
     },
     "contributing/architecture.md": {
-      "content_hash": "sha256:f86f6bbc3c6906ae001de3ac3242573cf8d370e9dfa958717b1c4aa183a510cd",
-      "last_analyzed": "2026-04-16T18:01:59.852043Z",
+      "content_hash": "sha256:0fad9af4f6f94d9f943b0d74425825645ac55d12d9dd845afc92d5ded5695bdd",
+      "last_analyzed": "2026-04-17T23:25:08.506945Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/contextual-detection.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -1160,25 +1232,25 @@
     },
     "faq.fr.md": {
       "content_hash": "sha256:8f29b435e89b43e60beab50f7a1003a955779e2fe91f66e5d31345ef8b6bb0d0",
-      "last_analyzed": "2026-04-16T18:01:59.866104Z",
+      "last_analyzed": "2026-04-17T23:25:08.507016Z",
       "suggestions": [
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/angela-polish.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1188,19 +1260,19 @@
     },
     "faq.md": {
       "content_hash": "sha256:295fd657d7a8f581480d5a2d10a7d02e926f27213ab45eb0ce22a35f32e2f80c",
-      "last_analyzed": "2026-04-16T18:01:59.878801Z",
+      "last_analyzed": "2026-04-17T23:25:08.507087Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "warning",
           "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1209,20 +1281,20 @@
       "analyzer_schema_version": 1
     },
     "getting-started/completions.fr.md": {
-      "content_hash": "sha256:35b0db139a31f61d6212e74262bd4d5f47893895e2e3f5d9563724bb0787d2bb",
-      "last_analyzed": "2026-04-16T18:01:59.883109Z",
+      "content_hash": "sha256:61083461bdd4709274f2986a9df355dffbc91e1023ec951dca57a5696627a841",
+      "last_analyzed": "2026-04-17T23:25:08.507156Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/completion.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 75,
@@ -1231,14 +1303,14 @@
       "analyzer_schema_version": 1
     },
     "getting-started/completions.md": {
-      "content_hash": "sha256:0ab544778774b9fd8a9645f9cc0cb113042004cad25faf29bc6a658dbe175d17",
-      "last_analyzed": "2026-04-16T18:01:59.886983Z",
+      "content_hash": "sha256:d4ce641714673cc2e61b1a5a9a3077d965756736f3b8a34f613bf212535e95b3",
+      "last_analyzed": "2026-04-17T23:25:08.507228Z",
       "suggestions": [
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/completion.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 75,
@@ -1248,19 +1320,19 @@
     },
     "getting-started/installation.fr.md": {
       "content_hash": "sha256:f07286cff4a384ab4ca7500c6d706cde80b05b0d386425dba1f3f3c8c4b267a1",
-      "last_analyzed": "2026-04-16T18:01:59.89092Z",
+      "last_analyzed": "2026-04-17T23:25:08.507306Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 90,
@@ -1270,13 +1342,13 @@
     },
     "getting-started/installation.md": {
       "content_hash": "sha256:0d4712dd5f7e3f6801a137bf27448325ec17f64e6a778fbb1e2e7d591272611e",
-      "last_analyzed": "2026-04-16T18:01:59.894805Z",
+      "last_analyzed": "2026-04-17T23:25:08.507377Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 90,
@@ -1285,44 +1357,50 @@
       "analyzer_schema_version": 1
     },
     "getting-started/quickstart.fr.md": {
-      "content_hash": "sha256:ab149e7e3da152948df610549cd4cd1fe275def3e4b5a8f9862180e601c6fefa",
-      "last_analyzed": "2026-04-16T18:01:59.897928Z",
+      "content_hash": "sha256:fd0d3c09d02edc1fb157b6cd10ba03f319627273f538c0ee8f6e2bbf2284fbaa",
+      "last_analyzed": "2026-04-17T23:25:08.507443Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Le document \"commands/angela-consult.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/angela-draft.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 75,
@@ -1331,66 +1409,60 @@
       "analyzer_schema_version": 1
     },
     "getting-started/quickstart.md": {
-      "content_hash": "sha256:f33df6c6503f009a2d3d0aac2ea8df8019dfca6879a74734265687c67456ab86",
-      "last_analyzed": "2026-04-16T18:01:59.901788Z",
+      "content_hash": "sha256:b08d616b975e10b100407c3999fa31f9325374faa94470d0b854ed5c1bd099ec",
+      "last_analyzed": "2026-04-17T23:25:08.507512Z",
       "suggestions": [
-        {
-          "category": "persona",
-          "severity": "info",
-          "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
-          "diff_status": "new"
-        },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/angela-consult.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/angela-draft.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/angela-ci.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"guides/configuration.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
-      "score": 75,
-      "grade": "B",
+      "score": 95,
+      "grade": "A",
       "profile": "free-form",
       "analyzer_schema_version": 1
     },
     "guides/angela-ci.fr.md": {
-      "content_hash": "sha256:209fc8b052e9f227aba97a5329facfc7eb468e3903a94d83f39cc6256c8bdc54",
-      "last_analyzed": "2026-04-16T18:01:59.914126Z",
+      "content_hash": "sha256:0b1c423992a452a72b7bb22dc2210ee4f868e24e2596c3160834e0440365d8b2",
+      "last_analyzed": "2026-04-17T23:25:08.507616Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,
@@ -1399,24 +1471,24 @@
       "analyzer_schema_version": 1
     },
     "guides/angela-ci.md": {
-      "content_hash": "sha256:fff2acce9b6c3a85fe3466905f33b84fb050439d486b1ecd65fbdc16f9a31797",
-      "last_analyzed": "2026-04-16T18:01:59.929352Z",
+      "content_hash": "sha256:0c10ad83abc03d7c826ab84bdd2b9da6e49bd3c0cd65c79008e3b1c7ecf6afd6",
+      "last_analyzed": "2026-04-17T23:25:08.507689Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
-      "score": 95,
+      "score": 100,
       "grade": "A",
       "profile": "free-form",
       "analyzer_schema_version": 1
     },
-    "guides/comparaison.fr.md": {
+    "guides/comparison.fr.md": {
       "content_hash": "sha256:8841cbe66645b7400d7feeaf6f57ae1f9d1e921380c85f3f75234cf61da28dab",
-      "last_analyzed": "2026-04-16T18:01:59.937202Z",
+      "last_analyzed": "2026-04-17T23:25:08.516019Z",
       "suggestions": [
         {
           "category": "persona",
@@ -1428,40 +1500,6 @@
           "category": "persona",
           "severity": "info",
           "message": "[🔌 Ouattara] Champs DTO sans colonne « Requis » — marque chaque champ ✅ (requis) ou — (optionnel)",
-          "diff_status": "new"
-        },
-        {
-          "category": "coherence",
-          "severity": "info",
-          "message": "Le document \"faq.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
-        },
-        {
-          "category": "coherence",
-          "severity": "info",
-          "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
-        },
-        {
-          "category": "coherence",
-          "severity": "info",
-          "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
-        }
-      ],
-      "score": 85,
-      "grade": "A",
-      "profile": "free-form",
-      "analyzer_schema_version": 1
-    },
-    "guides/comparaison.md": {
-      "content_hash": "sha256:19a639d5c391b221477bbbb049f6aedc73141af2f6f16b1472f91d93dc8af884",
-      "last_analyzed": "2026-04-16T18:01:59.944685Z",
-      "suggestions": [
-        {
-          "category": "persona",
-          "severity": "info",
-          "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
           "diff_status": "new"
         },
         {
@@ -1490,31 +1528,31 @@
     },
     "guides/comparison.md": {
       "content_hash": "sha256:19a639d5c391b221477bbbb049f6aedc73141af2f6f16b1472f91d93dc8af884",
-      "last_analyzed": "2026-04-16T18:01:59.952126Z",
+      "last_analyzed": "2026-04-17T23:25:08.516177Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"faq.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"index.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1523,44 +1561,44 @@
       "analyzer_schema_version": 1
     },
     "guides/configuration.fr.md": {
-      "content_hash": "sha256:9fc130210f70b597612f7aa6aaed91a6af2adf622dc77cb890f0ecdab03b3b82",
-      "last_analyzed": "2026-04-16T18:01:59.970006Z",
+      "content_hash": "sha256:10cb792ca2822444277d25d9aab29c21b5a4ab03d95d882481922815eec0c359",
+      "last_analyzed": "2026-04-17T23:25:08.516312Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔌 Ouattara] Endpoints sans réponses d'erreur documentées — ajoute une section « Error Responses » avec au moins 400, 401, 403, 404, 500",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/config.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/doctor.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"faq.fr.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"faq.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1569,38 +1607,38 @@
       "analyzer_schema_version": 1
     },
     "guides/configuration.md": {
-      "content_hash": "sha256:0cbbd4241ca8070ad326faabd6e3063a666416a4bc8e2a6e4e1de09734b265be",
-      "last_analyzed": "2026-04-16T18:01:59.986471Z",
+      "content_hash": "sha256:6997960b4a1da6d9303a36c50514a28c7cda66927213b717f2bd5806717198c1",
+      "last_analyzed": "2026-04-17T23:25:08.516402Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔌 Ouattara] Endpoints sans réponses d'erreur documentées — ajoute une section « Error Responses » avec au moins 400, 401, 403, 404, 500",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/config.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/doctor.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"faq.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 85,
@@ -1610,25 +1648,25 @@
     },
     "guides/contextual-detection.fr.md": {
       "content_hash": "sha256:83f6ba387f0f47411f0b3eb12ce99b483958c7cbec03381544dbcb45bce23486",
-      "last_analyzed": "2026-04-16T18:01:59.995966Z",
+      "last_analyzed": "2026-04-17T23:25:08.51649Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/decision.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/pending.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -1638,25 +1676,25 @@
     },
     "guides/contextual-detection.md": {
       "content_hash": "sha256:c88da8fb3eae778680164ff5aefdd0fa7b08fec5d9bfb33f7e47cfe1d0e6d13e",
-      "last_analyzed": "2026-04-16T18:02:00.004886Z",
+      "last_analyzed": "2026-04-17T23:25:08.516583Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/decision.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/pending.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -1666,37 +1704,37 @@
     },
     "guides/document-types.fr.md": {
       "content_hash": "sha256:404d4c2b635c9c974aec25baf3741b43d380d7e52b98003258da0659fba2fb3b",
-      "last_analyzed": "2026-04-16T18:02:00.011408Z",
+      "last_analyzed": "2026-04-17T23:25:08.516666Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "warning",
           "message": "[🔌 Ouattara] Endpoints listés sans exemple de requête HTTP — ajoute un bloc ```http avec méthode, URL, headers et body",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/list.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/new.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/show.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -1706,31 +1744,31 @@
     },
     "guides/document-types.md": {
       "content_hash": "sha256:66360991248034cf06de10e9b2a95f508e05be4b380102cc03277b454872c45f",
-      "last_analyzed": "2026-04-16T18:02:00.017738Z",
+      "last_analyzed": "2026-04-17T23:25:08.516747Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/list.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/new.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"commands/show.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 100,
@@ -1738,65 +1776,43 @@
       "profile": "free-form",
       "analyzer_schema_version": 1
     },
+    "guides/examples.fr.md": {
+      "content_hash": "sha256:796070d3bd252a2b510056853e981836a84892c5963f6f578da53a80cdcdc503",
+      "last_analyzed": "2026-04-17T23:25:08.518412Z",
+      "suggestions": [
+        {
+          "category": "persona",
+          "severity": "info",
+          "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
+          "diff_status": "new"
+        },
+        {
+          "category": "coherence",
+          "severity": "info",
+          "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "diff_status": "new"
+        }
+      ],
+      "score": 80,
+      "grade": "B",
+      "profile": "free-form",
+      "analyzer_schema_version": 1
+    },
     "guides/examples.md": {
       "content_hash": "sha256:7fe13fb88a902e9e54c659d0a7852f4ace8f7171058959d99f91139d8b85e719",
-      "last_analyzed": "2026-04-16T18:02:00.019539Z",
+      "last_analyzed": "2026-04-17T23:25:08.518525Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
-        }
-      ],
-      "score": 80,
-      "grade": "B",
-      "profile": "free-form",
-      "analyzer_schema_version": 1
-    },
-    "guides/exemples.fr.md": {
-      "content_hash": "sha256:796070d3bd252a2b510056853e981836a84892c5963f6f578da53a80cdcdc503",
-      "last_analyzed": "2026-04-16T18:02:00.021436Z",
-      "suggestions": [
-        {
-          "category": "persona",
-          "severity": "info",
-          "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
-        },
-        {
-          "category": "coherence",
-          "severity": "info",
-          "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
-        }
-      ],
-      "score": 80,
-      "grade": "B",
-      "profile": "free-form",
-      "analyzer_schema_version": 1
-    },
-    "guides/exemples.md": {
-      "content_hash": "sha256:7fe13fb88a902e9e54c659d0a7852f4ace8f7171058959d99f91139d8b85e719",
-      "last_analyzed": "2026-04-16T18:02:00.023084Z",
-      "suggestions": [
-        {
-          "category": "persona",
-          "severity": "info",
-          "message": "[🏗️ Doumbia] Contenu architectural sans compromis explicites — qu'est-ce qui a été envisagé et rejeté ?",
-          "diff_status": "new"
-        },
-        {
-          "category": "coherence",
-          "severity": "info",
-          "message": "Le document \"getting-started/quickstart.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 80,
@@ -1805,14 +1821,14 @@
       "analyzer_schema_version": 1
     },
     "guides/philosophy.fr.md": {
-      "content_hash": "sha256:902195379ff85a29b66fd9a5298d01428709cd0bc52ce40c877ee22f9f5c884e",
-      "last_analyzed": "2026-04-16T18:02:00.030284Z",
+      "content_hash": "sha256:a05acb4ded94b97e0ae26cf1aeced7d05ec2fdfe4618e562a3020375489fcfc6",
+      "last_analyzed": "2026-04-17T23:25:08.525654Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 75,
@@ -1821,14 +1837,14 @@
       "analyzer_schema_version": 1
     },
     "guides/philosophy.md": {
-      "content_hash": "sha256:6b9d6dcd73d16eb94f8d9eea2abf98635523c415e53c5bf02f3c1d8def8117fb",
-      "last_analyzed": "2026-04-16T18:02:00.037426Z",
+      "content_hash": "sha256:a3eaa0110a69277fcb48a136cdf5e043f896b8bddad8085c1f33fce953e1b3eb",
+      "last_analyzed": "2026-04-17T23:25:08.525754Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 75,
@@ -1838,19 +1854,19 @@
     },
     "guides/roadmap.fr.md": {
       "content_hash": "sha256:942cdf8368c26e45f110300614b7283a18ba9a84cd5d1ac6eeca7b09f7ae9dfb",
-      "last_analyzed": "2026-04-16T18:02:00.042606Z",
+      "last_analyzed": "2026-04-17T23:25:08.52588Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"contributing/architecture.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 90,
@@ -1860,13 +1876,13 @@
     },
     "guides/roadmap.md": {
       "content_hash": "sha256:ddc761774dc8a988034fec7a2dfdc1755c9106bd2144c6c98ff52968256ba5a8",
-      "last_analyzed": "2026-04-16T18:02:00.047157Z",
+      "last_analyzed": "2026-04-17T23:25:08.526002Z",
       "suggestions": [
         {
           "category": "coherence",
           "severity": "info",
           "message": "Le document \"contributing/architecture.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 90,
@@ -1875,25 +1891,25 @@
       "analyzer_schema_version": 1
     },
     "index.fr.md": {
-      "content_hash": "sha256:aac1684915915f132c50e5ff56a705b9e0352612ad599db1eb0e083f23f2c0d6",
-      "last_analyzed": "2026-04-16T18:02:00.053467Z",
+      "content_hash": "sha256:aa29f63c7457e3c6eb02b7eee0926fb795ecc2be6fb0ecc06b4a18fc7874e2a7",
+      "last_analyzed": "2026-04-17T23:25:08.532205Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "persona",
           "severity": "info",
           "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
-          "diff_status": "new"
+          "diff_status": "persisting"
         },
         {
           "category": "coherence",
           "severity": "info",
-          "message": "Le document \"guides/comparaison.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
+          "message": "Le document \"guides/comparison.md\" est mentionné dans le corps — envisagez de l'ajouter aux références",
           "diff_status": "new"
         }
       ],
@@ -1903,14 +1919,14 @@
       "analyzer_schema_version": 1
     },
     "index.md": {
-      "content_hash": "sha256:1a21c17e21f1b56e6a5b9d18c870209f2413e08948c88015cd3157bb5252888b",
-      "last_analyzed": "2026-04-16T18:02:00.05943Z",
+      "content_hash": "sha256:6153836fdb6d13b499ac37c6836489bda960c043129e4962e48a1857a81471b3",
+      "last_analyzed": "2026-04-17T23:25:08.532326Z",
       "suggestions": [
         {
           "category": "persona",
           "severity": "info",
           "message": "[✏️ Sialou] Paragraphe(s) \u003e 5 lignes détecté(s) — envisagez de découper en puces",
-          "diff_status": "new"
+          "diff_status": "persisting"
         }
       ],
       "score": 95,

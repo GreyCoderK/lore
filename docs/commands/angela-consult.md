@@ -6,6 +6,7 @@ related:
     - angela-draft.md
     - angela-polish.md
     - angela-review.md
+    - angela-personas.md
 angela_mode: polish
 ---
 # lore angela consult

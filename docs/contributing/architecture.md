@@ -4,10 +4,11 @@ date: 2026-04-12
 status: published
 related:
   - architecture.fr.md
+angela_mode: polish
 ---
 # Architecture (for Contributors)
 
-A concise overview of the lore codebase. For contribution guidelines, see `CONTRIBUTING.md` at the project root.
+A concise overview of the Lore codebase. For contribution guidelines, see `CONTRIBUTING.md` at the project root.
 
 ## Project Structure
 

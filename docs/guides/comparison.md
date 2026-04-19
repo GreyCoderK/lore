@@ -6,6 +6,7 @@ related:
   - philosophy.md
   - ../getting-started/quickstart.md
   - ../faq.md
+angela_mode: polish
 ---
 # How Lore Compares
 
@@ -13,7 +14,7 @@ related:
 
 Many tools exist for documenting software decisions, but most share a fundamental flaw: they ask developers to stop what they're doing and write documentation *separately* from coding. That's like asking a surgeon to write their operation notes the next day from memory.
 
-lore takes a different approach: **capture at the moment of the decision**, not after.
+Lore takes a different approach: **capture at the moment of the decision**, not after.
 
 ## Quick Comparison
 
@@ -42,7 +43,7 @@ Commit moment  ████████████████████ 100%
 6 months later ░░░░░░░░░░░░░░░░░░░░   0% context
 ```
 
-lore captures at the peak. Everything else captures on the decline.
+Lore captures at the peak. Everything else captures on the decline.
 
 ## Detailed Comparisons
 
@@ -50,7 +51,7 @@ lore captures at the peak. Everything else captures on the decline.
 
 **Swimm** is a SaaS documentation platform that lives alongside your code. It is well-designed and has solid IDE integrations.
 
-| Aspect | lore | Swimm |
+| Aspect | Lore | Swimm |
 |--------|------|-------|
 | **Capture moment** | Automatically at commit | Manually, when you remember |
 | **Data location** | Your repo (`.lore/docs/`) | Swimm's servers |
@@ -59,7 +60,7 @@ lore captures at the peak. Everything else captures on the decline.
 | **Price** | Free forever | $28/seat/month |
 | **Vendor risk** | None (Markdown files) | Company could pivot, raise prices, or shut down |
 
-**When Swimm is better:** Large teams that need collaborative editing, visual documentation, and IDE widgets. **When lore is better:** Developers who want zero-friction, local-first, commit-time capture with no subscription.
+**When Swimm is better:** Large teams that need collaborative editing, visual documentation, and IDE widgets. **When Lore is better:** Developers who want zero-friction, local-first, commit-time capture with no subscription.
 
 ### Lore vs Confluence
 
@@ -67,13 +68,13 @@ lore captures at the peak. Everything else captures on the decline.
 
 The core problem: nobody updates Confluence. Pages rot. The "Authentication Architecture" page was written 18 months ago by someone who has since left. It describes a system that no longer exists. Everyone knows it's wrong, but nobody has time to fix it.
 
-lore sidesteps this problem because documents are created **at the moment of change**. They cannot rot silently — `lore angela review` catches contradictions, and `lore doctor` flags stale content.
+Lore sidesteps this problem because documents are created **at the moment of change**. They cannot rot silently — `lore angela review` catches contradictions, and `lore doctor` flags stale content.
 
 ### Lore vs ADRs
 
 **Architecture Decision Records** (ADRs) are Markdown files that document significant architectural decisions. They are great.
 
-lore is **not** a replacement for ADRs — they are complementary:
+Lore is **not** a replacement for ADRs — they are complementary:
 
 | | ADRs | Lore |
 |---|---|---|
@@ -82,19 +83,19 @@ lore is **not** a replacement for ADRs — they are complementary:
 | **Trigger** | Manual ("someone should write an ADR") | Automatic (post-commit hook) |
 | **Example** | "We chose PostgreSQL over MongoDB" | "Why we added this index to the users table" |
 
-The best setup: ADRs for the big picture, lore for the daily details. Over time, lore documents naturally feed into ADR discussions.
+The best setup: ADRs for the big picture, Lore for the daily details. Over time, Lore documents naturally feed into ADR discussions.
 
 ### Lore vs Conventional Commits
 
-**Conventional Commits** (`feat:`, `fix:`, `docs:`) standardize the **what**. lore captures the **why**. They work beautifully together:
+**Conventional Commits** (`feat:`, `fix:`, `docs:`) standardize the **what**. Lore captures the **why**. They work beautifully together:
 
 ```bash
 git commit -m "feat(auth): add JWT middleware"
 # Conventional Commit tells you: it's a feature, in the auth scope
-# lore asks: WHY JWT? WHY now? What alternatives were considered?
+# Lore asks: WHY JWT? WHY now? What alternatives were considered?
 ```
 
-lore pre-fills the "What" field from your commit message. If you use Conventional Commits, lore's Decision Engine recognizes the type prefix and adjusts scoring accordingly.
+Lore pre-fills the "What" field from your commit message. If you use Conventional Commits, Lore's Decision Engine recognizes the type prefix and adjusts scoring accordingly.
 
 ### Lore vs Doing Nothing
 
@@ -107,10 +108,10 @@ The cost of lost context is real but invisible:
 - **Onboarding friction** — New team members spend weeks asking "why is this like this?"
 - **Review delays** — PRs stall because reviewers lack the reasoning behind changes
 
-lore's bet: **90 seconds per commit is worth it.** Over a year, that's ~6 hours of documentation for ~1,500 commits. The return: a searchable knowledge base that saves hundreds of hours of "why did we do this?"
+Lore's bet: **90 seconds per commit is worth it.** Over a year, that's ~6 hours of documentation for ~1,500 commits. The return: a searchable knowledge base that saves hundreds of hours of "why did we do this?"
 
 ## See Also
 
-- [Philosophy](philosophy.md) — The principles behind lore
+- [Philosophy](philosophy.md) — The principles behind Lore
 - [Quickstart](../getting-started/quickstart.md) — Try it in 5 minutes
 - [FAQ](../faq.md) — Common questions

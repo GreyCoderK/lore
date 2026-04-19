@@ -6,6 +6,7 @@ related:
   - init.md
   - ../getting-started/quickstart.md
   - ../guides/philosophy.md
+angela_mode: polish
 ---
 # lore demo
 
@@ -21,7 +22,7 @@ lore demo
 
 Runs a guided ~45-second simulation of the complete documentation flow: commit → questions → document → retrieval. A real file is created and marked as "demo" for easy cleanup.
 
-> **Analogy:** Like a test drive — you experience the full thing without buying. `lore demo` shows lore's complete workflow with no commitment.
+> **Analogy:** Like a test drive — you experience the full thing without buying. `lore demo` shows Lore's complete workflow with no commitment.
 
 ## Real World Scenario
 
@@ -135,7 +136,7 @@ lore delete example-demo-2026-03-16.md
 
 ## Tips & Tricks
 
-- **Convince your team:** `lore demo` is the fastest way to show lore to colleagues — 45 seconds, no slides.
+- **Convince your team:** `lore demo` is the fastest way to show Lore to colleagues — 45 seconds, no slides.
 - **Screen-sharing friendly:** The pauses between steps are designed for live demonstrations.
 - **Safe to re-run:** Each run creates a new document. Old demo docs can be deleted without confirmation.
 - **Demo docs do not count:** Documents with `status: "demo"` are excluded from coverage metrics in `lore status`.

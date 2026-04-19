@@ -6,6 +6,7 @@ related:
     - angela-draft.fr.md
     - angela-polish.fr.md
     - angela-review.fr.md
+    - angela-personas.fr.md
 angela_mode: polish
 ---
 # lore angela consult

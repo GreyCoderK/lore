@@ -7,6 +7,7 @@ related:
   - angela-draft.md
   - angela-polish.md
   - doctor.md
+angela_mode: polish
 ---
 # lore config
 
@@ -163,7 +164,7 @@ ai:
   model: "claude-sonnet-4-20250514"
 ```
 
-The key alone is not enough — lore also needs to know which provider to route it to.
+The key alone is not enough — Lore also needs to know which provider to route it to.
 
 ### "Can I have different keys per project?"
 

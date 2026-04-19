@@ -6,6 +6,7 @@ related:
   - doctor.md
   - list.md
   - pending.md
+angela_mode: polish
 ---
 # lore status
 

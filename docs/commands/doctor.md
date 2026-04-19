@@ -5,6 +5,7 @@ status: published
 related:
   - status.md
   - ../guides/configuration.md
+angela_mode: polish
 ---
 # lore doctor
 
@@ -189,7 +190,7 @@ Yes. `store.db` is a cache reconstructed from your Markdown files. Rebuilding lo
 
 ### "Doctor says 'manual fix required'"
 
-Broken references and invalid front matter cannot be auto-fixed because lore cannot infer the correct value. Open the flagged file, fix it manually, then re-run `lore doctor`.
+Broken references and invalid front matter cannot be auto-fixed because Lore cannot infer the correct value. Open the flagged file, fix it manually, then re-run `lore doctor`.
 
 ### "Should I run doctor after every merge?"
 
