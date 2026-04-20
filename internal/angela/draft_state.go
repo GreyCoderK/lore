@@ -46,6 +46,15 @@ import (
 // resolve/ignore mark a user had accumulated.
 var ErrStateCorrupt = errors.New("state file corrupt or incompatible")
 
+// QuarantineTimestampLayout is the Go reference-time layout used for
+// the `.corrupt-<stamp>` suffix on quarantined state files. Exported
+// so the single format is shared by the producer (this file) and the
+// consumer (internal/angela/gc/corrupt_quarantine_pruner.go). Story
+// 8-23 P0 fix: previously the format lived as a literal in both sites
+// and could silently drift if one side was changed — the pruner would
+// then fail to parse stamps and never delete anything.
+const QuarantineTimestampLayout = "20060102T150405.000"
+
 // QuarantineCorruptState renames a broken state file aside with a
 // timestamped `.corrupt-<ts>` suffix so the user can recover it by
 // hand if needed. Returns the quarantine path on success, or an empty
@@ -56,7 +65,7 @@ func QuarantineCorruptState(path string) (string, error) {
 	if path == "" {
 		return "", fmt.Errorf("angela: quarantine: empty path")
 	}
-	stamp := time.Now().UTC().Format("20060102T150405.000")
+	stamp := time.Now().UTC().Format(QuarantineTimestampLayout)
 	quarPath := path + ".corrupt-" + stamp
 	if err := os.Rename(path, quarPath); err != nil {
 		return "", fmt.Errorf("angela: quarantine: rename: %w", err)

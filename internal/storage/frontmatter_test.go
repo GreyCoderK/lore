@@ -4,6 +4,7 @@
 package storage
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -399,6 +400,199 @@ func TestValidateMeta_InvalidDateFormat(t *testing.T) {
 			}
 			if !strings.Contains(err.Error(), "YYYY-MM-DD") {
 				t.Errorf("error should mention format, got: %v", err)
+			}
+		})
+	}
+}
+
+// --- ExtractFrontmatter tests (story 8-21, invariant I24 foundation) ------
+
+func TestExtractFrontmatter_ReturnsBytesVerbatim(t *testing.T) {
+	// Key ordering, quote styles, and whitespace must survive round-trip
+	// with zero mutation. This is the anchor of I24 — no YAML
+	// re-serialization may touch fmBytes.
+	src := []byte("---\n" +
+		"type: decision\n" +
+		"date: \"2026-04-10\"\n" +
+		"status: published\n" +
+		"custom: 'single-quoted'\n" +
+		"---\n" +
+		"# Body\nContent here.\n")
+
+	fmBytes, bodyBytes, err := ExtractFrontmatter(src)
+	if err != nil {
+		t.Fatalf("ExtractFrontmatter: %v", err)
+	}
+
+	wantFM := "---\n" +
+		"type: decision\n" +
+		"date: \"2026-04-10\"\n" +
+		"status: published\n" +
+		"custom: 'single-quoted'\n" +
+		"---\n"
+	if string(fmBytes) != wantFM {
+		t.Errorf("fmBytes mismatch:\n got: %q\nwant: %q", string(fmBytes), wantFM)
+	}
+
+	wantBody := "# Body\nContent here.\n"
+	if string(bodyBytes) != wantBody {
+		t.Errorf("bodyBytes mismatch:\n got: %q\nwant: %q", string(bodyBytes), wantBody)
+	}
+}
+
+func TestExtractFrontmatter_ConcatEqualsSource(t *testing.T) {
+	// Postcondition: fmBytes + bodyBytes == normalized_input, byte-for-byte.
+	// This is the concrete I24 identity property across varied body shapes.
+	cases := []struct {
+		name string
+		src  string
+	}{
+		{"simple_body", "---\ntype: decision\ndate: \"2026-04-10\"\nstatus: published\n---\n## Body\n"},
+		{"no_trailing_newline_on_body", "---\ntype: note\ndate: \"2026-01-01\"\nstatus: draft\n---\nbody"},
+		{"empty_body", "---\ntype: note\ndate: \"2026-01-01\"\nstatus: draft\n---\n"},
+		{"body_with_leading_blanks", "---\ntype: note\ndate: \"2026-01-01\"\nstatus: draft\n---\n\n\n# Heading\n"},
+		{"body_with_code_fence_containing_dashes", "---\ntype: note\ndate: \"2026-01-01\"\nstatus: draft\n---\n```\n---\nnot a delimiter inside code\n```\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fmBytes, bodyBytes, err := ExtractFrontmatter([]byte(tc.src))
+			if err != nil {
+				t.Fatalf("ExtractFrontmatter: %v", err)
+			}
+			got := string(fmBytes) + string(bodyBytes)
+			if got != tc.src {
+				t.Errorf("concat mismatch:\n got: %q\nwant: %q", got, tc.src)
+			}
+		})
+	}
+}
+
+func TestExtractFrontmatter_MissingFM_TypedError(t *testing.T) {
+	cases := []struct {
+		name string
+		src  []byte
+	}{
+		{"empty", []byte("")},
+		{"plain_markdown", []byte("# Just a markdown file without front matter\n")},
+		{"random_prose", []byte("some other stuff\n")},
+		{"two_dashes_not_three", []byte("-- not quite three dashes\n")},
+		{"three_dashes_no_newline", []byte("---not a proper delimiter\n")},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, err := ExtractFrontmatter(tc.src)
+			if !errors.Is(err, ErrFrontmatterMissing) {
+				t.Errorf("expected ErrFrontmatterMissing, got %v", err)
+			}
+		})
+	}
+}
+
+func TestExtractFrontmatter_MalformedYAML_TypedError(t *testing.T) {
+	cases := []struct {
+		name string
+		src  []byte
+	}{
+		{"unclosed_delimiter", []byte("---\ntype: decision\nbody without closing delimiter\n")},
+		{"empty_yaml_block", []byte("---\n---\nbody\n")},
+		{"opening_only", []byte("---\n")},
+		{"yaml_parse_error", []byte("---\ntype: [unclosed\n---\nbody\n")},
+		{"whitespace_only_yaml", []byte("---\n\n\n---\nbody\n")},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, err := ExtractFrontmatter(tc.src)
+			if !errors.Is(err, ErrFrontmatterMalformed) {
+				t.Errorf("expected ErrFrontmatterMalformed, got %v", err)
+			}
+		})
+	}
+}
+
+func TestExtractFrontmatter_CRLFNormalized(t *testing.T) {
+	srcCRLF := "---\r\ntype: note\r\ndate: \"2026-01-01\"\r\nstatus: draft\r\n---\r\nbody line\r\n"
+	fmBytes, bodyBytes, err := ExtractFrontmatter([]byte(srcCRLF))
+	if err != nil {
+		t.Fatalf("ExtractFrontmatter: %v", err)
+	}
+	wantFM := "---\ntype: note\ndate: \"2026-01-01\"\nstatus: draft\n---\n"
+	if string(fmBytes) != wantFM {
+		t.Errorf("fmBytes:\n got: %q\nwant: %q", string(fmBytes), wantFM)
+	}
+	if string(bodyBytes) != "body line\n" {
+		t.Errorf("bodyBytes: got %q, want %q", string(bodyBytes), "body line\n")
+	}
+	// Concat identity still holds on the normalized form.
+	normalized := strings.ReplaceAll(srcCRLF, "\r\n", "\n")
+	if string(fmBytes)+string(bodyBytes) != normalized {
+		t.Errorf("concat does not equal normalized input")
+	}
+}
+
+// TestExtractFrontmatter_UTF8BOM_Stripped covers the P0 regression:
+// files saved with a UTF-8 BOM prefix (\xEF\xBB\xBF) previously
+// failed `HasPrefix("---\n")`, returned ErrFrontmatterMissing, and
+// downstream `doctor --fix` prepended a fresh FM ON TOP of the
+// existing one (violating I31). The BOM must be stripped before
+// delimiter detection so BOM+valid-FM parses correctly.
+func TestExtractFrontmatter_UTF8BOM_Stripped(t *testing.T) {
+	bom := "\xEF\xBB\xBF"
+	src := bom + "---\ntype: decision\ndate: \"2026-04-19\"\nstatus: draft\n---\nbody\n"
+	fmBytes, bodyBytes, err := ExtractFrontmatter([]byte(src))
+	if err != nil {
+		t.Fatalf("ExtractFrontmatter must accept BOM+FM, got err=%v", err)
+	}
+	wantFM := "---\ntype: decision\ndate: \"2026-04-19\"\nstatus: draft\n---\n"
+	if string(fmBytes) != wantFM {
+		t.Errorf("fmBytes:\n got: %q\nwant: %q", string(fmBytes), wantFM)
+	}
+	if string(bodyBytes) != "body\n" {
+		t.Errorf("bodyBytes: got %q, want %q", string(bodyBytes), "body\n")
+	}
+}
+
+// TestExtractFrontmatter_BOMPlusCRLF combines both normalizations —
+// a legacy Windows editor (Notepad) emits BOM+CRLF. The strip of BOM
+// must happen before the CRLF→LF conversion and before delimiter
+// detection.
+func TestExtractFrontmatter_BOMPlusCRLF(t *testing.T) {
+	src := "\xEF\xBB\xBF---\r\ntype: note\r\ndate: \"2026-04-19\"\r\nstatus: draft\r\n---\r\nbody\r\n"
+	fmBytes, bodyBytes, err := ExtractFrontmatter([]byte(src))
+	if err != nil {
+		t.Fatalf("ExtractFrontmatter must accept BOM+CRLF+FM, got err=%v", err)
+	}
+	wantFM := "---\ntype: note\ndate: \"2026-04-19\"\nstatus: draft\n---\n"
+	if string(fmBytes) != wantFM {
+		t.Errorf("fmBytes:\n got: %q\nwant: %q", string(fmBytes), wantFM)
+	}
+	if string(bodyBytes) != "body\n" {
+		t.Errorf("bodyBytes: got %q, want %q", string(bodyBytes), "body\n")
+	}
+}
+
+func TestExtractFrontmatter_PreservesInnerYAMLQuirks(t *testing.T) {
+	// Sources with YAML comments, blank lines between keys, or tag-style
+	// values must all survive untouched. This guards against a well-meaning
+	// refactor that routes ExtractFrontmatter through yaml.Marshal.
+	cases := []struct {
+		name      string
+		innerYAML string
+	}{
+		{"with_comment", "type: decision\n# this comment must survive\ndate: \"2026-04-10\"\nstatus: published\n"},
+		{"with_blank_line", "type: decision\n\ndate: \"2026-04-10\"\nstatus: published\n"},
+		{"unquoted_date", "type: decision\ndate: 2026-04-10\nstatus: published\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			src := "---\n" + tc.innerYAML + "---\nbody\n"
+			fmBytes, _, err := ExtractFrontmatter([]byte(src))
+			if err != nil {
+				t.Fatalf("ExtractFrontmatter: %v", err)
+			}
+			// The inner YAML bytes must be identical to tc.innerYAML.
+			wantFM := "---\n" + tc.innerYAML + "---\n"
+			if string(fmBytes) != wantFM {
+				t.Errorf("fmBytes:\n got: %q\nwant: %q", string(fmBytes), wantFM)
 			}
 		})
 	}

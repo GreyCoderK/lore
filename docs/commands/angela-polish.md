@@ -60,6 +60,8 @@ lore angela polish <filename> [flags]
 | `--no-synthesizers` | bool | `false` | Disable all Example Synthesizers for this run |
 | `--set-status` | string | | Update frontmatter `status` after apply (e.g. `reviewed`, `published`) |
 | `--persona` | string | | Force a single persona lens for this run |
+| `--arbitrate-rule` | string | | Non-interactive resolution rule for duplicate sections produced by the AI: `first`, `second`, `both`, `abort`. Required in non-TTY when duplicates are detected. Mutually exclusive with `--interactive`. |
+| `--verbose` / `-v` | bool | `false` | Surface structural-integrity events (stripped leaked frontmatter, arbitration details) on stderr. Always recorded in `polish.log` regardless. |
 
 ## How It Works (Step by Step)
 
@@ -594,15 +596,95 @@ After the AI responds, Angela applies local transforms (no API call):
 - **`--for` for team sharing:** Generate audience-specific versions without modifying the original.
 - **Ollama for experimentation:** Use a local model to test without spending credits.
 - **Re-polish is safe:** Each call reads the current file. No risk of overwriting your edits.
-- **After polishing:** The front matter gets `angela_mode: "polish"` added automatically.
+- **After polishing:** Your frontmatter bytes are preserved byte-for-byte (invariant I24). Polish never re-serializes the YAML — quote styles, comments, and key order survive. See *Structural Integrity Guards* below.
 - **Multi-pass is automatic:** For large documents, Angela splits into sections to stay within token limits.
+
+## Structural Integrity Guards
+
+Polish enforces seven invariants (I24–I30) that protect your document from accidental corruption — whether the AI misbehaves, a provider returns a malformed response, or a CI script runs the command in an unexpected context. Each guard is silent on the happy path; when it fires, polish either refuses cleanly or lets you arbitrate.
+
+### Frontmatter preserved byte-for-byte (I24)
+
+Polish reads the `---...---` block from your source and re-attaches the **same bytes** to the rewritten body. No YAML re-serialization: quote styles (`date: "2026-04-10"` vs `date: 2026-04-10`), key order, inline comments, and blank lines are preserved.
+
+> **Why this matters:** a round-trip through `yaml.Marshal` silently reformats your metadata. Over dozens of polish calls that drift accumulates and blows up diffs. Byte-identity stops the drift at run 1.
+
+### AI prompt excludes frontmatter (I25)
+
+Angela strips `---...---` before sending the body to the provider. The AI never sees your metadata, never has the opportunity to leak it, rewrite it, or invent new keys. Hard rules in the system prompt reinforce: **"Return ONLY the improved BODY."**
+
+### Leaked `---` stripped from AI output (I26)
+
+If the provider ignores the rules and returns a full doc with a `---`-delimited header, polish strips it via a two-pass sanitize (parseable YAML first, then malformed-but-delimited fallback). Silent by default; `--verbose` surfaces a stderr note:
+
+```text
+      • stripped leaked frontmatter from AI output (142 bytes, line 1)
+```
+
+### Duplicate sections trigger arbitration (I27)
+
+If the AI emits the same `## Heading` twice, polish **never deduplicates silently**. Two paths:
+
+**TTY (interactive):**
+
+```text
+[group 1/1] — "## Why" has 2 occurrences
+
+  [1] line 3  (42 words)
+      First version: the rationale behind the choice...
+
+  [2] line 12 (38 words)
+      Second version: with a different angle...
+
+  [1] keep first   [2] keep second   [b] keep both   [a] abort   [f] full view
+  Choice:
+```
+
+**Non-TTY (CI):** pass `--arbitrate-rule=first|second|both|abort`. Without the flag, polish refuses cleanly:
+
+```text
+⚠  AI output contains 1 duplicate section group(s); interactive arbitration unavailable (non-TTY).
+        "## Why" × 2
+      Re-run in a TTY, or use --arbitrate-rule=<first|second|both|abort>.
+```
+
+### Corrupt source refused pre-AI (I28)
+
+If your source file has a malformed frontmatter block, polish refuses **before** contacting the provider — zero tokens consumed, zero charges on your API bill:
+
+```text
+✗  cannot polish: source frontmatter is not valid YAML.
+      Run `lore doctor` to inspect, or `lore angela polish --restore decision-auth.md` to roll back.
+```
+
+Run `lore doctor` to see the exact parse error, then either edit by hand or restore from a polish backup.
+
+### Abort is atomic (I29)
+
+When you choose `[a] abort` at the prompt or `--arbitrate-rule=abort` matches, the command exits cleanly:
+
+- Source bytes untouched (mtime + content identical)
+- **No backup is written** — the `polish-backups/` directory is unchanged
+- A single entry in `polish.log` records `result: "aborted_arbitrate"` for audit
+
+### Every run logs exactly one line (I30)
+
+Every terminal state of `polish` writes exactly one JSONL line to `<state_dir>/polish.log` (except `--dry-run`, which is side-effect-free by contract). Example:
+
+```json
+{"ts":"2026-04-19T14:32:01Z","file":"decision-auth.md","op":"polish","mode":"full","result":"written","exit":0,"ai":{"provider":"anthropic","model":"claude-sonnet-4-6","prompt_tokens":1240,"completion_tokens":820},"findings":{"leaked_fm":{"stripped":true,"bytes":142},"duplicates":[{"heading":"## Why","count":2,"resolution":"rule:first"}]}}
+```
+
+Fields recorded: mode (full/incremental/interactive/dry-run), result (`written`, `aborted_corrupt_src`, `aborted_arbitrate`, `ai_error`), exit code, AI usage (provider/model/tokens), structural findings (leaked frontmatter bytes + duplicate resolutions).
+
+Retention is governed by `angela.polish.log.retention_days` (default 30) and `angela.polish.log.max_size_mb` (default 10). See [`lore doctor --prune`](doctor.md#prune-generated-artifacts) to trigger cleanup manually.
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
 | `0` | Success (or no changes / all rejected) |
-| `1` | Error (no provider configured, file not found, TOCTOU conflict) |
+| `1` | Error (no provider configured, file not found, TOCTOU conflict, corrupt source, aborted arbitration) |
 
 ## See Also
 

@@ -135,6 +135,14 @@ jobs:
             lore angela polish "$(basename $f)" --synthesize --set-status reviewed || true
           done
 
+      # Optional: AI-driven polish on curated files.
+      # `--arbitrate-rule=first` resolves duplicate sections deterministically
+      # in non-TTY (otherwise polish refuses cleanly with exit 1).
+      - run: lore angela polish decision-auth.md --yes --arbitrate-rule=first
+
+      # Optional: bound disk footprint of polish backups + polish.log + quarantine
+      - run: lore doctor --prune
+
       # Step 3: AI coherence review (optional, only on tags)
       - if: startsWith(github.ref, 'refs/tags/v')
         uses: GreyCoderK/lore@v1

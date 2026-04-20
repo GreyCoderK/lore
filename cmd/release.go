@@ -41,10 +41,11 @@ func newReleaseCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&fromFlag, "from", "", "Start of commit range (tag or SHA)")
-	cmd.Flags().StringVar(&toFlag, "to", "", "End of commit range (tag or SHA, default: HEAD)")
-	cmd.Flags().StringVar(&versionFlag, "version", "", "Version label for release notes")
-	cmd.Flags().BoolVar(&quietFlag, "quiet", false, "Output only the release notes file path")
+	tc := i18n.T().Cmd
+	cmd.Flags().StringVar(&fromFlag, "from", "", tc.ReleaseFlagFrom)
+	cmd.Flags().StringVar(&toFlag, "to", "", tc.ReleaseFlagTo)
+	cmd.Flags().StringVar(&versionFlag, "version", "", tc.ReleaseFlagVersion)
+	cmd.Flags().BoolVar(&quietFlag, "quiet", false, tc.ReleaseFlagQuiet)
 
 	_ = cmd.RegisterFlagCompletionFunc("from", gitRefFlagCompletion)
 	_ = cmd.RegisterFlagCompletionFunc("to", gitRefFlagCompletion)

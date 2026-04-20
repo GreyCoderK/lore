@@ -197,6 +197,18 @@ var catalogEN = &Messages{
 		DoctorFixing:         "Applying fixes…",
 		DoctorRebuilding:     "Rebuilding store from sources…",
 
+		// Story 8-22 — malformed-frontmatter suggestion block
+		DoctorSuggestedActions:    "Suggested actions:",
+		DoctorMalformedRestore:    "Restore from a polish backup:",
+		DoctorMalformedEditManual: "Edit the file manually to repair the YAML block.",
+
+		// Story 8-23 — prune output
+		DoctorPruneHeader:     "Pruning generated artifacts:",
+		DoctorPruneRowOK:      "%-22s removed %d / kept %d  (%s)",
+		DoctorPruneRowErr:     "%-22s %s",
+		DoctorPruneTotal:      "%s total",
+		DoctorPruneDryRunFoot: "(dry-run: no files changed)",
+
 		// config_cmd.go
 		ConfigShort:          "Manage Lore configuration",
 		SetKeyShort:          "Store an API key in the system keychain",
@@ -259,6 +271,16 @@ var catalogEN = &Messages{
 		AngelaPolishRestoreListHdr:  "Backups for %s (newest first):",
 		AngelaPolishRestoreListRow:  "  %s  (%s)",
 		AngelaPolishRestoreUnknown:  "No backup found with timestamp %s",
+
+		// Story 8-21 — structural integrity messages
+		AngelaPolishCorruptSource:        "cannot polish: source frontmatter is not valid YAML.",
+		AngelaPolishCorruptSourceHint:    "Run `lore doctor` to inspect, or `lore angela polish --restore %s` to roll back if a backup exists.",
+		AngelaPolishLeakedFMStripped:     "stripped leaked frontmatter from AI output (%d bytes, line %d)",
+		AngelaPolishDryRunDuplicates:     "AI output contains %d duplicate section group(s) — would need arbitration outside --dry-run",
+		AngelaPolishDuplicateHeadingRow:  "%q × %d",
+		AngelaPolishArbitrateAbortMsg:    "polish aborted: AI output had %d duplicate section group(s); arbitration rule resolved to abort. Source unchanged, no backup consumed.",
+		AngelaPolishArbitrateRefusedMsg:  "AI output contains %d duplicate section group(s); interactive arbitration unavailable (non-TTY).",
+		AngelaPolishArbitrateRefusedHint: "Re-run in a TTY, or use --arbitrate-rule=<first|second|both|abort>.",
 
 		// angela_review.go
 		AngelaReviewShort:      "Analyze your entire documentation corpus for consistency",
@@ -374,6 +396,107 @@ To load completions:
 		CheckUpdateHint:       "Run: lore upgrade",
 		CheckUpdatePreRelease: "pre-release",
 		CheckUpdateChecking:   "Checking for updates…",
+
+		// ─── Flag help strings (EN) ────────────────────────────────────
+		// angela draft
+		AngelaDraftFlagAll:             "Analyze all documents in the corpus",
+		AngelaDraftFlagVerbose:         "Show every suggestion inline (default: warnings only)",
+		AngelaDraftFlagFormat:          "Output format: human | json (default: from config)",
+		AngelaDraftFlagFailOn:          "Exit non-zero when findings at this level or higher exist: error | warning | info | never",
+		AngelaDraftFlagStrict:          "Promote all warnings to errors for exit-code purposes",
+		AngelaDraftFlagSeverity:        "Override category severity (repeatable: --severity coherence=off --severity style=warning)",
+		AngelaDraftFlagDiffOnly:        "Hide PERSISTING findings and show only NEW/RESOLVED since the previous --all run",
+		AngelaDraftFlagResetState:      "Delete the draft state file and treat all current findings as NEW",
+		AngelaDraftFlagPersonasMode:    "Persona selection mode: auto | manual | all | none",
+		AngelaDraftFlagManualPersonas:  "Persona names for --personas manual (e.g. storyteller,architect)",
+		AngelaDraftFlagPersona:         "Shortcut: run with this single persona only (sugar for --personas manual --manual-personas <name>)",
+		AngelaDraftFlagInteractive:     "Launch interactive fix-it TUI to walk through findings",
+		AngelaDraftFlagAutofix:         "Apply mechanical fixes: safe | aggressive",
+		AngelaDraftFlagDryRun:          "Preview autofix changes without writing",
+		AngelaDraftFlagSynthesizers:    "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")",
+		AngelaDraftFlagNoSynthesizers:  "Disable all Example Synthesizers for this run",
+
+		// angela polish
+		AngelaPolishFlagDryRun:         "Preview polish non-interactively: polished content to stdout, unified diff to stderr. No write, no backup.",
+		AngelaPolishFlagYes:            "Accept all changes without confirmation",
+		AngelaPolishFlagFor:            "Rewrite document for a target audience (e.g., \"CTO\", \"commercial team\")",
+		AngelaPolishFlagAuto:           "Auto-accept additions, auto-reject deletions, ask only for modifications",
+		AngelaPolishFlagIncremental:    "Re-polish only changed sections",
+		AngelaPolishFlagFull:           "Force full polish even if incremental is enabled in config",
+		AngelaPolishFlagHalluStrict:    "Hallucination check: warn | reject | off",
+		AngelaPolishFlagForce:          "Bypass hallucination reject mode (escape hatch)",
+		AngelaPolishFlagInteractive:    "Review polish changes section-by-section in a TUI",
+		AngelaPolishFlagSynthesizers:   "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")",
+		AngelaPolishFlagNoSynthesizers: "Disable all Example Synthesizers for this run",
+		AngelaPolishFlagSynthDryRun:    "Detect synthesizer opportunities and report without writing (polish only)",
+		AngelaPolishFlagSynthesize:     "Apply Example Synthesizer proposals (api-postman, …) and write to the doc — offline, no AI call",
+		AngelaPolishFlagSetStatus:      "Update the frontmatter `status` after the run (e.g. draft, reviewed, published). Always overwrites — re-running with a new value is safe.",
+		AngelaPolishFlagPersona:        "Run polish with this single persona's lens only (shortcut)",
+		AngelaPolishFlagArbitrateRule:  "Resolution rule for duplicate sections produced by the AI: first | second | both | abort (required in non-TTY when duplicates are detected)",
+		AngelaPolishFlagVerbose:        "Surface structural-integrity events (stripped leaked frontmatter, arbitration details) on stderr",
+
+		// angela polish restore
+		AngelaPolishRestoreFlagTimestamp: "Restore the backup with the specified YYYYMMDDTHHmmss stamp",
+		AngelaPolishRestoreFlagList:      "List available backups without restoring",
+
+		// angela review
+		AngelaReviewFlagQuiet:                 "Suppress human messages on stderr",
+		AngelaReviewFlagVerbose:               "Print detailed rejection reasons for findings dropped by the evidence validator",
+		AngelaReviewFlagFor:                   "Adapt findings for a target audience (e.g., \"CTO\", \"commercial team\")",
+		AngelaReviewFlagFilter:                "Regex to filter documents by filename (e.g., \"commands/.*\", \".*\\.fr\\.md$\")",
+		AngelaReviewFlagAll:                   "Review all documents (no 25+25 sampling)",
+		AngelaReviewFlagDiffOnly:              "Show only NEW + REGRESSED findings (and counts of PERSISTING/RESOLVED). Ideal for CI.",
+		AngelaReviewFlagInteractive:           "Launch interactive TUI to navigate and triage findings",
+		AngelaReviewFlagSynthesizers:          "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")",
+		AngelaReviewFlagNoSynthesizers:        "Disable all Example Synthesizers for this run",
+		AngelaReviewFlagPersona:               "Activate a persona lens for this review (repeatable, e.g. --persona architect --persona qa-reviewer)",
+		AngelaReviewFlagNoPersonas:            "Force baseline review (ignore .lorerc personas, no prompt in TTY)",
+		AngelaReviewFlagUseConfiguredPersonas: "Activate the personas configured in .lorerc without prompting",
+		AngelaReviewFlagPreview:               "Estimate tokens/cost/context before calling the AI. Zero HTTP, zero state write.",
+		AngelaReviewFlagFormat:                "Output format for --preview: text (default) | json",
+
+		// angela review ignore / log
+		AngelaReviewIgnoreFlagReason: "Required: explain why this finding is being ignored",
+		AngelaReviewLogFlagFormat:    "Output format: human (default) | json",
+
+		// decision
+		DecisionFlagExplain:     "Commit ref to analyze (default: HEAD)",
+		DecisionFlagCalibration: "Show Decision Engine quality metrics from stored commits",
+
+		// delete
+		DeleteFlagForce: "Skip confirmation (for scripts/CI)",
+
+		// doctor
+		DoctorFlagFix:          "Automatically repair fixable issues",
+		DoctorFlagQuiet:        "Machine output: issue count on stdout",
+		DoctorFlagConfig:       "Validate configuration files only",
+		DoctorFlagRebuildStore: "Reconstruct store.db from .lore/docs/ and git log",
+		DoctorFlagPrune:        "Run garbage collection on generated artifacts (backups, logs, corrupt quarantine)",
+		DoctorFlagDryRun:       "With --prune: report what would be removed without touching the filesystem",
+
+		// init
+		InitFlagNoDemo: "Skip the demo prompt",
+
+		// list
+		ListFlagType:  "Filter by document type (decision, feature, bugfix, refactor, note)",
+		ListFlagQuiet: "Suppress human messages on stderr",
+
+		// release
+		ReleaseFlagFrom:    "Start of commit range (tag or SHA)",
+		ReleaseFlagTo:      "End of commit range (tag or SHA, default: HEAD)",
+		ReleaseFlagVersion: "Version label for release notes",
+		ReleaseFlagQuiet:   "Output only the release notes file path",
+
+		// show
+		ShowFlagType:     "Filter by document type (decision, feature, bugfix, refactor, note)",
+		ShowFlagAfter:    "Show documents after date (YYYY-MM or YYYY-MM-DD)",
+		ShowFlagAll:      "Show all documents",
+		ShowFlagQuiet:    "Suppress human messages on stderr",
+		ShowFlagFeature:  "Shorthand for --type feature",
+		ShowFlagDecision: "Shorthand for --type decision",
+		ShowFlagBugfix:   "Shorthand for --type bugfix",
+		ShowFlagRefactor: "Shorthand for --type refactor",
+		ShowFlagNote:     "Shorthand for --type note",
 	},
 
 	Engagement: EngagementMessages{
@@ -574,6 +697,18 @@ To load completions:
 		UIReviewFlaggedBy:                "Flagged by: %s",
 		UIReviewAgreementConcur:          "Agreement: %d/%d personas concur",
 		UIReviewAgreementLineFormat:      " (%d/%d)",
+
+		// Story 8-21 — TTY duplicate-section arbitration prompts
+		ArbitrateGroupHeader:      "\n[group %d/%d] — %q has %d occurrences\n\n",
+		ArbitrateInvalidChoice:    "  (invalid choice — try again)",
+		ArbitratePrompt:           "  → ",
+		ArbitratePreviewLine:      "  [%d] line %d  (%d words)\n",
+		ArbitratePreviewTruncated: "      (%d lines shown / %d)\n",
+		ArbitrateOptKeepBoth:      "keep both",
+		ArbitrateOptKeepAll:       "keep all %d",
+		ArbitrateOptsLine:         "  [1] keep first    [2] keep second\n  [b] %s       [d] show full content\n  [a] abort (no write, source unchanged)\n",
+		ArbitrateOccurrenceBanner: "\n--- occurrence %d of %d (line %d) ---\n",
+		ArbitrateEmptyPreview:     "      (empty section)\n",
 	},
 
 	Decision: DecisionMessages{

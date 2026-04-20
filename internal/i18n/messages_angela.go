@@ -142,4 +142,17 @@ type AngelaMessages struct {
 	UIReviewFlaggedBy                string // arg: comma-separated "icon name" pairs
 	UIReviewAgreementConcur          string // args: concurrentCount (int), poolSize (int)
 	UIReviewAgreementLineFormat      string // arg: agreement tag — "(%d/%d)"
+
+	// Story 8-21 — duplicate-section arbitration prompts (TTY).
+	// Used by internal/angela/polish_arbitrate.go.
+	ArbitrateGroupHeader        string // args: groupIdx (int), total (int), heading (%q), occCount (int)
+	ArbitrateInvalidChoice      string // no args
+	ArbitratePrompt             string // no args — "  → "
+	ArbitratePreviewLine        string // args: idx (int), line (int), words (int)
+	ArbitratePreviewTruncated   string // args: shown (int), total (int)
+	ArbitrateOptKeepBoth        string // no args
+	ArbitrateOptKeepAll         string // arg: count (int)
+	ArbitrateOptsLine           string // arg: bothOrAll label (already localized)
+	ArbitrateOccurrenceBanner   string // args: i (int), total (int), line (int)
+	ArbitrateEmptyPreview       string // no args — "(empty section)"
 }

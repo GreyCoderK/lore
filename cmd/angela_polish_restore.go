@@ -100,8 +100,8 @@ func newAngelaPolishRestoreCmd(cfg *config.Config, streams domain.IOStreams) *co
 		},
 	}
 
-	cmd.Flags().StringVar(&flagTimestamp, "timestamp", "", "Restore the backup with the specified YYYYMMDDTHHmmss stamp")
-	cmd.Flags().BoolVar(&flagList, "list", false, "List available backups without restoring")
+	cmd.Flags().StringVar(&flagTimestamp, "timestamp", "", i18n.T().Cmd.AngelaPolishRestoreFlagTimestamp)
+	cmd.Flags().BoolVar(&flagList, "list", false, i18n.T().Cmd.AngelaPolishRestoreFlagList)
 
 	return cmd
 }

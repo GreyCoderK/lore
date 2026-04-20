@@ -103,6 +103,94 @@ func loadPolishProviderFactory() func(cfg *config.Config, streams domain.IOStrea
 	return polishProviderFactory
 }
 
+// appendPolishLog writes one JSONL entry to <state_dir>/polish.log.
+// Story 8-21 / invariant I30: every terminal state of a polish command
+// that modifies (or could have modified) a file writes exactly one log
+// line. Dry-run is the one exception (AC-14: zero side-effect).
+//
+// Errors during append are surfaced to stderr as a non-fatal note —
+// polish success is never blocked on a failed log write.
+func appendPolishLog(
+	streams domain.IOStreams,
+	cfg *config.Config,
+	filename, mode, result string,
+	exit int,
+	findings angela.LogFindings,
+	ai *angela.LogAIInfo,
+) {
+	workDir, err := os.Getwd()
+	if err != nil {
+		_, _ = fmt.Fprintf(streams.Err, "      %s polish.log: cwd failed — %v (non-fatal)\n", ui.Dim("•"), err)
+		return
+	}
+	stateDir := config.ResolveStateDir(workDir, cfg, cfg.DetectedMode)
+	entry := angela.LogEntry{
+		File:     filename,
+		Mode:     mode,
+		AI:       ai,
+		Findings: findings,
+		Result:   result,
+		Exit:     exit,
+	}
+	if err := angela.AppendLogEntry(stateDir, entry); err != nil {
+		_, _ = fmt.Fprintf(streams.Err, "      %s polish.log append failed — %v (non-fatal)\n", ui.Dim("•"), err)
+	}
+}
+
+// findingsFromReport maps the angela.SanitizeReport (produced by the
+// sanitize layer) into the LogFindings slice used by polish.log. The
+// mapping is intentionally lossy: log readers get heading + count +
+// resolution, not the full byte content of each occurrence.
+func findingsFromReport(report angela.SanitizeReport) angela.LogFindings {
+	var out angela.LogFindings
+	if report.LeakedFM.Stripped {
+		out.LeakedFM = &angela.LogLeakedFM{
+			Stripped: true,
+			Bytes:    report.LeakedFM.Bytes,
+		}
+	}
+	if len(report.DupGroups) == 0 {
+		return out
+	}
+	// Build Duplicates slice. Align with resolutions if present;
+	// otherwise record Resolution as "<source>:pending" so the log
+	// reflects that arbitration never completed (abort/refused paths).
+	dups := make([]angela.LogDuplicate, 0, len(report.DupGroups))
+	for i, g := range report.DupGroups {
+		d := angela.LogDuplicate{
+			Heading: g.Heading,
+			Count:   len(g.Occurrences),
+		}
+		if i < len(report.Resolutions) {
+			d.Resolution = angela.FormatResolution(report.Source, report.Resolutions[i].Choice)
+		} else {
+			// Abort/refused — record the source with an abort tag.
+			src := report.Source
+			if src == "" {
+				src = "user"
+			}
+			d.Resolution = src + ":abort"
+		}
+		dups = append(dups, d)
+	}
+	out.Duplicates = dups
+	return out
+}
+
+// polishModeForLog maps the command flags to a LogMode constant.
+func polishModeForLog(incremental, interactive, dryRun bool) string {
+	switch {
+	case dryRun:
+		return angela.LogModeDryRun
+	case interactive:
+		return angela.LogModeInteractive
+	case incremental:
+		return angela.LogModeIncremental
+	default:
+		return angela.LogModeFull
+	}
+}
+
 func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 	var flagDryRun bool
 	var flagYes bool
@@ -119,6 +207,8 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 	var flagSynthesize bool
 	var flagSetStatus string
 	var flagPersona string
+	var flagArbitrateRule string
+	var flagVerbose bool
 
 	cmd := &cobra.Command{
 		Use:               "polish <filename>",
@@ -130,6 +220,11 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			// Mutual exclusion: --interactive and --dry-run.
 			if flagInteractive && flagDryRun {
 				return fmt.Errorf("angela: polish: --interactive and --dry-run are mutually exclusive")
+			}
+
+			// Validate --arbitrate-rule value.
+			if flagArbitrateRule != "" && !angela.ValidArbitrationRule(flagArbitrateRule) {
+				return fmt.Errorf("angela: polish: invalid --arbitrate-rule %q (must be first|second|both|abort)", flagArbitrateRule)
 			}
 
 			applySynthesizerFlags(cfg, flagSynthesizers, flagNoSynthesizers, cmd.Flags().Changed("synthesizers"))
@@ -224,6 +319,58 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			if readErr != nil {
 				return fmt.Errorf("angela: polish: preflight read: %w", readErr)
 			}
+
+			// Story 8-21 / I28: refuse malformed-frontmatter sources BEFORE
+			// contacting the provider. No AI call, no credits consumed.
+			// The neutral message points at `lore doctor` so the user can
+			// diagnose or roll back via `angela polish --restore`.
+			//
+			// fmBytes is captured here for the post-AI reassembly stage
+			// (I24 byte-identity): the bytes that go back to disk are the
+			// exact same bytes that came off disk for the frontmatter
+			// region. No re-serialization.
+			// Resolve the incremental vs full decision once — used
+			// both by the log entry's "mode" field (I30) and by the
+			// service.PolishDocument call later. --full overrides
+			// --incremental overrides config.
+			useIncremental := cfg.Angela.Polish.Incremental.Enabled
+			if flagIncremental {
+				useIncremental = true
+			}
+			if flagFull {
+				useIncremental = false
+			}
+			plannedMode := polishModeForLog(useIncremental, flagInteractive, flagDryRun)
+
+			// Story 8-21 / I30: emit one polish.log entry at every terminal
+			// state. Dry-run is the documented exception (AC-14: zero
+			// side-effect). Defaults reflect a successful write; error
+			// paths update these values before returning.
+			var (
+				logResult   = angela.LogResultWritten
+				logExit     = 0
+				logFindings angela.LogFindings
+				logAI       *angela.LogAIInfo
+			)
+			defer func() {
+				if flagDryRun {
+					return
+				}
+				appendPolishLog(streams, cfg, filename, plannedMode, logResult, logExit, logFindings, logAI)
+			}()
+
+			srcFMBytes, _, fmErr := storage.ExtractFrontmatter(raw)
+			if fmErr != nil {
+				_, _ = fmt.Fprintf(streams.Err,
+					"%s  %s\n",
+					ui.Error("✗"), i18n.T().Cmd.AngelaPolishCorruptSource)
+				_, _ = fmt.Fprintf(streams.Err,
+					"      "+i18n.T().Cmd.AngelaPolishCorruptSourceHint+"\n",
+					filename)
+				logResult = angela.LogResultAbortedCorruptSrc
+				logExit = 1
+				return fmt.Errorf("angela: polish: %w", fmErr)
+			}
 			{
 				docWords := len(strings.Fields(string(raw)))
 				maxTokens := angela.ResolveMaxTokens("polish", docWords, cfg.Angela.MaxTokens)
@@ -274,15 +421,9 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			// --- Step 2/3: Calling AI ---
 			_, _ = fmt.Fprintf(streams.Err, "%s\n", ui.Bold("[2/3] "+fmt.Sprintf(i18n.T().Cmd.AngelaPolishStep2, filename)))
 			spin := ui.StartSpinnerWithTimeout(streams, fmt.Sprintf(i18n.T().Cmd.AngelaPolishStep2, filename), timeout)
-			// Resolve incremental mode.
-			// --full overrides --incremental; --incremental overrides config.
-			useIncremental := cfg.Angela.Polish.Incremental.Enabled
-			if flagIncremental {
-				useIncremental = true
-			}
-			if flagFull {
-				useIncremental = false
-			}
+			// useIncremental + plannedMode are resolved earlier (near the
+			// corrupt-source gate) so they can be used for polish.log
+			// entries on early-exit paths. Re-using here for service call.
 			var polishOpts []service.PolishOptions
 			po := service.PolishOptions{Audience: flagFor}
 			if useIncremental {
@@ -299,6 +440,8 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			if err != nil {
 				elapsed := spin.Elapsed()
 				spin.Stop()
+				logResult = angela.LogResultAIError
+				logExit = 1
 				if isTimeoutError(err) {
 					_, _ = fmt.Fprintf(streams.Err, "\n      %s\n", ui.Error(fmt.Sprintf(ta.UITimeoutErr, formatElapsed(timeout), formatElapsed(elapsed))))
 					_, _ = fmt.Fprintf(streams.Err, "      %s\n", ui.Dim(ta.UITimeoutHint1))
@@ -318,6 +461,16 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			var usage *domain.AIUsage
 			if tracker, ok := provider.(domain.UsageTracker); ok {
 				usage = tracker.LastUsage()
+			}
+			// Populate logAI for polish.log from the usage tracker, if
+			// the provider exposes one. Zero-value safe.
+			if usage != nil {
+				logAI = &angela.LogAIInfo{
+					Provider:         cfg.AI.Provider,
+					Model:            usage.Model,
+					PromptTokens:     usage.InputTokens,
+					CompletionTokens: usage.OutputTokens,
+				}
 			}
 			if usage != nil {
 				_, _ = fmt.Fprintf(streams.Err, "      ✓ %s in %s\n", i18n.T().Cmd.AngelaPolishStep2Done, formatElapsed(elapsed))
@@ -393,6 +546,91 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 				}
 			}
 
+			// Story 8-21 / Task 6.b: sanitize + arbitrate the AI response
+			// before any display or write. In dry-run we detect findings
+			// only and report on stderr (AC-14, no prompt, no side-effect).
+			// Outside dry-run, SanitizeAIOutput may prompt in TTY or
+			// apply the --arbitrate-rule flag in non-TTY. On
+			// abort/refuse it returns a typed error we surface neutrally
+			// without mentioning "credits" or "corruption".
+			isTTY := ui.IsTerminal(streams)
+			arbRule := angela.ArbitrationRule(flagArbitrateRule)
+			arbOpts := angela.ArbitrateOptions{Verbose: flagVerbose}
+			if flagDryRun {
+				// Dry-run: detect only. Report findings on stderr; do
+				// not alter result.Polished — the raw polished payload
+				// flows to stdout untouched so piped tools see exactly
+				// what the AI produced.
+				_, report := angela.DetectStructuralIssues([]byte(result.Polished))
+				if report.LeakedFM.Stripped && flagVerbose {
+					_, _ = fmt.Fprintf(streams.Err,
+						"      %s "+i18n.T().Cmd.AngelaPolishLeakedFMStripped+"\n",
+						ui.Dim("•"), report.LeakedFM.Bytes, report.LeakedFM.Line)
+				}
+				if len(report.DupGroups) > 0 {
+					_, _ = fmt.Fprintf(streams.Err,
+						"      %s "+i18n.T().Cmd.AngelaPolishDryRunDuplicates+"\n",
+						ui.Warning("⚠"), len(report.DupGroups))
+					for _, g := range report.DupGroups {
+						_, _ = fmt.Fprintf(streams.Err,
+							"        "+i18n.T().Cmd.AngelaPolishDuplicateHeadingRow+"\n",
+							g.Heading, len(g.Occurrences))
+					}
+				}
+			} else {
+				cleaned, report, sanErr := angela.SanitizeAIOutput([]byte(result.Polished), arbRule, isTTY, streams, arbOpts)
+				// Record findings on the deferred log entry whether or
+				// not arbitration succeeded.
+				logFindings = findingsFromReport(report)
+				if sanErr != nil {
+					logResult = angela.LogResultAbortedArbitrate
+					logExit = 1
+					dupCount := len(report.DupGroups)
+					if errors.Is(sanErr, angela.ErrArbitrateAbort) {
+						// Story 8-21 P0-3: CI operators need the root cause
+						// (how many duplicate groups, which rule fired) to
+						// diagnose without opening polish.log. Message stays
+						// neutral — no "credits" / "corruption" framing.
+						_, _ = fmt.Fprintf(streams.Err,
+							"%s  "+i18n.T().Cmd.AngelaPolishArbitrateAbortMsg+"\n",
+							ui.Warning("✗"), dupCount)
+						for _, g := range report.DupGroups {
+							_, _ = fmt.Fprintf(streams.Err,
+								"        "+i18n.T().Cmd.AngelaPolishDuplicateHeadingRow+"\n",
+								g.Heading, len(g.Occurrences))
+						}
+						return sanErr
+					}
+					if errors.Is(sanErr, angela.ErrArbitrateRefused) {
+						_, _ = fmt.Fprintf(streams.Err,
+							"%s  "+i18n.T().Cmd.AngelaPolishArbitrateRefusedMsg+"\n",
+							ui.Warning("⚠"), dupCount)
+						for _, g := range report.DupGroups {
+							_, _ = fmt.Fprintf(streams.Err,
+								"        "+i18n.T().Cmd.AngelaPolishDuplicateHeadingRow+"\n",
+								g.Heading, len(g.Occurrences))
+						}
+						_, _ = fmt.Fprintln(streams.Err,
+							"      "+i18n.T().Cmd.AngelaPolishArbitrateRefusedHint)
+						return sanErr
+					}
+					return fmt.Errorf("angela: polish: sanitize: %w", sanErr)
+				}
+				if report.LeakedFM.Stripped && flagVerbose {
+					_, _ = fmt.Fprintf(streams.Err,
+						"      %s "+i18n.T().Cmd.AngelaPolishLeakedFMStripped+"\n",
+						ui.Dim("•"), report.LeakedFM.Bytes, report.LeakedFM.Line)
+				}
+				// Reassemble the full polished doc using the source's
+				// fm bytes verbatim (I24 byte-identity) + the cleaned
+				// body. Recompute hunks against the reassembly so the
+				// downstream diff/display/write stages see consistent
+				// content — full doc on both sides.
+				full := string(srcFMBytes) + string(cleaned)
+				result.Polished = full
+				result.Diff = angela.ComputeDiff(result.Original, full)
+			}
+
 			// --- Step 3/3: Computing diff ---
 			_, _ = fmt.Fprintf(streams.Err, "%s\n", ui.Bold("[3/3] "+i18n.T().Cmd.AngelaPolishStep3))
 
@@ -432,6 +670,18 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 						_, _ = fmt.Fprintf(streams.Err, "%s\n", pm.QuitSummary)
 					}
 					if pm.Written && pm.FinalDoc != "" {
+						// Story 8-21 / I24 guard: the interactive TUI assembles
+						// its final doc from sections, which should preserve
+						// the original frontmatter byte-for-byte. Verify
+						// before writing — if this ever regresses we surface
+						// it as a hard error rather than silently corrupting.
+						finalFM, _, finalErr := storage.ExtractFrontmatter([]byte(pm.FinalDoc))
+						if finalErr != nil {
+							return fmt.Errorf("angela: polish: interactive final doc has invalid frontmatter: %w", finalErr)
+						}
+						if !bytes.Equal(finalFM, srcFMBytes) {
+							return fmt.Errorf("angela: polish: I24 violation — interactive final doc frontmatter differs from source")
+						}
 						// Backup before write
 						backupCfg := cfg.Angela.Polish.Backup
 						workDir, wderr := os.Getwd()
@@ -532,25 +782,24 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			// Apply changes
 			applied := angela.ApplyDiff(originalContent, hunks, choices)
 
-			// Validate and update angela_mode in front matter
-			resultMeta, resultBody, err := storage.Unmarshal([]byte(applied))
-			if err != nil {
-				// If parsing fails, use the result as-is with original meta
-				resultMeta = meta
-				resultBody = applied
+			// Story 8-21 / I24 guard: the final bytes must preserve the
+			// source's frontmatter exactly. No Unmarshal+Marshal dance
+			// (that would re-serialize YAML and lose key ordering,
+			// comments, and quote styles).
+			//
+			// The angela_mode="polish" field update the old path used to
+			// perform is intentionally dropped: it would violate I24.
+			// The polish.log JSONL audit trail (Task 6.d) provides a
+			// richer "what was polished when" record anyway.
+			appliedFM, _, fmErr := storage.ExtractFrontmatter([]byte(applied))
+			if fmErr != nil {
+				return fmt.Errorf("angela: polish: post-apply frontmatter invalid: %w", fmErr)
 			}
-			resultMeta.AngelaMode = "polish"
-
-			// Validate the resulting frontmatter before writing to disk
-			if valErr := storage.ValidateMeta(resultMeta); valErr != nil {
-				return fmt.Errorf("angela: polish: AI response produced invalid frontmatter: %w", valErr)
+			if !bytes.Equal(appliedFM, srcFMBytes) {
+				return fmt.Errorf("angela: polish: I24 violation — frontmatter bytes drifted during diff apply")
 			}
-
-			// Write atomically
-			marshaled, err := storage.Marshal(resultMeta, resultBody)
-			if err != nil {
-				return fmt.Errorf("angela: polish: marshal: %w", err)
-			}
+			marshaled := []byte(applied)
+			_ = meta // still referenced earlier; compiler happy without re-use here
 
 			// Automatic backup of the
 			// *current* on-disk content before we overwrite it. The backup
@@ -605,31 +854,43 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 		},
 	}
 
-	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Preview polish non-interactively: polished content to stdout, unified diff to stderr. No write, no backup.")
-	cmd.Flags().BoolVar(&flagYes, "yes", false, "Accept all changes without confirmation")
-	cmd.Flags().StringVar(&flagFor, "for", "", "Rewrite document for a target audience (e.g., \"équipe commerciale\", \"CTO\", \"nouveau développeur\")")
-	cmd.Flags().BoolVarP(&flagAuto, "auto", "a", false, "Auto-accept additions, auto-reject deletions, ask only for modifications")
-	cmd.Flags().BoolVar(&flagIncremental, "incremental", false, "Re-polish only changed sections")
-	cmd.Flags().BoolVar(&flagFull, "full", false, "Force full polish even if incremental is enabled in config")
-	cmd.Flags().StringVar(&flagHallucinationStrictness, "hallucination-strictness", "", "Hallucination check: warn | reject | off")
-	cmd.Flags().BoolVar(&flagForce, "force", false, "Bypass hallucination reject mode (escape hatch)")
+	tc := i18n.T().Cmd
+	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, tc.AngelaPolishFlagDryRun)
+	cmd.Flags().BoolVar(&flagYes, "yes", false, tc.AngelaPolishFlagYes)
+	cmd.Flags().StringVar(&flagFor, "for", "", tc.AngelaPolishFlagFor)
+	cmd.Flags().BoolVarP(&flagAuto, "auto", "a", false, tc.AngelaPolishFlagAuto)
+	cmd.Flags().BoolVar(&flagIncremental, "incremental", false, tc.AngelaPolishFlagIncremental)
+	cmd.Flags().BoolVar(&flagFull, "full", false, tc.AngelaPolishFlagFull)
+	cmd.Flags().StringVar(&flagHallucinationStrictness, "hallucination-strictness", "", tc.AngelaPolishFlagHalluStrict)
+	cmd.Flags().BoolVar(&flagForce, "force", false, tc.AngelaPolishFlagForce)
 	// Interactive section-level polish.
-	cmd.Flags().BoolVarP(&flagInteractive, "interactive", "i", false, "Review polish changes section-by-section in a TUI")
+	cmd.Flags().BoolVarP(&flagInteractive, "interactive", "i", false, tc.AngelaPolishFlagInteractive)
 
 	// Synthesizer flags. The flags are declared on every angela
 	// sub-command so users can override per-run; the framework only acts on
 	// docs whose synthesizers are registered.
-	cmd.Flags().StringSliceVar(&flagSynthesizers, "synthesizers", nil, "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")")
-	cmd.Flags().BoolVar(&flagNoSynthesizers, "no-synthesizers", false, "Disable all Example Synthesizers for this run")
-	cmd.Flags().BoolVar(&flagSynthesizerDryRun, "synthesizer-dry-run", false, "Detect synthesizer opportunities and report without writing (polish only)")
-	cmd.Flags().BoolVar(&flagSynthesize, "synthesize", false, "Apply Example Synthesizer proposals (api-postman, …) and write to the doc — offline, no AI call")
-	cmd.Flags().StringVar(&flagSetStatus, "set-status", "", "Update the frontmatter `status` after the run (e.g. draft, reviewed, published). Always overwrites — re-running with a new value is safe.")
+	cmd.Flags().StringSliceVar(&flagSynthesizers, "synthesizers", nil, tc.AngelaPolishFlagSynthesizers)
+	cmd.Flags().BoolVar(&flagNoSynthesizers, "no-synthesizers", false, tc.AngelaPolishFlagNoSynthesizers)
+	cmd.Flags().BoolVar(&flagSynthesizerDryRun, "synthesizer-dry-run", false, tc.AngelaPolishFlagSynthDryRun)
+	cmd.Flags().BoolVar(&flagSynthesize, "synthesize", false, tc.AngelaPolishFlagSynthesize)
+	cmd.Flags().StringVar(&flagSetStatus, "set-status", "", tc.AngelaPolishFlagSetStatus)
 
-	cmd.Flags().StringVar(&flagPersona, "persona", "", "Run polish with this single persona's lens only (shortcut)")
+	cmd.Flags().StringVar(&flagPersona, "persona", "", tc.AngelaPolishFlagPersona)
+
+	// Story 8-21: structural integrity controls.
+	// --arbitrate-rule resolves AI-produced duplicate sections in non-TTY
+	// runs (CI pipelines); in TTY the user is prompted per group.
+	// -v / --verbose surfaces the otherwise-silent "leaked frontmatter
+	// stripped" event on stderr (always recorded in polish.log).
+	cmd.Flags().StringVar(&flagArbitrateRule, "arbitrate-rule", "", tc.AngelaPolishFlagArbitrateRule)
+	cmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, tc.AngelaPolishFlagVerbose)
+	cmd.MarkFlagsMutuallyExclusive("arbitrate-rule", "interactive")
 
 	_ = cmd.RegisterFlagCompletionFunc("synthesizers", synthesizerFlagCompletion)
 	_ = cmd.RegisterFlagCompletionFunc("set-status", statusFlagCompletion)
 	_ = cmd.RegisterFlagCompletionFunc("persona", personaFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("arbitrate-rule", arbitrateRuleFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("hallucination-strictness", hallucinationStrictnessFlagCompletion)
 
 	// Restore subcommand for polish backups.
 	cmd.AddCommand(newAngelaPolishRestoreCmd(cfg, streams))

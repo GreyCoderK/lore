@@ -58,6 +58,8 @@ lore angela polish <fichier> [flags]
 | `--no-synthesizers` | bool | `false` | Désactiver tous les Example Synthesizers pour ce run |
 | `--set-status` | string | | Mettre à jour le `status` du frontmatter après application (ex : `reviewed`, `published`) |
 | `--persona` | string | | Forcer un seul persona pour ce run |
+| `--arbitrate-rule` | string | | Règle de résolution non-interactive pour les sections en doublon produites par l'IA : `first`, `second`, `both`, `abort`. Requis en non-TTY quand des doublons sont détectés. Mutuellement exclusif avec `--interactive`. |
+| `--verbose` / `-v` | bool | `false` | Afficher sur stderr les événements d'intégrité structurelle (frontmatter leaké strippé, détails d'arbitrage). Toujours enregistré dans `polish.log` indépendamment. |
 
 ## Comment ça marche (étape par étape)
 
@@ -590,15 +592,95 @@ Après la réponse IA, Angela applique des transformations locales (sans appel A
 - **`--for` pour le partage d'équipe :** Générez des versions adaptées sans modifier l'original.
 - **Ollama pour expérimenter :** Utilisez un modèle local pour tester sans dépenser de crédits.
 - **Re-polish est sûr :** Chaque appel relit le fichier actuel. Aucun risque d'écraser vos éditions.
-- **Après polish :** Le front matter reçoit `angela_mode: "polish"` automatiquement.
+- **Après polish :** Les octets de votre frontmatter sont préservés byte-pour-byte (invariant I24). Polish ne re-sérialise jamais le YAML — styles de quote, commentaires et ordre des clés survivent. Voir *Garde-fous d'intégrité structurelle* ci-dessous.
 - **Multi-pass automatique :** Pour les gros documents, Angela découpe en sections pour rester dans les limites de tokens.
+
+## Garde-fous d'intégrité structurelle
+
+Polish applique sept invariants (I24–I30) qui protègent votre document d'une corruption accidentelle — que l'IA dérape, qu'un fournisseur renvoie une réponse malformée, ou qu'un script CI lance la commande dans un contexte inattendu. Chaque garde-fou est silencieux sur le chemin heureux ; quand il se déclenche, polish refuse proprement ou vous laisse arbitrer.
+
+### Frontmatter préservé byte-pour-byte (I24)
+
+Polish lit le bloc `---...---` de la source et ré-attache les **mêmes octets** au corps réécrit. Pas de re-sérialisation YAML : styles de quote (`date: "2026-04-10"` vs `date: 2026-04-10`), ordre des clés, commentaires inline et lignes vides sont préservés.
+
+> **Pourquoi c'est important :** un aller-retour par `yaml.Marshal` reformate silencieusement votre metadata. Sur des dizaines de polish la dérive s'accumule et pollue les diffs. L'identité byte-à-byte stoppe la dérive dès le run 1.
+
+### Le prompt IA exclut le frontmatter (I25)
+
+Angela retire `---...---` avant d'envoyer le corps au fournisseur. L'IA ne voit jamais votre metadata, ne peut jamais la leak, la réécrire, ou inventer de nouvelles clés. Les hard rules du prompt système enfoncent le clou : **« Return ONLY the improved BODY. »**
+
+### `---` leaké strippé de la sortie IA (I26)
+
+Si le fournisseur ignore les consignes et renvoie un doc complet avec un header `---`-délimité, polish le strippe via une sanitize en deux passes (YAML parsable d'abord, puis fallback malformé-mais-délimité). Silencieux par défaut ; `--verbose` affiche une note stderr :
+
+```text
+      • stripped leaked frontmatter from AI output (142 bytes, line 1)
+```
+
+### Les sections en doublon déclenchent l'arbitrage (I27)
+
+Si l'IA émet deux fois le même `## Heading`, polish **ne déduplique jamais en silence**. Deux chemins :
+
+**TTY (interactif) :**
+
+```text
+[group 1/1] — "## Why" has 2 occurrences
+
+  [1] line 3  (42 words)
+      First version: the rationale behind the choice...
+
+  [2] line 12 (38 words)
+      Second version: with a different angle...
+
+  [1] keep first   [2] keep second   [b] keep both   [a] abort   [f] full view
+  Choice:
+```
+
+**Non-TTY (CI) :** passez `--arbitrate-rule=first|second|both|abort`. Sans le flag, polish refuse proprement :
+
+```text
+⚠  AI output contains 1 duplicate section group(s); interactive arbitration unavailable (non-TTY).
+        "## Why" × 2
+      Re-run in a TTY, or use --arbitrate-rule=<first|second|both|abort>.
+```
+
+### Source corrompue refusée avant l'appel IA (I28)
+
+Si votre fichier source a un bloc frontmatter malformé, polish refuse **avant** de contacter le fournisseur — zéro token consommé, zéro charge sur votre facture API :
+
+```text
+✗  cannot polish: source frontmatter is not valid YAML.
+      Run `lore doctor` to inspect, or `lore angela polish --restore decision-auth.md` to roll back.
+```
+
+Lancez `lore doctor` pour voir l'erreur de parse exacte, puis éditez à la main ou restaurez depuis un backup polish.
+
+### L'abort est atomique (I29)
+
+Quand vous choisissez `[a] abort` au prompt ou que `--arbitrate-rule=abort` matche, la commande sort proprement :
+
+- Octets source intacts (mtime + contenu identiques)
+- **Aucun backup écrit** — le répertoire `polish-backups/` est inchangé
+- Une seule entrée dans `polish.log` enregistre `result: "aborted_arbitrate"` pour l'audit
+
+### Chaque run écrit exactement une ligne de log (I30)
+
+Chaque état terminal de `polish` écrit exactement une ligne JSONL dans `<state_dir>/polish.log` (sauf `--dry-run`, sans effet de bord par contrat). Exemple :
+
+```json
+{"ts":"2026-04-19T14:32:01Z","file":"decision-auth.md","op":"polish","mode":"full","result":"written","exit":0,"ai":{"provider":"anthropic","model":"claude-sonnet-4-6","prompt_tokens":1240,"completion_tokens":820},"findings":{"leaked_fm":{"stripped":true,"bytes":142},"duplicates":[{"heading":"## Why","count":2,"resolution":"rule:first"}]}}
+```
+
+Champs enregistrés : mode (full/incremental/interactive/dry-run), résultat (`written`, `aborted_corrupt_src`, `aborted_arbitrate`, `ai_error`), exit code, usage IA (provider/modèle/tokens), findings structurels (bytes frontmatter leaké + résolutions de doublons).
+
+La rétention est pilotée par `angela.polish.log.retention_days` (défaut 30) et `angela.polish.log.max_size_mb` (défaut 10). Voir [`lore doctor --prune`](doctor.md#elaguer-les-artefacts-generes) pour déclencher le nettoyage manuellement.
 
 ## Codes de sortie
 
 | Code | Signification |
 |------|---------------|
 | `0` | Succès (ou pas de changement / tout rejeté) |
-| `1` | Erreur (pas de fournisseur, fichier non trouvé, conflit TOCTOU) |
+| `1` | Erreur (pas de fournisseur, fichier non trouvé, conflit TOCTOU, source corrompue, arbitrage aborté) |
 
 ## Voir aussi
 

@@ -197,6 +197,18 @@ type CmdMessages struct {
 	DoctorFixing          string // spinner label
 	DoctorRebuilding      string // spinner label
 
+	// Story 8-22 — malformed-frontmatter suggestion block.
+	DoctorSuggestedActions    string // no args
+	DoctorMalformedRestore    string // no args — "Restore from a polish backup:"
+	DoctorMalformedEditManual string // no args — "Edit the file manually to repair the YAML block."
+
+	// Story 8-23 — prune output.
+	DoctorPruneHeader      string // no args — "Pruning generated artifacts:"
+	DoctorPruneRowOK       string // args: feature (str), removed (int), kept (int), human-bytes (str)
+	DoctorPruneRowErr      string // args: feature (str), err (str)
+	DoctorPruneTotal       string // arg: human-bytes (str)
+	DoctorPruneDryRunFoot  string // no args — "(dry-run: no files changed)"
+
 	// config_cmd.go
 	ConfigShort          string
 	SetKeyShort          string
@@ -259,6 +271,16 @@ type CmdMessages struct {
 	AngelaPolishRestoreListHdr  string // arg: filename
 	AngelaPolishRestoreListRow  string // args: stamp, pretty time
 	AngelaPolishRestoreUnknown  string // arg: stamp
+
+	// Story 8-21 — structural integrity messages (cmd-level, user-facing).
+	AngelaPolishCorruptSource        string // no args — title of refusal
+	AngelaPolishCorruptSourceHint    string // arg: filename — pointer to doctor/restore
+	AngelaPolishLeakedFMStripped     string // args: bytes (int), line (int)
+	AngelaPolishDryRunDuplicates     string // arg: group count
+	AngelaPolishDuplicateHeadingRow  string // args: heading (%q), count (int)
+	AngelaPolishArbitrateAbortMsg    string // arg: group count
+	AngelaPolishArbitrateRefusedMsg  string // arg: group count
+	AngelaPolishArbitrateRefusedHint string // no args — "Re-run in a TTY, or use --arbitrate-rule=…"
 
 	// angela_review.go
 	AngelaReviewShort       string
@@ -359,4 +381,109 @@ type CmdMessages struct {
 	CheckUpdateHint        string
 	CheckUpdatePreRelease  string
 	CheckUpdateChecking    string // spinner label
+
+	// ─── Flag help strings (Task 9 i18n sweep) ────────────────────────
+	// Naming convention: <Command><Name>Flag for each flag. All flag
+	// help strings MUST carry the same positional %s/%d/%q specifiers
+	// in EN and FR — enforced by TestI11_AllCatalogsFormatArgParity.
+
+	// angela draft root (cmd/angela.go)
+	AngelaDraftFlagAll             string
+	AngelaDraftFlagVerbose         string
+	AngelaDraftFlagFormat          string
+	AngelaDraftFlagFailOn          string
+	AngelaDraftFlagStrict          string
+	AngelaDraftFlagSeverity        string
+	AngelaDraftFlagDiffOnly        string
+	AngelaDraftFlagResetState      string
+	AngelaDraftFlagPersonasMode    string
+	AngelaDraftFlagManualPersonas  string
+	AngelaDraftFlagPersona         string
+	AngelaDraftFlagInteractive     string
+	AngelaDraftFlagAutofix         string
+	AngelaDraftFlagDryRun          string
+	AngelaDraftFlagSynthesizers    string
+	AngelaDraftFlagNoSynthesizers  string
+
+	// angela polish (cmd/angela_polish.go)
+	AngelaPolishFlagDryRun             string
+	AngelaPolishFlagYes                string
+	AngelaPolishFlagFor                string
+	AngelaPolishFlagAuto               string
+	AngelaPolishFlagIncremental        string
+	AngelaPolishFlagFull               string
+	AngelaPolishFlagHalluStrict        string
+	AngelaPolishFlagForce              string
+	AngelaPolishFlagInteractive        string
+	AngelaPolishFlagSynthesizers       string
+	AngelaPolishFlagNoSynthesizers     string
+	AngelaPolishFlagSynthDryRun        string
+	AngelaPolishFlagSynthesize         string
+	AngelaPolishFlagSetStatus          string
+	AngelaPolishFlagPersona            string
+	AngelaPolishFlagArbitrateRule      string
+	AngelaPolishFlagVerbose            string
+
+	// angela polish restore (cmd/angela_polish_restore.go)
+	AngelaPolishRestoreFlagTimestamp string
+	AngelaPolishRestoreFlagList      string
+
+	// angela review (cmd/angela_review.go)
+	AngelaReviewFlagQuiet                 string
+	AngelaReviewFlagVerbose               string
+	AngelaReviewFlagFor                   string
+	AngelaReviewFlagFilter                string
+	AngelaReviewFlagAll                   string
+	AngelaReviewFlagDiffOnly              string
+	AngelaReviewFlagInteractive           string
+	AngelaReviewFlagSynthesizers          string
+	AngelaReviewFlagNoSynthesizers        string
+	AngelaReviewFlagPersona               string
+	AngelaReviewFlagNoPersonas            string
+	AngelaReviewFlagUseConfiguredPersonas string
+	AngelaReviewFlagPreview               string
+	AngelaReviewFlagFormat                string
+
+	// angela review ignore / log (cmd/angela_review_ignore.go + log.go)
+	AngelaReviewIgnoreFlagReason string
+	AngelaReviewLogFlagFormat    string
+
+	// decision (cmd/decision.go)
+	DecisionFlagExplain     string
+	DecisionFlagCalibration string
+
+	// delete (cmd/delete.go)
+	DeleteFlagForce string
+
+	// doctor (cmd/doctor.go)
+	DoctorFlagFix          string
+	DoctorFlagQuiet        string
+	DoctorFlagConfig       string
+	DoctorFlagRebuildStore string
+	DoctorFlagPrune        string
+	DoctorFlagDryRun       string
+
+	// init (cmd/init.go)
+	InitFlagNoDemo string
+
+	// list (cmd/list.go)
+	ListFlagType  string
+	ListFlagQuiet string
+
+	// release (cmd/release.go)
+	ReleaseFlagFrom    string
+	ReleaseFlagTo      string
+	ReleaseFlagVersion string
+	ReleaseFlagQuiet   string
+
+	// show (cmd/show.go)
+	ShowFlagType     string
+	ShowFlagAfter    string
+	ShowFlagAll      string
+	ShowFlagQuiet    string
+	ShowFlagFeature  string
+	ShowFlagDecision string
+	ShowFlagBugfix   string
+	ShowFlagRefactor string
+	ShowFlagNote     string
 }

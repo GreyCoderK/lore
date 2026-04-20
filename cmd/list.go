@@ -81,9 +81,9 @@ func newListCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagType, "type", "", "Filter by document type (decision, feature, bugfix, refactor, note)")
+	cmd.Flags().StringVar(&flagType, "type", "", i18n.T().Cmd.ListFlagType)
 	_ = cmd.RegisterFlagCompletionFunc("type", docTypeFlagCompletion)
-	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Suppress human messages on stderr")
+	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, i18n.T().Cmd.ListFlagQuiet)
 
 	return cmd
 }

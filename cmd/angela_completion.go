@@ -37,6 +37,56 @@ func statusFlagCompletion(cmd *cobra.Command, args []string, toComplete string) 
 	return []string{"draft", "reviewed", "published", "archived"}, cobra.ShellCompDirectiveNoFileComp
 }
 
+// arbitrateRuleFlagCompletion powers tab-completion for --arbitrate-rule
+// on `angela polish`. Strict enum (story 8-21 AC-9): any value outside
+// this set is rejected at runtime by `angela.ValidArbitrationRule`, so
+// the completion matches the validator 1:1.
+func arbitrateRuleFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"first", "second", "both", "abort"}, cobra.ShellCompDirectiveNoFileComp
+}
+
+// hallucinationStrictnessFlagCompletion powers tab-completion for
+// --hallucination-strictness on `angela polish`. Enum sourced from the
+// same set enforced by the polish runtime.
+func hallucinationStrictnessFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"warn", "reject", "off"}, cobra.ShellCompDirectiveNoFileComp
+}
+
+// formatFlagCompletion powers tab-completion for the generic --format
+// flag on draft/review-log where the supported values are human-readable
+// text vs machine-parseable JSON.
+func formatFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"human", "json"}, cobra.ShellCompDirectiveNoFileComp
+}
+
+// textJSONFormatFlagCompletion powers tab-completion for `angela review
+// --format` whose enum is {text, json} (not human/json — "text" is the
+// default, matching the review preview schema vocabulary).
+func textJSONFormatFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"text", "json"}, cobra.ShellCompDirectiveNoFileComp
+}
+
+// failOnFlagCompletion powers tab-completion for --fail-on on
+// `angela draft`. Matches severity levels emitted by the draft analyzer
+// plus the "never" opt-out.
+func failOnFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"error", "warning", "info", "never"}, cobra.ShellCompDirectiveNoFileComp
+}
+
+// autofixFlagCompletion powers tab-completion for --autofix on
+// `angela draft`. Two modes are supported; any other value is an
+// error at runtime.
+func autofixFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"safe", "aggressive"}, cobra.ShellCompDirectiveNoFileComp
+}
+
+// personasModeFlagCompletion powers tab-completion for --personas on
+// `angela draft` (selection mode, distinct from --persona which picks
+// a single name via personaFlagCompletion).
+func personasModeFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"auto", "manual", "all", "none"}, cobra.ShellCompDirectiveNoFileComp
+}
+
 // docTypeFlagCompletion powers tab-completion for --type on commands that
 // filter/select by document type (list, show, pending resolve, new).
 // Sourced from domain.DocTypeNames so the list stays in sync with the

@@ -167,6 +167,13 @@ func TestLoadFromDir_AngelaDefaults_ZeroConfig(t *testing.T) {
 	if cfg.Angela.Polish.Incremental.Enabled {
 		t.Error("Polish.Incremental.Enabled should default to false (opt-in)")
 	}
+	// Story 8-21: polish.log schema keys (consumed by story 8-23 pruner).
+	if cfg.Angela.Polish.Log.RetentionDays != 30 {
+		t.Errorf("Polish.Log.RetentionDays: got %d, want 30", cfg.Angela.Polish.Log.RetentionDays)
+	}
+	if cfg.Angela.Polish.Log.MaxSizeMB != 10 {
+		t.Errorf("Polish.Log.MaxSizeMB: got %d, want 10", cfg.Angela.Polish.Log.MaxSizeMB)
+	}
 }
 
 // TestLoadFromDir_ExtendedAngelaConfigFullyPopulated writes a .lorerc with

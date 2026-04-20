@@ -44,7 +44,9 @@ lore doctor [flags]
 | `--fix` | bool | `false` | Réparer automatiquement les problèmes corrigeables |
 | `--config` | bool | `false` | Valider `.lorerc` uniquement (sauter le corpus) |
 | `--rebuild-store` | bool | `false` | Reconstruire `store.db` depuis zéro |
-| `--quiet` | bool | `false` | Afficher uniquement le nombre de problèmes |
+| `--prune` | bool | `false` | Lancer le garbage collection sur les artefacts générés (backups polish, polish.log, quarantaine de state corrompu). Mutuellement exclusif avec `--fix`, `--rebuild-store`, `--config`. |
+| `--dry-run` | bool | `false` | Avec `--prune` : rapporter ce qui serait supprimé sans toucher au disque |
+| `--quiet` | bool | `false` | Afficher uniquement le nombre de problèmes (ou format tab-séparé `feature\tremoved\tkept\tbytes` avec `--prune`) |
 
 ## Vérifications diagnostiques
 
@@ -54,8 +56,31 @@ lore doctor [flags]
 | **stale-index** | Fichier index désynchronisé avec les documents | ✅ Oui — reconstruit l'index |
 | **stale-cache** | Cache review Angela obsolète | ✅ Oui — vide le cache |
 | **broken-ref** | Un document référence un autre qui n'existe pas | ❌ Non — correction manuelle |
-| **invalid-frontmatter** | Les métadonnées YAML ne peuvent pas être parsées | ❌ Non — correction manuelle |
+| **invalid-frontmatter** | Les métadonnées YAML ne peuvent pas être parsées | ⚠ Dépend du sous-type — voir ci-dessous |
 | **config** | Fautes de frappe ou valeurs invalides dans `.lorerc` | ❌ Non — correction manuelle |
+
+### Invalid-frontmatter — sous-types
+
+Pour les problèmes `invalid-frontmatter`, doctor distingue deux sous-cas et les traite différemment :
+
+| Sous-type | Ce que ça détecte | Auto-réparable ? |
+|-----------|-------------------|------------------|
+| `missing` | Aucun délimiteur `---` du tout | ✅ Oui — synthétise un bloc frontmatter safe (`type` inféré du filename, `status: draft`, date du jour) |
+| `malformed` | Délimiteur `---` présent mais YAML non-parsable (quote non fermée, indentation cassée, clés en doublon, BOM + cassé, CRLF + cassé, etc.) | ❌ Non — le contenu authentique peut encore être récupérable, l'auto-fix le détruirait |
+
+Sur `malformed`, doctor affiche un bloc de suggestions :
+
+```text
+✗  invalid-frontmatter    decision-auth.md (malformed: YAML parse error: ...)
+      Suggested actions:
+        - Restore from a polish backup:
+            lore angela polish --restore 'decision-auth.md'
+        - Edit the file manually to repair the YAML block.
+```
+
+Le hint `--restore` n'apparaît que quand un backup polish existe pour le filename ; les filenames contenant des métacaractères shell (espaces, `;`, backticks) sont single-quotés pour qu'une copie-colle dans un shell soit safe.
+
+Cette protection est l'invariant **I31** — *doctor ne réécrit jamais un bloc frontmatter quand un délimiteur `---` est présent*. Elle protège contre une typo YAML manuelle qui détruirait du contenu authentique.
 
 ## Sortie
 
@@ -108,6 +133,43 @@ Config Check:
 
 > **Comment les corrections sont suggérées :** Lore utilise la [distance de Levenshtein](https://fr.wikipedia.org/wiki/Distance_de_Levenshtein) — une mesure de similarité entre deux mots. Si vous tapez `providr`, il sait que vous vouliez probablement dire `provider` (1 caractère de différence).
 
+## Élaguer les artefacts générés { #elaguer-les-artefacts-generes }
+
+`lore doctor --prune` lance le garbage collection sur toutes les familles d'artefacts croissants produits par Lore — une commande unique pour borner l'empreinte disque.
+
+| Famille | Pattern | Policy |
+|---------|---------|--------|
+| `polish-backups` | `polish-backups/*.bak` | Supprime les backups plus vieux que `angela.polish.backup.retention_days` (défaut 30) |
+| `polish-log` | `polish.log` | Deux passes : drop des entrées plus vieilles que `angela.polish.log.retention_days` (défaut 30), puis trim des plus anciennes jusqu'à passer sous `angela.polish.log.max_size_mb` (défaut 10 MB) |
+| `corrupt-quarantine` | `*.corrupt-<stamp>` | Supprime les fichiers de state quarantinés plus vieux que `angela.gc.corrupt_quarantine.retention_days` (défaut 14). Symlinks et fichiers non-réguliers sont ignorés. |
+
+```bash
+# Prévisualiser ce qui serait supprimé — pas de modif disque
+lore doctor --prune --dry-run
+
+Pruning generated artifacts:
+  ✓  polish-backups         removed 12 / kept 3  (14.2 KB)
+  ✓  polish-log             removed 87 / kept 412  (68.1 KB)
+  ✓  corrupt-quarantine     removed 2 / kept 0  (2.4 KB)
+                            84.7 KB total
+  (dry-run: no files changed)
+
+# Pruner pour de vrai
+lore doctor --prune
+
+# Sortie machine pour CI
+lore doctor --prune --quiet
+# polish-backups<TAB>12<TAB>3<TAB>14540
+# polish-log<TAB>87<TAB>412<TAB>69734
+# corrupt-quarantine<TAB>2<TAB>0<TAB>2457
+```
+
+L'invariant **I32** garantit que chaque famille de fichiers que Lore peut produire a un `Pruner` enregistré. Un futur artefact croissant ajouté sans pruner dédié échoue le test de régression I32 — donc `--prune` est future-proof par construction.
+
+### Concurrency-safe
+
+Le pruner polish-log acquiert le même `flock` consultatif que le writer (`AppendLogEntry`), et re-stat size + mtime juste avant la réécriture. Si un writer bypasse le lock et append pendant le prune, la dérive est détectée et le prune avorte sans perte de données.
+
 ## Rebuild Store (`--rebuild-store`)
 
 Le fichier `store.db` est une base SQLite qui indexe vos documents pour une recherche rapide. Il est **toujours reconstructible** depuis vos fichiers Markdown — ils sont la source de vérité.
@@ -124,16 +186,20 @@ lore doctor --rebuild-store
 
 ```mermaid
 graph TD
-    A[lore doctor] --> B{--config seulement ?}
-    B -->|Oui| C[Valider .lorerc + .lorerc.local]
-    B -->|Non| D[Lancer toutes les vérifications]
+    A[lore doctor] --> B{Mode ?}
+    B -->|--config| C[Valider .lorerc + .lorerc.local]
+    B -->|--prune| P[Lancer tous les Pruners enregistrés]
+    B -->|défaut| D[Lancer toutes les vérifications]
     D --> E{Problèmes trouvés ?}
     E -->|Non| F[✓ Tout est bon]
     E -->|Oui| G{Flag --fix ?}
-    G -->|Oui| H[Auto-réparer ce qui est possible]
+    G -->|Oui| H[Auto-réparer ce qui est safe]
     H --> I[Rapport : réparé + nécessite intervention manuelle]
     G -->|Non| J[Rapport + suggérer --fix]
     C --> K[Rapport des problèmes config avec suggestions]
+    P --> Q{--dry-run ?}
+    Q -->|Oui| R[Rapport des counts + bytes qui seraient supprimés]
+    Q -->|Non| S[Supprimer + rapport des counts réels]
 ```
 
 ## Exemples
@@ -147,6 +213,12 @@ lore doctor --fix
 
 # Juste la config
 lore doctor --config
+
+# Prévisualiser un prune (aucune modif disque)
+lore doctor --prune --dry-run
+
+# Prune les artefacts croissants pour de vrai
+lore doctor --prune
 
 # Option nucléaire : tout reconstruire
 lore doctor --fix --rebuild-store
@@ -164,6 +236,8 @@ lore doctor --fix --rebuild-store
 | Après édition de `.lorerc` | `lore doctor --config` — attraper les fautes de frappe |
 | Après migration/upgrade | `lore doctor --fix --rebuild-store` — reset complet |
 | Quelque chose semble bizarre | `lore doctor --fix` — laissez Lore comprendre |
+| L'empreinte disque de `.lore/` grandit | `lore doctor --prune` — garbage-collect backups, logs, quarantaine |
+| Avant un gros batch polish | `lore doctor --prune --dry-run` — prévisualiser le nettoyage |
 
 ## Tips & Tricks
 
@@ -188,7 +262,11 @@ Oui. `store.db` est un cache reconstruit depuis vos fichiers Markdown. Reconstru
 
 ### "Doctor dit 'correction manuelle requise'"
 
-Les références cassées et le front matter invalide ne peuvent pas être auto-réparés car Lore ne peut pas inférer la valeur correcte. Ouvrez le fichier signalé, corrigez-le manuellement, puis relancez `lore doctor`.
+Les références cassées et le frontmatter malformé ne peuvent pas être auto-réparés car Lore ne peut pas inférer la valeur correcte sans risquer de perdre du contenu authentique (invariant I31). Ouvrez le fichier signalé, corrigez-le manuellement — ou lancez `lore angela polish --restore <file>` si un backup existe — puis relancez `lore doctor`.
+
+### « Qu'est-ce que `--prune` supprime exactement ? »
+
+Uniquement trois familles : `polish-backups/*.bak` (backups atomiques de polish), les entrées `polish.log` plus vieilles que la rétention (ou au-dessus du cap de taille), et les fichiers de state quarantinés `*.corrupt-<ts>`. Les symlinks et fichiers non-réguliers sont ignorés. Votre markdown source, `.lorerc` et `store.db` ne sont jamais touchés par `--prune`.
 
 ### "Faut-il lancer doctor après chaque merge ?"
 

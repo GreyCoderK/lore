@@ -9,7 +9,30 @@ import (
 	"strings"
 
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/storage"
 )
+
+// bodyForPrompt returns the body portion of a document for inclusion
+// in an AI prompt, stripping any leading frontmatter block. The AI
+// never sees frontmatter (invariant I25): the caller holds fm_bytes
+// verbatim and re-attaches them on write.
+//
+// If the input has no frontmatter (no `---\n` prefix) or the
+// frontmatter is malformed, the input is returned unchanged — we
+// refuse to block prompt construction on a YAML parse error. The
+// caller is expected to have already validated the source via
+// storage.ExtractFrontmatter during the pipeline's pre-AI guard
+// (invariant I28).
+func bodyForPrompt(doc string) string {
+	if doc == "" {
+		return ""
+	}
+	_, body, err := storage.ExtractFrontmatter([]byte(doc))
+	if err != nil {
+		return doc
+	}
+	return string(body)
+}
 
 // BuildPolishPrompt constructs the AI prompt for polishing a document.
 // Returns (systemPrompt, userContent) where system is stable/cacheable and user varies per call.
@@ -83,8 +106,11 @@ CODE BLOCKS — Use with language tags (` + "`" + `bash` + "`" + `, ` + "`" + `y
 HARD RULES
 ═══════════════════════════════════════
 
-- Return the COMPLETE document: front matter (unchanged) + improved body
-- Do NOT modify front matter fields (type, date, commit, status, tags, related, generated_by)
+- Return ONLY the improved BODY content. Never emit ` + "`---`" + ` delimiters and never emit YAML frontmatter
+  fields (type, date, commit, status, tags, related, generated_by). The frontmatter is managed
+  by Lore and is NOT part of your input — you see only the body.
+- If the body appears to start with a ` + "`---`" + ` block, that is body content (a Markdown horizontal
+  rule inside the body), not a delimiter — leave it as body content
 - NEVER add generic filler. Banned phrases: "Moreover", "It is worth noting", "Furthermore",
   "This approach", "In conclusion", "It should be noted", "As mentioned above",
   "This is important because", "improves the overall workflow", "ensures reliability"
@@ -198,12 +224,14 @@ REWRITE RULES:
 		usr.WriteString("\n<<<END_CORPUS>>>\n\n")
 	}
 
-	// Use unique delimiters to prevent prompt injection via triple backticks in document content
-	usr.WriteString("DOCUMENT TO IMPROVE (between <<<DOCUMENT>>> and <<<END_DOCUMENT>>> markers):\n")
-	usr.WriteString("<<<DOCUMENT>>>\n")
-	usr.WriteString(sanitizePromptContent(doc))
-	usr.WriteString("\n<<<END_DOCUMENT>>>\n\n")
-	usr.WriteString("Return ONLY the improved document content. No explanations, no wrapping, no <<<DOCUMENT>>> markers.")
+	// Use unique delimiters to prevent prompt injection via triple backticks in document content.
+	// The body is stripped of frontmatter before interpolation (invariant I25) — the AI never sees
+	// the `---` YAML block. The caller re-attaches frontmatter bytes verbatim on write (invariant I24).
+	usr.WriteString("DOCUMENT BODY TO IMPROVE (between <<<BODY>>> and <<<END_BODY>>> markers):\n")
+	usr.WriteString("<<<BODY>>>\n")
+	usr.WriteString(sanitizePromptContent(bodyForPrompt(doc)))
+	usr.WriteString("\n<<<END_BODY>>>\n\n")
+	usr.WriteString("Return ONLY the improved body. No explanations, no wrapping, no `---` delimiters, no <<<BODY>>> markers.")
 
 	return sys.String(), usr.String()
 }

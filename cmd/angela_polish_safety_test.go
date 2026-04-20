@@ -4,7 +4,9 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +16,7 @@ import (
 	"github.com/greycoderk/lore/internal/angela"
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
+	"github.com/greycoderk/lore/internal/storage"
 	"github.com/greycoderk/lore/internal/testutil"
 )
 
@@ -372,5 +375,546 @@ func TestPolishCmd_BackupDisabled(t *testing.T) {
 	}
 	if strings.Contains(stderr2.String(), "disabled") || strings.Contains(stderr2.String(), "désactiv") {
 		t.Errorf("second run: warning should be suppressed after ack, got:\n%s", stderr2.String())
+	}
+}
+
+// --- Story 8-21 / I28: corrupt-source refused before AI call ----------
+
+// TestPolishCmd_RefusesCorruptSource_NoProviderCall asserts that when
+// the source document has malformed YAML in its frontmatter, polish
+// exits with a non-zero status BEFORE issuing any provider call. This
+// is invariant I28: zero credits consumed on a broken source.
+func TestPolishCmd_RefusesCorruptSource_NoProviderCall(t *testing.T) {
+	// A malformed YAML payload: unclosed list inside the frontmatter.
+	original := "---\ntype: [unclosed\n---\n## Why\nOriginal.\n"
+	cfg, _ := setupPolishSafety(t, "corrupt-src.md", original, "polished body")
+
+	// Replace the mock provider with one that fails if called. If the
+	// gate works, this function is never invoked.
+	var callCount int
+	restore := setPolishProviderFactory(func(_ *config.Config, _ domain.IOStreams) (domain.AIProvider, error) {
+		return &safetyMockProvider{
+			fn: func(ctx context.Context, prompt string, opts ...domain.Option) (string, error) {
+				callCount++
+				return "should never reach here", nil
+			},
+		}, nil
+	})
+	t.Cleanup(restore)
+
+	streams, _, stderr := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "corrupt-src.md"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatalf("expected polish to return an error on corrupt source")
+	}
+	if callCount != 0 {
+		t.Errorf("provider was called %d time(s); I28 requires zero calls on corrupt source", callCount)
+	}
+	// Message should be neutral and point at `lore doctor`.
+	errMsg := stderr.String()
+	if !strings.Contains(errMsg, "cannot polish: source frontmatter is not valid YAML") {
+		t.Errorf("stderr missing neutral corrupt-source message:\n%s", errMsg)
+	}
+	if !strings.Contains(errMsg, "lore doctor") {
+		t.Errorf("stderr should point at `lore doctor`:\n%s", errMsg)
+	}
+}
+
+// TestPolishCmd_InvalidArbitrateRule_Rejected asserts that a bogus
+// --arbitrate-rule value is rejected cleanly with a clear error,
+// before any file I/O or provider setup.
+func TestPolishCmd_InvalidArbitrateRule_Rejected(t *testing.T) {
+	cfg, _ := setupPolishSafety(t, "any.md", "---\ntype: note\ndate: \"2026-04-10\"\nstatus: draft\n---\nbody\n", "polished")
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--arbitrate-rule=bogus", "any.md"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatalf("expected error for invalid --arbitrate-rule")
+	}
+	if !strings.Contains(err.Error(), "invalid --arbitrate-rule") {
+		t.Errorf("error should mention invalid rule; got: %v", err)
+	}
+}
+
+// --- Story 8-21 / Task 6.b: sanitize + arbitrate in cmd integration ---
+
+// TestPolishCmd_DuplicateSection_NonTTYRefusesWithoutRule asserts
+// invariant I27: when the AI response contains duplicate sections and
+// stdin is not a TTY and no --arbitrate-rule is set, polish refuses
+// with a neutral message rather than silently de-duplicating.
+func TestPolishCmd_DuplicateSection_NonTTYRefusesWithoutRule(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	// Mock AI returns body with a duplicate `## Why`.
+	polished := "## Why\nFirst version.\n## Why\nSecond version.\n"
+	cfg, dir := setupPolishSafety(t, "dup-refuse.md", original, polished)
+
+	srcPath := filepath.Join(dir, ".lore", "docs", "dup-refuse.md")
+	bytesBefore, _ := os.ReadFile(srcPath)
+
+	streams, _, stderr := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "dup-refuse.md"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatalf("expected polish to refuse duplicate sections in non-TTY mode")
+	}
+	// Source must be bit-for-bit unchanged (I29).
+	bytesAfter, _ := os.ReadFile(srcPath)
+	if string(bytesAfter) != string(bytesBefore) {
+		t.Errorf("source mutated despite refusal")
+	}
+	// Stderr should mention the duplicate issue and point at the flag.
+	// Story 8-21 P0-3: message now enriched with the group count and
+	// a per-heading breakdown. Accept either the pre- or post-enrichment
+	// wording to keep the assertion robust against later polishing.
+	errMsg := stderr.String()
+	if !strings.Contains(errMsg, "duplicate section") {
+		t.Errorf("stderr should mention duplicate section(s):\n%s", errMsg)
+	}
+	if !strings.Contains(errMsg, "--arbitrate-rule") {
+		t.Errorf("stderr should mention --arbitrate-rule option:\n%s", errMsg)
+	}
+}
+
+// TestPolishCmd_DuplicateSection_ArbitrateRuleFirst_KeepsFirst asserts
+// that --arbitrate-rule=first resolves duplicates deterministically
+// and the polish proceeds to write.
+func TestPolishCmd_DuplicateSection_ArbitrateRuleFirst_KeepsFirst(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal reason.\n"
+	polished := "## Why\nFirst version.\n## Why\nSecond version.\n"
+	cfg, dir := setupPolishSafety(t, "dup-first.md", original, polished)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "--arbitrate-rule=first", "dup-first.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish: %v", err)
+	}
+
+	srcPath := filepath.Join(dir, ".lore", "docs", "dup-first.md")
+	written, err := os.ReadFile(srcPath)
+	if err != nil {
+		t.Fatalf("read written file: %v", err)
+	}
+	// Must contain the first version only; the second must be gone.
+	if !strings.Contains(string(written), "First version.") {
+		t.Errorf("written file missing first version:\n%s", string(written))
+	}
+	if strings.Contains(string(written), "Second version.") {
+		t.Errorf("written file still contains second version (arbitration failed):\n%s", string(written))
+	}
+}
+
+// TestPolishCmd_LeakedFrontmatter_SilentByDefault asserts that when
+// the AI cheats and emits a full document (frontmatter + body), the
+// extra `---` block is stripped silently by default — no "stripped"
+// message on stderr (invariant I26).
+func TestPolishCmd_LeakedFrontmatter_SilentByDefault(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	// AI cheated: emitted `---\n...` block on top of its body.
+	polished := "---\nid: 999\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nPolished body.\n"
+	cfg, _ := setupPolishSafety(t, "leaked.md", original, polished)
+
+	streams, _, stderr := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "leaked.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish: %v", err)
+	}
+	// Without -v the "stripped leaked frontmatter" message must not appear.
+	if strings.Contains(stderr.String(), "stripped leaked frontmatter") {
+		t.Errorf("silent-by-default violated; stderr contains strip message:\n%s", stderr.String())
+	}
+}
+
+// TestPolishCmd_LeakedFrontmatter_VerboseShowsStderr asserts that with
+// -v / --verbose, the otherwise-silent strip event surfaces as a
+// single stderr line.
+func TestPolishCmd_LeakedFrontmatter_VerboseShowsStderr(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "---\nid: 999\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nPolished body.\n"
+	cfg, _ := setupPolishSafety(t, "leaked-verbose.md", original, polished)
+
+	streams, _, stderr := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "-v", "leaked-verbose.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish: %v", err)
+	}
+	if !strings.Contains(stderr.String(), "stripped leaked frontmatter") {
+		t.Errorf("verbose should surface the strip message; stderr:\n%s", stderr.String())
+	}
+}
+
+// TestPolishCmd_LogWrittenOnSuccessfulPolish asserts invariant I30:
+// a successful polish run appends one LogResultWritten line to the
+// polish.log audit trail.
+func TestPolishCmd_LogWrittenOnSuccessfulPolish(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "## Why\nPolished body.\n"
+	cfg, dir := setupPolishSafety(t, "log-ok.md", original, polished)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "log-ok.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish: %v", err)
+	}
+
+	stateDir := config.ResolveStateDir(dir, cfg, cfg.DetectedMode)
+	entries, err := angela.ReadLogEntries(stateDir)
+	if err != nil {
+		t.Fatalf("ReadLogEntries: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 log entry, got %d", len(entries))
+	}
+	e := entries[0]
+	if e.Result != angela.LogResultWritten {
+		t.Errorf("Result=%q, want %q", e.Result, angela.LogResultWritten)
+	}
+	if e.File != "log-ok.md" {
+		t.Errorf("File=%q, want 'log-ok.md'", e.File)
+	}
+	if e.Exit != 0 {
+		t.Errorf("Exit=%d, want 0", e.Exit)
+	}
+	if e.Op != "polish" {
+		t.Errorf("Op=%q, want 'polish'", e.Op)
+	}
+}
+
+// TestPolishCmd_LogOnCorruptSource asserts that a refused-on-corrupt
+// source run still writes a LogResultAbortedCorruptSrc entry (I30 +
+// I28 combined: observability of refused runs).
+func TestPolishCmd_LogOnCorruptSource(t *testing.T) {
+	original := "---\ntype: [broken\n---\n## Why\nOriginal.\n"
+	cfg, dir := setupPolishSafety(t, "log-corrupt.md", original, "any")
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "log-corrupt.md"})
+	if err := cmd.Execute(); err == nil {
+		t.Fatalf("expected error on corrupt source")
+	}
+
+	stateDir := config.ResolveStateDir(dir, cfg, cfg.DetectedMode)
+	entries, err := angela.ReadLogEntries(stateDir)
+	if err != nil {
+		t.Fatalf("ReadLogEntries: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 log entry, got %d", len(entries))
+	}
+	if entries[0].Result != angela.LogResultAbortedCorruptSrc {
+		t.Errorf("Result=%q, want %q", entries[0].Result, angela.LogResultAbortedCorruptSrc)
+	}
+	if entries[0].Exit != 1 {
+		t.Errorf("Exit=%d, want 1", entries[0].Exit)
+	}
+}
+
+// TestPolishCmd_LogOnArbitrationAbort asserts LogResultAbortedArbitrate
+// is recorded when --arbitrate-rule=abort triggers, AND that the
+// findings include the detected duplicate group (I30).
+func TestPolishCmd_LogOnArbitrationAbort(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "## Why\nFirst.\n## Why\nSecond.\n"
+	cfg, dir := setupPolishSafety(t, "log-abort.md", original, polished)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "--arbitrate-rule=abort", "log-abort.md"})
+	if err := cmd.Execute(); err == nil {
+		t.Fatalf("expected abort to return error")
+	}
+
+	stateDir := config.ResolveStateDir(dir, cfg, cfg.DetectedMode)
+	entries, err := angela.ReadLogEntries(stateDir)
+	if err != nil {
+		t.Fatalf("ReadLogEntries: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 log entry, got %d", len(entries))
+	}
+	e := entries[0]
+	if e.Result != angela.LogResultAbortedArbitrate {
+		t.Errorf("Result=%q, want %q", e.Result, angela.LogResultAbortedArbitrate)
+	}
+	if len(e.Findings.Duplicates) != 1 {
+		t.Fatalf("expected 1 duplicate finding, got %d", len(e.Findings.Duplicates))
+	}
+	if e.Findings.Duplicates[0].Heading != "## Why" {
+		t.Errorf("duplicate Heading=%q, want '## Why'", e.Findings.Duplicates[0].Heading)
+	}
+	if e.Findings.Duplicates[0].Resolution != "rule:abort" {
+		t.Errorf("Resolution=%q, want 'rule:abort'", e.Findings.Duplicates[0].Resolution)
+	}
+}
+
+// TestPolishCmd_DryRun_NoLogWrite asserts AC-14: dry-run never writes
+// to polish.log (zero side-effect).
+func TestPolishCmd_DryRun_NoLogWrite(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "## Why\nPolished.\n"
+	cfg, dir := setupPolishSafety(t, "log-dryrun.md", original, polished)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--dry-run", "log-dryrun.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish --dry-run: %v", err)
+	}
+
+	stateDir := config.ResolveStateDir(dir, cfg, cfg.DetectedMode)
+	entries, err := angela.ReadLogEntries(stateDir)
+	if err != nil {
+		t.Fatalf("ReadLogEntries: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("dry-run wrote %d log entries; AC-14 requires zero", len(entries))
+	}
+}
+
+// TestPolishCmd_ArbitrateRuleSecond_KeepsSecond verifies the `second`
+// value of --arbitrate-rule at the cmd layer.
+func TestPolishCmd_ArbitrateRuleSecond_KeepsSecond(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "## Why\nFirst version.\n## Why\nSecond version.\n"
+	cfg, dir := setupPolishSafety(t, "arb-second.md", original, polished)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "--arbitrate-rule=second", "arb-second.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish: %v", err)
+	}
+	written, _ := os.ReadFile(filepath.Join(dir, ".lore", "docs", "arb-second.md"))
+	if !strings.Contains(string(written), "Second version.") || strings.Contains(string(written), "First version.") {
+		t.Errorf("expected only second version written; got:\n%s", string(written))
+	}
+}
+
+// TestPolishCmd_ArbitrateRuleBoth_ConcatsInSourceOrder verifies the
+// `both` value keeps every duplicate in source order.
+func TestPolishCmd_ArbitrateRuleBoth_ConcatsInSourceOrder(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "## Why\nFirst.\n## Why\nSecond.\n## Why\nThird.\n"
+	cfg, dir := setupPolishSafety(t, "arb-both.md", original, polished)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "--arbitrate-rule=both", "arb-both.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish: %v", err)
+	}
+	written, _ := os.ReadFile(filepath.Join(dir, ".lore", "docs", "arb-both.md"))
+	body := string(written)
+	// All three occurrences present in source order.
+	idxFirst := strings.Index(body, "First.")
+	idxSecond := strings.Index(body, "Second.")
+	idxThird := strings.Index(body, "Third.")
+	if idxFirst < 0 || idxSecond < 0 || idxThird < 0 {
+		t.Fatalf("all three occurrences expected; body:\n%s", body)
+	}
+	if !(idxFirst < idxSecond && idxSecond < idxThird) {
+		t.Errorf("source order not preserved: first@%d second@%d third@%d", idxFirst, idxSecond, idxThird)
+	}
+}
+
+// TestPolishCmd_ArbitrateRuleMutuallyExclusiveWithInteractive asserts
+// that cobra's mutual-exclusion declaration fires — the user cannot
+// combine --arbitrate-rule and --interactive on the same invocation.
+func TestPolishCmd_ArbitrateRuleMutuallyExclusiveWithInteractive(t *testing.T) {
+	cfg, _ := setupPolishSafety(t, "mx.md", "---\ntype: note\ndate: \"2026-04-10\"\nstatus: draft\n---\nbody\n", "polished")
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--arbitrate-rule=first", "--interactive", "mx.md"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatalf("expected mutual-exclusion error")
+	}
+	// Cobra's phrasing: "if any flags in the group [...] are set none
+	// of the others can be". We check for both flag names to be
+	// robust to future cobra wording changes.
+	msg := err.Error()
+	if !strings.Contains(msg, "arbitrate-rule") || !strings.Contains(msg, "interactive") {
+		t.Errorf("error should reference both mutually-exclusive flags; got: %v", err)
+	}
+}
+
+// TestPolishCmd_LogOnAIError asserts that an AI provider error path
+// writes a LogResultAIError entry, completing the I30 coverage of
+// terminal states.
+func TestPolishCmd_LogOnAIError(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	cfg, dir := setupPolishSafety(t, "log-ai-err.md", original, "never used")
+	// Override the factory to return a provider that always fails.
+	restore := setPolishProviderFactory(func(_ *config.Config, _ domain.IOStreams) (domain.AIProvider, error) {
+		return &safetyMockProvider{
+			fn: func(ctx context.Context, prompt string, opts ...domain.Option) (string, error) {
+				return "", errors.New("provider boom")
+			},
+		}, nil
+	})
+	t.Cleanup(restore)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "log-ai-err.md"})
+	if err := cmd.Execute(); err == nil {
+		t.Fatalf("expected error from provider failure")
+	}
+
+	stateDir := config.ResolveStateDir(dir, cfg, cfg.DetectedMode)
+	entries, err := angela.ReadLogEntries(stateDir)
+	if err != nil {
+		t.Fatalf("ReadLogEntries: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 log entry, got %d", len(entries))
+	}
+	if entries[0].Result != angela.LogResultAIError {
+		t.Errorf("Result=%q, want %q", entries[0].Result, angela.LogResultAIError)
+	}
+	if entries[0].Exit != 1 {
+		t.Errorf("Exit=%d, want 1", entries[0].Exit)
+	}
+}
+
+// TestPolishCmd_FrontmatterBytesIdentical is the cornerstone I24 test:
+// after a polish that writes the file, the frontmatter region of the
+// written doc must be byte-for-byte identical to the source's. No
+// YAML re-serialization, no key reordering, no quote-style change.
+func TestPolishCmd_FrontmatterBytesIdentical(t *testing.T) {
+	// Hand-crafted source with key-ordering quirks that yaml.Marshal
+	// would mutate: a comment, single-quoted and double-quoted values
+	// mixed, and a non-standard custom field.
+	original := "---\n" +
+		"type: decision\n" +
+		"date: \"2026-04-10\"\n" +
+		"# explicit status, do not touch\n" +
+		"status: published\n" +
+		"custom: 'single-quoted value'\n" +
+		"---\n" +
+		"## Why\nOriginal reason.\n"
+	// Mock AI returns a cleaner body — no leak, no duplicates.
+	polished := "## Why\nPolished reason, crisper and shorter.\n"
+	cfg, dir := setupPolishSafety(t, "i24.md", original, polished)
+
+	// Capture the source's fm bytes before polish.
+	srcPath := filepath.Join(dir, ".lore", "docs", "i24.md")
+	srcBytes, err := os.ReadFile(srcPath)
+	if err != nil {
+		t.Fatalf("read src: %v", err)
+	}
+	srcFM, _, err := storage.ExtractFrontmatter(srcBytes)
+	if err != nil {
+		t.Fatalf("extract src FM: %v", err)
+	}
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "i24.md"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("polish: %v", err)
+	}
+
+	// Read back and extract FM.
+	writtenBytes, err := os.ReadFile(srcPath)
+	if err != nil {
+		t.Fatalf("read written: %v", err)
+	}
+	writtenFM, _, err := storage.ExtractFrontmatter(writtenBytes)
+	if err != nil {
+		t.Fatalf("extract written FM: %v", err)
+	}
+	if !bytes.Equal(srcFM, writtenFM) {
+		t.Errorf("I24 violation — FM bytes drifted\nsrc: %q\nwritten: %q", string(srcFM), string(writtenFM))
+	}
+	// Body should have been replaced with the polished version.
+	if !strings.Contains(string(writtenBytes), "Polished reason, crisper") {
+		t.Errorf("written body missing polished content:\n%s", string(writtenBytes))
+	}
+}
+
+// TestPolishCmd_ArbitrateRuleAbort_NoWriteNoBackup asserts invariant
+// I29: --arbitrate-rule=abort exits cleanly without writing and
+// without consuming a backup slot.
+func TestPolishCmd_ArbitrateRuleAbort_NoWriteNoBackup(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "## Why\nFirst.\n## Why\nSecond.\n" // duplicates trigger arbitration
+	cfg, dir := setupPolishSafety(t, "arb-abort.md", original, polished)
+
+	srcPath := filepath.Join(dir, ".lore", "docs", "arb-abort.md")
+	bytesBefore, _ := os.ReadFile(srcPath)
+
+	streams, _, _ := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "--arbitrate-rule=abort", "arb-abort.md"})
+	if err := cmd.Execute(); err == nil {
+		t.Fatalf("expected abort to return an error")
+	}
+	// Source unchanged.
+	bytesAfter, _ := os.ReadFile(srcPath)
+	if string(bytesAfter) != string(bytesBefore) {
+		t.Errorf("source mutated on abort")
+	}
+	// No backup directory should exist (or if it does, be empty).
+	root := backupRootFor(t, cfg, dir)
+	_, statErr := os.Stat(root)
+	if statErr == nil {
+		// Directory exists — assert it has no entries.
+		entries, _ := os.ReadDir(root)
+		if len(entries) > 0 {
+			t.Errorf("backup dir has %d entries on abort; expected 0", len(entries))
+		}
+	}
+}
+
+// TestPolishCmd_ArbitrateRuleAbort_StderrMentionsDuplicates asserts the
+// Story 8-21 P0-3 fix: the abort message must name the root cause
+// (how many duplicate section groups were detected) so a CI operator
+// can diagnose without opening polish.log. The message must stay
+// neutral — never framing the situation as "wasted credits" or the
+// AI being "corrupted" (user feedback: ai_corruption_handling memory).
+func TestPolishCmd_ArbitrateRuleAbort_StderrMentionsDuplicates(t *testing.T) {
+	original := "---\ntype: decision\nstatus: published\ndate: \"2026-04-10\"\n---\n## Why\nOriginal.\n"
+	polished := "## Why\nFirst.\n## How\nH1.\n## How\nH2.\n## Why\nSecond.\n"
+	cfg, _ := setupPolishSafety(t, "arb-abort-msg.md", original, polished)
+
+	streams, _, errBuf := testStreams()
+	cmd := newAngelaCmd(cfg, streams)
+	cmd.SetArgs([]string{"polish", "--yes", "--arbitrate-rule=abort", "arb-abort-msg.md"})
+	_ = cmd.Execute()
+
+	stderr := errBuf.String()
+
+	// Must mention duplicate section group count.
+	if !strings.Contains(stderr, "duplicate section group") {
+		t.Errorf("stderr must mention duplicate section group(s), got:\n%s", stderr)
+	}
+	// Must cite the "abort" rule explicitly so the operator knows the
+	// rule took effect rather than an unrelated failure.
+	if !strings.Contains(stderr, "abort") {
+		t.Errorf("stderr must cite the abort rule, got:\n%s", stderr)
+	}
+	// Must stay neutral — reject any framing that blames the AI or
+	// wastes credits.
+	forbidden := []string{"wasted", "credit", "corrupt"}
+	for _, w := range forbidden {
+		if strings.Contains(strings.ToLower(stderr), w) {
+			t.Errorf("stderr contains forbidden framing %q:\n%s", w, stderr)
+		}
+	}
+	// Must list each duplicate heading with its count so the operator
+	// sees WHAT is duplicated, not just how many groups.
+	if !strings.Contains(stderr, `"## Why" × 2`) {
+		t.Errorf("stderr must list the duplicate headings with counts, got:\n%s", stderr)
 	}
 }

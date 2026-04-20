@@ -162,8 +162,29 @@ func PolishIncremental(ctx context.Context, doc string, storedHashes map[string]
 // incremental polish. The system prompt is the standard polish
 // prompt; the user content includes the full outline + only the
 // changed section bodies.
+//
+// Invariant I25: the frontmatter is never in the prompt. Section 0
+// (preamble / front matter) is excluded from both the outline and
+// the changed-sections block, even if a stale hash mark it as
+// "changed". The polish pipeline owns frontmatter byte-verbatim.
+//
+// The inter-section separator is `<<<NEXT SECTION>>>` rather than
+// `---` so that a Markdown horizontal rule in a section body cannot
+// be mistaken for a separator, and so the AI is not primed to emit
+// `---` delimiters in its response.
 func buildIncrementalPrompt(sections []Section, changedIdx []int, o IncrementalOpts) (string, string) {
-	// Build full outline.
+	// Filter out section 0 (preamble / frontmatter) from changedIdx.
+	// Even if its hash drifted (e.g. front matter edit), the AI never
+	// sees it — the pipeline re-attaches fm_bytes verbatim on write.
+	filteredIdx := make([]int, 0, len(changedIdx))
+	for _, i := range changedIdx {
+		if i == 0 {
+			continue
+		}
+		filteredIdx = append(filteredIdx, i)
+	}
+
+	// Build full outline (skip preamble — it has no heading anyway).
 	var outline strings.Builder
 	outline.WriteString("## Document outline\n\n")
 	for _, s := range sections {
@@ -174,21 +195,17 @@ func buildIncrementalPrompt(sections []Section, changedIdx []int, o IncrementalO
 	}
 
 	// Build changed sections block.
-	changedSet := make(map[int]bool, len(changedIdx))
-	for _, i := range changedIdx {
-		changedSet[i] = true
-	}
 	var changed strings.Builder
 	changed.WriteString("\n## Sections to polish\n\n")
 	changed.WriteString("Return ONLY the polished versions of these sections, each starting with its original heading.\n\n")
-	for _, i := range changedIdx {
+	for _, i := range filteredIdx {
 		s := sections[i]
 		if s.Heading != "" {
 			changed.WriteString(s.Heading)
 			changed.WriteByte('\n')
 		}
 		changed.WriteString(s.Body)
-		changed.WriteString("\n\n---\n\n")
+		changed.WriteString("\n\n<<<NEXT SECTION>>>\n\n")
 	}
 
 	// Reuse the standard polish system prompt.

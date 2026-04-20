@@ -449,37 +449,31 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 		},
 	}
 
-	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Suppress human messages on stderr")
-	cmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, "Print detailed rejection reasons for findings dropped by the evidence validator")
-	cmd.Flags().StringVar(&flagFor, "for", "", "Adapt findings for a target audience (e.g., \"CTO\", \"équipe commerciale\", \"nouveau développeur\")")
-	cmd.Flags().StringVar(&flagFilter, "filter", "", "Regex to filter documents by filename (e.g., \"commands/.*\", \".*\\.fr\\.md$\")")
-	cmd.Flags().BoolVar(&flagAll, "all", false, "Review all documents (no 25+25 sampling)")
+	tc := i18n.T().Cmd
+	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, tc.AngelaReviewFlagQuiet)
+	cmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, tc.AngelaReviewFlagVerbose)
+	cmd.Flags().StringVar(&flagFor, "for", "", tc.AngelaReviewFlagFor)
+	cmd.Flags().StringVar(&flagFilter, "filter", "", tc.AngelaReviewFlagFilter)
+	cmd.Flags().BoolVar(&flagAll, "all", false, tc.AngelaReviewFlagAll)
 	// Differential review.
-	cmd.Flags().BoolVar(&flagDiffOnly, "diff-only", false, "Show only NEW + REGRESSED findings (and counts of PERSISTING/RESOLVED). Ideal for CI.")
+	cmd.Flags().BoolVar(&flagDiffOnly, "diff-only", false, tc.AngelaReviewFlagDiffOnly)
 	// Interactive TUI mode.
-	cmd.Flags().BoolVarP(&flagInteractive, "interactive", "i", false, "Launch interactive TUI to navigate and triage findings")
-	cmd.Flags().StringSliceVar(&flagSynthesizers, "synthesizers", nil, "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")")
-	cmd.Flags().BoolVar(&flagNoSynthesizers, "no-synthesizers", false, "Disable all Example Synthesizers for this run")
+	cmd.Flags().BoolVarP(&flagInteractive, "interactive", "i", false, tc.AngelaReviewFlagInteractive)
+	cmd.Flags().StringSliceVar(&flagSynthesizers, "synthesizers", nil, tc.AngelaReviewFlagSynthesizers)
+	cmd.Flags().BoolVar(&flagNoSynthesizers, "no-synthesizers", false, tc.AngelaReviewFlagNoSynthesizers)
 	// Persona opt-in flags (mutually exclusive).
-	cmd.Flags().StringSliceVar(&flagPersonaNames, "persona", nil,
-		"Activate persona lenses for this review (repeatable; e.g. --persona architect --persona qa-reviewer). Default: no personas.")
-	cmd.Flags().BoolVar(&flagNoPersonas, "no-personas", false,
-		"Force baseline review without personas, even if .lorerc configures them. Mutually exclusive with --persona and --use-configured-personas.")
-	cmd.Flags().BoolVar(&flagUseConfiguredPersonas, "use-configured-personas", false,
-		"Activate personas from .lorerc without the interactive confirmation prompt. Mutually exclusive with --persona and --no-personas.")
+	cmd.Flags().StringSliceVar(&flagPersonaNames, "persona", nil, tc.AngelaReviewFlagPersona)
+	cmd.Flags().BoolVar(&flagNoPersonas, "no-personas", false, tc.AngelaReviewFlagNoPersonas)
+	cmd.Flags().BoolVar(&flagUseConfiguredPersonas, "use-configured-personas", false, tc.AngelaReviewFlagUseConfiguredPersonas)
 	// Preview flags.
-	cmd.Flags().BoolVar(&flagPreview, "preview", false,
-		"Print cost estimate + planned personas then exit without calling the AI. Safe dry-run for CI/budget governance.")
-	cmd.Flags().StringVar(&flagFormat, "format", "",
-		"Output format for --preview: text (default) | json. Ignored without --preview.")
+	cmd.Flags().BoolVar(&flagPreview, "preview", false, tc.AngelaReviewFlagPreview)
+	cmd.Flags().StringVar(&flagFormat, "format", "", tc.AngelaReviewFlagFormat)
 
 	_ = cmd.RegisterFlagCompletionFunc("synthesizers", synthesizerFlagCompletion)
 	// Persona name completion on --persona (matches draft/polish).
 	_ = cmd.RegisterFlagCompletionFunc("persona", personaFlagCompletion)
-	// Fixed completion set for --format.
-	_ = cmd.RegisterFlagCompletionFunc("format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return []string{"text", "json"}, cobra.ShellCompDirectiveNoFileComp
-	})
+	// Fixed completion set for --format (text | json).
+	_ = cmd.RegisterFlagCompletionFunc("format", textJSONFormatFlagCompletion)
 	// Mutual exclusions declared declaratively so a refactor cannot silently
 	// drop them. Cobra enforces these at flag-parse time, before RunE runs.
 	cmd.MarkFlagsMutuallyExclusive("persona", "no-personas")

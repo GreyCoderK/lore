@@ -41,6 +41,19 @@ angela:
   # mode: draft             # DEPRECATED — no runtime effect. Pick the mode via the sub-command: `lore angela draft|polish|review`
   # max_tokens: 8192         # Optional: override auto-computed max tokens (default: dynamic per mode)
 
+  polish:
+    backup:
+      enabled: true          # Create a pre-polish backup of the source before each write
+      path: polish-backups   # Subdirectory under state dir
+      retention_days: 30     # Delete backups older than N days (0 = keep forever)
+    log:
+      retention_days: 30     # polish.log: keep entries from the last N days (0 = disable date filter)
+      max_size_mb: 10        # polish.log: trim oldest entries to stay under this cap (0 = disable cap)
+
+  gc:
+    corrupt_quarantine:
+      retention_days: 14     # Delete *.corrupt-<ts> state files older than N days (0 = keep forever)
+
 hooks:
   post_commit: true          # Enable post-commit hook
   star_prompt: true          # Show star prompt
@@ -182,6 +195,19 @@ ai:
 Each team member stores their own API key locally. The shared config defines the provider and model.
 
 > **`angela.max_tokens`** — When set, this value overrides the auto-computed limit. By default, Angela computes `max_tokens` dynamically based on document size (word_count × 1.3 × 1.8, capped at 8192, floor 512). If you set `angela.max_tokens: 10000` in `.lorerc`, that value is always used instead. Increase this if Angela warns that "input exceeds max output" or if responses are being truncated.
+
+### Polish safety & retention keys
+
+| Key | Default | What it controls |
+|-----|---------|------------------|
+| `angela.polish.backup.enabled` | `true` | Whether `polish` writes a pre-polish backup to `polish-backups/` before touching the source. Disabling trades safety for speed; a first-time-disabled warning is printed once per state dir. |
+| `angela.polish.backup.path` | `polish-backups` | Subdirectory under the state dir where backups land. |
+| `angela.polish.backup.retention_days` | `30` | Backups older than N days are deleted by `lore doctor --prune` (and as a side-effect of each polish run). `0` = keep forever. |
+| `angela.polish.log.retention_days` | `30` | `polish.log` entries older than N days are dropped on prune. `0` = disable date filter. |
+| `angela.polish.log.max_size_mb` | `10` | After the date filter, if `polish.log` still exceeds this cap, oldest entries are trimmed until it fits. `0` = disable cap. |
+| `angela.gc.corrupt_quarantine.retention_days` | `14` | `*.corrupt-<ts>` quarantined state files older than N days are deleted on prune. Symlinks and non-regular files are always skipped. `0` = keep forever. |
+
+Run `lore doctor --prune --dry-run` to preview the effect of your retention policy before running it. See [`lore doctor`](../commands/doctor.md#prune-generated-artifacts) for the full command reference.
 
 ### Bilingual Project (FR/EN)
 

@@ -168,6 +168,11 @@ func TestDiagnose_InvalidFrontMatter_MalformedYAML(t *testing.T) {
 			if issue.AutoFix {
 				t.Error("malformed YAML front matter should NOT be auto-fixable")
 			}
+			// Story 8-22: Subkind must be "malformed" when delimiters
+			// are present but YAML is unparseable.
+			if issue.Subkind != SubkindFrontmatterMalformed {
+				t.Errorf("Subkind=%q, want %q", issue.Subkind, SubkindFrontmatterMalformed)
+			}
 		}
 	}
 	if !found {
@@ -197,10 +202,238 @@ func TestDiagnose_InvalidFrontMatter_Missing(t *testing.T) {
 			if !issue.AutoFix {
 				t.Error("missing front matter should be auto-fixable")
 			}
+			// Story 8-22: Subkind must be "missing" when no `---` delimiter
+			// is present. Synthesis is safe.
+			if issue.Subkind != SubkindFrontmatterMissing {
+				t.Errorf("Subkind=%q, want %q", issue.Subkind, SubkindFrontmatterMissing)
+			}
 		}
 	}
 	if !found {
 		t.Errorf("expected invalid-frontmatter issue for missing FM, got: %+v", report.Issues)
+	}
+}
+
+// --- Story 8-22 / I31: doctor safe — never rewrite when `---` present ---
+
+// TestI31_FixRefusesMalformed_NeverRewrites asserts the codified I31
+// invariant: `doctor --fix` never modifies a file's bytes when the
+// source contains a `---` delimiter, even if auto-fix is requested
+// for that issue category.
+func TestI31_FixRefusesMalformed_NeverRewrites(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	// Simulate a user mis-edit: delimiters present, YAML broken.
+	malformed := "---\ntype: decision\nid: [unclosed\n---\n## Why\nUser-authored content that may be recoverable.\n"
+	path := filepath.Join(docsDir, "decision-malformed-2026-04-19.md")
+	if err := os.WriteFile(path, []byte(malformed), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	srcBytes, _ := os.ReadFile(path)
+
+	report, err := Diagnose(docsDir)
+	if err != nil {
+		t.Fatalf("Diagnose: %v", err)
+	}
+
+	// Adversarial step: even if a caller accidentally set AutoFix=true
+	// on a malformed issue (e.g. via a custom DiagnosticReport built
+	// by hand), the Fix() function must still refuse to rewrite the
+	// file because Subkind != missing.
+	for i := range report.Issues {
+		if report.Issues[i].Category == "invalid-frontmatter" &&
+			report.Issues[i].Subkind == SubkindFrontmatterMalformed {
+			report.Issues[i].AutoFix = true // adversarial flip
+		}
+	}
+
+	fixReport, err := Fix(docsDir, report)
+	if err != nil {
+		t.Fatalf("Fix: %v", err)
+	}
+
+	// The malformed issue must NOT have been auto-fixed.
+	if fixReport.Fixed > 0 {
+		t.Errorf("Fixed=%d, want 0 — I31 requires no rewrite when delimiter present", fixReport.Fixed)
+	}
+	// The file bytes must be unchanged.
+	afterBytes, _ := os.ReadFile(path)
+	if string(afterBytes) != string(srcBytes) {
+		t.Errorf("I31 violation — file bytes changed\nbefore: %q\nafter:  %q", string(srcBytes), string(afterBytes))
+	}
+}
+
+// TestI31_FixRefusesMalformed_PropertyStyle sweeps 6 adversarial
+// malformed inputs and asserts none of them are rewritten. Extending
+// this table is the right way to add new regression scenarios.
+//
+// Story 8-22 P0 fix: added CRLF and BOM+malformed variants that the
+// old `strings.HasPrefix(content, "---\n")` heuristic mis-classified
+// as "missing" → AutoFix=true → double-prepend. These now flow
+// through ExtractFrontmatter which normalizes both.
+func TestI31_FixRefusesMalformed_PropertyStyle(t *testing.T) {
+	cases := []struct {
+		name    string
+		content string
+	}{
+		{"unclosed_list", "---\ntype: [oops\n---\nbody\n"},
+		{"unclosed_quote", "---\ntitle: \"unclosed\n---\nbody\n"},
+		{"broken_indent", "---\ntype: decision\n  - bad: indent\n---\nbody\n"},
+		{"duplicate_keys", "---\ntype: decision\ntype: duplicate\n---\nbody\n"},
+		{"tab_instead_of_space", "---\ntype:\tdecision\n---\nbody\n"},
+		{"truncated_fm", "---\ntype: decision\n"}, // opening delim, never closed
+		// Story 8-22 P0 additions (these crash-tested the old heuristic):
+		{"crlf_delimiter_malformed", "---\r\ntype: [broken\r\n---\r\nbody\r\n"},
+		{"bom_delimiter_malformed", "\xEF\xBB\xBF---\ntype: [broken\n---\nbody\n"},
+		{"empty_fm_block", "---\n---\nbody\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			docsDir := newDoctorDir(t)
+			path := filepath.Join(docsDir, "decision-"+tc.name+"-2026-04-19.md")
+			if err := os.WriteFile(path, []byte(tc.content), 0o644); err != nil {
+				t.Fatalf("WriteFile: %v", err)
+			}
+
+			report, err := Diagnose(docsDir)
+			if err != nil {
+				t.Fatalf("Diagnose: %v", err)
+			}
+			fixReport, err := Fix(docsDir, report)
+			if err != nil {
+				t.Fatalf("Fix: %v", err)
+			}
+			if fixReport.Fixed > 0 {
+				t.Errorf("I31 violation: Fixed=%d for %q", fixReport.Fixed, tc.name)
+			}
+			afterBytes, _ := os.ReadFile(path)
+			if string(afterBytes) != tc.content {
+				t.Errorf("I31 violation: file rewritten for %q\nbefore: %q\nafter:  %q", tc.name, tc.content, string(afterBytes))
+			}
+		})
+	}
+}
+
+// TestI31_BOMPlusValidFM_NotClassifiedMissing asserts the Story 8-22
+// P0 fix: a file with a UTF-8 BOM before an otherwise-valid FM used
+// to fail `strings.HasPrefix(content, "---\n")` in the classification
+// heuristic, get tagged "missing", and `fixMissingFrontMatter` would
+// then prepend a fresh FM ON TOP of the existing one. The ExtractFrontmatter-
+// based classification must accept BOM+valid and not emit any issue
+// (or at worst a non-fatal schema issue, never a "missing" subkind).
+func TestI31_BOMPlusValidFM_NotClassifiedMissing(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	path := filepath.Join(docsDir, "decision-bom-ok-2026-04-19.md")
+	content := "\xEF\xBB\xBF---\ntype: decision\ndate: 2026-04-19\nstatus: draft\n---\n# Body\n"
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	report, err := Diagnose(docsDir)
+	if err != nil {
+		t.Fatalf("Diagnose: %v", err)
+	}
+	for _, iss := range report.Issues {
+		if iss.Category == "invalid-frontmatter" && iss.Subkind == SubkindFrontmatterMissing {
+			t.Fatalf("BOM+valid FM must not be classified as missing:\n%+v", iss)
+		}
+	}
+}
+
+// TestI31_CRLFDelimiterMalformed_ClassifiedMalformed closes the second
+// half of the P0: CRLF delimiters must route to the malformed subkind
+// (never missing). Combined with the new entry in
+// TestI31_FixRefusesMalformed_PropertyStyle, this locks down both
+// directions of the classification.
+func TestI31_CRLFDelimiterMalformed_ClassifiedMalformed(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	path := filepath.Join(docsDir, "decision-crlf-broken-2026-04-19.md")
+	// Delimiters are CRLF; YAML body is deliberately broken.
+	content := "---\r\ntype: [oops\r\n---\r\nbody\r\n"
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	report, err := Diagnose(docsDir)
+	if err != nil {
+		t.Fatalf("Diagnose: %v", err)
+	}
+	var iss *Issue
+	for i := range report.Issues {
+		if report.Issues[i].Category == "invalid-frontmatter" {
+			iss = &report.Issues[i]
+			break
+		}
+	}
+	if iss == nil {
+		t.Fatal("expected an invalid-frontmatter issue")
+	}
+	if iss.Subkind != SubkindFrontmatterMalformed {
+		t.Errorf("Subkind=%q, want %q (CRLF delimiter must NOT classify as missing)",
+			iss.Subkind, SubkindFrontmatterMalformed)
+	}
+	if iss.AutoFix {
+		t.Errorf("AutoFix=true on malformed CRLF — I31 violation risk")
+	}
+}
+
+// TestFix_MissingFM_TOCTOU_BecomesMalformed asserts the belt-and-
+// suspenders guard added to fixMissingFrontMatter: if the file on
+// disk at Fix time contains a delimiter (even malformed), we must
+// NOT prepend a fresh FM. The guard uses ExtractFrontmatter so it
+// handles BOM + CRLF uniformly with Diagnose.
+func TestFix_MissingFM_TOCTOU_BecomesMalformed(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	path := filepath.Join(docsDir, "decision-toctou-2026-04-19.md")
+	// Initial state: no FM at all → Diagnose classifies missing.
+	if err := os.WriteFile(path, []byte("# no fm yet\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile initial: %v", err)
+	}
+	report, err := Diagnose(docsDir)
+	if err != nil {
+		t.Fatalf("Diagnose: %v", err)
+	}
+	// Simulate the user manually starting a (broken) repair between
+	// Diagnose and Fix.
+	midEdit := "---\ntype: [broken\n---\n# user edit\n"
+	if err := os.WriteFile(path, []byte(midEdit), 0o644); err != nil {
+		t.Fatalf("WriteFile mid-edit: %v", err)
+	}
+
+	_, err = Fix(docsDir, report)
+	if err != nil {
+		t.Fatalf("Fix: %v", err)
+	}
+
+	after, _ := os.ReadFile(path)
+	if string(after) != midEdit {
+		t.Fatalf("I31 violation: Fix prepended FM on top of user-edited malformed file:\nbefore: %q\nafter:  %q",
+			midEdit, string(after))
+	}
+}
+
+// TestFix_MalformedFM_AdversarialSubkindBypass asserts the Fix-layer
+// guard: a caller building a DiagnosticReport by hand with AutoFix=true
+// and an empty or non-missing Subkind must NOT bypass the malformed
+// protection.
+func TestFix_MalformedFM_AdversarialSubkindBypass(t *testing.T) {
+	docsDir := newDoctorDir(t)
+	path := filepath.Join(docsDir, "decision-adv-2026-04-19.md")
+	bad := "---\ntype: [broken\n---\nbody\n"
+	if err := os.WriteFile(path, []byte(bad), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	adversarial := &DiagnosticReport{Issues: []Issue{{
+		Category: "invalid-frontmatter",
+		File:     "decision-adv-2026-04-19.md",
+		AutoFix:  true,
+		Subkind:  "", // empty — must not match SubkindFrontmatterMissing
+	}}}
+	if _, err := Fix(docsDir, adversarial); err != nil {
+		t.Fatalf("Fix: %v", err)
+	}
+	after, _ := os.ReadFile(path)
+	if string(after) != bad {
+		t.Fatalf("I31 violation via empty subkind:\nbefore: %q\nafter:  %q", bad, string(after))
 	}
 }
 
@@ -300,7 +533,12 @@ func TestFix_InvalidFrontMatterFixed(t *testing.T) {
 
 	report := &DiagnosticReport{
 		Issues: []Issue{
-			{Category: "invalid-frontmatter", File: "decision-auth-2026-04-08.md", AutoFix: true},
+			{
+				Category: "invalid-frontmatter",
+				Subkind:  SubkindFrontmatterMissing,
+				File:     "decision-auth-2026-04-08.md",
+				AutoFix:  true,
+			},
 		},
 	}
 

@@ -79,6 +79,27 @@ type AngelaConfig struct {
 	// framework enforces invariants I4 (zero-hallucination), I5 (security-
 	// first projection), I6 (idempotency), I7 (no silent merge).
 	Synthesizers SynthesizersConfig `yaml:"synthesizers" mapstructure:"synthesizers"`
+
+	// GC drives the retention policies consumed by the Pruner registry
+	// at `internal/angela/gc/`. Pruners run on demand via
+	// `lore doctor --prune` and automatically via each producer
+	// (polish backups today, others as they register). Story 8-23.
+	GC GCConfig `yaml:"gc" mapstructure:"gc"`
+}
+
+// GCConfig collects the cross-feature garbage-collection retention
+// knobs. Per-feature retention (polish backups, polish.log) lives on
+// the feature config where it was originally declared; GCConfig holds
+// retention for artifacts that don't belong to a single feature.
+type GCConfig struct {
+	CorruptQuarantine CorruptQuarantineConfig `yaml:"corrupt_quarantine" mapstructure:"corrupt_quarantine"`
+}
+
+// CorruptQuarantineConfig controls how long `<state>.corrupt-<ts>`
+// files produced by angela.QuarantineCorruptState are kept before
+// `doctor --prune` removes them. Default 14 days.
+type CorruptQuarantineConfig struct {
+	RetentionDays int `yaml:"retention_days" mapstructure:"retention_days"`
 }
 
 // SynthesizersConfig activates and configures the Example Synthesizer family.
@@ -344,6 +365,21 @@ type PolishConfig struct {
 	Interactive        PolishInteractiveConfig  `yaml:"interactive" mapstructure:"interactive"`
 	Personas           PersonasConfig           `yaml:"personas" mapstructure:"personas"`
 	Audience           PolishAudienceConfig     `yaml:"audience" mapstructure:"audience"`
+	Log                PolishLogConfig          `yaml:"log" mapstructure:"log"`
+}
+
+// PolishLogConfig controls the polish.log JSONL audit trail.
+// Story 8-21 defines the schema and the write path (invariant I30);
+// retention + size cap are consumed by story 8-23's Pruner registry
+// (doctor --prune). Keeping the keys here so the schema lands in one
+// place and is visible to config validation.
+type PolishLogConfig struct {
+	// RetentionDays: entries older than this are eligible for pruning
+	// via `lore doctor --prune`. 0 = keep forever.
+	RetentionDays int `yaml:"retention_days" mapstructure:"retention_days"`
+	// MaxSizeMB: hard cap on polish.log size; when exceeded, the oldest
+	// lines are truncated until the cap is respected. 0 = no cap.
+	MaxSizeMB int `yaml:"max_size_mb" mapstructure:"max_size_mb"`
 }
 
 // PolishBackupConfig controls automatic backup of files before polish writes.
@@ -536,6 +572,18 @@ func setAngelaDefaults(v *viper.Viper) {
 
 	v.SetDefault("angela.polish.interactive.enabled", false)
 	v.SetDefault("angela.polish.interactive.granularity", "section")
+
+	// Story 8-21: polish.log JSONL audit trail. Retention and cap are
+	// consumed by story 8-23's Pruner registry; keys live here so the
+	// schema is visible to polish.
+	v.SetDefault("angela.polish.log.retention_days", 30)
+	v.SetDefault("angela.polish.log.max_size_mb", 10)
+
+	// Story 8-23: GC retention for artifacts that don't belong to a
+	// single feature. 14 days for corrupt-quarantine files (aggressive
+	// cleanup is fine — if the user has not investigated a corruption
+	// in 2 weeks, they never will).
+	v.SetDefault("angela.gc.corrupt_quarantine.retention_days", 14)
 
 	// Per-command persona override defaults removed — see draft block above.
 

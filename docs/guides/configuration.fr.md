@@ -40,6 +40,19 @@ angela:
   # mode: draft             # DÉPRÉCIÉ — aucun effet à l'exécution. Choisissez le mode via la sous-commande : `lore angela draft|polish|review`
   # max_tokens: 8192         # Optionnel : surcharge le max tokens auto-calculé (défaut : dynamique par mode)
 
+  polish:
+    backup:
+      enabled: true          # Crée un backup pré-polish du source avant chaque écriture
+      path: polish-backups   # Sous-répertoire sous le state dir
+      retention_days: 30     # Supprime les backups plus vieux que N jours (0 = garder pour toujours)
+    log:
+      retention_days: 30     # polish.log : garde les entrées des N derniers jours (0 = désactive filtre date)
+      max_size_mb: 10        # polish.log : trim des plus anciennes pour rester sous ce cap (0 = désactive cap)
+
+  gc:
+    corrupt_quarantine:
+      retention_days: 14     # Supprime les fichiers state *.corrupt-<ts> plus vieux que N jours (0 = garder pour toujours)
+
 hooks:
   post_commit: true          # Activer le hook post-commit
   star_prompt: true          # Afficher le prompt star
@@ -181,6 +194,19 @@ ai:
 Chaque membre de l'équipe stocke sa propre clé API. La config partagée définit le fournisseur et le modèle.
 
 > **`angela.max_tokens`** — Quand défini, cette valeur remplace la limite auto-calculée. Par défaut, Angela calcule `max_tokens` dynamiquement selon la taille du document (word_count × 1.3 × 1.8, plafonné à 8192, plancher 512). Si vous définissez `angela.max_tokens: 10000` dans `.lorerc`, cette valeur est toujours utilisée. Augmentez-la si Angela avertit que « l'entrée dépasse la sortie max » ou si les réponses sont tronquées.
+
+### Clés de sûreté & rétention polish
+
+| Clé | Défaut | Ce qu'elle contrôle |
+|-----|--------|---------------------|
+| `angela.polish.backup.enabled` | `true` | Si `polish` écrit un backup pré-polish dans `polish-backups/` avant de toucher la source. Désactiver échange sûreté contre vitesse ; un avertissement « première fois désactivé » est affiché une seule fois par state dir. |
+| `angela.polish.backup.path` | `polish-backups` | Sous-répertoire sous le state dir où les backups atterrissent. |
+| `angela.polish.backup.retention_days` | `30` | Les backups plus vieux que N jours sont supprimés par `lore doctor --prune` (et en side-effect de chaque run polish). `0` = garder pour toujours. |
+| `angela.polish.log.retention_days` | `30` | Les entrées `polish.log` plus vieilles que N jours sont droppées au prune. `0` = désactive le filtre date. |
+| `angela.polish.log.max_size_mb` | `10` | Après le filtre date, si `polish.log` dépasse ce cap, les plus anciennes entrées sont trimmées jusqu'à passer sous. `0` = désactive le cap. |
+| `angela.gc.corrupt_quarantine.retention_days` | `14` | Les fichiers de state quarantinés `*.corrupt-<ts>` plus vieux que N jours sont supprimés au prune. Symlinks et fichiers non-réguliers sont toujours ignorés. `0` = garder pour toujours. |
+
+Lancez `lore doctor --prune --dry-run` pour prévisualiser l'effet de votre policy de rétention avant de l'appliquer. Voir [`lore doctor`](../commands/doctor.md#elaguer-les-artefacts-generes) pour la référence complète de la commande.
 
 ### Projet bilingue (FR/EN)
 

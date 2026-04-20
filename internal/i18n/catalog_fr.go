@@ -200,6 +200,18 @@ var catalogFR = &Messages{
 		DoctorFixing:         "Application des corrections…",
 		DoctorRebuilding:     "Reconstruction du store depuis les sources…",
 
+		// Story 8-22 — bloc de suggestions pour frontmatter malformé
+		DoctorSuggestedActions:    "Actions suggérées :",
+		DoctorMalformedRestore:    "Restaurer depuis un backup polish :",
+		DoctorMalformedEditManual: "Éditer le fichier manuellement pour réparer le bloc YAML.",
+
+		// Story 8-23 — sortie de prune
+		DoctorPruneHeader:     "Élagage des artefacts générés :",
+		DoctorPruneRowOK:      "%-22s supprimés %d / gardés %d  (%s)",
+		DoctorPruneRowErr:     "%-22s %s",
+		DoctorPruneTotal:      "%s au total",
+		DoctorPruneDryRunFoot: "(dry-run : aucun fichier modifié)",
+
 		// config_cmd.go
 		ConfigShort:          "Gérer la configuration Lore",
 		SetKeyShort:          "Stocker une clé API dans le trousseau système",
@@ -262,6 +274,16 @@ var catalogFR = &Messages{
 		AngelaPolishRestoreListHdr:  "Sauvegardes pour %s (plus récente en premier) :",
 		AngelaPolishRestoreListRow:  "  %s  (%s)",
 		AngelaPolishRestoreUnknown:  "Aucune sauvegarde trouvée pour l'horodatage %s",
+
+		// Story 8-21 — messages d'intégrité structurelle
+		AngelaPolishCorruptSource:        "impossible de polir : le frontmatter source n'est pas du YAML valide.",
+		AngelaPolishCorruptSourceHint:    "Lancez `lore doctor` pour inspecter, ou `lore angela polish --restore %s` pour revenir en arrière si un backup existe.",
+		AngelaPolishLeakedFMStripped:     "frontmatter leaké strippé de la sortie IA (%d octets, ligne %d)",
+		AngelaPolishDryRunDuplicates:     "la sortie IA contient %d groupe(s) de sections dupliquées — arbitrage nécessaire hors --dry-run",
+		AngelaPolishDuplicateHeadingRow:  "%q × %d",
+		AngelaPolishArbitrateAbortMsg:    "polish aborté : la sortie IA avait %d groupe(s) de sections dupliquées ; la règle d'arbitrage a résolu en abort. Source inchangée, aucun backup consommé.",
+		AngelaPolishArbitrateRefusedMsg:  "la sortie IA contient %d groupe(s) de sections dupliquées ; arbitrage interactif indisponible (non-TTY).",
+		AngelaPolishArbitrateRefusedHint: "Relancez en TTY, ou utilisez --arbitrate-rule=<first|second|both|abort>.",
 
 		// angela_review.go
 		AngelaReviewShort:      "Analyser la cohérence de tout votre corpus de documentation",
@@ -377,6 +399,107 @@ Pour charger les complétions :
 		CheckUpdateHint:       "Lancez : lore upgrade",
 		CheckUpdatePreRelease: "pre-release",
 		CheckUpdateChecking:   "Vérification des mises à jour…",
+
+		// ─── Flag help strings (FR) ────────────────────────────────────
+		// angela draft
+		AngelaDraftFlagAll:             "Analyser tous les documents du corpus",
+		AngelaDraftFlagVerbose:         "Afficher toutes les suggestions en ligne (défaut : warnings uniquement)",
+		AngelaDraftFlagFormat:          "Format de sortie : human | json (défaut : depuis la config)",
+		AngelaDraftFlagFailOn:          "Sortie non-zéro quand des findings à ce niveau ou supérieur existent : error | warning | info | never",
+		AngelaDraftFlagStrict:          "Promouvoir tous les warnings en errors pour les exit codes",
+		AngelaDraftFlagSeverity:        "Surcharger la sévérité d'une catégorie (répétable : --severity coherence=off --severity style=warning)",
+		AngelaDraftFlagDiffOnly:        "Masquer les findings PERSISTING et n'afficher que NEW/RESOLVED depuis le dernier run --all",
+		AngelaDraftFlagResetState:      "Supprimer le fichier d'état draft et traiter tous les findings actuels comme NEW",
+		AngelaDraftFlagPersonasMode:    "Mode de sélection des personas : auto | manual | all | none",
+		AngelaDraftFlagManualPersonas:  "Noms de personas pour --personas manual (ex. storyteller,architect)",
+		AngelaDraftFlagPersona:         "Raccourci : lancer avec uniquement ce persona (sucre pour --personas manual --manual-personas <nom>)",
+		AngelaDraftFlagInteractive:     "Lancer le TUI fix-it interactif pour parcourir les findings",
+		AngelaDraftFlagAutofix:         "Appliquer les corrections mécaniques : safe | aggressive",
+		AngelaDraftFlagDryRun:          "Prévisualiser les changements autofix sans écrire",
+		AngelaDraftFlagSynthesizers:    "Surcharger les synthesizers activés pour ce run (noms séparés par virgule, ex. \"api-postman\")",
+		AngelaDraftFlagNoSynthesizers:  "Désactiver tous les Example Synthesizers pour ce run",
+
+		// angela polish
+		AngelaPolishFlagDryRun:         "Prévisualiser le polish non-interactivement : contenu poli sur stdout, diff unifié sur stderr. Aucune écriture, aucun backup.",
+		AngelaPolishFlagYes:            "Accepter tous les changements sans confirmation",
+		AngelaPolishFlagFor:            "Réécrire le document pour une audience cible (ex. \"CTO\", \"équipe commerciale\")",
+		AngelaPolishFlagAuto:           "Auto-accepter les ajouts, auto-rejeter les suppressions, ne demander que pour les modifications",
+		AngelaPolishFlagIncremental:    "Re-polir uniquement les sections modifiées",
+		AngelaPolishFlagFull:           "Forcer un polish complet même si incremental est activé dans la config",
+		AngelaPolishFlagHalluStrict:    "Vérification des hallucinations : warn | reject | off",
+		AngelaPolishFlagForce:          "Contourner le mode hallucination=reject (issue de secours)",
+		AngelaPolishFlagInteractive:    "Passer en revue les changements polish section par section dans un TUI",
+		AngelaPolishFlagSynthesizers:   "Surcharger les synthesizers activés pour ce run (noms séparés par virgule, ex. \"api-postman\")",
+		AngelaPolishFlagNoSynthesizers: "Désactiver tous les Example Synthesizers pour ce run",
+		AngelaPolishFlagSynthDryRun:    "Détecter les opportunités de synthesizer et reporter sans écrire (polish uniquement)",
+		AngelaPolishFlagSynthesize:     "Appliquer les propositions du Example Synthesizer (api-postman, …) et écrire dans le doc — hors ligne, sans appel IA",
+		AngelaPolishFlagSetStatus:      "Mettre à jour le `status` du frontmatter après le run (ex. draft, reviewed, published). Écrase toujours — relancer avec une autre valeur est sûr.",
+		AngelaPolishFlagPersona:        "Lancer polish avec uniquement la lentille de ce persona (raccourci)",
+		AngelaPolishFlagArbitrateRule:  "Règle de résolution pour les sections dupliquées produites par l'IA : first | second | both | abort (requis en non-TTY quand des doublons sont détectés)",
+		AngelaPolishFlagVerbose:        "Afficher les événements d'intégrité structurelle (frontmatter leaké strippé, détails d'arbitrage) sur stderr",
+
+		// angela polish restore
+		AngelaPolishRestoreFlagTimestamp: "Restaurer le backup avec l'horodatage YYYYMMDDTHHmmss spécifié",
+		AngelaPolishRestoreFlagList:      "Lister les backups disponibles sans restaurer",
+
+		// angela review
+		AngelaReviewFlagQuiet:                 "Supprimer les messages humains sur stderr",
+		AngelaReviewFlagVerbose:               "Afficher les raisons détaillées de rejet pour les findings droppés par le validateur d'evidence",
+		AngelaReviewFlagFor:                   "Adapter les findings pour une audience cible (ex. \"CTO\", \"équipe commerciale\")",
+		AngelaReviewFlagFilter:                "Regex pour filtrer les documents par filename (ex. \"commands/.*\", \".*\\.fr\\.md$\")",
+		AngelaReviewFlagAll:                   "Review de tous les documents (pas d'échantillonnage 25+25)",
+		AngelaReviewFlagDiffOnly:              "Afficher uniquement les findings NEW + REGRESSED (et les counts PERSISTING/RESOLVED). Idéal pour CI.",
+		AngelaReviewFlagInteractive:           "Lancer le TUI interactif pour naviguer et trier les findings",
+		AngelaReviewFlagSynthesizers:          "Surcharger les synthesizers activés pour ce run (noms séparés par virgule, ex. \"api-postman\")",
+		AngelaReviewFlagNoSynthesizers:        "Désactiver tous les Example Synthesizers pour ce run",
+		AngelaReviewFlagPersona:               "Activer une lentille persona pour cette review (répétable, ex. --persona architect --persona qa-reviewer)",
+		AngelaReviewFlagNoPersonas:            "Forcer une review baseline (ignorer les personas .lorerc, pas de prompt en TTY)",
+		AngelaReviewFlagUseConfiguredPersonas: "Activer les personas configurés dans .lorerc sans prompt",
+		AngelaReviewFlagPreview:               "Estimer les tokens/coût/contexte avant d'appeler l'IA. Zéro HTTP, zéro écriture d'état.",
+		AngelaReviewFlagFormat:                "Format de sortie pour --preview : text (défaut) | json",
+
+		// angela review ignore / log
+		AngelaReviewIgnoreFlagReason: "Requis : expliquer pourquoi ce finding est ignoré",
+		AngelaReviewLogFlagFormat:    "Format de sortie : human (défaut) | json",
+
+		// decision
+		DecisionFlagExplain:     "Ref du commit à analyser (défaut : HEAD)",
+		DecisionFlagCalibration: "Afficher les métriques de qualité du Decision Engine depuis les commits stockés",
+
+		// delete
+		DeleteFlagForce: "Passer la confirmation (pour les scripts/CI)",
+
+		// doctor
+		DoctorFlagFix:          "Réparer automatiquement les problèmes corrigeables",
+		DoctorFlagQuiet:        "Sortie machine : nombre de problèmes sur stdout",
+		DoctorFlagConfig:       "Valider uniquement les fichiers de configuration",
+		DoctorFlagRebuildStore: "Reconstruire store.db depuis .lore/docs/ et le git log",
+		DoctorFlagPrune:        "Lancer le garbage collection sur les artefacts générés (backups, logs, quarantaine corrompue)",
+		DoctorFlagDryRun:       "Avec --prune : rapporter ce qui serait supprimé sans toucher au filesystem",
+
+		// init
+		InitFlagNoDemo: "Passer le prompt demo",
+
+		// list
+		ListFlagType:  "Filtrer par type de document (decision, feature, bugfix, refactor, note)",
+		ListFlagQuiet: "Supprimer les messages humains sur stderr",
+
+		// release
+		ReleaseFlagFrom:    "Début de la plage de commits (tag ou SHA)",
+		ReleaseFlagTo:      "Fin de la plage de commits (tag ou SHA, défaut : HEAD)",
+		ReleaseFlagVersion: "Étiquette de version pour les release notes",
+		ReleaseFlagQuiet:   "Afficher uniquement le chemin du fichier de release notes",
+
+		// show
+		ShowFlagType:     "Filtrer par type de document (decision, feature, bugfix, refactor, note)",
+		ShowFlagAfter:    "Afficher les documents après la date (YYYY-MM ou YYYY-MM-DD)",
+		ShowFlagAll:      "Afficher tous les documents",
+		ShowFlagQuiet:    "Supprimer les messages humains sur stderr",
+		ShowFlagFeature:  "Raccourci pour --type feature",
+		ShowFlagDecision: "Raccourci pour --type decision",
+		ShowFlagBugfix:   "Raccourci pour --type bugfix",
+		ShowFlagRefactor: "Raccourci pour --type refactor",
+		ShowFlagNote:     "Raccourci pour --type note",
 	},
 
 	Engagement: EngagementMessages{
@@ -577,6 +700,18 @@ Pour charger les complétions :
 		UIReviewFlaggedBy:                "Flaguée par : %s",
 		UIReviewAgreementConcur:          "Accord : %d/%d personas concordent",
 		UIReviewAgreementLineFormat:      " (%d/%d)",
+
+		// Story 8-21 — prompts TTY d'arbitrage de sections dupliquées
+		ArbitrateGroupHeader:      "\n[groupe %d/%d] — %q a %d occurrences\n\n",
+		ArbitrateInvalidChoice:    "  (choix invalide — réessayez)",
+		ArbitratePrompt:           "  → ",
+		ArbitratePreviewLine:      "  [%d] ligne %d  (%d mots)\n",
+		ArbitratePreviewTruncated: "      (%d lignes affichées / %d)\n",
+		ArbitrateOptKeepBoth:      "garder les deux",
+		ArbitrateOptKeepAll:       "garder les %d",
+		ArbitrateOptsLine:         "  [1] garder la première    [2] garder la seconde\n  [b] %s       [d] afficher le contenu complet\n  [a] abort (pas d'écriture, source inchangée)\n",
+		ArbitrateOccurrenceBanner: "\n--- occurrence %d sur %d (ligne %d) ---\n",
+		ArbitrateEmptyPreview:     "      (section vide)\n",
 	},
 
 	Decision: DecisionMessages{

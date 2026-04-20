@@ -121,6 +121,6 @@ func newDeleteCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&force, "force", false, "Skip confirmation (for scripts/CI)")
+	cmd.Flags().BoolVar(&force, "force", false, i18n.T().Cmd.DeleteFlagForce)
 	return cmd
 }

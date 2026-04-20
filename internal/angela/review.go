@@ -101,9 +101,12 @@ var severityOrder = map[string]int{
 //
 // The regex-based approach (rather than an exact-match blacklist)
 // ensures all case/whitespace variants of the markers are caught,
-// including section/style markers added by multi-pass polish.
+// including section/style markers added by multi-pass polish and the
+// BODY / NEXT_SECTION markers introduced by story 8-21 for the polish
+// prompt pipeline (structural separation) and incremental re-polish
+// (section boundary).
 var promptMarkerRe = regexp.MustCompile(
-	`(?i)<<<\s*/?\s*(END_)?(CORPUS|STYLE_GUIDE|DOCUMENT|SECTION|STYLE)\s*>>>`,
+	`(?i)<<<\s*/?\s*(END_)?(CORPUS|STYLE_GUIDE|DOCUMENT|SECTION|STYLE|BODY|NEXT[_\s]SECTION)\s*>>>`,
 )
 
 // sanitizePromptContent provides defense-in-depth against prompt injection.

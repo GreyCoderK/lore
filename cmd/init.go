@@ -85,7 +85,7 @@ func newInitCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&noDemo, "no-demo", false, "Skip the demo prompt")
+	cmd.Flags().BoolVar(&noDemo, "no-demo", false, i18n.T().Cmd.InitFlagNoDemo)
 
 	return cmd
 }

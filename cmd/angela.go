@@ -373,31 +373,34 @@ func newAngelaDraftCmd(cfg *config.Config, streams domain.IOStreams, flagPath *s
 		},
 	}
 
-	cmd.Flags().BoolVar(&flags.all, "all", false, "Analyze all documents in the corpus")
-	cmd.Flags().BoolVarP(&flags.verbose, "verbose", "v", false, "Show every suggestion inline (default: warnings only)")
+	tc := i18n.T().Cmd
+	cmd.Flags().BoolVar(&flags.all, "all", false, tc.AngelaDraftFlagAll)
+	cmd.Flags().BoolVarP(&flags.verbose, "verbose", "v", false, tc.AngelaDraftFlagVerbose)
 	// CI output & gating flags
-	cmd.Flags().StringVar(&flags.format, "format", "", "Output format: human | json (default: from config)")
-	cmd.Flags().StringVar(&flags.failOn, "fail-on", "", "Exit non-zero when findings at this level or higher exist: error | warning | info | never")
-	cmd.Flags().BoolVar(&flags.strict, "strict", false, "Promote all warnings to errors for exit-code purposes")
-	cmd.Flags().StringSliceVar(&flags.severity, "severity", nil, "Override category severity (repeatable: --severity coherence=off --severity style=warning)")
+	cmd.Flags().StringVar(&flags.format, "format", "", tc.AngelaDraftFlagFormat)
+	cmd.Flags().StringVar(&flags.failOn, "fail-on", "", tc.AngelaDraftFlagFailOn)
+	cmd.Flags().BoolVar(&flags.strict, "strict", false, tc.AngelaDraftFlagStrict)
+	cmd.Flags().StringSliceVar(&flags.severity, "severity", nil, tc.AngelaDraftFlagSeverity)
 	// Differential flags
-	cmd.Flags().BoolVar(&flags.diffOnly, "diff-only", false, "Hide PERSISTING findings and show only NEW/RESOLVED since the previous --all run")
-	cmd.Flags().BoolVar(&flags.resetState, "reset-state", false, "Delete the draft state file and treat all current findings as NEW")
-	cmd.Flags().StringVar(&flags.personas, "personas", "", "Persona selection mode: auto | manual | all | none")
-	cmd.Flags().StringSliceVar(&flags.manualPersonas, "manual-personas", nil, "Persona names for --personas manual (e.g. storyteller,architect)")
-	cmd.Flags().StringVar(&flags.persona, "persona", "", "Shortcut: run with this single persona only (sugar for --personas manual --manual-personas <name>)")
+	cmd.Flags().BoolVar(&flags.diffOnly, "diff-only", false, tc.AngelaDraftFlagDiffOnly)
+	cmd.Flags().BoolVar(&flags.resetState, "reset-state", false, tc.AngelaDraftFlagResetState)
+	cmd.Flags().StringVar(&flags.personas, "personas", "", tc.AngelaDraftFlagPersonasMode)
+	cmd.Flags().StringSliceVar(&flags.manualPersonas, "manual-personas", nil, tc.AngelaDraftFlagManualPersonas)
+	cmd.Flags().StringVar(&flags.persona, "persona", "", tc.AngelaDraftFlagPersona)
 	_ = cmd.RegisterFlagCompletionFunc("persona", personaFlagCompletion)
 	_ = cmd.RegisterFlagCompletionFunc("manual-personas", personaFlagCompletion)
-	_ = cmd.RegisterFlagCompletionFunc("personas", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
-		return []string{"auto", "manual", "all", "none"}, cobra.ShellCompDirectiveNoFileComp
-	})
+	_ = cmd.RegisterFlagCompletionFunc("personas", personasModeFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("format", formatFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("fail-on", failOnFlagCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("synthesizers", synthesizerFlagCompletion)
 	// Interactive fix-it TUI
-	cmd.Flags().BoolVarP(&flags.interactive, "interactive", "i", false, "Launch interactive fix-it TUI to walk through findings")
+	cmd.Flags().BoolVarP(&flags.interactive, "interactive", "i", false, tc.AngelaDraftFlagInteractive)
 	// Autofix mode
-	cmd.Flags().StringVar(&flags.autofix, "autofix", "", "Apply mechanical fixes: safe | aggressive")
-	cmd.Flags().BoolVar(&flags.dryRun, "dry-run", false, "Preview autofix changes without writing")
-	cmd.Flags().StringSliceVar(&flags.synthesizers, "synthesizers", nil, "Override the enabled synthesizers for this run (comma-separated names, e.g. \"api-postman\")")
-	cmd.Flags().BoolVar(&flags.noSynthesizers, "no-synthesizers", false, "Disable all Example Synthesizers for this run")
+	cmd.Flags().StringVar(&flags.autofix, "autofix", "", tc.AngelaDraftFlagAutofix)
+	cmd.Flags().BoolVar(&flags.dryRun, "dry-run", false, tc.AngelaDraftFlagDryRun)
+	cmd.Flags().StringSliceVar(&flags.synthesizers, "synthesizers", nil, tc.AngelaDraftFlagSynthesizers)
+	cmd.Flags().BoolVar(&flags.noSynthesizers, "no-synthesizers", false, tc.AngelaDraftFlagNoSynthesizers)
+	_ = cmd.RegisterFlagCompletionFunc("autofix", autofixFlagCompletion)
 	return cmd
 }
 

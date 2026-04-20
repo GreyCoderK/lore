@@ -43,6 +43,35 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           args: check
+      - name: Verify Chocolatey metadata complete
+        shell: bash
+        run: |
+          config=.goreleaser.yaml
+          required=(icon_url summary package_source_url release_notes)
+          suggested=(docs_url bug_tracker_url project_source_url)
+
+          missing_required=()
+          for f in "${required[@]}"; do
+            grep -qE "^[[:space:]]+${f}:" "$config" || missing_required+=("$f")
+          done
+
+          missing_suggested=()
+          for f in "${suggested[@]}"; do
+            grep -qE "^[[:space:]]+${f}:" "$config" || missing_suggested+=("$f")
+          done
+
+          if [ ${#missing_required[@]} -gt 0 ]; then
+            echo "::error::Chocolatey required fields missing from ${config}: ${missing_required[*]}"
+            echo "These were flagged as 'Guidelines' by chocolatey-ops automated review."
+            echo "Add them under the 'chocolateys:' list entry."
+            exit 1
+          fi
+
+          if [ ${#missing_suggested[@]} -gt 0 ]; then
+            echo "::warning::Chocolatey suggested fields missing: ${missing_suggested[*]}"
+          fi
+
+          echo "✓ All required Chocolatey metadata fields present."
 
   docs:
     runs-on: ubuntu-latest

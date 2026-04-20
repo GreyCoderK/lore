@@ -90,8 +90,8 @@ func newDecisionCmd(cfg *config.Config, streams domain.IOStreams, storePtr *doma
 		},
 	}
 
-	cmd.Flags().StringVar(&explain, "explain", "", "Commit ref to analyze (default: HEAD)")
-	cmd.Flags().BoolVar(&calibration, "calibration", false, "Show Decision Engine quality metrics from stored commits")
+	cmd.Flags().StringVar(&explain, "explain", "", i18n.T().Cmd.DecisionFlagExplain)
+	cmd.Flags().BoolVar(&calibration, "calibration", false, i18n.T().Cmd.DecisionFlagCalibration)
 
 	_ = cmd.RegisterFlagCompletionFunc("explain", gitRefFlagCompletion)
 

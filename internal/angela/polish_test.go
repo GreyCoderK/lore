@@ -273,3 +273,156 @@ func TestBuildCorpusSummary_TruncationOver20(t *testing.T) {
 		t.Errorf("should mention '5 more documents', got: %s", result)
 	}
 }
+
+// --- I25: AI prompt excludes frontmatter (story 8-21, Task 2) --------
+
+func TestBuildPolishPrompt_UserContentExcludesFrontmatter(t *testing.T) {
+	// The user content passed to the AI must NOT contain the `---`
+	// delimiter or any frontmatter field. Body content is preserved.
+	doc := "---\n" +
+		"type: decision\n" +
+		"date: \"2026-04-10\"\n" +
+		"status: published\n" +
+		"commit: abc1234\n" +
+		"tags: [auth, jwt]\n" +
+		"---\n" +
+		"## Why\nBecause compliance asked.\n"
+
+	_, usr := BuildPolishPrompt(doc, domain.DocMeta{}, "", "", nil)
+
+	// None of these substrings from the frontmatter should leak into
+	// the user content. We assert on each key independently so the
+	// failure message is specific.
+	forbidden := []string{
+		"type: decision",
+		"date: \"2026-04-10\"",
+		"status: published",
+		"commit: abc1234",
+		"tags: [auth, jwt]",
+	}
+	for _, s := range forbidden {
+		if strings.Contains(usr, s) {
+			t.Errorf("user content leaks frontmatter field %q:\n%s", s, usr)
+		}
+	}
+
+	// Body content must still be present.
+	if !strings.Contains(usr, "Because compliance asked.") {
+		t.Error("user content should preserve body")
+	}
+	// And the BODY marker block must not contain a `---\n` at its very
+	// start (the AI would interpret it as a delimiter).
+	bodyBlock := extractBetween(usr, "<<<BODY>>>", "<<<END_BODY>>>")
+	if strings.HasPrefix(strings.TrimLeft(bodyBlock, "\n"), "---\n") {
+		t.Errorf("body block starts with `---\\n` — frontmatter leaked:\n%s", bodyBlock)
+	}
+}
+
+func TestBuildPolishPrompt_SystemPromptInstructsNoFrontmatter(t *testing.T) {
+	sys, _ := BuildPolishPrompt("", domain.DocMeta{}, "", "", nil)
+	// The system prompt must explicitly forbid emitting a frontmatter
+	// block in the response.
+	if !strings.Contains(sys, "Return ONLY the improved BODY") {
+		t.Error("system prompt should instruct AI to return body only")
+	}
+	if !strings.Contains(sys, "never emit ") || !strings.Contains(sys, "delimiters") {
+		t.Error("system prompt should forbid `---` delimiter emission")
+	}
+}
+
+func TestBuildPolishPrompt_DocWithoutFrontmatter_PreservedAsBody(t *testing.T) {
+	// When the input has no frontmatter (edge case: raw body only),
+	// the entire content is used as body — no rejection, no error.
+	doc := "## Why\nPure body content.\nNo frontmatter here.\n"
+	_, usr := BuildPolishPrompt(doc, domain.DocMeta{}, "", "", nil)
+	if !strings.Contains(usr, "Pure body content.") {
+		t.Error("body content should appear in user content")
+	}
+}
+
+func TestBuildPolishPrompt_BodyWithHorizontalRule_Preserved(t *testing.T) {
+	// A `---` INSIDE the body (Markdown horizontal rule) must survive
+	// the pipeline unchanged — it is content, not a delimiter.
+	doc := "---\n" +
+		"type: note\ndate: \"2026-04-01\"\nstatus: draft\n" +
+		"---\n" +
+		"## Intro\nFirst section.\n\n---\n\n## Outro\nSecond section.\n"
+	_, usr := BuildPolishPrompt(doc, domain.DocMeta{}, "", "", nil)
+	// The horizontal rule in the body must survive.
+	if !strings.Contains(usr, "\n---\n") {
+		t.Error("body horizontal rule should be preserved")
+	}
+	// But the FM key must not leak.
+	if strings.Contains(usr, "type: note") {
+		t.Error("frontmatter leaked despite FM being split out")
+	}
+}
+
+func TestBuildIncrementalPrompt_OutlineAndChangedExcludePreamble(t *testing.T) {
+	// sections[0] is the preamble (frontmatter). It must be excluded
+	// from both the outline and the "sections to polish" block, even
+	// when index 0 appears in changedIdx.
+	sections := []Section{
+		{Index: 0, Heading: "", Body: "---\ntype: decision\ndate: \"2026-04-10\"\nstatus: published\n---\n"},
+		{Index: 1, Heading: "## Why", Body: "\nBecause compliance.\n"},
+		{Index: 2, Heading: "## Context", Body: "\nThe legal team...\n"},
+	}
+	// Deliberately include index 0 to simulate a stale hash marking
+	// the preamble as changed — the builder must still filter it out.
+	changedIdx := []int{0, 1}
+	opts := IncrementalOpts{Meta: domain.DocMeta{Type: "decision"}}
+	_, usr := buildIncrementalPrompt(sections, changedIdx, opts)
+
+	forbidden := []string{"type: decision", "date: \"2026-04-10\"", "status: published"}
+	for _, s := range forbidden {
+		if strings.Contains(usr, s) {
+			t.Errorf("incremental user content leaks frontmatter %q", s)
+		}
+	}
+	// The body we wanted to polish is still present.
+	if !strings.Contains(usr, "Because compliance.") {
+		t.Error("expected changed section body in prompt")
+	}
+	// The outline must mention the headings that DO exist.
+	if !strings.Contains(usr, "## Why") || !strings.Contains(usr, "## Context") {
+		t.Error("outline should list the actual headings")
+	}
+}
+
+func TestBuildIncrementalPrompt_UsesSafeSectionSeparator(t *testing.T) {
+	// Inter-section separator must NOT be `---`. A Markdown horizontal
+	// rule in a body would collide with it and the AI would be primed
+	// to emit `---` in response.
+	sections := []Section{
+		{Index: 0, Heading: "", Body: "preamble\n"},
+		{Index: 1, Heading: "## A", Body: "\nBody A.\n"},
+		{Index: 2, Heading: "## B", Body: "\nBody B.\n"},
+	}
+	opts := IncrementalOpts{Meta: domain.DocMeta{Type: "note"}}
+	_, usr := buildIncrementalPrompt(sections, []int{1, 2}, opts)
+
+	if !strings.Contains(usr, "<<<NEXT SECTION>>>") {
+		t.Error("expected safe separator `<<<NEXT SECTION>>>` between changed sections")
+	}
+	// Between the two section bodies, there should not be a bare
+	// `\n---\n` separator (the horizontal-rule lookalike).
+	// Count `\n---\n` occurrences: any body may contain it, but not as
+	// a structural separator. We assert by checking that the structural
+	// separator is `<<<NEXT SECTION>>>`, which we already did above.
+	_ = usr
+}
+
+// extractBetween returns the content between markerStart and markerEnd
+// exclusively, or the full string if either is absent.
+func extractBetween(s, start, end string) string {
+	i := strings.Index(s, start)
+	if i < 0 {
+		return s
+	}
+	rest := s[i+len(start):]
+	j := strings.Index(rest, end)
+	if j < 0 {
+		return rest
+	}
+	return rest[:j]
+}

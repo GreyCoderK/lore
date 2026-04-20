@@ -83,15 +83,16 @@ func newShowCmd(_ *config.Config, streams domain.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagType, "type", "", "Filter by document type (decision, feature, bugfix, refactor, note)")
-	cmd.Flags().StringVar(&flagAfter, "after", "", "Show documents after date (YYYY-MM or YYYY-MM-DD)")
-	cmd.Flags().BoolVar(&flagAll, "all", false, "Show all documents")
-	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, "Suppress human messages on stderr")
-	cmd.Flags().BoolVar(&flagFeature, "feature", false, "Shorthand for --type feature")
-	cmd.Flags().BoolVar(&flagDecision, "decision", false, "Shorthand for --type decision")
-	cmd.Flags().BoolVar(&flagBugfix, "bugfix", false, "Shorthand for --type bugfix")
-	cmd.Flags().BoolVar(&flagRefactor, "refactor", false, "Shorthand for --type refactor")
-	cmd.Flags().BoolVar(&flagNote, "note", false, "Shorthand for --type note")
+	tc := i18n.T().Cmd
+	cmd.Flags().StringVar(&flagType, "type", "", tc.ShowFlagType)
+	cmd.Flags().StringVar(&flagAfter, "after", "", tc.ShowFlagAfter)
+	cmd.Flags().BoolVar(&flagAll, "all", false, tc.ShowFlagAll)
+	cmd.Flags().BoolVar(&flagQuiet, "quiet", false, tc.ShowFlagQuiet)
+	cmd.Flags().BoolVar(&flagFeature, "feature", false, tc.ShowFlagFeature)
+	cmd.Flags().BoolVar(&flagDecision, "decision", false, tc.ShowFlagDecision)
+	cmd.Flags().BoolVar(&flagBugfix, "bugfix", false, tc.ShowFlagBugfix)
+	cmd.Flags().BoolVar(&flagRefactor, "refactor", false, tc.ShowFlagRefactor)
+	cmd.Flags().BoolVar(&flagNote, "note", false, tc.ShowFlagNote)
 
 	_ = cmd.RegisterFlagCompletionFunc("type", docTypeFlagCompletion)
 

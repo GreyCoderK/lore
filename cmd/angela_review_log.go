@@ -12,6 +12,7 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/fileutil"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -95,6 +96,7 @@ func newAngelaReviewLogCmd(cfg *config.Config, streams domain.IOStreams) *cobra.
 			}
 		},
 	}
-	cmd.Flags().StringVar(&flagFormat, "format", "", "Output format: human (default) | json")
+	cmd.Flags().StringVar(&flagFormat, "format", "", i18n.T().Cmd.AngelaReviewLogFlagFormat)
+	_ = cmd.RegisterFlagCompletionFunc("format", formatFlagCompletion)
 	return cmd
 }

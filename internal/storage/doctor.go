@@ -4,6 +4,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,10 +15,27 @@ import (
 // Issue represents a single diagnostic finding.
 type Issue struct {
 	Category string // "orphan-tmp", "broken-ref", "stale-index", "stale-cache", "invalid-frontmatter"
-	File     string // file concerned
-	Detail   string // human-readable description
-	AutoFix  bool   // repairable automatically?
+	// Subkind narrows an issue to a precise sub-category. Currently
+	// only populated for Category == "invalid-frontmatter":
+	//   - "missing"   — no "---\n" delimiter; a synthesized FM is safe
+	//   - "malformed" — "---" present but the YAML between delimiters
+	//                   is unparseable; auto-fix would destroy
+	//                   potentially recoverable authentic content
+	// Story 8-22 / invariant I31: `doctor --fix` never rewrites an
+	// FM when the source contains a "---" delimiter — the malformed
+	// path surfaces a restore hint rather than synthesizing.
+	Subkind string
+	File    string // file concerned
+	Detail  string // human-readable description
+	AutoFix bool   // repairable automatically?
 }
+
+// Invalid-frontmatter subkinds. Kept as constants so callers can
+// pattern-match on stable strings.
+const (
+	SubkindFrontmatterMissing   = "missing"
+	SubkindFrontmatterMalformed = "malformed"
+)
 
 // DiagnosticReport holds the results of a full corpus health check.
 type DiagnosticReport struct {
@@ -78,6 +96,7 @@ func Diagnose(docsDir string) (*DiagnosticReport, error) {
 		if readErr != nil {
 			report.Issues = append(report.Issues, Issue{
 				Category: "invalid-frontmatter",
+				Subkind:  SubkindFrontmatterMalformed,
 				File:     name,
 				Detail:   fmt.Sprintf("cannot read file: %v", readErr),
 				AutoFix:  false,
@@ -85,18 +104,48 @@ func Diagnose(docsDir string) (*DiagnosticReport, error) {
 			continue
 		}
 
-		meta, body, parseErr := Unmarshal(data)
-		if parseErr != nil {
-			// Distinguish missing front matter (auto-fixable) from malformed YAML (not fixable).
-			// Files starting with "---\n" have attempted front matter (malformed YAML — not fixable).
-			// Files that are just "---" without newline are also treated as malformed.
-			content := string(data)
-			canFix := !strings.HasPrefix(content, "---\n") && content != "---"
-			report.Issues = append(report.Issues, Issue{
+		// Story 8-22 / I31: classify via the typed sentinels produced
+		// by ExtractFrontmatter — they are the single source of truth
+		// for "is the delimiter present?". Using a string heuristic
+		// here instead would diverge on CRLF-terminated delimiters and
+		// BOM-prefixed files (both were misclassified as missing by
+		// the previous `strings.HasPrefix(content, "---\n")` probe).
+		_, _, extractErr := ExtractFrontmatter(data)
+		if extractErr != nil {
+			issue := Issue{
 				Category: "invalid-frontmatter",
 				File:     name,
+				Detail:   fmt.Sprintf("YAML parse error: %v", extractErr),
+			}
+			switch {
+			case errors.Is(extractErr, ErrFrontmatterMissing):
+				issue.Subkind = SubkindFrontmatterMissing
+				issue.AutoFix = true
+			case errors.Is(extractErr, ErrFrontmatterMalformed):
+				issue.Subkind = SubkindFrontmatterMalformed
+				issue.AutoFix = false
+			default:
+				// Oversized / other I/O-like errors — treat conservatively:
+				// a non-sentinel error means we cannot be sure whether a
+				// delimiter exists, so refuse auto-fix.
+				issue.Subkind = SubkindFrontmatterMalformed
+				issue.AutoFix = false
+			}
+			report.Issues = append(report.Issues, issue)
+			continue
+		}
+
+		// FM bytes parse cleanly — run full validation (ValidateMeta)
+		// to surface semantic errors (unknown type, bad date). These
+		// are classified malformed (auto-fix would destroy valid YAML).
+		meta, body, parseErr := Unmarshal(data)
+		if parseErr != nil {
+			report.Issues = append(report.Issues, Issue{
+				Category: "invalid-frontmatter",
+				Subkind:  SubkindFrontmatterMalformed,
+				File:     name,
 				Detail:   fmt.Sprintf("YAML parse error: %v", parseErr),
-				AutoFix:  canFix,
+				AutoFix:  false,
 			})
 			continue
 		}
@@ -194,6 +243,17 @@ func Fix(docsDir string, report *DiagnosticReport) (*FixReport, error) {
 			}
 
 		case "invalid-frontmatter":
+			// Story 8-22 / I31: belt-and-suspenders guard. Only a
+			// truly-missing frontmatter is safe to synthesize. A
+			// malformed FM (delimiters present, YAML broken) must
+			// never be overwritten — the caller can still have
+			// partially-readable metadata we would otherwise destroy.
+			// Issues with AutoFix=true and a non-missing Subkind are
+			// treated as if AutoFix were false.
+			if issue.Subkind != SubkindFrontmatterMissing {
+				fix.Remaining++
+				continue
+			}
 			if err := fixMissingFrontMatter(docsDir, issue.File); err != nil {
 				fix.Errors++
 				fix.Details = append(fix.Details, fmt.Sprintf("error fixing frontmatter %s: %v", issue.File, err))
@@ -275,8 +335,11 @@ func fixMissingFrontMatter(docsDir, filename string) error {
 		return fmt.Errorf("storage: doctor: read %s: %w", filename, err)
 	}
 
-	// Already has front matter — nothing to do
-	if strings.HasPrefix(string(data), "---\n") {
+	// Belt-and-suspenders TOCTOU guard: if the file gained a delimiter
+	// (BOM-prefixed, CRLF-terminated, or plain LF) between Diagnose and
+	// Fix, refuse to prepend. Uses the same sentinel classification as
+	// Diagnose so the two paths agree on "is there a delimiter?".
+	if _, _, err := ExtractFrontmatter(data); err == nil || errors.Is(err, ErrFrontmatterMalformed) {
 		return nil
 	}
 

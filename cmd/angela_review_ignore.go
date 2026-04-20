@@ -13,6 +13,7 @@ import (
 	"github.com/greycoderk/lore/internal/config"
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/fileutil"
+	"github.com/greycoderk/lore/internal/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -77,6 +78,6 @@ func newAngelaReviewIgnoreCmd(cfg *config.Config, streams domain.IOStreams) *cob
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&flagReason, "reason", "", "Required: explain why this finding is being ignored")
+	cmd.Flags().StringVar(&flagReason, "reason", "", i18n.T().Cmd.AngelaReviewIgnoreFlagReason)
 	return cmd
 }
