@@ -589,11 +589,6 @@ func TestDoctor_MissingFM_NoSuggestionBlock(t *testing.T) {
 	if strings.Contains(stderr, "Suggested actions:") {
 		t.Errorf("missing-FM issue should NOT emit the malformed suggestion block:\n%s", stderr)
 	}
-	if strings.Contains(stderr, "missing:") {
-		// subkind prefix appears in diagnose detail — that's fine,
-		// but let's be sure it's specifically the missing subkind and
-		// not the malformed one.
-	}
 }
 
 // --- Story 8-23: doctor --prune ---------------------------------------

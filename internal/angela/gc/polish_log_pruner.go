@@ -31,6 +31,13 @@ import (
 // WOULD be removed.
 type polishLogPruner struct{}
 
+// testHookBeforePreWriteStat fires right before the pre-write drift
+// check. Nil in production. Tests set it to simulate a lock-bypassing
+// writer appending between baseline capture and the rewrite, so the
+// concurrency guard can be exercised deterministically instead of via
+// a flaky timing race.
+var testHookBeforePreWriteStat func(logPath string)
+
 func init() {
 	Register(&polishLogPruner{})
 }
@@ -45,8 +52,7 @@ func (p polishLogPruner) Prune(_ context.Context, workDir string, cfg *config.Co
 	logPath := angela.PolishLogPath(stateDir)
 
 	// Missing log = nothing to prune. Not an error.
-	info, statErr := os.Stat(logPath)
-	if statErr != nil {
+	if _, statErr := os.Stat(logPath); statErr != nil {
 		if os.IsNotExist(statErr) {
 			return report
 		}
@@ -80,7 +86,7 @@ func (p polishLogPruner) Prune(_ context.Context, workDir string, cfg *config.Co
 	// rewrite; we compare this baseline again just before the rewrite
 	// and abort the prune if the file grew to avoid silent data loss
 	// through the AtomicWriteStream rename-replace flow.
-	info, statErr = os.Stat(logPath)
+	info, statErr := os.Stat(logPath)
 	if statErr != nil {
 		if os.IsNotExist(statErr) {
 			return report
@@ -170,6 +176,10 @@ func (p polishLogPruner) Prune(_ context.Context, workDir string, cfg *config.Co
 
 	if dryRun || removed == 0 {
 		return report
+	}
+
+	if testHookBeforePreWriteStat != nil {
+		testHookBeforePreWriteStat(logPath)
 	}
 
 	// Re-stat once more under the still-held lock. If the file grew

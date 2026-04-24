@@ -167,15 +167,11 @@ func TestPolishLogPruner_NoPoliciesSet_NoOp(t *testing.T) {
 // drift and abort — otherwise the AtomicWriteStream rename-replace
 // flow would silently drop the appended entries.
 //
-// We simulate the drift by appending directly to the file between
-// the writeLogLines fixture and the pruner run via a fixture helper
-// that mutates the file AFTER the pruner has opened it. Since the
-// pruner both reads and rewrites inside a single call, the cleanest
-// way to trigger the guard is to mutate mtime ahead of the rewrite
-// by appending between stat baseline and atomic write. We do this
-// with a custom pruner invocation where the file is appended during
-// execution — for a hermetic unit test, we pre-age the file's mtime
-// via os.Chtimes so baseline != pre-write mtime at rewrite time.
+// We drive the scenario deterministically via testHookBeforePreWriteStat,
+// which the pruner invokes between its baseline stat and its pre-write
+// drift check. The hook appends a fresh line; the guard then observes
+// size/mtime drift and aborts without rewriting. No goroutines, no
+// timing races, no reliance on filesystem scheduling.
 func TestPolishLogPruner_ConcurrentAppendDetected(t *testing.T) {
 	stateDir := t.TempDir()
 	cfg := pruneConfig(t, stateDir, 7, 0)
@@ -186,62 +182,46 @@ func TestPolishLogPruner_ConcurrentAppendDetected(t *testing.T) {
 		`{"ts":"` + old + `","file":"a.md","op":"polish","mode":"full","result":"written","exit":0,"findings":{}}`,
 		`{"ts":"` + recent + `","file":"b.md","op":"polish","mode":"full","result":"written","exit":0,"findings":{}}`,
 	})
-	// Drive the scenario: invoke the pruner via a goroutine and,
-	// inside a different goroutine, append once the pruner is likely
-	// to have taken its baseline. Correctness doesn't depend on
-	// timing — the guard is asserted by comparing baseline to
-	// pre-write stat; any append between the two triggers it. We
-	// simply append synchronously BEFORE calling Prune so the
-	// baseline is stale from its first stat. (Simpler than channel
-	// choreography; equally exercises the guard.)
 	logPath := filepath.Join(stateDir, "polish.log")
 
-	// Subvert the baseline by pre-aging mtime (tomorrow mtime).
-	// Now both reads see "appended-during-prune" semantics: after
-	// the lock acquires and the baseline stat runs, a subsequent
-	// re-stat before the atomic write will see a different mtime
-	// because we touched it after baseline. We achieve that by
-	// running the pruner and mutating mtime DURING execution.
-	//
-	// In practice, the simplest hermetic stimulus is: force the
-	// atomic write to find a different size. We do that by using a
-	// test hook? None exists. Instead, we exercise the guard by
-	// calling the pruner, then asserting that a concurrent append
-	// at the wrong moment yields r.Err != nil OR the appended line
-	// survives. Here we spawn an appender goroutine that starts a
-	// few ms before Prune acquires the lock and tries to get its
-	// append in during the open window. Because scheduling is
-	// non-deterministic, the test tolerates both outcomes: if the
-	// append landed during the window → Err signals drift AND
-	// appended line survives on disk; if the append landed after
-	// the rewrite → appended line survives normally (the rewrite
-	// cleared the old+recent and the appender added a fresh one).
 	appendedLine := `{"ts":"` + time.Now().UTC().Format(time.RFC3339) + `","file":"c.md","op":"polish","mode":"full","result":"written","exit":0,"findings":{}}`
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		time.Sleep(5 * time.Millisecond)
-		f, err := os.OpenFile(logPath, os.O_WRONLY|os.O_APPEND, 0o600)
+	testHookBeforePreWriteStat = func(p string) {
+		f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND, 0o600)
 		if err != nil {
-			return
+			t.Fatalf("hook open: %v", err)
 		}
-		_, _ = f.WriteString(appendedLine + "\n")
-		_ = f.Close()
-	}()
+		if _, err := f.WriteString(appendedLine + "\n"); err != nil {
+			t.Fatalf("hook write: %v", err)
+		}
+		// Force mtime to advance even on filesystems with coarse
+		// resolution; the guard compares both size and mtime.
+		if err := f.Close(); err != nil {
+			t.Fatalf("hook close: %v", err)
+		}
+	}
+	t.Cleanup(func() { testHookBeforePreWriteStat = nil })
 
 	p := polishLogPruner{}
-	_ = p.Prune(context.Background(), ".", cfg, false)
-	<-done
+	r := p.Prune(context.Background(), ".", cfg, false)
 
-	// Post-condition: whatever the race outcome, the appended entry
-	// MUST NOT have been silently discarded. Either the pruner
-	// detected the drift and aborted (so the file still has all 3
-	// lines), or the append landed after the rewrite (so the file
-	// has survivors + appended). A zero count of "c.md" means
-	// silent data loss — the exact bug the guard fixes.
+	if r.Err == nil {
+		t.Fatalf("expected concurrent-write error, got nil; report=%+v", r)
+	}
+	if !strings.Contains(r.Err.Error(), "concurrent write detected") {
+		t.Errorf("expected error to mention 'concurrent write detected', got: %v", r.Err)
+	}
+	if r.Removed != 0 {
+		t.Errorf("Removed=%d; expected 0 when guard aborts", r.Removed)
+	}
+
+	// Guard aborts the rewrite, so every line — the two originals
+	// AND the appended one — must still be on disk.
 	raw, _ := os.ReadFile(logPath)
-	if !strings.Contains(string(raw), `"file":"c.md"`) {
-		t.Errorf("concurrent append was silently dropped by pruner:\n%s", string(raw))
+	body := string(raw)
+	for _, marker := range []string{`"file":"a.md"`, `"file":"b.md"`, `"file":"c.md"`} {
+		if !strings.Contains(body, marker) {
+			t.Errorf("missing %s after aborted prune:\n%s", marker, body)
+		}
 	}
 }
 
@@ -253,22 +233,7 @@ func TestPolishLogPruner_ConcurrentAppendDetected(t *testing.T) {
 // condition: without the guard, one survivor alone gets dropped,
 // leaving an empty log.
 func TestPolishLogPruner_SingleOversizeLine_KeepsMinimum(t *testing.T) {
-	stateDir := t.TempDir()
-	// Cap at 1 KB; single line will be ~3 KB.
-	cfg := pruneConfig(t, stateDir, 0, 1) // retention 0 disables date filter
-	// Cap the entire pruner at 1 byte via a direct MaxSizeMB override
-	// is impossible (it's in MB). So instead, use 1 MB cap and inject
-	// a ~2 MB single line. That's enough bytes for the scenario but
-	// not so many we slow CI down.
-	//
-	// NOTE: currently the code drops to zero; this test is
-	// EXPECTED-FAIL until we harden the loop to keep len(survivors)
-	// >= 1. Skipping for now so CI stays green; captured as a
-	// backlog item for Story 8-23 follow-up.
 	t.Skip("captured as P1 backlog: size-cap loop can drop single oversize survivor — fix requires code change separate from the concurrency guard")
-
-	_ = cfg
-	_ = stateDir
 }
 
 func TestPolishLogPruner_PreservesUnparseableLines(t *testing.T) {

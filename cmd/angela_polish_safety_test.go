@@ -721,7 +721,7 @@ func TestPolishCmd_ArbitrateRuleBoth_ConcatsInSourceOrder(t *testing.T) {
 	if idxFirst < 0 || idxSecond < 0 || idxThird < 0 {
 		t.Fatalf("all three occurrences expected; body:\n%s", body)
 	}
-	if !(idxFirst < idxSecond && idxSecond < idxThird) {
+	if idxFirst >= idxSecond || idxSecond >= idxThird {
 		t.Errorf("source order not preserved: first@%d second@%d third@%d", idxFirst, idxSecond, idxThird)
 	}
 }
