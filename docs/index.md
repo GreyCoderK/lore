@@ -105,13 +105,15 @@ graph LR
 
 ## Angela — Your AI Documentation Companion
 
-Angela is Lore's embedded reviewer — a colleague who has read every document your team ever wrote:
+Angela is Lore's embedded reviewer — a colleague who has read every document your team ever wrote, knows the project's style, and proofreads your docs before you publish them.
+
+She doesn't work alone. She leans on a system of expert personas — **Affoue** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. **Not a generic AI — a team that knows your project.**
 
 - **`lore angela draft`** — Free, offline analysis: missing sections, style issues, related documents
 - **`lore angela polish`** — AI-assisted rewrite with interactive diff review
 - **`lore angela review`** — Corpus-wide coherence check: contradictions, isolated docs, coverage gaps
 
-Angela is opt-in. She works with Anthropic (Claude), OpenAI (GPT), or Ollama (local). `draft` mode requires no API key.
+Angela is opt-in. Respectful of resources. No automatic decision without your consent. She works with Anthropic (Claude), OpenAI (GPT), or Ollama (local). `draft` mode requires no API key.
 
 Angela also works as a **standalone CI quality gate** on any Markdown directory — no `lore init` required. Add 3 lines to your GitHub Actions, GitLab CI, or Jenkins pipeline: [Angela in CI →](guides/angela-ci.md)
 
