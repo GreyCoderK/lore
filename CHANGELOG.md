@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Persona renamed: `Sialou` → `Salou`** across the codebase, public docs (FR/EN),
+  state files, and BMAD internal artifacts. All `Salou` is an Ivorian first name
+  and remains consistent with the persona naming convention.
+
 _Work in progress for the next release._
 
 ## [1.2.2] — 2026-04-17 — Release workflow: remove impossible pre-release install check

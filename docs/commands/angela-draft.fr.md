@@ -118,7 +118,7 @@ lore angela draft decision-database-2026-02-10.md
 
 ```text
 lore angela draft — decision-database-2026-02-10.md
-  Reviewed by: Sialou + Doumbia  (relevance: 7)
+  Reviewed by: Salou + Doumbia  (relevance: 7)
 
   error    structure       Section "Impact" manquante — les décisions doivent décrire les conséquences
   warning  tone            "On a juste pris PostgreSQL" — évitez "juste", ça affaiblit la décision
@@ -215,7 +215,7 @@ Angela utilise 7 relecteurs virtuels avec des perspectives différentes. Les 3 m
 | Persona | Icône | Focus |
 |---------|-------|-------|
 | **Affoue** (Storyteller) | 📖 | Clarté narrative, sections "Why" |
-| **Sialou** (Tech Writer) | ✏️ | Précision technique, structure |
+| **Salou** (Tech Writer) | ✏️ | Précision technique, structure |
 | **Kouame** (QA Reviewer) | 🔍 | Critères de validation, cas limites |
 | **Doumbia** (Architect) | 🏗️ | Compromis, conception système |
 | **Gougou** (UX Designer) | 🎨 | Empathie utilisateur, accessibilité |

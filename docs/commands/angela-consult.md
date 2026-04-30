@@ -67,7 +67,7 @@ Personas disponibles :
   📖 storyteller           Affoue
                             Narrative clarity and authentic storytelling
 
-  ✏️ tech-writer            Sialou
+  ✏️ tech-writer            Salou
                             Technical writing precision and clarity
 
   🔍 qa-reviewer            Kouame

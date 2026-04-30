@@ -116,7 +116,7 @@ lore angela draft decision-database-2026-02-10.md
 
 ```text
 lore angela draft — decision-database-2026-02-10.md
-  Reviewed by: Sialou + Doumbia  (relevance: 7)
+  Reviewed by: Salou + Doumbia  (relevance: 7)
 
   error    structure       Missing "Impact" section — decisions should describe consequences
   warning  tone            "We just picked PostgreSQL" — avoid "just", it undermines the decision
@@ -212,7 +212,7 @@ Angela uses 7 virtual reviewers, each with a distinct perspective. The top 3 act
 | Persona | Icon | Focus |
 |---------|------|-------|
 | **Affoue** (Storyteller) | 📖 | Narrative clarity, "Why" sections |
-| **Sialou** (Tech Writer) | ✏️ | Technical precision, structure |
+| **Salou** (Tech Writer) | ✏️ | Technical precision, structure |
 | **Kouame** (QA Reviewer) | 🔍 | Validation criteria, edge cases |
 | **Doumbia** (Architect) | 🏗️ | Trade-offs, system design |
 | **Gougou** (UX Designer) | 🎨 | User empathy, accessibility |

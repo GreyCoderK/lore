@@ -107,7 +107,7 @@ var registry = []PersonaProfile{
 	},
 	{
 		Name:        "tech-writer",
-		DisplayName: "Sialou",
+		DisplayName: "Salou",
 		Icon:        "✏️",
 		Expertise:   "Technical writing precision and clarity",
 		Principles: []string{
@@ -144,13 +144,13 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: `TECHNICAL WRITING LENS (Sialou):
+		PromptDirective: `TECHNICAL WRITING LENS (Salou):
 - Cut every sentence that doesn't add information. Target: 30-50% fewer words than the original
 - Replace paragraphs > 4 lines with bullet lists or tables
 - Add a mermaid diagram if the doc describes any process, flow, or architecture — this is mandatory, not optional
 - Add code blocks with language tags for commands, config, or API examples
 - Structure: scannable headers → key info in first sentence of each section → details after`,
-		ReviewDirective: `TECHNICAL WRITING LENS (Sialou) — REVIEW MODE:
+		ReviewDirective: `TECHNICAL WRITING LENS (Salou) — REVIEW MODE:
 - Flag TERMINOLOGY DRIFT across documents: the same concept named differently (e.g. "rate limiter" in doc A, "throttler" in doc B)
 - Flag STRUCTURAL INCONSISTENCY: docs of the same type with different required sections or header conventions
 - Flag MISSING DIAGRAMS CROSS-CORPUS: a technology mentioned in 3+ docs but never diagrammed anywhere

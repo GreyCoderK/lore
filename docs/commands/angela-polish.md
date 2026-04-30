@@ -74,7 +74,7 @@ lore angela polish decision-database-2026-02-10.md
 ```text
 [1/3] Preparing decision-database-2026-02-10.md…
       ~3012 tokens → | max ←: 8192 tokens | timeout: 60s
-      Personas: 📖 Affoue (12), ✏️ Sialou (10), 🏗️ Doumbia (6)
+      Personas: 📖 Affoue (12), ✏️ Salou (10), 🏗️ Doumbia (6)
       Quality: 52/100 (C)
       Estimated cost: ~$0.0042
 ```
@@ -535,7 +535,7 @@ Angela uses 7 virtual reviewers. The top 3 are activated based on document type,
 | Persona | Icon | Focus | Activated by |
 |---------|------|-------|--------------|
 | **Affoue** (Storyteller) | 📖 | Narrative clarity, "Why" sections | Decisions, notes; `--for commercial/sales` |
-| **Sialou** (Tech Writer) | ✏️ | Technical precision, structure | Features, refactors; `--for développeur` |
+| **Salou** (Tech Writer) | ✏️ | Technical precision, structure | Features, refactors; `--for développeur` |
 | **Kouame** (QA Reviewer) | 🔍 | Validation criteria, edge cases | Bugfixes; `--for qa/audit` |
 | **Doumbia** (Architect) | 🏗️ | Trade-offs, system design | Decisions, refactors; `--for CTO` |
 | **Gougou** (UX Designer) | 🎨 | User empathy, accessibility | Features; `--for design/ux` |

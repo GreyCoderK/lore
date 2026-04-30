@@ -19,7 +19,7 @@ Les personas sont disponibles en trois modes d'activation : `angela consult` pou
 
 | Icône | ID | Nom | Focus |
 |---|---|---|---|
-| ✏️ | `tech-writer` | Sialou | Précision rédactionnelle et clarté technique |
+| ✏️ | `tech-writer` | Salou | Précision rédactionnelle et clarté technique |
 | 🎨 | `ux-designer` | Gougou | Empathie utilisateur, mental models, accessibilité |
 | 🔌 | `api-designer` | Ouattara | Contrats API, docs synthesizer-ready, sémantique HTTP |
 | 🔍 | `qa-reviewer` | Kouame | Assurance qualité et critères de validation |
@@ -27,11 +27,11 @@ Les personas sont disponibles en trois modes d'activation : `angela consult` pou
 | 📊 | `business-analyst` | Beda | Traçabilité des exigences, valeur business |
 | 📖 | `storyteller` | Affoue | Clarté narrative et authenticité |
 
-Les prénoms affichés (Sialou, Gougou, Ouattara, Kouame, Doumbia, Beda, Affoue) sont des prénoms ivoiriens courants. Lore est construit en Côte d'Ivoire et le projet assume ses racines culturelles plutôt que de retomber sur des placeholders génériques de l'industrie tech. L'émoji garde l'identité persona scannable dans les sorties terminal où les noms peuvent être tronqués.
+Les prénoms affichés (Salou, Gougou, Ouattara, Kouame, Doumbia, Beda, Affoue) sont des prénoms ivoiriens courants. Lore est construit en Côte d'Ivoire et le projet assume ses racines culturelles plutôt que de retomber sur des placeholders génériques de l'industrie tech. L'émoji garde l'identité persona scannable dans les sorties terminal où les noms peuvent être tronqués.
 
 ## Quand utiliser laquelle
 
-- **Vous écrivez une doc de feature ?** Commencez par `tech-writer` (Sialou) pour la qualité rédactionnelle, puis `ux-designer` (Gougou) pour le mental model du lecteur.
+- **Vous écrivez une doc de feature ?** Commencez par `tech-writer` (Salou) pour la qualité rédactionnelle, puis `ux-designer` (Gougou) pour le mental model du lecteur.
 - **Vous documentez un endpoint API ?** `api-designer` (Ouattara) attrape les méthodes manquantes, les naming incohérents, et les trous headers/body qui cassent les imports Postman.
 - **Vous shippez une décision ?** Lancez `architect` (Doumbia) pour la clarté des trade-offs, et `qa-reviewer` (Kouame) pour forcer la colonne « qu'est-ce qui peut mal se passer ».
 - **Un guide long ou une pièce d'onboarding ?** `storyteller` (Affoue) vérifie que la narration ne dérive pas en milieu de paragraphe.

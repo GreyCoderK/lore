@@ -43,7 +43,7 @@ EOF
 # --- Fixture: single-file draft output (2-space indent) ---
 FIXTURE_DRAFT_SINGLE=$(cat <<'EOF'
 lore angela draft — decision-auth.md
-  Reviewed by: Sialou + Doumbia
+  Reviewed by: Salou + Doumbia
 
   error    structure       Missing "Impact" section
   warning  tone            Avoid "just"
