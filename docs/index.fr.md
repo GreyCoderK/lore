@@ -110,15 +110,17 @@ graph LR
 | **Lock-in** | Markdown | Propriétaire | Propriétaire | Mixte |
 | **Prix** | Gratuit (AGPL) | $28/siège | $5,75/user | $8/user |
 
-## Angela — Votre compagne IA de documentation
+## Angela — Votre revieweuse embarquée
 
-Angela est la revieweuse embarquée de Lore — une collègue qui a lu chaque document que votre équipe a jamais écrit :
+Angela est la revieweuse embarquée de Lore — une collègue qui a lu tous les documents de votre équipe, connaît le style du projet, et relit votre doc avant que vous la publiiez.
+
+Et elle ne travaille pas seule. Elle s'appuie sur un système de personas experts — **Affoue** (la conteuse, qui veille à ce que le pourquoi soit toujours plus clair que le quoi), **Ouattara** (le designer d'API, pour les contrats Postman et les spécifications techniques), et d'autres en chemin. **Pas une IA générique — une équipe qui connaît votre projet.**
 
 - **`lore angela draft`** — Analyse gratuite, hors ligne : sections manquantes, style, documents liés
 - **`lore angela polish`** — Réécriture assistée par IA avec revue de diff interactive
 - **`lore angela review`** — Vérification de cohérence du corpus : contradictions, docs isolés, lacunes
 
-Angela est opt-in. Elle fonctionne avec Anthropic (Claude), OpenAI (GPT), ou Ollama (local). Le mode `draft` ne nécessite aucune clé API.
+Angela est opt-in. Respectueuse des ressources. Aucune décision automatique sans consentement. Elle fonctionne avec Anthropic (Claude), OpenAI (GPT), ou Ollama (local). Le mode `draft` ne nécessite aucune clé API.
 
 Angela fonctionne aussi comme **quality gate CI standalone** sur n'importe quel dossier Markdown — sans `lore init`. Ajoutez 3 lignes à votre GitHub Actions, GitLab CI ou Jenkins : [Angela en CI →](guides/angela-ci.md)
 
