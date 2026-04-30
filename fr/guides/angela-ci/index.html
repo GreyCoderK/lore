@@ -1,0 +1,3172 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Your code knows what. Lore knows why.">
+      
+      
+      
+        <link rel="canonical" href="https://greycoderk.github.io/lore/fr/guides/angela-ci/">
+      
+      
+        <link rel="prev" href="../comparison/">
+      
+      
+        <link rel="next" href="../examples/">
+      
+      
+        
+          <link rel="alternate" href="../../../guides/angela-ci/" hreflang="en">
+        
+          <link rel="alternate" href="./" hreflang="fr">
+        
+      
+      
+      <link rel="icon" href="../../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Angela in CI - Lore</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#angela-en-ci-quality-gate-documentation" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="../../" title="Lore" class="md-header__button md-logo" aria-label="Lore" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Lore
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Angela in CI
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../../guides/angela-ci/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="fr" class="md-select__link">
+              Français
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Recherche">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Effacer" aria-label="Effacer" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/greycoderk/lore" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    greycoderk/lore
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Onglets" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../commands/" class="md-tabs__link">
+          
+  
+  
+  Commands
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../philosophy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Philosophy
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../roadmap/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/architecture/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../" title="Lore" class="md-nav__button md-logo" aria-label="Lore" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    Lore
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/greycoderk/lore" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    greycoderk/lore
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/completions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shell Completions
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore init
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/new/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore new
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/show/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore show
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore delete
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/pending/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore pending
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore doctor
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore demo
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/hook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore hook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore config
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/angela-draft/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore angela draft
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/angela-polish/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore angela polish
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/angela-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore angela review
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/angela-personas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Angela Personas
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/decision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore decision
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/completion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore completion
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore upgrade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/check-update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lore check-update
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../document-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Document Types & Metadata
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contextual-detection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contextual Detection
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How Lore Compares
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Angela in CI
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Angela in CI
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pourquoi-utiliser-angela-en-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pourquoi utiliser Angela en CI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-draft-recommande-pour-la-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode Draft (recommandé pour la CI)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mode Draft (recommandé pour la CI)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#utiliser-angela-sur-un-site-de-doc-non-lore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utiliser Angela sur un site de doc non-lore
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demarrage-rapide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Démarrage rapide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Démarrage rapide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gitlab-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitLab CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jenkins-bitbucket-tout-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jenkins / Bitbucket / Tout CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comment-ca-marche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comment ça marche
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-ci-en-3-etapes-recommande" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline CI en 3 étapes recommandé
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions-pipeline-3-etapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions (pipeline 3 étapes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs-externes-pre-planifiees-sans-lore-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs externes pré-planifiées (sans lore init)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-review-optionnel-pour-les-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode Review (optionnel, pour les releases)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mode Review (optionnel, pour les releases)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#avec-anthropic-claude-par-defaut" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec Anthropic (Claude) — par défaut
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avec-openai-gpt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec OpenAI (GPT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avec-ollama-auto-heberge-gratuit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec Ollama (auto-hébergé, gratuit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avec-toute-api-compatible-openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec toute API compatible OpenAI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-du-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options du script
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Options du script">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exemples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jenkins-bitbucket-gitlab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jenkins / Bitbucket / GitLab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Jenkins / Bitbucket / GitLab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jenkins-jenkinsfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jenkins (Jenkinsfile)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bitbucket-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitbucket Pipelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gitlab-ci_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitLab CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variables-denvironnement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variables d'environnement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-standalone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode standalone
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-dintegration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture d'intégration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visualisation-des-diagrammes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualisation des diagrammes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--published"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pourquoi-utiliser-angela-en-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pourquoi utiliser Angela en CI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-draft-recommande-pour-la-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode Draft (recommandé pour la CI)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mode Draft (recommandé pour la CI)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#utiliser-angela-sur-un-site-de-doc-non-lore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utiliser Angela sur un site de doc non-lore
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demarrage-rapide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Démarrage rapide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Démarrage rapide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gitlab-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitLab CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jenkins-bitbucket-tout-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jenkins / Bitbucket / Tout CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comment-ca-marche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comment ça marche
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-ci-en-3-etapes-recommande" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline CI en 3 étapes recommandé
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions-pipeline-3-etapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions (pipeline 3 étapes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs-externes-pre-planifiees-sans-lore-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs externes pré-planifiées (sans lore init)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-review-optionnel-pour-les-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode Review (optionnel, pour les releases)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mode Review (optionnel, pour les releases)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#avec-anthropic-claude-par-defaut" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec Anthropic (Claude) — par défaut
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avec-openai-gpt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec OpenAI (GPT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avec-ollama-auto-heberge-gratuit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec Ollama (auto-hébergé, gratuit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avec-toute-api-compatible-openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Avec toute API compatible OpenAI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-du-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options du script
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Options du script">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exemples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jenkins-bitbucket-gitlab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jenkins / Bitbucket / GitLab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Jenkins / Bitbucket / GitLab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jenkins-jenkinsfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jenkins (Jenkinsfile)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bitbucket-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitbucket Pipelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gitlab-ci_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitLab CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variables-denvironnement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variables d'environnement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mode-standalone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode standalone
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-dintegration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture d'intégration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visualisation-des-diagrammes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualisation des diagrammes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="angela-en-ci-quality-gate-documentation">Angela en CI — Quality Gate Documentation</h1>
+<p>Angela peut s'exécuter comme quality gate dans n'importe quel pipeline CI/CD, en analysant votre documentation Markdown pour détecter les problèmes structurels, les incohérences et les problèmes de cohérence — <strong>sans nécessiter <code>lore init</code></strong>. Le mode draft est entièrement hors ligne (pas de clé API, pas de coût) ; le mode review est opt-in et nécessite un fournisseur IA, réservé aux vérifications de cohérence pré-release à l'échelle du corpus.</p>
+<h2 id="pourquoi-utiliser-angela-en-ci">Pourquoi utiliser Angela en CI</h2>
+<p>Votre documentation casse silencieusement. Un développeur ajoute un endpoint API mais oublie de mettre à jour la section d'authentification. Un autre supprime une fonctionnalité mais laisse des exemples obsolètes dans trois fichiers différents. Un troisième écrit « voir le guide de configuration » sans jamais y faire de lien.</p>
+<p>Angela détecte ces problèmes avant qu'ils n'atteignent la production. Contrairement aux linters qui vérifient la syntaxe, Angela comprend les relations de contenu, les références croisées et les patterns de documentation qui comptent pour les humains.</p>
+<h2 id="mode-draft-recommande-pour-la-ci">Mode Draft (recommandé pour la CI)</h2>
+<p>S'exécute entièrement hors ligne. Vérifie :</p>
+<ul>
+<li><strong>Sections manquantes</strong> — Why/What/Alternatives sur les types stricts lore (<code>decision</code>, <code>feature</code>, <code>bugfix</code>, <code>refactor</code>)</li>
+<li><strong>Conformité au guide de style</strong> — structure des titres, langages des blocs de code, formats de liens</li>
+<li><strong>Cohérence inter-documents</strong> — tags partagés, clusters de scope, liens internes cassés</li>
+<li><strong>Cohérence tapes VHS ↔ documentation</strong> — info uniquement, ne bloque jamais la CI</li>
+<li><strong>Score de qualité par personas</strong> — types stricts uniquement</li>
+</ul>
+<p>Le mode draft ne fait jamais d'appel réseau. Il analyse vos fichiers localement et se termine immédiatement.</p>
+<h3 id="utiliser-angela-sur-un-site-de-doc-non-lore">Utiliser Angela sur un site de doc non-lore</h3>
+<p>Angela peut <strong>tourner sans risque sur n'importe quel site de doc Markdown</strong> — MkDocs, Docusaurus, Astro, Diátaxis, fait main — même si vous n'avez jamais utilisé <code>lore init</code>.</p>
+<p>L'analyse se branche sur le champ <code>type</code> du front matter :</p>
+<ul>
+<li><strong>Types stricts</strong> (<code>decision</code>, <code>feature</code>, <code>bugfix</code>, <code>refactor</code>) — reçoivent le traitement lore complet : exigences What/Why/Alternatives/Impact, checks personas, notation poids fort.</li>
+<li><strong>Tout le reste</strong> — profil libre. Aucune exigence de sections, aucun check persona ; la notation récompense la structure, la densité et les exemples de code plutôt que les conventions lore.</li>
+</ul>
+<p>Blog posts, tutoriels, guides, concept pages, landing pages et tout type personnalisé ne produiront donc pas de faux warnings. Un tutoriel bien écrit peut atteindre 95/100 (A) sur le profil libre.</p>
+<p><strong>Les paires de traductions</strong> (par ex. <code>installation.md</code> et <code>installation.fr.md</code>) sont détectées automatiquement — elles ne sont pas marquées comme doublons. Codes supportés : <code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code>, <code>it</code>, <code>pt</code>, <code>zh</code>, <code>ja</code>, <code>ko</code>, <code>ru</code>, <code>ar</code>, <code>nl</code>, <code>pl</code>.</p>
+<p><strong>Le front matter partiel est préservé</strong> : un doc avec seulement <code>type: decision</code> et <code>date:</code> (sans <code>status</code>) garde son type déclaré — il n'est pas silencieusement dégradé en <code>note</code>.</p>
+<h2 id="demarrage-rapide">Démarrage rapide</h2>
+<h3 id="github-actions">GitHub Actions</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># .github/workflows/docs.yml</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GreyCoderK/lore@v1</span>
+<span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">draft</span><span class="w">        </span><span class="c1"># hors-ligne, gratuit — pas de clé API nécessaire</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs</span><span class="w">       </span><span class="c1"># votre répertoire markdown</span>
+<span class="w">    </span><span class="nt">fail_on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">error</span><span class="w">     </span><span class="c1"># ou : warning, none</span>
+</code></pre></div>
+<h3 id="gitlab-ci">GitLab CI</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">doc-review</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">stage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<span class="w">  </span><span class="nt">script</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./scripts/angela-ci.sh --path docs --fail-on warning --install</span>
+</code></pre></div>
+<h3 id="jenkins-bitbucket-tout-ci">Jenkins / Bitbucket / Tout CI</h3>
+<div class="highlight"><pre><span></span><code>./scripts/angela-ci.sh<span class="w"> </span>--path<span class="w"> </span>docs<span class="w"> </span>--fail-on<span class="w"> </span>error<span class="w"> </span>--install
+</code></pre></div>
+<h2 id="comment-ca-marche">Comment ça marche</h2>
+<pre class="mermaid"><code>    flowchart LR
+    A[Déclencheur CI] --&gt; B[Installer lore]
+    B --&gt; C[angela draft --all --path ./docs]
+    C --&gt; D{Problèmes trouvés ?}
+    D --&gt;|erreurs| E[EXIT 1 — Échec]
+    D --&gt;|warnings seulement| F{--fail-on ?}
+    D --&gt;|propre| G[EXIT 0 — Succès]
+    F --&gt;|warning| E
+    F --&gt;|error| G</code></pre>
+<p>Angela parcourt votre répertoire de documentation, analyse chaque fichier pour détecter les problèmes structurels et de contenu, puis se termine avec le code 0 (succès) ou 1 (échec) selon votre seuil.</p>
+<p>Pas besoin de répertoire <code>.lore/</code>. Pas de fichiers de configuration. Il suffit de pointer vers un dossier de fichiers Markdown.</p>
+<h2 id="modes">Modes</h2>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Clé API</th>
+<th>Coût</th>
+<th>Ce qu'il vérifie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>draft</code></td>
+<td>Non</td>
+<td>Gratuit</td>
+<td>Structure, style, cohérence, personas</td>
+</tr>
+<tr>
+<td><code>synthesize</code></td>
+<td>Non</td>
+<td>Gratuit</td>
+<td>Génère automatiquement des exemples API, requêtes SQL depuis le contenu du doc (hors ligne)</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td>Oui</td>
+<td>~0,01-0,05 $</td>
+<td>Contradictions corpus-wide, lacunes, obsolescence</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pipeline-ci-en-3-etapes-recommande">Pipeline CI en 3 étapes recommandé</h3>
+<pre class="mermaid"><code>    flowchart LR
+    A[Push / PR] --&gt; B[Étape 1 : draft]
+    B --&gt; C[Étape 2 : synthesize]
+    C --&gt; D[Étape 3 : review]
+    B -.-&gt;|GRATUIT, hors ligne| B
+    C -.-&gt;|GRATUIT, hors ligne| C
+    D -.-&gt;|Coût API, optionnel| D</code></pre>
+<p>Les étapes 1 et 2 sont entièrement hors ligne — pas de clé API, pas de coût. L'étape 3 (review) est optionnelle et uniquement nécessaire pour les vérifications de cohérence corpus-wide (pré-release, audits périodiques).</p>
+<h3 id="github-actions-pipeline-3-etapes">GitHub Actions (pipeline 3 étapes)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># .github/workflows/docs.yml</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Documentation Quality</span>
+<span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">pull_request</span><span class="p p-Indicator">]</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">docs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+
+<span class="w">      </span><span class="c1"># Étape 1 : Vérification structurelle hors ligne (gratuit)</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GreyCoderK/lore@v1</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">draft</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs</span>
+<span class="w">          </span><span class="nt">fail_on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">error</span>
+
+<span class="w">      </span><span class="c1"># Étape 2 : Génération automatique d&#39;exemples API depuis le contenu existant (gratuit)</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">for f in docs/*.md; do</span>
+<span class="w">            </span><span class="no">lore angela polish &quot;$(basename $f)&quot; --synthesize --set-status reviewed || true</span>
+<span class="w">          </span><span class="no">done</span>
+
+<span class="w">      </span><span class="c1"># Optionnel : polish IA sur des fichiers curés.</span>
+<span class="w">      </span><span class="c1"># `--arbitrate-rule=first` résout les sections dupliquées de manière</span>
+<span class="w">      </span><span class="c1"># déterministe en non-TTY (sinon polish refuse proprement avec exit 1).</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lore angela polish decision-auth.md --yes --arbitrate-rule=first</span>
+
+<span class="w">      </span><span class="c1"># Optionnel : borner l&#39;empreinte disque des backups polish + polish.log + quarantaine</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lore doctor --prune</span>
+
+<span class="w">      </span><span class="c1"># Étape 3 : Revue de cohérence IA (optionnel, uniquement sur les tags)</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">if</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">startsWith(github.ref, &#39;refs/tags/v&#39;)</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GreyCoderK/lore@v1</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs</span>
+<span class="w">          </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.ANTHROPIC_API_KEY }}</span>
+</code></pre></div>
+<h3 id="docs-externes-pre-planifiees-sans-lore-init">Docs externes pré-planifiées (sans lore init)</h3>
+<p>Angela fonctionne sur <strong>n'importe quel répertoire Markdown</strong> — votre équipe peut planifier la documentation en dehors de lore (dans un wiki, un export Confluence, un export Notion, ou un site MkDocs fait main) et bénéficier quand même de l'analyse et de l'enrichissement synthesizer d'Angela :</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Projet externe — pas de répertoire .lore/ nécessaire</span>
+lore<span class="w"> </span>angela<span class="w"> </span>draft<span class="w"> </span>--all<span class="w"> </span>--path<span class="w"> </span>./external-wiki/
+
+<span class="c1"># Générer des exemples Postman depuis des specs API dans un arbre de docs externe</span>
+lore<span class="w"> </span>angela<span class="w"> </span>polish<span class="w"> </span>api-endpoints.md<span class="w"> </span>--synthesize<span class="w"> </span>--path<span class="w"> </span>./swagger-docs/
+</code></pre></div>
+<p>En mode autonome :
+- Les fichiers avec front matter YAML reçoivent l'analyse complète
+- Les fichiers sans front matter reçoivent des métadonnées synthétiques (type=note)
+- Le synthesizer détecte les endpoints, filtres et sections sécurité que le doc ait été créé par lore ou non
+- Pas besoin de <code>.lorerc</code> — les valeurs par défaut s'appliquent</p>
+<h2 id="mode-review-optionnel-pour-les-releases">Mode Review (optionnel, pour les releases)</h2>
+<p>Utilise un seul appel API IA pour trouver des problèmes à l'échelle du corpus. Idéal pour les vérifications pré-release ou les revues périodiques — pas pour chaque commit.</p>
+<p><strong>Clé API requise.</strong> Contrairement au mode draft (gratuit, hors ligne), le mode review fait un appel API par run. Le coût dépend de la taille du corpus et du modèle :</p>
+<table>
+<thead>
+<tr>
+<th>Modèle</th>
+<th>Coût typique par review</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>claude-haiku-4-5-20251001</code></td>
+<td>~0,001–0,005 $</td>
+<td>Recommandé pour la CI — rapide, peu cher</td>
+</tr>
+<tr>
+<td><code>claude-sonnet-4-6</code></td>
+<td>~0,01–0,05 $</td>
+<td>Meilleure qualité de findings</td>
+</tr>
+<tr>
+<td><code>gpt-4o-mini</code></td>
+<td>~0,001–0,005 $</td>
+<td>Bonne alternative</td>
+</tr>
+<tr>
+<td><code>ollama/*</code></td>
+<td>Gratuit</td>
+<td>Auto-hébergé, pas de coût réseau</td>
+</tr>
+</tbody>
+</table>
+<p>Configurez la clé API comme secret du dépôt. Angela affiche le coût estimé avant d'appeler l'API. Le job CI n'échouera pas sur un dépassement de coût, mais il avertira si le corpus est très grand.</p>
+<h3 id="avec-anthropic-claude-par-defaut">Avec Anthropic (Claude) — par défaut</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GreyCoderK/lore@v1</span>
+<span class="w">  </span><span class="nt">if</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">startsWith(github.ref, &#39;refs/tags/v&#39;)</span>
+<span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs</span>
+<span class="w">    </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.ANTHROPIC_API_KEY }}</span>
+</code></pre></div>
+<h3 id="avec-openai-gpt">Avec OpenAI (GPT)</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GreyCoderK/lore@v1</span>
+<span class="w">  </span><span class="nt">if</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">startsWith(github.ref, &#39;refs/tags/v&#39;)</span>
+<span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs</span>
+<span class="w">    </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.OPENAI_API_KEY }}</span>
+<span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai</span>
+<span class="w">    </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt-4o</span>
+</code></pre></div>
+<h3 id="avec-ollama-auto-heberge-gratuit">Avec Ollama (auto-hébergé, gratuit)</h3>
+<p>Si vous exécutez Ollama sur votre runner CI (ou un service sidecar) :</p>
+<div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ollama</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/ollama</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11434:11434</span>
+
+<span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">curl -s http://localhost:11434/api/pull -d &#39;{&quot;name&quot;:&quot;llama3.1&quot;}&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GreyCoderK/lore@v1</span>
+<span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review</span>
+<span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs</span>
+<span class="w">      </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama</span>
+<span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llama3.1</span>
+<span class="w">      </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://ollama:11434</span>
+</code></pre></div>
+<h3 id="avec-toute-api-compatible-openai">Avec toute API compatible OpenAI</h3>
+<p>Tout fournisseur exposant un endpoint compatible OpenAI — Groq, Together, Mistral, Azure OpenAI, vLLM, LM Studio — fonctionne avec <code>provider: openai</code> :</p>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GreyCoderK/lore@v1</span>
+<span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs</span>
+<span class="w">    </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.GROQ_API_KEY }}</span>
+<span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai</span>
+<span class="w">    </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mixtral-8x7b-32768</span>
+<span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://api.groq.com</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Endpoint</th>
+<th>Exemples de modèles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Groq</strong></td>
+<td><code>https://api.groq.com</code></td>
+<td><code>mixtral-8x7b-32768</code>, <code>llama-3.1-70b-versatile</code></td>
+</tr>
+<tr>
+<td><strong>Together</strong></td>
+<td><code>https://api.together.xyz</code></td>
+<td><code>meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo</code></td>
+</tr>
+<tr>
+<td><strong>Mistral</strong></td>
+<td><code>https://api.mistral.ai</code></td>
+<td><code>mistral-large-latest</code></td>
+</tr>
+<tr>
+<td><strong>Azure OpenAI</strong></td>
+<td><code>https://VOTRE.openai.azure.com</code></td>
+<td>Votre nom de déploiement</td>
+</tr>
+<tr>
+<td><strong>vLLM / LM Studio</strong></td>
+<td><code>http://localhost:8000</code></td>
+<td>N'importe quel modèle chargé</td>
+</tr>
+</tbody>
+</table>
+<h2 id="options-du-script">Options du script</h2>
+<p>Le script portable supporte les modes draft et review :</p>
+<div class="highlight"><pre><span></span><code>./scripts/angela-ci.sh<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+
+<span class="w">  </span>--path<span class="w"> </span>&lt;dir&gt;<span class="w">        </span>Chemin<span class="w"> </span>vers<span class="w"> </span>les<span class="w"> </span>docs<span class="w"> </span>markdown<span class="w"> </span><span class="o">(</span>défaut<span class="w"> </span>:<span class="w"> </span>./docs<span class="o">)</span>
+<span class="w">  </span>--mode<span class="w"> </span>&lt;mode&gt;<span class="w">       </span>Mode<span class="w"> </span>d<span class="s1">&#39;analyse : draft (hors-ligne) ou review (IA) (défaut : draft)</span>
+<span class="s1">  --fail-on &lt;level&gt;   error | warning | none (défaut : error)</span>
+<span class="s1">  --filter &lt;regex&gt;    Regex pour filtrer les documents par nom de fichier (review uniquement)</span>
+<span class="s1">  --all               Analyser tous les documents, pas d&#39;</span>échantillonnage<span class="w"> </span><span class="m">25</span>+25<span class="w"> </span><span class="o">(</span>review<span class="w"> </span>uniquement<span class="o">)</span>
+<span class="w">  </span>--install<span class="w">           </span>Installer<span class="w"> </span>lore<span class="w"> </span>automatiquement<span class="w"> </span>si<span class="w"> </span>absent<span class="w"> </span>du<span class="w"> </span>PATH
+<span class="w">  </span>--version<span class="w"> </span>&lt;ver&gt;<span class="w">     </span>Version<span class="w"> </span>spécifique<span class="w"> </span>de<span class="w"> </span>lore<span class="w"> </span><span class="o">(</span>défaut<span class="w"> </span>:<span class="w"> </span>latest<span class="o">)</span>
+<span class="w">  </span>--quiet<span class="w">             </span>Supprimer<span class="w"> </span>la<span class="w"> </span>sortie<span class="w"> </span>lisible<span class="w"> </span>par<span class="w"> </span>l<span class="err">&#39;</span>humain
+</code></pre></div>
+<h3 id="exemples">Exemples</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Draft (hors-ligne, gratuit) — chaque push</span>
+./scripts/angela-ci.sh<span class="w"> </span>--path<span class="w"> </span>docs<span class="w"> </span>--fail-on<span class="w"> </span>warning<span class="w"> </span>--install
+
+<span class="c1"># Review (IA) — tous les docs</span>
+./scripts/angela-ci.sh<span class="w"> </span>--mode<span class="w"> </span>review<span class="w"> </span>--path<span class="w"> </span>docs<span class="w"> </span>--all<span class="w"> </span>--install
+
+<span class="c1"># Review — seulement les docs de commandes</span>
+./scripts/angela-ci.sh<span class="w"> </span>--mode<span class="w"> </span>review<span class="w"> </span>--path<span class="w"> </span>docs<span class="w"> </span>--filter<span class="w"> </span><span class="s2">&quot;commands/.*&quot;</span><span class="w"> </span>--install
+
+<span class="c1"># Review — silencieux pour parsing de logs</span>
+./scripts/angela-ci.sh<span class="w"> </span>--mode<span class="w"> </span>review<span class="w"> </span>--path<span class="w"> </span>docs<span class="w"> </span>--all<span class="w"> </span>--quiet<span class="w"> </span>--install
+</code></pre></div>
+<h2 id="jenkins-bitbucket-gitlab">Jenkins / Bitbucket / GitLab</h2>
+<p>Le script fonctionne dans n'importe quel système CI. Configurez les variables <code>LORE_AI_*</code> pour activer le mode review :</p>
+<h3 id="jenkins-jenkinsfile">Jenkins (Jenkinsfile)</h3>
+<div class="highlight"><pre><span></span><code><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">environment</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">LORE_AI_PROVIDER</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;anthropic&#39;</span>
+<span class="w">        </span><span class="n">LORE_AI_API_KEY</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">credentials</span><span class="o">(</span><span class="s1">&#39;anthropic-api-key&#39;</span><span class="o">)</span>
+<span class="w">        </span><span class="n">LORE_AI_TIMEOUT</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;120s&#39;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Doc Draft&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./scripts/angela-ci.sh --path docs --fail-on error --install&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Doc Review&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">when</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">buildingTag</span><span class="o">()</span><span class="w"> </span><span class="o">}</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./scripts/angela-ci.sh --mode review --path docs --all --install&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+<h3 id="bitbucket-pipelines">Bitbucket Pipelines</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">pipelines</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">step</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Qualité Doc (hors-ligne)</span>
+<span class="w">        </span><span class="nt">script</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./scripts/angela-ci.sh --path docs --fail-on warning --install</span>
+
+<span class="w">  </span><span class="nt">tags</span><span class="p">:</span>
+<span class="w">    </span><span class="s">&#39;v*&#39;</span><span class="p p-Indicator">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">step</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Revue Doc (IA)</span>
+<span class="w">          </span><span class="nt">script</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./scripts/angela-ci.sh --mode review --path docs --all --install</span>
+<span class="w">          </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">LORE_AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai</span>
+<span class="w">            </span><span class="nt">LORE_AI_MODEL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt-4o</span>
+<span class="w">            </span><span class="nt">LORE_AI_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$OPENAI_API_KEY</span>
+<span class="w">            </span><span class="nt">LORE_AI_TIMEOUT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120s</span>
+</code></pre></div>
+<h3 id="gitlab-ci_1">GitLab CI</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">doc-draft</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">stage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<span class="w">  </span><span class="nt">script</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./scripts/angela-ci.sh --path docs --fail-on warning --install</span>
+
+<span class="nt">doc-review</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">stage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">if</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$CI_COMMIT_TAG =~ /^v/</span>
+<span class="w">  </span><span class="nt">variables</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">LORE_AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">anthropic</span>
+<span class="w">    </span><span class="nt">LORE_AI_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$ANTHROPIC_API_KEY</span>
+<span class="w">    </span><span class="nt">LORE_AI_TIMEOUT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120s</span>
+<span class="w">    </span><span class="nt">LORE_ANGELA_MAX_TOKENS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8192</span>
+<span class="w">  </span><span class="nt">script</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./scripts/angela-ci.sh --mode review --path docs --all --install</span>
+</code></pre></div>
+<h3 id="variables-denvironnement">Variables d'environnement</h3>
+<p>lore lit automatiquement les variables <code>LORE_AI_*</code> (via Viper auto-env). Pas besoin de fichier <code>.lorerc</code> en CI :</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Exemple</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LORE_AI_PROVIDER</code></td>
+<td>Fournisseur IA</td>
+<td><code>anthropic</code>, <code>openai</code>, <code>ollama</code></td>
+</tr>
+<tr>
+<td><code>LORE_AI_MODEL</code></td>
+<td>Nom du modèle</td>
+<td><code>claude-haiku-4-5-20251001</code>, <code>gpt-4o</code>, <code>llama3.1</code></td>
+</tr>
+<tr>
+<td><code>LORE_AI_API_KEY</code></td>
+<td>Clé API (requis pour review, sauf ollama)</td>
+<td><code>sk-ant-...</code>, <code>sk-...</code></td>
+</tr>
+<tr>
+<td><code>LORE_AI_ENDPOINT</code></td>
+<td>URL endpoint custom</td>
+<td><code>https://api.groq.com</code>, <code>http://localhost:11434</code></td>
+</tr>
+<tr>
+<td><code>LORE_AI_TIMEOUT</code></td>
+<td>Timeout de requête</td>
+<td><code>120s</code></td>
+</tr>
+<tr>
+<td><code>LORE_ANGELA_MAX_TOKENS</code></td>
+<td>Max tokens de sortie</td>
+<td><code>8192</code></td>
+</tr>
+</tbody>
+</table>
+<p>Ces variables fonctionnent dans <strong>n'importe quel système CI</strong> — GitHub Actions, GitLab, Jenkins, Bitbucket, CircleCI, etc.</p>
+<h2 id="mode-standalone">Mode standalone</h2>
+<p>Angela fonctionne sur <strong>n'importe quel répertoire de fichiers Markdown</strong> — avec ou sans front matter YAML :</p>
+<ul>
+<li><strong>Avec front matter</strong> : Analyse complète (type, tags, dates, clusters de scope)</li>
+<li><strong>Sans front matter</strong> : Métadonnées synthétiques à partir du nom de fichier et de la date de modification ; les vérifications structurelles et de style fonctionnent toujours</li>
+</ul>
+<p>Vous pouvez ajouter Angela à n'importe quel projet ayant un dossier <code>docs/</code>, que vous utilisiez lore ou non.</p>
+<h2 id="architecture-dintegration">Architecture d'intégration</h2>
+<pre class="mermaid"><code>    flowchart TB
+    subgraph "Votre pipeline CI"
+        A[Push / PR] --&gt; B{GitHub ?}
+        B --&gt;|Oui| C[action.yml]
+        B --&gt;|Non| D[angela-ci.sh]
+        C --&gt; E[lore angela draft --all --path ./docs]
+        D --&gt; E
+    end
+
+    subgraph "Analyse Angela"
+        E --&gt; F[PlainCorpusStore]
+        F --&gt; G[langdetect + VHS]
+        F --&gt; H[corpus signals]
+        F --&gt; I[style guide]
+        G --&gt; J[Sortie JSON]
+        H --&gt; J
+        I --&gt; J
+    end
+
+    J --&gt; K{Code de sortie}
+    K --&gt;|0| L[Succès]
+    K --&gt;|1| M[Échec + Rapport]</code></pre>
+<h2 id="visualisation-des-diagrammes">Visualisation des diagrammes</h2>
+<p>Les diagrammes de cette documentation utilisent <a href="https://mermaid.js.org/">Mermaid</a>. Voici comment les visualiser selon votre environnement :</p>
+<table>
+<thead>
+<tr>
+<th>Environnement</th>
+<th>Solution</th>
+<th>Lien</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>VS Code</strong></td>
+<td>Extension Markdown Preview Mermaid</td>
+<td><a href="https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid">Installer</a></td>
+</tr>
+<tr>
+<td><strong>JetBrains</strong> (IntelliJ, GoLand, etc.)</td>
+<td>Plugin Mermaid</td>
+<td><a href="https://plugins.jetbrains.com/plugin/20146-mermaid">Installer</a></td>
+</tr>
+<tr>
+<td><strong>En ligne</strong></td>
+<td>Coller le bloc dans l'éditeur en ligne</td>
+<td><a href="https://mermaid.live">mermaid.live</a></td>
+</tr>
+<tr>
+<td><strong>MkDocs</strong></td>
+<td>Rendu automatique via <code>pymdownx.superfences</code></td>
+<td>Déjà configuré dans ce projet</td>
+</tr>
+<tr>
+<td><strong>GitHub</strong></td>
+<td>Rendu natif dans les fichiers <code>.md</code></td>
+<td>Aucune action requise</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Audience non-technique ?</strong> Si votre audience ne peut pas rendre les diagrammes Mermaid, vous pouvez les convertir en images PNG/SVG avec <a href="https://github.com/mermaid-js/mermaid-cli">mermaid-cli</a> (<code>mmdc</code>) et les placer dans <code>assets/diagrams/</code>.</p>
+</blockquote>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Retour en haut de la page
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/greycoderk/lore" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../assets/extra.js"></script>
+      
+    
+  </body>
+</html>
