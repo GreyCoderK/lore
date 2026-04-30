@@ -73,21 +73,19 @@ These principles translate into concrete, non-negotiable architectural choices:
 - **Not a commit linter** — Conventional Commits standardize the "what." Lore captures the "why." They work together.
 - **Not a surveillance tool** — Lore doesn't track who documents or who doesn't. It's a personal practice that benefits the team.
 
-## About Angela
+## About Angela { #about-angela }
 
 The AI companion inside Lore is named **Angela**.
 
 Angela is the embedded reviewer who reads your documentation, knows your project's style, and checks consistency before you publish — like a colleague who has read every document your team ever wrote.
 
+She doesn't work alone. She leans on a system of expert personas — **Affoue** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. **Not a generic AI — a team that knows your project.**
+
 She can also step back and analyze your entire corpus at once — like a librarian surveying the full collection and telling you: "This document contradicts that one. There is a missing chapter on this subject."
 
 She is opt-in. She respects resources. She never makes automatic decisions without consent.
 
-**Angela is named after the creator's niece, who was lost to cancer.**
-
-It's not just a name in a config file. It's a way to keep her present in what's being built. To honor her through something that helps people, that lasts, that travels far.
-
-Every time Angela reviews a document, every time she catches a contradiction, every time she helps someone write a clearer "why" — a little piece of that legacy lives on.
+Every time Angela reviews a document, every time she catches a contradiction, every time she helps someone write a clearer "why" — the corpus gets sharper, and the project's collective memory grows.
 
 ## The Vision
 

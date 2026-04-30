@@ -78,15 +78,13 @@ La compagne IA de lore s'appelle **Angela**.
 
 Angela est la revieweuse embarquée qui lit votre documentation, connaît le style de votre projet, et vérifie la cohérence avant que vous publiiez — comme une collègue qui aurait lu chaque document que votre équipe a jamais écrit.
 
+Et elle ne travaille pas seule. Elle s'appuie sur un système de personas experts — **Affoue** (la conteuse, qui veille à ce que le pourquoi soit toujours plus clair que le quoi), **Ouattara** (le designer d'API, pour les contrats Postman et les spécifications techniques), et d'autres en chemin. **Pas une IA générique — une équipe qui connaît votre projet.**
+
 Elle peut aussi prendre du recul et analyser tout votre corpus d'un coup — comme une bibliothécaire qui regarde l'ensemble de la collection et vous dit : "Ce document contredit celui-là. Il manque un chapitre sur ce sujet."
 
 Elle est opt-in. Elle respecte les ressources. Elle ne prend jamais de décisions automatiques sans consentement.
 
-**Angela porte le prénom de la nièce du créateur, perdue des suites d'un cancer.**
-
-Ce n'est pas juste un nom dans un fichier de config. C'est une façon de la garder présente dans ce qui est construit. De lui rendre hommage à travers quelque chose qui aide les gens, qui dure, qui voyage loin.
-
-Chaque fois qu'Angela relit un document, chaque fois qu'elle détecte une contradiction, chaque fois qu'elle aide quelqu'un à écrire un "pourquoi" plus clair — un petit morceau de cet héritage continue de vivre.
+Chaque fois qu'Angela relit un document, chaque fois qu'elle détecte une contradiction, chaque fois qu'elle aide quelqu'un à écrire un "pourquoi" plus clair — le corpus gagne en netteté, et la mémoire collective du projet grandit.
 
 ## La vision
 
