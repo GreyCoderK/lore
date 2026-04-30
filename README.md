@@ -180,19 +180,19 @@ Angela works as a **documentation quality gate** in any CI pipeline — no `lore
 
 Works on **any Markdown directory** — with or without YAML front matter. See the [Angela in CI guide](https://greycoderk.github.io/lore/guides/angela-ci/) for details.
 
-### Personas
+### Personas — not a generic AI, a team that knows your project
 
-Angela evaluates your documentation through **7 expert lenses** — each with its own priorities and blind spots:
+Angela doesn't work alone. She leans on a system of expert personas — **Affoue** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. Each lens has its own priorities and blind spots:
 
-| Icon | ID | Focus |
-|---|---|---|
-| ✏️ | `tech-writer` | Rédactionnel, précision, clarté |
-| 🎨 | `ux-designer` | Mental models, onboarding, accessibilité |
-| 🔌 | `api-designer` | Contrats d'API, headers, body, exemples HTTP |
-| 🔍 | `qa-reviewer` | Edge cases, validation, failure modes |
-| 🏗️ | `architect` | Trade-offs, scalabilité, design |
-| 📊 | `business-analyst` | Traçabilité, valeur business |
-| 📖 | `storyteller` | Narration, onboarding long-form |
+| Icon | ID | Name | Focus |
+|---|---|---|---|
+| ✏️ | `tech-writer` | Salou | Rédactionnel, précision, clarté |
+| 🎨 | `ux-designer` | Gougou | Mental models, onboarding, accessibilité |
+| 🔌 | `api-designer` | Ouattara | Contrats d'API, headers, body, exemples HTTP |
+| 🔍 | `qa-reviewer` | Kouame | Edge cases, validation, failure modes |
+| 🏗️ | `architect` | Doumbia | Trade-offs, scalabilité, design |
+| 📊 | `business-analyst` | Beda | Traçabilité, valeur business |
+| 📖 | `storyteller` | Affoue | Narration, onboarding long-form |
 
 Personas activate in three modes:
 
@@ -312,6 +312,16 @@ If Lore helps you capture better decisions, consider [sponsoring the project](ht
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github-sponsors)](https://github.com/sponsors/GreyCoderK)
 
 ![lore-documented](assets/lore-documented.svg)
+
+## On the shoulders of giants
+
+Lore wouldn't exist without the open source foundations laid by others — Git, Linux, Go, SQLite, Cobra, Viper. When you build to last, you stand on the shoulders of giants. That's why Lore is free and open source in turn.
+
+What you see today is an MVP. A solid foundation, built with the right tools. But it's only a beginning. If adoption follows, the best is still to come — more personas, more integrations, more languages, more intelligence.
+
+That signal is you. Test it. Break it. Contribute. Tell us what's missing.
+
+Built solo from Côte d'Ivoire. Bilingual EN/FR. Made to last.
 
 ## Third-Party Notices
 
