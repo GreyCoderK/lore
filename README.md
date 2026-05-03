@@ -215,12 +215,60 @@ If all 3 answers come in under 3 seconds, Lore enters **express mode** and skips
 
 ### Contextual Detection
 
-- **Merge commits** — Skipped automatically
-- **Rebase** — Deferred to pending
-- **Cherry-pick with doc** — Skipped
-- **Amend** — Updates existing document
-- **Non-TTY** (IDE, CI) — Deferred with OS notification (VS Code, dialog)
-- **Ctrl+C** — Partial answers saved to pending (at any question level, including type selector and amend prompts)
+The hook **never blocks a commit** and rarely asks questions when it shouldn't. Before any prompt, Lore evaluates a chain of rules — the first match wins:
+
+```mermaid
+flowchart TD
+    A["Post-commit hook fires"] --> A1["Reconnect stdin (< /dev/tty)"]
+    A1 --> B{"doc-skip in message?"}
+    B -->|Yes| C["Skip silently"]
+    B -->|No| D{"/dev/tty available?<br/>TERM != dumb?"}
+    D -->|"No (CI, pipe, dumb term)"| E["Defer to pending"]
+    D -->|Yes| F{"Rebase in progress?"}
+    F -->|Yes| E
+    F -->|No| G{"Merge commit?"}
+    G -->|Yes| H["Skip — 1-line message"]
+    G -->|No| I{"Cherry-pick + doc exists?"}
+    I -->|Yes| C
+    I -->|No| J{"Amend + doc exists?"}
+    J -->|Yes| K0["Question 0: Document this? Y/n"]
+    K0 -->|No| C
+    K0 -->|Yes| K["Update / Create / Skip"]
+    J -->|No| L["Decision Engine scoring"]
+    L --> M{"Score?"}
+    M -->|">=60"| N["Ask full questions"]
+    M -->|"35-59"| O["Ask reduced questions"]
+    M -->|"15-34"| P["Suggest skip — confirm"]
+    M -->|"<15"| Q["Auto-skip silently"]
+    E --> E1{"IDE detected?<br/>(GIT_ASKPASS)"}
+    E1 -->|Yes| E2["Notify via IDE/OS dialog"]
+    E1 -->|No| E3["Silent pending"]
+```
+
+**Detection rules (priority order):**
+
+| # | Rule | Action | Reason |
+|---|------|--------|--------|
+| 1 | `[doc-skip]` in commit message | Skip silently | Explicit developer intent |
+| 2 | Non-TTY or `TERM=dumb` | Defer to pending | CI/pipes must never block |
+| 3 | Rebase in progress | Defer to pending | Avoid prompts during replay |
+| 4 | Merge commit (2+ parents) | Skip silently | Infrastructure commits |
+| 5 | Cherry-pick + source doc exists | Skip silently | Already documented |
+| 6 | Amend + existing doc | `[U]pdate` / `[C]reate` / `[S]kip` | Editing prior work |
+| 7 | Decision Engine score | Score-based action | Multi-signal analysis |
+
+**Decision Engine tiers** (configurable via `decision.threshold_*` in `.lorerc`):
+
+| Score | Action |
+|---|---|
+| ≥ 60 | Full questions (Type, What, Why, Alternatives, Impact) |
+| 35–59 | Reduced questions (Type, What, Why) |
+| 15–34 | Suggest skip — confirm |
+| < 15 | Auto-skip silently |
+
+**Other safety nets:** Non-TTY contexts (IDE, CI, Docker, cron) defer to pending and trigger an OS dialog when an IDE is detected. `Ctrl+C` at any prompt saves partial answers to `.lore/pending/` for resume via `lore pending resolve`.
+
+Full reference: [`docs/guides/contextual-detection.md`](docs/guides/contextual-detection.md) ([FR](docs/guides/contextual-detection.fr.md)).
 
 ### Document Format
 
