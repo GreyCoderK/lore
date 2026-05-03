@@ -245,7 +245,7 @@ func TestLoadFromDir_ConfigStructFullyPopulated(t *testing.T) {
 	dir := t.TempDir()
 	lorercContent := `ai:
   provider: anthropic
-  model: claude-sonnet-4-20250514
+  model: claude-sonnet-4-6
   api_key: ""
 angela:
   mode: full

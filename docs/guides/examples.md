@@ -29,7 +29,7 @@ output:
   dir: .lore/docs
 ```
 
-Every commit triggers 3 questions. Use `lore show` to review past decisions when you revisit code months later.
+Every commit triggers 3 essential questions (plus 2 optional ones for higher-stakes changes). Use `lore show` to review past decisions when you revisit code months later.
 
 ### Open Source Project
 

@@ -27,7 +27,7 @@ const lorercContent = `# Lore configuration — shared with team (commit this fi
 
 ai:
   provider: ""       # anthropic, openai, ollama
-  model: ""          # model name (e.g., claude-sonnet-4-20250514)
+  model: ""          # model name (e.g., claude-sonnet-4-6)
 
 angela:
   max_tokens: 2000   # optional: override the auto-computed max output tokens

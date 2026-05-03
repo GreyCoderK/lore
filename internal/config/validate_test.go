@@ -18,7 +18,7 @@ func TestValidateConfig_ValidConfig(t *testing.T) {
 	writeYAML(t, dir, ".lorerc.yaml", `
 ai:
   provider: anthropic
-  model: claude-sonnet-4-20250514
+  model: claude-sonnet-4-6
 hooks:
   post_commit: true
 `)
@@ -30,7 +30,7 @@ hooks:
 	assert.Empty(t, report.Warnings)
 	assert.Empty(t, report.Errors)
 	assert.Equal(t, "anthropic", report.Active["ai.provider"])
-	assert.Equal(t, "claude-sonnet-4-20250514", report.Active["ai.model"])
+	assert.Equal(t, "claude-sonnet-4-6", report.Active["ai.model"])
 }
 
 func TestValidateConfig_UnknownFieldWithSuggestion(t *testing.T) {

@@ -28,7 +28,7 @@ output:
   dir: .lore/docs
 ```
 
-Chaque commit déclenche 3 questions. Consultez vos décisions avec `lore show` quand vous revisitez le code des mois plus tard.
+Chaque commit déclenche 3 questions essentielles (plus 2 optionnelles pour les changements à plus fort enjeu). Consultez vos décisions avec `lore show` quand vous revisitez le code des mois plus tard.
 
 ### Projet open source
 
