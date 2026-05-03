@@ -119,13 +119,18 @@ Oui. Supprimez le dossier `.lore/` : `rm -rf .lore` — votre code et historique
 
 ## Que se passe-t-il ensuite ?
 
-Après `lore init`, la prochaine fois que vous lancez `git commit`, Lore posera automatiquement 3 questions :
+Après `lore init`, la prochaine fois que vous lancez `git commit`, Lore posera automatiquement 3 questions essentielles :
 
 1. **Type** — Quel genre de changement ? (feature, bugfix, decision, refactor, note)
 2. **Quoi** — Pré-rempli depuis votre message de commit. Appuyez sur Entrée.
 3. **Pourquoi** — La question importante ! Pourquoi ce choix ?
 
-Le "pourquoi" est capturé en quelques secondes et conservé durablement avec votre code.
+Pour les commits à plus fort enjeu, 2 questions optionnelles suivent :
+
+4. **Alternatives** — Qu'avez-vous envisagé puis écarté ?
+5. **Impact** — Qu'est-ce qui change en aval à cause de ce choix ?
+
+La paire optionnelle s'auto-skippe quand vous répondez aux trois premières en moins de ~3 secondes (mode express). Prenez plus de temps sur un changement important et elles restent. Le "pourquoi" est capturé en quelques secondes et conservé durablement avec votre code.
 
 ## Tips & Tricks
 

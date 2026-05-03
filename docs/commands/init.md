@@ -130,13 +130,18 @@ Yes. Remove the `.lore/` folder with `rm -rf .lore` — your code and Git histor
 
 ## What Happens Next?
 
-After `lore init`, the next time you run `git commit`, Lore will automatically ask you 3 questions:
+After `lore init`, the next time you run `git commit`, Lore will automatically ask you 3 essential questions:
 
 1. **Type** — What kind of change? (feature, bugfix, decision, refactor, note)
 2. **What** — Pre-filled from your commit message. Just press Enter.
 3. **Why** — The important one! Why did you make this choice?
 
-The "why" is captured in seconds and stored permanently alongside your code.
+For higher-stakes commits, 2 optional questions follow:
+
+4. **Alternatives** — What did you consider and reject?
+5. **Impact** — What changes downstream because of this?
+
+The optional pair auto-skips when you answer the first three within ~3 seconds (express mode). Take more time on a meaningful change and they stay in. The "why" is captured in seconds and stored permanently alongside your code.
 
 ## Tips & Tricks
 
