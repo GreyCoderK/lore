@@ -185,13 +185,13 @@ Angela doesn't work alone. She leans on a system of expert personas — **Affou�
 
 | Icon | ID | Name | Focus |
 |---|---|---|---|
-| ✏️ | `tech-writer` | Salou | Rédactionnel, précision, clarté |
-| 🎨 | `ux-designer` | Gougou | Mental models, onboarding, accessibilité |
-| 🔌 | `api-designer` | Ouattara | Contrats d'API, headers, body, exemples HTTP |
-| 🔍 | `qa-reviewer` | Kouamé | Edge cases, validation, failure modes |
-| 🏗️ | `architect` | Doumbia | Trade-offs, scalabilité, design |
-| 📊 | `business-analyst` | Béda | Traçabilité, valeur business |
-| 📖 | `storyteller` | Affoué | Narration, onboarding long-form |
+| ✏️ | `tech-writer` | Salou | Technical writing precision and clarity |
+| 🎨 | `ux-designer` | Gougou | User empathy, mental models, and accessibility |
+| 🔌 | `api-designer` | Ouattara | API contracts, synthesizer-ready docs, HTTP semantics |
+| 🔍 | `qa-reviewer` | Kouamé | Quality assurance and validation criteria |
+| 🏗️ | `architect` | Doumbia | System design, trade-offs, and scalability |
+| 📊 | `business-analyst` | Béda | Requirements traceability and business value |
+| 📖 | `storyteller` | Affoué | Narrative clarity and authentic storytelling |
 
 Personas activate in three modes:
 
