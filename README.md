@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Your code knows what. Lore knows why.</strong><br>
-  <em>L'or de vos decisions techniques.</em>
+  <em>L'or de vos décisions techniques.</em>
 </p>
 
 <p align="center">
@@ -36,7 +36,7 @@ Every codebase has an invisible layer of decisions that code alone can't convey.
 
 ## The Solution
 
-Three questions. Ninety seconds. Done.
+Three quick questions. Ninety seconds. Done.
 
 ```
 $ git commit -m "feat: add JWT auth middleware"
@@ -46,7 +46,7 @@ $ git commit -m "feat: add JWT auth middleware"
   Captured  feature-add-jwt-auth-middleware-2026-03-16.md
 ```
 
-Lore hooks into your Git workflow and asks **3 questions** after every commit — Type, What, Why. The answers become a Markdown file living in your repo, searchable, versionable, portable. No wiki. No SaaS. No friction.
+Lore hooks into your Git workflow and asks **3 essential questions** after every commit — Type, What, Why — plus 2 optional ones (Alternatives, Impact) that auto-skip when you answer the first three quickly, or stay in for higher-stakes commits. The answers become a Markdown file living in your repo, searchable, versionable, portable. No wiki. No SaaS. No friction.
 
 ## Installation
 
@@ -67,6 +67,8 @@ curl -sSfL https://raw.githubusercontent.com/GreyCoderK/lore/main/install.sh | s
 ```
 
 Or download from [GitHub Releases](https://github.com/GreyCoderK/lore/releases) — binaries for macOS, Linux, and Windows.
+
+**Supported platforms:** macOS (arm64, x86_64), Linux (arm64, x86_64), Windows (x86_64, arm64). Docs site: [greycoderk.github.io/lore](https://greycoderk.github.io/lore/) (EN+FR).
 
 ### Optional (macOS only) — Notification icons
 
@@ -211,7 +213,7 @@ Full reference: [docs/commands/angela-personas.md](docs/commands/angela-personas
 2. **What** — Pre-filled from your commit message. Press Enter to confirm.
 3. **Why** — The one question that matters. Why this approach?
 
-If all 3 answers come in under 3 seconds, Lore enters **express mode** and skips optional questions.
+When you answer Type / What / Why within ~3 seconds, Lore enters **express mode** and auto-skips Alternatives and Impact. Take more time on a meaningful change and the optional pair stays in. Higher-level routing (full vs reduced vs suggest-skip vs auto-skip) is governed by the Decision Engine — see [Contextual Detection](#contextual-detection) below.
 
 ### Contextual Detection
 
@@ -305,7 +307,7 @@ Users can now authenticate without server-side state...
 language: "en"           # "en" or "fr" — bilingual UI
 ai:
   provider: ""            # "anthropic", "openai", "ollama", or "" (zero-API)
-  model: ""               # e.g. "claude-sonnet-4-20250514", "gpt-4o"
+  model: ""               # e.g. "claude-sonnet-4-6", "claude-haiku-4-5-20251001", "gpt-4o", "llama3.2"
   endpoint: ""            # custom endpoint (Groq, Together, Ollama, etc.)
   timeout: 60s
 angela:
@@ -349,6 +351,8 @@ For security vulnerabilities, see [SECURITY.md](SECURITY.md).
 
 - [GitHub Issues](https://github.com/GreyCoderK/lore/issues) — Bugs & feature requests
 - [GitHub Discussions](https://github.com/GreyCoderK/lore/discussions) — Q&A, ideas, show & tell
+- [Documentation site](https://greycoderk.github.io/lore/) — full guides, EN + FR
+- [FAQ](https://greycoderk.github.io/lore/faq/) — common questions ([FR](https://greycoderk.github.io/lore/fr/faq/))
 - [SUPPORT.md](SUPPORT.md) — Where to get help
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Community guidelines
 
@@ -362,9 +366,9 @@ If Lore helps you capture better decisions, consider [sponsoring the project](ht
 
 ## On the shoulders of giants
 
-Lore wouldn't exist without the open source foundations laid by others — Git, Linux, Go, SQLite, Cobra, Viper. When you build to last, you stand on the shoulders of giants. That's why Lore is free and open source in turn.
+Lore stands on the open-source foundations laid by others — Git, Linux, Go, SQLite, Cobra, Viper, Bubble Tea. That's why Lore is free and open source in turn.
 
-What you see today is an MVP. A solid foundation, built with the right tools. But it's only a beginning. If adoption follows, the best is still to come — more personas, more integrations, more languages, more intelligence.
+What you see today is an MVP — a foundation, not a finished product. If adoption follows, the next steps are clear: more personas live, dynamic templates, knowledge-graph hints from the existing corpus.
 
 That signal is you. Test it. Break it. Contribute. Tell us what's missing.
 
@@ -372,16 +376,21 @@ Built solo from Côte d'Ivoire. Bilingual EN/FR. Made to last.
 
 ## Third-Party Notices
 
-| Dependency | License |
-|------------|---------|
-| [cobra](https://github.com/spf13/cobra) | Apache-2.0 |
-| [afero](https://github.com/spf13/afero) | Apache-2.0 |
-| [mousetrap](https://github.com/inconshreveable/mousetrap) | Apache-2.0 |
-| [pflag](https://github.com/spf13/pflag) | BSD-3-Clause |
-| [fsnotify](https://github.com/fsnotify/fsnotify) | BSD-3-Clause |
-| [x/term](https://pkg.go.dev/golang.org/x/term) | BSD-3-Clause |
-| [x/sys](https://pkg.go.dev/golang.org/x/sys) | BSD-3-Clause |
-| [x/text](https://pkg.go.dev/golang.org/x/text) | BSD-3-Clause |
+Selected direct dependencies (full graph in [`go.mod`](go.mod) / [`go.sum`](go.sum)):
+
+| Dependency | License | Used for |
+|------------|---------|----------|
+| [cobra](https://github.com/spf13/cobra) | Apache-2.0 | Command tree, flag parsing |
+| [viper](https://github.com/spf13/viper) | MIT | Config cascade (`.lorerc` → env → flags) |
+| [bubbletea](https://github.com/charmbracelet/bubbletea) | MIT | Interactive type selector, persona picker |
+| [lipgloss](https://github.com/charmbracelet/lipgloss) | MIT | Terminal styling |
+| [modernc.org/sqlite](https://gitlab.com/cznic/sqlite) | BSD-3-Clause | SQLite driver (CGO-free, pure Go) |
+| [yaml.v3](https://github.com/go-yaml/yaml) | MIT + Apache-2.0 | YAML front-matter parsing |
+| [mapstructure](https://github.com/go-viper/mapstructure) | MIT | Config decoding |
+| [x/term](https://pkg.go.dev/golang.org/x/term) | BSD-3-Clause | Terminal detection |
+| [x/text](https://pkg.go.dev/golang.org/x/text) | BSD-3-Clause | Unicode normalization (i18n) |
+| [pflag](https://github.com/spf13/pflag) | BSD-3-Clause | Cobra flag backend |
+| [fsnotify](https://github.com/fsnotify/fsnotify) | BSD-3-Clause | Config file watching |
 
 ## License
 

@@ -36,7 +36,7 @@ You are 50 commits in. Six months later, someone asks: *"Why did we build it thi
 
 ## The Solution
 
-Three questions. Ninety seconds. Done.
+Three quick questions. Ninety seconds. Done.
 
 ```
 $ git commit -m "feat: add JWT auth middleware"
@@ -46,7 +46,7 @@ $ git commit -m "feat: add JWT auth middleware"
   ✓ Captured: feature-add-jwt-auth-2026-03-16.md
 ```
 
-Lore hooks into your Git workflow and asks **3 questions** after every commit. The answers become a Markdown file in your repo — searchable, versionable, portable. No wiki. No SaaS. No friction.
+Lore hooks into your Git workflow and asks **3 essential questions** after every commit — Type, What, Why — plus 2 optional ones (Alternatives, Impact) that auto-skip when you answer the first three quickly, or stay in for higher-stakes commits. The answers become a Markdown file in your repo — searchable, versionable, portable. No wiki. No SaaS. No friction.
 
 ## How it works
 
@@ -59,7 +59,7 @@ graph LR
 ```
 
 1. **Commit** your code as usual
-2. **Answer 3 questions** — Type, What, Why (90 seconds)
+2. **Answer 3 essential questions** — Type, What, Why — plus 2 optional (Alternatives, Impact) that auto-skip when you go fast (~90 seconds median)
 3. **Done** — A Markdown document captures the decision forever
 4. **Search** anytime with `lore show "auth"` to find past decisions
 

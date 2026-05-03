@@ -31,7 +31,7 @@ lore init [flags]
 > lore init
 > ```
 >
-> From now on, every `git commit` triggers 3 questions. Your project has a memory.
+> From now on, every `git commit` triggers 3 essential questions (plus 2 optional ones for higher-stakes commits). Your project has a memory.
 
 ![lore init](../assets/vhs/init.gif)
 <!-- Generate: vhs assets/vhs/init.tape -->

@@ -43,7 +43,7 @@ Trois questions. Quatre-vingt-dix secondes. C'est fait.
 ![lore interactif](../assets/vhs/interactive.gif)
 <!-- Generate: vhs assets/vhs/interactive.tape -->
 
-> **Que vient-il de se passer ?** Le hook post-commit de Lore a détecté votre commit, posé 3 questions, et enregistré un fichier Markdown dans `.lore/docs/`. Le fichier contient un en-tête YAML (type, date, hash du commit) et votre "pourquoi" — lié définitivement à ce commit.
+> **Que vient-il de se passer ?** Le hook post-commit de Lore a détecté votre commit, posé 3 questions essentielles (Type, Quoi, Pourquoi) plus 2 optionnelles (Alternatives, Impact) qui se sont auto-skippées car vous avez répondu vite, et enregistré un fichier Markdown dans `.lore/docs/`. Le fichier contient un en-tête YAML (type, date, hash du commit) et votre "pourquoi" — lié définitivement à ce commit.
 
 ## 3. Consulter votre document
 

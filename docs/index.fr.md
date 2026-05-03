@@ -43,7 +43,7 @@ Vous êtes à 50 commits. Six mois plus tard, quelqu'un demande : *"Pourquoi on 
 
 ## La solution
 
-Trois questions. Quatre-vingt-dix secondes. C'est fait.
+Trois questions rapides. Quatre-vingt-dix secondes. C'est fait.
 
 ```
 $ git commit -m "feat: add JWT auth middleware"
@@ -53,7 +53,7 @@ $ git commit -m "feat: add JWT auth middleware"
   ✓ Capturé : feature-add-jwt-auth-2026-03-16.md
 ```
 
-Lore s'intègre dans votre workflow Git et pose **3 questions** après chaque commit. Les réponses deviennent un fichier Markdown dans votre repo — cherchable, versionnable, portable. Pas de wiki. Pas de SaaS. Zéro friction.
+Lore s'intègre dans votre workflow Git et pose **3 questions essentielles** après chaque commit — Type, Quoi, Pourquoi — plus 2 optionnelles (Alternatives, Impact) qui s'auto-skippent quand vous répondez vite aux trois premières, ou restent pour les changements à plus fort enjeu. Les réponses deviennent un fichier Markdown dans votre repo — cherchable, versionnable, portable. Pas de wiki. Pas de SaaS. Zéro friction.
 
 ## Comment ça marche
 
@@ -66,7 +66,7 @@ graph LR
 ```
 
 1. **Committez** votre code comme d'habitude
-2. **Répondez à 3 questions** — Type, Quoi, Pourquoi (90 secondes)
+2. **Répondez à 3 questions essentielles** — Type, Quoi, Pourquoi — plus 2 optionnelles (Alternatives, Impact) qui s'auto-skippent quand vous allez vite (~90 secondes médian)
 3. **C'est fait** — Un document Markdown capture la décision pour toujours
 4. **Cherchez** à tout moment avec `lore show "auth"` pour retrouver vos décisions
 

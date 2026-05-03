@@ -43,7 +43,7 @@ Three questions. Ninety seconds. Done.
 ![lore interactive](../assets/vhs/interactive.gif)
 <!-- Generate: vhs assets/vhs/interactive.tape -->
 
-> **What just happened?** Lore's post-commit hook detected your commit, asked 3 questions, and saved a Markdown file in `.lore/docs/`. The file contains YAML front matter (type, date, commit hash) and your "why" — permanently linked to that commit.
+> **What just happened?** Lore's post-commit hook detected your commit, asked 3 essential questions (Type, What, Why) plus 2 optional ones (Alternatives, Impact) that auto-skipped because you answered fast, and saved a Markdown file in `.lore/docs/`. The file contains YAML front matter (type, date, commit hash) and your "why" — permanently linked to that commit.
 
 ## 3. View your document
 

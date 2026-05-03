@@ -20,7 +20,7 @@ lore init [flags]
 > lore init
 > ```
 >
-> Désormais, chaque `git commit` déclenche 3 questions. Votre projet a une mémoire.
+> Désormais, chaque `git commit` déclenche 3 questions essentielles (plus 2 optionnelles pour les commits à plus fort enjeu). Votre projet a une mémoire.
 
 ![lore init](../assets/vhs/init.gif)
 <!-- Generate: vhs assets/vhs/init.tape -->
