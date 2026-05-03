@@ -357,8 +357,8 @@ func TestBuildPersonaPrompt_TwoPersonas(t *testing.T) {
 	if prompt == "" {
 		t.Fatal("expected non-empty prompt")
 	}
-	if !strings.Contains(prompt, "Affoue") {
-		t.Error("prompt should contain Affoue")
+	if !strings.Contains(prompt, "Affoué") {
+		t.Error("prompt should contain Affoué")
 	}
 	if !strings.Contains(prompt, "Doumbia") {
 		t.Error("prompt should contain Doumbia")
@@ -386,12 +386,12 @@ func TestRunPersonaDraftChecks_Storyteller_WhyNarrative(t *testing.T) {
 	suggestions := RunPersonaDraftChecks(body, []PersonaProfile{storyteller})
 	var found bool
 	for _, s := range suggestions {
-		if strings.Contains(s.Message, "Affoue") && strings.Contains(s.Message, "list") {
+		if strings.Contains(s.Message, "Affoué") && strings.Contains(s.Message, "list") {
 			found = true
 		}
 	}
 	if !found {
-		t.Error("expected Affoue draft check to flag listy Why section")
+		t.Error("expected Affoué draft check to flag listy Why section")
 	}
 }
 
@@ -400,7 +400,7 @@ func TestRunPersonaDraftChecks_MessageDecoratedWithIcon(t *testing.T) {
 	storyteller := GetRegistry()[0]
 	suggestions := RunPersonaDraftChecks(body, []PersonaProfile{storyteller})
 	for _, s := range suggestions {
-		if !strings.HasPrefix(s.Message, "[📖 Affoue]") {
+		if !strings.HasPrefix(s.Message, "[📖 Affoué]") {
 			t.Errorf("message should be decorated with icon+name prefix, got: %s", s.Message)
 		}
 	}

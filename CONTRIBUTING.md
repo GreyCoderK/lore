@@ -33,6 +33,11 @@ Open an issue with the `enhancement` label. Describe the use case and why it mat
 - Keep functions small and focused.
 - Add tests for new functionality.
 
+## Security and Code of Conduct
+
+- **Security vulnerabilities**: do not open public issues. See [SECURITY.md](SECURITY.md) for the private disclosure path.
+- **Conduct concerns**: see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Reports are handled privately.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [AGPL-3.0](LICENSE).

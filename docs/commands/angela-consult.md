@@ -24,7 +24,7 @@ lore angela consult                        # lists available personas
 
 After polishing a document or making manual edits, you need targeted feedback from a specific expert without running the full draft pipeline. `consult` gives you instant, focused critique from one persona's lens.
 
-The full `draft` command runs 7 personas and takes 30+ seconds. Sometimes you just need Ouattara to check your API examples or Affoue to verify your narrative flows. That's a 50ms consultation, not a full review.
+The full `draft` command runs 7 personas and takes 30+ seconds. Sometimes you just need Ouattara to check your API examples or Affoué to verify your narrative flows. That's a 50ms consultation, not a full review.
 
 ```mermaid
     graph LR
@@ -64,13 +64,13 @@ lore angela consult
 ```text
 Personas disponibles :
 
-  📖 storyteller           Affoue
+  📖 storyteller           Affoué
                             Narrative clarity and authentic storytelling
 
   ✏️ tech-writer            Salou
                             Technical writing precision and clarity
 
-  🔍 qa-reviewer            Kouame
+  🔍 qa-reviewer            Kouamé
                             Quality assurance and validation criteria
 
   🏗️ architect              Doumbia
@@ -79,7 +79,7 @@ Personas disponibles :
   🎨 ux-designer            Gougou
                             User empathy, mental models, and accessibility
 
-  📊 business-analyst       Beda
+  📊 business-analyst       Béda
                             Requirements traceability and business value
 
   🔌 api-designer           Ouattara
@@ -92,10 +92,10 @@ Personas disponibles :
 # Ask Ouattara about API completeness
 lore angela consult api-designer feature-auth.md
 
-# Ask Affoue about narrative quality
+# Ask Affoué about narrative quality
 lore angela consult storyteller decision-database.md
 
-# Ask Kouame about verification criteria
+# Ask Kouamé about verification criteria
 lore angela consult qa-reviewer bugfix-login.md
 
 # Works on external docs too (no lore init needed)

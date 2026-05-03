@@ -54,17 +54,16 @@ Lore hooks into your Git workflow and asks **3 questions** after every commit �
 # Homebrew (macOS / Linux)
 brew install GreyCoderK/tap/lore
 
-# Snap (Linux)
-sudo snap install lore --classic
-
 # Chocolatey (Windows) — package name is lore-cli (bare "lore" was taken)
+# NOTE: Chocolatey moderation is pending — until approved, use the GitHub Releases
+# Windows binary or the `go install` path below. Re-enable once package is live.
 choco install lore-cli
 
 # Go (any platform)
 go install github.com/greycoderk/lore@latest
 
 # Pre-built binaries (macOS / Linux)
-curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/GreyCoderK/lore/main/install.sh | sh
 ```
 
 Or download from [GitHub Releases](https://github.com/GreyCoderK/lore/releases) — binaries for macOS, Linux, and Windows.
@@ -182,17 +181,17 @@ Works on **any Markdown directory** — with or without YAML front matter. See t
 
 ### Personas — not a generic AI, a team that knows your project
 
-Angela doesn't work alone. She leans on a system of expert personas — **Affoue** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. Each lens has its own priorities and blind spots:
+Angela doesn't work alone. She leans on a system of expert personas — **Affoué** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. Each lens has its own priorities and blind spots:
 
 | Icon | ID | Name | Focus |
 |---|---|---|---|
 | ✏️ | `tech-writer` | Salou | Rédactionnel, précision, clarté |
 | 🎨 | `ux-designer` | Gougou | Mental models, onboarding, accessibilité |
 | 🔌 | `api-designer` | Ouattara | Contrats d'API, headers, body, exemples HTTP |
-| 🔍 | `qa-reviewer` | Kouame | Edge cases, validation, failure modes |
+| 🔍 | `qa-reviewer` | Kouamé | Edge cases, validation, failure modes |
 | 🏗️ | `architect` | Doumbia | Trade-offs, scalabilité, design |
-| 📊 | `business-analyst` | Beda | Traçabilité, valeur business |
-| 📖 | `storyteller` | Affoue | Narration, onboarding long-form |
+| 📊 | `business-analyst` | Béda | Traçabilité, valeur business |
+| 📖 | `storyteller` | Affoué | Narration, onboarding long-form |
 
 Personas activate in three modes:
 
@@ -338,4 +337,4 @@ Built solo from Côte d'Ivoire. Bilingual EN/FR. Made to last.
 
 ## License
 
-AGPL-3.0 — see [LICENSE](LICENSE). Commercial license available — see [LICENSING.md](../LICENSING.md).
+AGPL-3.0 — see [LICENSE](LICENSE). Commercial license available — see [LICENSING.md](LICENSING.md).

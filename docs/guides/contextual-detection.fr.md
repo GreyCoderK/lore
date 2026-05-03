@@ -23,8 +23,7 @@ flowchart TD
     A1 --> B{"doc-skip dans le message ?"}
     B -->|Oui| C["Ignorer silencieusement"]
     B -->|Non| D{"/dev/tty disponible ?<br/>TERM != dumb ?"}
-    D -->|Non| E["Différer vers pending"]
-    D -->|"Pas de /dev/tty (CI, pipe)"| E
+    D -->|"Non (CI, pipe, terminal muet)"| E["Différer vers pending"]
     D -->|Oui| F{"Rebase en cours ?"}
     F -->|Oui| E
     F -->|Non| G{"Commit de merge ?"}

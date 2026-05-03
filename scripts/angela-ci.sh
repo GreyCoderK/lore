@@ -122,11 +122,23 @@ fi
 
 # --- Ensure lore is available ---
 install_lore() {
-  local os arch url
-  os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  # Asset names are produced by GoReleaser as lore_<TitleOS>_<arch>.tar.gz
+  # (e.g. lore_Linux_x86_64.tar.gz, lore_Darwin_arm64.tar.gz). Mapping must
+  # match `.goreleaser.yaml` archives.name_template exactly, otherwise the
+  # latest/<tag> download URL 404s.
+  local os_lower os arch url
+  os_lower="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  case "$os_lower" in
+    linux)  os="Linux" ;;
+    darwin) os="Darwin" ;;
+    *)
+      echo "error: unsupported OS: $os_lower (Linux/Darwin only)" >&2
+      exit 2
+      ;;
+  esac
   arch="$(uname -m)"
   case "$arch" in
-    x86_64)  arch="amd64" ;;
+    x86_64|amd64)  arch="x86_64" ;;
     aarch64|arm64) arch="arm64" ;;
     *)
       echo "error: unsupported architecture: $arch" >&2

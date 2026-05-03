@@ -56,7 +56,14 @@ jobs:
 
   release:
     needs: verify-chocolatey
-    runs-on: windows-latest
+    # ubuntu-latest is the goreleaser-recommended runner for releases:
+    # it cross-compiles cleanly to darwin/linux/windows, has no
+    # PowerShell ldflags-escape quirks (which on windows-latest dropped
+    # the -X version vars and shipped binaries with `version dev`),
+    # and consumes fewer billable minutes than Windows runners.
+    # The verify-chocolatey job above intentionally stays on windows-latest
+    # to validate the .nupkg artifact in its native packaging context.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:

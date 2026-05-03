@@ -283,4 +283,4 @@ Deux causes courantes :
 
 ---
 
-**Question non listée ?** [Posez-la sur GitHub Discussions Q&A](https://github.com/greycoderk/lore/discussions/categories/q-a)
+**Question non listée ?** [Posez-la sur GitHub Discussions Q&A](https://github.com/GreyCoderK/lore/discussions/categories/q-a)

@@ -633,7 +633,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
+          "message": "[📊 Béda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
           "diff_status": "persisting"
         },
         {
@@ -751,7 +751,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
+          "message": "[🔍 Kouamé] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
           "diff_status": "persisting"
         },
         {
@@ -825,7 +825,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
+          "message": "[🔍 Kouamé] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
           "diff_status": "persisting"
         },
         {
@@ -859,7 +859,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
+          "message": "[🔍 Kouamé] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
           "diff_status": "persisting"
         },
         {
@@ -1287,7 +1287,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
+          "message": "[📊 Béda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
           "diff_status": "persisting"
         },
         {
@@ -1331,7 +1331,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
+          "message": "[📊 Béda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
           "diff_status": "persisting"
         }
       ],
@@ -1363,7 +1363,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[📊 Beda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
+          "message": "[📊 Béda] Contenu métier sans déclaration de valeur explicite — quel est le résultat attendu ?",
           "diff_status": "persisting"
         },
         {
@@ -1859,7 +1859,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
+          "message": "[🔍 Kouamé] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
           "diff_status": "persisting"
         },
         {
@@ -1903,7 +1903,7 @@
         {
           "category": "persona",
           "severity": "info",
-          "message": "[🔍 Kouame] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
+          "message": "[🔍 Kouamé] Aucun critère de vérification trouvé — comment saurez-vous que cela fonctionne ?",
           "diff_status": "persisting"
         },
         {

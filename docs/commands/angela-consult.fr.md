@@ -24,7 +24,7 @@ lore angela consult                            # liste les personas disponibles
 
 Après avoir poli un document ou effectué des modifications manuelles, vous avez besoin d'un retour ciblé d'un expert précis sans relancer tout le pipeline draft. `consult` vous donne une critique instantanée et focalisée à travers la lentille d'un seul persona.
 
-La commande `draft` complète lance 7 personas et prend 30+ secondes. Parfois vous avez juste besoin qu'Ouattara vérifie vos exemples API ou qu'Affoue valide que votre narration tient la route. C'est une consultation de 50ms, pas une revue complète.
+La commande `draft` complète lance 7 personas et prend 30+ secondes. Parfois vous avez juste besoin qu'Ouattara vérifie vos exemples API ou qu'Affoué valide que votre narration tient la route. C'est une consultation de 50ms, pas une revue complète.
 
 ```mermaid
     graph LR
@@ -64,13 +64,13 @@ lore angela consult
 ```text
 Personas disponibles :
 
-  📖 storyteller           Affoue
+  📖 storyteller           Affoué
                             Clarté narrative et storytelling authentique
 
   ✏️ tech-writer            Salou
                             Précision et clarté d'écriture technique
 
-  🔍 qa-reviewer            Kouame
+  🔍 qa-reviewer            Kouamé
                             Assurance qualité et critères de validation
 
   🏗️ architect              Doumbia
@@ -79,7 +79,7 @@ Personas disponibles :
   🎨 ux-designer            Gougou
                             Empathie utilisateur, modèles mentaux et accessibilité
 
-  📊 business-analyst       Beda
+  📊 business-analyst       Béda
                             Traçabilité des exigences et valeur métier
 
   🔌 api-designer           Ouattara
@@ -92,10 +92,10 @@ Personas disponibles :
 # Demander à Ouattara de vérifier la complétude API
 lore angela consult api-designer feature-auth.md
 
-# Demander à Affoue de vérifier la qualité narrative
+# Demander à Affoué de vérifier la qualité narrative
 lore angela consult storyteller decision-database.md
 
-# Demander à Kouame les critères de vérification
+# Demander à Kouamé les critères de vérification
 lore angela consult qa-reviewer bugfix-login.md
 
 # Fonctionne aussi sur des docs externes (pas de lore init nécessaire)

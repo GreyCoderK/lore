@@ -37,7 +37,7 @@ Le MVP est complet. lore capture le "pourquoi" au moment du commit et le rend ch
 - **Preflight & Coût** — Estimation tokens, avertissements coût, abandon si trop gros, prédiction timeout avant appels API
 - **Release** — `lore release` génère des notes depuis le corpus
 - **Bilingue** — 700+ strings EN/FR, i18n complet
-- **Distribution** — Homebrew, Snap, Chocolatey, deb, rpm, apk, Go, curl
+- **Distribution** — Homebrew, Chocolatey, deb, rpm, apk, Go, curl
 - **Intelligence** — Decision Engine (5 signaux, scoring 0-100), LKS SQLite
 - **IDE** — Détection non-TTY, notifications VS Code
 

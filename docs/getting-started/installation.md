@@ -15,12 +15,6 @@ angela_mode: polish
 brew install GreyCoderK/tap/lore
 ```
 
-## Snap (Linux)
-
-```bash
-sudo snap install lore --classic
-```
-
 ## Go Install
 
 Requires Go 1.21+:
@@ -32,7 +26,7 @@ go install github.com/greycoderk/lore@latest
 ## Pre-built Binaries
 
 ```bash
-curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/GreyCoderK/lore/main/install.sh | sh
 ```
 
 Or download directly from [GitHub Releases](https://github.com/GreyCoderK/lore/releases) and place the binary in your `PATH`.
@@ -92,7 +86,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 | Platform | Architectures | Package formats | Tested in CI |
 |----------|--------------|-----------------|-------------|
 | **macOS** | amd64 (Intel), arm64 (Apple Silicon) | Homebrew, tar.gz, Go, curl | Yes (`macos-latest`) |
-| **Linux** | amd64, arm64 | Homebrew, Snap, deb, rpm, apk, tar.gz, Go, curl | Yes (`ubuntu-latest`) |
+| **Linux** | amd64, arm64 | Homebrew, deb, rpm, apk, tar.gz, Go, curl | Yes (`ubuntu-latest`) |
 | **Windows** | amd64 | Chocolatey, zip, Go | Yes (`windows-latest`) |
 
 ### Distribution Channels
@@ -100,7 +94,6 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 | Channel | Command | Platforms |
 |---------|---------|-----------|
 | **Homebrew** | `brew install GreyCoderK/tap/lore` | macOS, Linux |
-| **Snap** | `sudo snap install lore --classic` | Linux |
 | **Chocolatey** | `choco install lore-cli` | Windows |
 | **Go** | `go install github.com/greycoderk/lore@latest` | All (requires Go 1.21+) |
 | **curl** | `curl -sSfL .../install.sh \| sh` | macOS, Linux |

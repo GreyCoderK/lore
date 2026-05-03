@@ -165,17 +165,17 @@ func TestAnalyzeDraft_WithPersonas_IncludesPersonaSuggestions(t *testing.T) {
 	meta := domain.DocMeta{Type: "decision", Tags: []string{"api"}}
 
 	// Pass storyteller persona — should flag listy Why
-	personas := []PersonaProfile{GetRegistry()[0]} // storyteller = Affoue
+	personas := []PersonaProfile{GetRegistry()[0]} // storyteller = Affoué
 	suggestions := AnalyzeDraft(doc, meta, nil, nil, personas)
 
 	var found bool
 	for _, s := range suggestions {
-		if s.Category == "persona" && strings.Contains(s.Message, "Affoue") {
+		if s.Category == "persona" && strings.Contains(s.Message, "Affoué") {
 			found = true
 		}
 	}
 	if !found {
-		t.Error("expected persona suggestion from Affoue (storyteller) when personas are active")
+		t.Error("expected persona suggestion from Affoué (storyteller) when personas are active")
 	}
 }
 

@@ -22,20 +22,20 @@ Personas are available in three activation modes: `angela consult` for a single-
 | ✏️ | `tech-writer` | Salou | Technical writing precision and clarity |
 | 🎨 | `ux-designer` | Gougou | User empathy, mental models, and accessibility |
 | 🔌 | `api-designer` | Ouattara | API contracts, synthesizer-ready docs, HTTP semantics |
-| 🔍 | `qa-reviewer` | Kouame | Quality assurance and validation criteria |
+| 🔍 | `qa-reviewer` | Kouamé | Quality assurance and validation criteria |
 | 🏗️ | `architect` | Doumbia | System design, trade-offs, and scalability |
-| 📊 | `business-analyst` | Beda | Requirements traceability and business value |
-| 📖 | `storyteller` | Affoue | Narrative clarity and authentic storytelling |
+| 📊 | `business-analyst` | Béda | Requirements traceability and business value |
+| 📖 | `storyteller` | Affoué | Narrative clarity and authentic storytelling |
 
-The display names (Salou, Gougou, Ouattara, Kouame, Doumbia, Beda, Affoue) are common Ivorian given names. Lore is built in Côte d'Ivoire and the project embraces its cultural roots rather than defaulting to generic tech-industry placeholders. The emoji keeps persona identity scannable in terminal output where names may truncate.
+The display names (Salou, Gougou, Ouattara, Kouamé, Doumbia, Béda, Affoué) are common Ivorian given names. Lore is built in Côte d'Ivoire and the project embraces its cultural roots rather than defaulting to generic tech-industry placeholders. The emoji keeps persona identity scannable in terminal output where names may truncate.
 
 ## When to Use Which
 
 - **Writing a feature doc?** Start with `tech-writer` (Salou) for prose quality, then `ux-designer` (Gougou) for the reader's mental model.
 - **Documenting an API endpoint?** `api-designer` (Ouattara) catches missing methods, inconsistent naming, and body/header gaps that break Postman imports.
-- **Shipping a decision?** Run `architect` (Doumbia) for trade-off clarity, and `qa-reviewer` (Kouame) to force the "what could go wrong" column.
-- **A long-form guide or onboarding piece?** `storyteller` (Affoue) checks the narrative doesn't drift mid-paragraph.
-- **A product or feature spec?** `business-analyst` (Beda) verifies requirements trace back to a named business outcome.
+- **Shipping a decision?** Run `architect` (Doumbia) for trade-off clarity, and `qa-reviewer` (Kouamé) to force the "what could go wrong" column.
+- **A long-form guide or onboarding piece?** `storyteller` (Affoué) checks the narrative doesn't drift mid-paragraph.
+- **A product or feature spec?** `business-analyst` (Béda) verifies requirements trace back to a named business outcome.
 
 For single-document work, pick 1 persona. For corpus-wide review, 3–4 complementary personas give cross-lens signal (when two personas independently flag the same issue, that convergence is a high-confidence marker — Angela surfaces it via the `Flagged by:` attribution).
 
@@ -90,7 +90,7 @@ $ lore angela review --persona tech-writer --persona qa-reviewer
 
   + gap   Missing Angela persona documentation
           [abc123] commands/angela-consult.md vs commands/angela-consult.fr.md
-          Flagged by: Kouame, Gougou
+          Flagged by: Kouamé, Gougou
 ```
 
 ## Persona selection config

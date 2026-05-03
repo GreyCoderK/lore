@@ -4,12 +4,12 @@ language: "fr"
 
 ai:
   provider: "anthropic"       # anthropic, openai, ollama
-  model: "claude-sonnet-4-20250514"  # model name (e.g., claude-opus-4-6, claude-sonnet-4-20250514, llama3.2)
+  model: "claude-sonnet-4-6"  # model name (e.g., claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5-20251001, llama3.2)
   timeout: 120s
 angela:
   max_tokens: 16000  # bumped for review on larger corpus
 
-  # Example Synthesizer family (story 8-17 / 8-18)
+  # Synthesizer family
   # Synthesizers recompose information already present in a doc into
   # ready-to-use blocks (Postman examples, SQL queries, env templates...).
   # Invariants I4–I7 enforce zero-hallucination output.
@@ -32,7 +32,8 @@ angela:
     per_synthesizer:
       review:
         # Severity used when review emits a synthesizer finding.
-        # Per 2026-04-15 decision: info for MVP; escalate after dogfood.
+        # Defaults to `info` so MVP runs are non-blocking; escalate to
+        # `warning` once your team has settled on synthesizer expectations.
         # Valid: info | warning | error.
         severity: info
 

@@ -22,20 +22,20 @@ Les personas sont disponibles en trois modes d'activation : `angela consult` pou
 | ✏️ | `tech-writer` | Salou | Précision rédactionnelle et clarté technique |
 | 🎨 | `ux-designer` | Gougou | Empathie utilisateur, mental models, accessibilité |
 | 🔌 | `api-designer` | Ouattara | Contrats API, docs synthesizer-ready, sémantique HTTP |
-| 🔍 | `qa-reviewer` | Kouame | Assurance qualité et critères de validation |
+| 🔍 | `qa-reviewer` | Kouamé | Assurance qualité et critères de validation |
 | 🏗️ | `architect` | Doumbia | Design système, trade-offs, scalabilité |
-| 📊 | `business-analyst` | Beda | Traçabilité des exigences, valeur business |
-| 📖 | `storyteller` | Affoue | Clarté narrative et authenticité |
+| 📊 | `business-analyst` | Béda | Traçabilité des exigences, valeur business |
+| 📖 | `storyteller` | Affoué | Clarté narrative et authenticité |
 
-Les prénoms affichés (Salou, Gougou, Ouattara, Kouame, Doumbia, Beda, Affoue) sont des prénoms ivoiriens courants. Lore est construit en Côte d'Ivoire et le projet assume ses racines culturelles plutôt que de retomber sur des placeholders génériques de l'industrie tech. L'émoji garde l'identité persona scannable dans les sorties terminal où les noms peuvent être tronqués.
+Les prénoms affichés (Salou, Gougou, Ouattara, Kouamé, Doumbia, Béda, Affoué) sont des prénoms ivoiriens courants. Lore est construit en Côte d'Ivoire et le projet assume ses racines culturelles plutôt que de retomber sur des placeholders génériques de l'industrie tech. L'émoji garde l'identité persona scannable dans les sorties terminal où les noms peuvent être tronqués.
 
 ## Quand utiliser laquelle
 
 - **Vous écrivez une doc de feature ?** Commencez par `tech-writer` (Salou) pour la qualité rédactionnelle, puis `ux-designer` (Gougou) pour le mental model du lecteur.
 - **Vous documentez un endpoint API ?** `api-designer` (Ouattara) attrape les méthodes manquantes, les naming incohérents, et les trous headers/body qui cassent les imports Postman.
-- **Vous shippez une décision ?** Lancez `architect` (Doumbia) pour la clarté des trade-offs, et `qa-reviewer` (Kouame) pour forcer la colonne « qu'est-ce qui peut mal se passer ».
-- **Un guide long ou une pièce d'onboarding ?** `storyteller` (Affoue) vérifie que la narration ne dérive pas en milieu de paragraphe.
-- **Un spec produit ou feature ?** `business-analyst` (Beda) vérifie que les exigences renvoient à un objectif business nommé.
+- **Vous shippez une décision ?** Lancez `architect` (Doumbia) pour la clarté des trade-offs, et `qa-reviewer` (Kouamé) pour forcer la colonne « qu'est-ce qui peut mal se passer ».
+- **Un guide long ou une pièce d'onboarding ?** `storyteller` (Affoué) vérifie que la narration ne dérive pas en milieu de paragraphe.
+- **Un spec produit ou feature ?** `business-analyst` (Béda) vérifie que les exigences renvoient à un objectif business nommé.
 
 Pour le travail sur un seul document, prenez 1 persona. Pour une review corpus, 3–4 personas complémentaires donnent un signal cross-lens (quand deux personas flaguent indépendamment le même problème, cette convergence est un marqueur haute confiance — Angela la surface via l'attribution `Flaguée par :`).
 
@@ -90,7 +90,7 @@ $ lore angela review --persona tech-writer --persona qa-reviewer
 
   + gap   Documentation personas Angela manquante
           [abc123] commands/angela-consult.md vs commands/angela-consult.fr.md
-          Flaguée par : Kouame, Gougou
+          Flaguée par : Kouamé, Gougou
 ```
 
 ## Config sélection de personas

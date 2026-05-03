@@ -79,7 +79,7 @@ The AI companion inside Lore is named **Angela**.
 
 Angela is the embedded reviewer who reads your documentation, knows your project's style, and checks consistency before you publish — like a colleague who has read every document your team ever wrote.
 
-She doesn't work alone. She leans on a system of expert personas — **Affoue** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. **Not a generic AI — a team that knows your project.**
+She doesn't work alone. She leans on a system of expert personas — **Affoué** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. **Not a generic AI — a team that knows your project.**
 
 She can also step back and analyze your entire corpus at once — like a librarian surveying the full collection and telling you: "This document contradicts that one. There is a missing chapter on this subject."
 

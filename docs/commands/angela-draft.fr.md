@@ -214,15 +214,15 @@ Angela utilise 7 relecteurs virtuels avec des perspectives différentes. Les 3 m
 
 | Persona | Icône | Focus |
 |---------|-------|-------|
-| **Affoue** (Storyteller) | 📖 | Clarté narrative, sections "Why" |
+| **Affoué** (Storyteller) | 📖 | Clarté narrative, sections "Why" |
 | **Salou** (Tech Writer) | ✏️ | Précision technique, structure |
-| **Kouame** (QA Reviewer) | 🔍 | Critères de validation, cas limites |
+| **Kouamé** (QA Reviewer) | 🔍 | Critères de validation, cas limites |
 | **Doumbia** (Architect) | 🏗️ | Compromis, conception système |
 | **Gougou** (UX Designer) | 🎨 | Empathie utilisateur, accessibilité |
-| **Beda** (Business Analyst) | 📊 | Valeur business, exigences |
+| **Béda** (Business Analyst) | 📊 | Valeur business, exigences |
 | **Ouattara** (API Designer) | 🔌 | Contrats API, exemples HTTP, complétude des DTO |
 
-Chaque persona exécute des vérifications locales et produit des suggestions typées. Par exemple, Affoue vérifie que la section "Why" raconte une histoire plutôt que de lister des bullets. Kouame vérifie que les affirmations ont des critères de vérification. Ouattara vérifie que les endpoints disposent d'exemples de requêtes HTTP, de réponses d'erreur, et que les champs DTO possèdent une colonne requis/optionnel.
+Chaque persona exécute des vérifications locales et produit des suggestions typées. Par exemple, Affoué vérifie que la section "Why" raconte une histoire plutôt que de lister des bullets. Kouamé vérifie que les affirmations ont des critères de vérification. Ouattara vérifie que les endpoints disposent d'exemples de requêtes HTTP, de réponses d'erreur, et que les champs DTO possèdent une colonne requis/optionnel.
 
 Pour forcer un persona spécifique :
 

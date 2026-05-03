@@ -38,7 +38,7 @@ The MVP is complete. Lore captures the "why" at commit-time and makes it searcha
 - **Preflight & Cost** — Token estimation, cost warnings, abort-if-too-large, timeout prediction before API calls
 - **Release** — `lore release` generates notes from corpus
 - **Bilingual** — 700+ EN/FR strings, full i18n
-- **Distribution** — Homebrew, Snap, Chocolatey, deb, rpm, apk, Go, curl
+- **Distribution** — Homebrew, Chocolatey, deb, rpm, apk, Go, curl
 - **Intelligence** — Decision Engine (5 signals, scoring 0-100), LKS SQLite store
 - **IDE** — Non-TTY detection, VS Code notifications
 

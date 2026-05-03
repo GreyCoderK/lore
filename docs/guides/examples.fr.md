@@ -10,7 +10,7 @@ related:
 
 ## Dépôt de démonstration
 
-Un dépôt démo pré-configuré est disponible dans [`examples/demo-repo/`](https://github.com/greycoderk/lore/tree/main/examples/demo-repo) :
+Un dépôt démo pré-configuré est disponible dans [`examples/demo-repo/`](https://github.com/GreyCoderK/lore/tree/main/examples/demo-repo) :
 
 - `.lorerc` — Configuration minimale
 - `.lore/docs/` — 3-5 documents réels générés par lore (dogfooding)

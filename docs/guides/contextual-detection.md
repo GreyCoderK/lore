@@ -24,8 +24,7 @@ flowchart TD
     A1 --> B{"doc-skip in message?"}
     B -->|Yes| C["Skip silently"]
     B -->|No| D{"/dev/tty available?<br/>TERM != dumb?"}
-    D -->|No| E["Defer to pending"]
-    D -->|"No /dev/tty (CI, pipe)"| E
+    D -->|"No (CI, pipe, dumb term)"| E["Defer to pending"]
     D -->|Yes| F{"Rebase in progress?"}
     F -->|Yes| E
     F -->|No| G{"Merge commit?"}

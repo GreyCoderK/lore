@@ -1,14 +1,14 @@
 site_name: Lore
 site_url: https://greycoderk.github.io/lore/
 site_description: "Your code knows what. Lore knows why."
-repo_url: https://github.com/greycoderk/lore
-repo_name: greycoderk/lore
+repo_url: https://github.com/GreyCoderK/lore
+repo_name: GreyCoderK/lore
 
 theme:
   name: material
   language: en
   logo: assets/logo.svg
-  favicon: assets/logo.svg
+  favicon: assets/favicon.png
   palette:
     - scheme: default
       primary: custom
@@ -53,7 +53,7 @@ extra:
       lang: fr
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/greycoderk/lore
+      link: https://github.com/GreyCoderK/lore
 
 nav:
   - Home: index.md

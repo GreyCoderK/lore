@@ -41,10 +41,13 @@ an individual is officially representing the community in public spaces.
 
 ## Enforcement
 
-Instances of unacceptable behavior may be reported to the community leaders
-responsible for enforcement at:
+Instances of unacceptable behavior may be reported privately to the project
+maintainer through GitHub:
 
-**leshodaimekossonou@gmail.com**
+- **Open a private security advisory** (any sensitive report, including conduct
+  issues) at https://github.com/GreyCoderK/lore/security/advisories/new
+- Or contact the maintainer via the contact methods listed on the
+  [GreyCoderK GitHub profile](https://github.com/GreyCoderK).
 
 All complaints will be reviewed and investigated promptly and fairly. All
 community leaders are obligated to respect the privacy and security of the
@@ -86,9 +89,13 @@ sont pas toleres.
 
 ## Application
 
-Les cas de comportement inapproprie peuvent etre signales a :
+Les cas de comportement inapproprie peuvent etre signales en prive au mainteneur
+du projet via GitHub :
 
-**leshodaimekossonou@gmail.com**
+- **Ouvrir une advisory privee** (pour tout signalement sensible, y compris
+  les questions de conduite) sur https://github.com/GreyCoderK/lore/security/advisories/new
+- Ou contacter le mainteneur via les coordonnees listees sur le
+  [profil GitHub GreyCoderK](https://github.com/GreyCoderK).
 
 Toutes les plaintes seront examinees rapidement et equitablement.
 

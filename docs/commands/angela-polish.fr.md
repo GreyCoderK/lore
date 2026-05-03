@@ -72,7 +72,7 @@ lore angela polish decision-database-2026-02-10.md
 ```text
 [1/3] Préparation de decision-database-2026-02-10.md…
       ~3012 tokens → | max ←: 8192 tokens | timeout: 60s
-      Personas : 📖 Affoue (12), ✏️ Salou (10), 🏗️ Doumbia (6)
+      Personas : 📖 Affoué (12), ✏️ Salou (10), 🏗️ Doumbia (6)
       Qualité : 52/100 (C)
       Coût estimé : ~$0.0042
 ```
@@ -530,12 +530,12 @@ Angela utilise 7 relecteurs virtuels. Les 3 meilleurs s'activent selon le type d
 
 | Persona | Icône | Focus | Activé par |
 |---------|-------|-------|------------|
-| **Affoue** (Storyteller) | 📖 | Clarté narrative, sections "Why" | Décisions, notes ; `--for commercial/sales` |
+| **Affoué** (Storyteller) | 📖 | Clarté narrative, sections "Why" | Décisions, notes ; `--for commercial/sales` |
 | **Salou** (Tech Writer) | ✏️ | Précision technique, structure | Features, refactors ; `--for développeur` |
-| **Kouame** (QA Reviewer) | 🔍 | Critères de validation, cas limites | Bugfixes ; `--for qa/audit` |
+| **Kouamé** (QA Reviewer) | 🔍 | Critères de validation, cas limites | Bugfixes ; `--for qa/audit` |
 | **Doumbia** (Architect) | 🏗️ | Compromis, conception système | Décisions, refactors ; `--for CTO` |
 | **Gougou** (UX Designer) | 🎨 | Empathie utilisateur, accessibilité | Features ; `--for design/ux` |
-| **Beda** (Business Analyst) | 📊 | Valeur business, exigences | Features, releases ; `--for commercial/CEO` |
+| **Béda** (Business Analyst) | 📊 | Valeur business, exigences | Features, releases ; `--for commercial/CEO` |
 | **Ouattara** (API Designer) | 🔌 | Exemples API, réponses d'erreur, complétude des DTO | Feature/API docs avec endpoints ; `--for api/postman/integration` |
 
 Avec `--for`, les personas correspondantes reçoivent un boost de +20. Par exemple, `--for "CTO"` booste Architect et Business Analyst.

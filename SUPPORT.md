@@ -4,24 +4,24 @@
 
 ### Bug Reports
 
-Found a bug? Please [open an issue](https://github.com/greycoderk/lore/issues/new?template=bug_report.yml) with:
+Found a bug? Please [open an issue](https://github.com/GreyCoderK/lore/issues/new?template=bug_report.yml) with:
 - Steps to reproduce
 - Expected vs actual behavior
 - Your environment (OS, Go version, Lore version)
 
 ### Feature Requests
 
-Have an idea? [Submit a feature request](https://github.com/greycoderk/lore/issues/new?template=feature_request.yml).
+Have an idea? [Submit a feature request](https://github.com/GreyCoderK/lore/issues/new?template=feature_request.yml).
 
 ### Questions
 
-- **GitHub Discussions Q&A**: [Ask a question](https://github.com/greycoderk/lore/discussions/categories/q-a)
-- **General chat**: [Join Discussions](https://github.com/greycoderk/lore/discussions)
+- **GitHub Discussions Q&A**: [Ask a question](https://github.com/GreyCoderK/lore/discussions/categories/q-a)
+- **General chat**: [Join Discussions](https://github.com/GreyCoderK/lore/discussions)
 
 ### Documentation
 
-- **README**: [lore_cli/README.md](README.md)
-- **Documentation site**: Coming soon (GitHub Pages)
+- **README**: [README.md](README.md)
+- **Documentation site**: https://greycoderk.github.io/lore/
 
 ### Security
 
@@ -35,24 +35,24 @@ For security vulnerabilities, please see [SECURITY.md](SECURITY.md).
 
 ### Rapports de bugs
 
-Un bug ? [Ouvrez une issue](https://github.com/greycoderk/lore/issues/new?template=bug_report.yml) avec :
+Un bug ? [Ouvrez une issue](https://github.com/GreyCoderK/lore/issues/new?template=bug_report.yml) avec :
 - Etapes pour reproduire
 - Comportement attendu vs observe
 - Votre environnement (OS, version Go, version Lore)
 
 ### Demandes de fonctionnalites
 
-Une idee ? [Soumettez une demande](https://github.com/greycoderk/lore/issues/new?template=feature_request.yml).
+Une idee ? [Soumettez une demande](https://github.com/GreyCoderK/lore/issues/new?template=feature_request.yml).
 
 ### Questions
 
-- **Discussions Q&A** : [Poser une question](https://github.com/greycoderk/lore/discussions/categories/q-a)
-- **Discussion generale** : [Rejoindre les Discussions](https://github.com/greycoderk/lore/discussions)
+- **Discussions Q&A** : [Poser une question](https://github.com/GreyCoderK/lore/discussions/categories/q-a)
+- **Discussion generale** : [Rejoindre les Discussions](https://github.com/GreyCoderK/lore/discussions)
 
 ### Documentation
 
-- **README** : [lore_cli/README.md](README.md)
-- **Site de documentation** : Bientot disponible (GitHub Pages)
+- **README** : [README.md](README.md)
+- **Site de documentation** : https://greycoderk.github.io/lore/
 
 ### Securite
 

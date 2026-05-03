@@ -82,7 +82,7 @@ lore status --badge
 
 Output:
 ```
-[![lore](https://img.shields.io/badge/lore-documented%2085%25-d4a)](https://github.com/greycoderk/lore)
+[![lore](https://img.shields.io/badge/lore-documented%2085%25-d4a)](https://github.com/GreyCoderK/lore)
 ```
 
 This renders as: ![lore | documented 85%](https://img.shields.io/badge/lore-documented%2085%25-d4a)

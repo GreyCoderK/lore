@@ -131,8 +131,8 @@ func TestBuildPolishPrompt_WithPersonas_ContainsDirectives(t *testing.T) {
 	if !strings.Contains(usr, "ARCHITECTURE LENS") {
 		t.Error("user content should contain architect directive")
 	}
-	if !strings.Contains(usr, "Affoue") {
-		t.Error("user content should contain Affoue display name")
+	if !strings.Contains(usr, "Affoué") {
+		t.Error("user content should contain Affoué display name")
 	}
 	if !strings.Contains(usr, "Doumbia") {
 		t.Error("user content should contain Doumbia display name")

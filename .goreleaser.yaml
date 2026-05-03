@@ -136,7 +136,8 @@ release:
     # Fedora / RHEL
     sudo rpm -i lore_*.rpm
 
-    # Chocolatey (Windows)
+    # Chocolatey (Windows) — moderation pending; until approved, use GitHub
+    # Releases or the `go install` path above
     choco install lore-cli
 
     # Go

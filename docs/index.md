@@ -69,7 +69,7 @@ graph LR
 
 - :material-download: **[Installation](getting-started/installation.md)**
 
-    Homebrew, Snap, Chocolatey, Go, curl — 9 ways to install on macOS, Linux, Windows
+    Homebrew, Chocolatey, Go, curl, deb, rpm — ways to install on macOS, Linux, Windows
 
 - :material-rocket-launch: **[Quickstart](getting-started/quickstart.md)**
 
@@ -107,7 +107,7 @@ graph LR
 
 Angela is Lore's embedded reviewer — a colleague who has read every document your team ever wrote, knows the project's style, and proofreads your docs before you publish them.
 
-She doesn't work alone. She leans on a system of expert personas — **Affoue** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. **Not a generic AI — a team that knows your project.**
+She doesn't work alone. She leans on a system of expert personas — **Affoué** (the storyteller, who keeps the *why* clearer than the *what*), **Ouattara** (the API designer, for Postman contracts and technical specs), and others. **Not a generic AI — a team that knows your project.**
 
 - **`lore angela draft`** — Free, offline analysis: missing sections, style issues, related documents
 - **`lore angela polish`** — AI-assisted rewrite with interactive diff review

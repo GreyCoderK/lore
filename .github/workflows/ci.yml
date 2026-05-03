@@ -108,24 +108,31 @@ jobs:
         if: steps.changes.outputs.docs == 'true' || steps.changes.outputs.code == 'true'
         run: go build -o lore .
 
-      # Angela Draft — offline quality gate on our own docs
+      # Angela Draft — offline quality gate on PR docs
+      # NOTE: disabled on push events during the launch wave to keep the
+      # commit log clean. Re-enable on push after 2026-05-19 by removing
+      # the `github.event_name == 'pull_request' &&` prefix below.
       - name: Angela Draft (docs site)
-        if: steps.changes.outputs.docs == 'true' || steps.changes.outputs.code == 'true'
+        if: >-
+          github.event_name == 'pull_request'
+          && (steps.changes.outputs.docs == 'true' || steps.changes.outputs.code == 'true')
         run: |
           ./lore angela draft --all --path ./docs
 
       # Angela Draft — also check example docs
       - name: Angela Draft (examples)
-        if: steps.changes.outputs.docs == 'true'
+        if: >-
+          github.event_name == 'pull_request'
+          && steps.changes.outputs.docs == 'true'
         run: |
           ./lore angela draft --all --path ./examples/demo-repo/.lore/docs
 
-      # Angela Review — AI corpus coherence check (only on main + docs changed)
+      # Angela Review — AI corpus coherence check
+      # TEMP: disabled for launch wave (re-enable after 2026-05-19)
+      # Original condition was:
+      #   github.ref == 'refs/heads/main' && github.event_name == 'push' && docs changed
       - name: Angela Review (docs site)
-        if: >-
-          github.ref == 'refs/heads/main'
-          && github.event_name == 'push'
-          && steps.changes.outputs.docs == 'true'
+        if: false
         env:
           LORE_AI_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           LORE_AI_PROVIDER: anthropic

@@ -1,4 +1,4 @@
-# Launch Checklist — Lore v1.0.0
+# Launch Checklist — Lore v1.2.x (public W1 — 2026-05-05)
 
 > Internal document for the maintainer. Not linked from README or docs site.
 
@@ -20,7 +20,7 @@
 - [x] GIF demo embedded
 - [x] "The Problem" — storytelling section
 - [x] "The Solution" — 3 questions, 90 seconds
-- [x] Installation — 4 methods (Homebrew, Snap, Go, curl)
+- [x] Installation — Homebrew, Chocolatey *(pending moderation)*, Go, curl, deb, rpm
 - [x] Quickstart — 5 minutes walkthrough
 - [x] "How Lore Compares" — Lore vs Swimm vs Confluence vs GitBook vs Nothing
 - [x] Commands table — all 22+ MVP commands
@@ -57,7 +57,7 @@
 
 - [x] Test coverage >= 80% — **81.1%** on `go test -coverprofile=cov.out ./...`
 - [ ] Go Report Card grade A- or above (goreportcard.com) *(verify after release)*
-- [ ] Semantic versioning: release tagged vX.Y.Z *(tag v1.0.0 on release)*
+- [x] Semantic versioning: release tagged vX.Y.Z *(v1.2.2 shipped 2026-04-17; W1 launches against this tag)*
 - [ ] 5+ months of Git history *(verify at release time)*
 - [ ] CI passing on latest release *(verify after release)*
 - [x] README with installation, usage, and badges
@@ -110,3 +110,50 @@ The Show HN comment body is structured as a 7-point value pitch with opening nar
 6. Week 4: The corpus (40+ documents, searchable knowledge base)
 7. Results: Time spent vs value captured. Was it worth it?
 8. Try it yourself: installation + quickstart link
+
+---
+
+## Rollback / Incident Plan (jour-J)
+
+> Last-mile runbook for the W1 launch window. Goal: contain a launch-day failure
+> in under 30 minutes without panic-deleting public posts.
+
+### Watchlist (first 4 hours after Post 1)
+
+| Signal | What to check | First-line fix |
+|---|---|---|
+| `install.sh` 404 / 5xx | `curl -I https://raw.githubusercontent.com/GreyCoderK/lore/main/install.sh` | Edit Post 1 first comment to point at `brew install GreyCoderK/tap/lore` and `go install github.com/greycoderk/lore@latest` instead. Pin `LORE_VERSION=v1.2.2` in any new mention. |
+| Homebrew tap broken | `brew tap GreyCoderK/tap && brew install lore` from a clean shell | Re-publish formula to `homebrew-tap` repo with corrected sha256. Comment on the LinkedIn post acknowledging + linking the GitHub release as fallback. |
+| Chocolatey traffic from Windows readers (still pending) | Watch for "package not found" reports in HN/Reddit/LinkedIn comments | Reply with the GitHub Releases Windows binary direct link + `go install` path. The README caveat already warns about this — point readers to it. |
+| GitHub release asset missing | `gh release view v1.2.2 --json assets` | Re-run release workflow (`gh workflow run release.yml`) on the same tag, or attach assets manually via `gh release upload`. |
+| HN front page hit + GitHub API rate-limit on `install.sh` | Reports of "VERSION is empty" errors | Push a follow-up commit to `main` with `install.sh` hardcoding `LORE_VERSION=v1.2.2` until traffic settles. Don't tag a new release; the script is fetched from `main`. |
+| Critical security report from a curious reader | GitHub Security Advisory created (`SECURITY.md` route) | Acknowledge within 48h per policy. Do NOT hotfix in public; coordinate via the advisory. |
+
+### What to NEVER do mid-launch
+
+- **Do not delete the LinkedIn post** — kills momentum, kills shares, looks panicked. Edit it instead (LinkedIn allows edits without breaking shares).
+- **Do not re-tag v1.2.2** — overwrites the published release; install URLs that have already been screenshotted go stale silently. Cut v1.2.3 instead.
+- **Do not edit HN or Reddit titles** — ranking penalty.
+- **Do not push W2 content early** as a "rescue" if W1 falters — destroys the chronology.
+
+### Comms templates (pre-written for speed)
+
+**LinkedIn Post 1 edit (install path broken):**
+> EDIT (HH:MM CEST): Le lien curl direct rate-limite pour cause d'afflux GitHub. En attendant, deux alternatives qui marchent maintenant : `brew install GreyCoderK/tap/lore` (macOS/Linux) et `go install github.com/greycoderk/lore@v1.2.2` (toutes plateformes). Merci à @… pour le signalement.
+
+**HN comment reply (Chocolatey not found):**
+> Chocolatey is pending moderation — until that lands, the Windows path is the GitHub Releases direct binary or `go install github.com/greycoderk/lore@v1.2.2`. README has the note now; sorry for the confusion.
+
+### Single-binary fail-safes verified
+
+- ✅ `install.sh` checksum verification (sha256sum/shasum fallback)
+- ✅ `install.sh` rejects unrecognized platforms loudly
+- ✅ Release workflow `--skip=chocolatey` until package live
+- ✅ `.gitattributes` LF normalization (no CRLF surprises in tarball)
+- ✅ AGPL-3.0 SPDX in `main.go` (license-checker tools won't flag)
+
+### Escalation contacts
+
+- Maintainer: `Museigen` (this account)
+- Secondary reviewers: tag in GitHub Discussions if drafted; otherwise none
+- Comms backup: none (solo launch — accept that some reply latency is unavoidable)

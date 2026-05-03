@@ -211,15 +211,15 @@ Angela uses 7 virtual reviewers, each with a distinct perspective. The top 3 act
 
 | Persona | Icon | Focus |
 |---------|------|-------|
-| **Affoue** (Storyteller) | 📖 | Narrative clarity, "Why" sections |
+| **Affoué** (Storyteller) | 📖 | Narrative clarity, "Why" sections |
 | **Salou** (Tech Writer) | ✏️ | Technical precision, structure |
-| **Kouame** (QA Reviewer) | 🔍 | Validation criteria, edge cases |
+| **Kouamé** (QA Reviewer) | 🔍 | Validation criteria, edge cases |
 | **Doumbia** (Architect) | 🏗️ | Trade-offs, system design |
 | **Gougou** (UX Designer) | 🎨 | User empathy, accessibility |
-| **Beda** (Business Analyst) | 📊 | Business value, requirements |
+| **Béda** (Business Analyst) | 📊 | Business value, requirements |
 | **Ouattara** (API Designer) | 🔌 | API contracts, HTTP examples, DTO completeness |
 
-Each persona runs local checks and produces typed suggestions. For example, Affoue checks that the "Why" section tells a story rather than just listing bullets. Kouame checks that claims have verification criteria. Ouattara checks that endpoints have HTTP request examples, error responses, and that DTO fields have a required/optional column.
+Each persona runs local checks and produces typed suggestions. For example, Affoué checks that the "Why" section tells a story rather than just listing bullets. Kouamé checks that claims have verification criteria. Ouattara checks that endpoints have HTTP request examples, error responses, and that DTO fields have a required/optional column.
 
 To force a specific persona:
 

@@ -54,7 +54,7 @@ type ScoredPersona struct {
 var registry = []PersonaProfile{
 	{
 		Name:        "storyteller",
-		DisplayName: "Affoue",
+		DisplayName: "Affoué",
 		Icon:        "📖",
 		Expertise:   "Narrative clarity and authentic storytelling",
 		Principles: []string{
@@ -90,13 +90,13 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: `STORYTELLING LENS (Affoue):
+		PromptDirective: `STORYTELLING LENS (Affoué):
 - The ## Why section is the story's climax — it must answer "why THIS choice?" not just "what we did"
 - Replace vague motivations with a concrete narrative: what was the pain? what broke? what did users experience?
 - Convert bullet-list-only sections into 2-3 sentence narratives that flow. Lists are scaffolding, not the story
 - Add a "before this change" vs "after this change" framing when relevant
 - Use one concrete analogy if it genuinely clarifies (avoid forced analogies)`,
-		ReviewDirective: `STORYTELLING LENS (Affoue) — REVIEW MODE:
+		ReviewDirective: `STORYTELLING LENS (Affoué) — REVIEW MODE:
 - Flag NARRATIVE CONTRADICTIONS across documents: two decisions with incompatible "why" stories for the same scope
 - Flag ORPHAN DECISIONS: feature docs whose causal story points to a decision doc that does not exist
 - Flag TEMPORAL GAPS: decisions referenced by features but older than the feature implementation without a superseding record
@@ -161,7 +161,7 @@ var registry = []PersonaProfile{
 	},
 	{
 		Name:        "qa-reviewer",
-		DisplayName: "Kouame",
+		DisplayName: "Kouamé",
 		Icon:        "🔍",
 		Expertise:   "Quality assurance and validation criteria",
 		Principles: []string{
@@ -194,12 +194,12 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: `QA LENS (Kouame):
+		PromptDirective: `QA LENS (Kouamé):
 - Add a "## How to Verify" section with concrete steps (commands to run, expected output)
 - List edge cases and failure modes explicitly — what happens when X fails? what about Y?
 - If the doc claims something works, specify how to test it: exact command, expected result
 - Flag any undocumented assumptions (e.g., "requires Redis" but Redis setup isn't mentioned)`,
-		ReviewDirective: `QA LENS (Kouame) — REVIEW MODE:
+		ReviewDirective: `QA LENS (Kouamé) — REVIEW MODE:
 - Flag UNVERIFIED CLAIMS across the corpus: docs that assert a behavior without any doc in the corpus describing how to verify it
 - Flag CONTRADICTORY CLAIMS about the same behavior in different docs (doc A says "returns 200", doc B says "returns 204" for the same endpoint)
 - Flag DOCUMENTATION/TEST DRIFT: a feature doc references a test file or command that no other doc in the corpus mentions
@@ -314,7 +314,7 @@ var registry = []PersonaProfile{
 	},
 	{
 		Name:        "business-analyst",
-		DisplayName: "Beda",
+		DisplayName: "Béda",
 		Icon:        "📊",
 		Expertise:   "Requirements traceability and business value",
 		Principles: []string{
@@ -356,12 +356,12 @@ var registry = []PersonaProfile{
 				},
 			},
 		},
-		PromptDirective: `BUSINESS LENS (Beda):
+		PromptDirective: `BUSINESS LENS (Béda):
 - Link the change to a concrete business outcome: what user problem does this solve?
 - Quantify value when possible: time saved, errors prevented, users impacted
 - If this was driven by a requirement, name it (compliance, SLA, customer request)
 - Add ## Impact section if missing: who benefits and how?`,
-		ReviewDirective: `BUSINESS LENS (Beda) — REVIEW MODE:
+		ReviewDirective: `BUSINESS LENS (Béda) — REVIEW MODE:
 - Flag VALUE/SCOPE CONTRADICTIONS: two docs that promise incompatible outcomes to the same stakeholder
 - Flag UNTRACEABLE REQUIREMENTS: features or releases that cite compliance/SLA/customer requirements with no requirements doc anywhere in the corpus
 - Flag ORPHAN BUSINESS OUTCOMES: decision or feature docs with impact claims that never reconnect to a release or retrospective doc

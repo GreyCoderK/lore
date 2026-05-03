@@ -19,3 +19,7 @@ docs/lore-corpus
 # the repo (caught the hard way when a binary integration test
 # running with cwd=repo root leaked these under cmd/).
 .angela-state/
+
+# Test coverage artifacts (regenerable from `go test -coverprofile=...`)
+coverage*.out
+coverage*.txt

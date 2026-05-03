@@ -14,12 +14,6 @@ related:
 brew install GreyCoderK/tap/lore
 ```
 
-## Snap (Linux)
-
-```bash
-sudo snap install lore --classic
-```
-
 ## Go Install
 
 Nécessite Go 1.21+ :
@@ -31,7 +25,7 @@ go install github.com/greycoderk/lore@latest
 ## Binaires pré-compilés
 
 ```bash
-curl -sSL https://github.com/GreyCoderK/lore/releases/latest/download/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/GreyCoderK/lore/main/install.sh | sh
 ```
 
 Ou télécharger directement depuis [GitHub Releases](https://github.com/GreyCoderK/lore/releases) et placer le binaire dans votre `PATH`.
@@ -91,7 +85,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 | Plateforme | Architectures | Formats de packages | Testé en CI |
 |------------|--------------|---------------------|-------------|
 | **macOS** | amd64 (Intel), arm64 (Apple Silicon) | Homebrew, tar.gz, Go, curl | Oui (`macos-latest`) |
-| **Linux** | amd64, arm64 | Homebrew, Snap, deb, rpm, apk, tar.gz, Go, curl | Oui (`ubuntu-latest`) |
+| **Linux** | amd64, arm64 | Homebrew, deb, rpm, apk, tar.gz, Go, curl | Oui (`ubuntu-latest`) |
 | **Windows** | amd64 | Chocolatey, zip, Go | Oui (`windows-latest`) |
 
 ### Canaux de distribution
@@ -99,7 +93,6 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 | Canal | Commande | Plateformes |
 |-------|----------|-------------|
 | **Homebrew** | `brew install GreyCoderK/tap/lore` | macOS, Linux |
-| **Snap** | `sudo snap install lore --classic` | Linux |
 | **Chocolatey** | `choco install lore-cli` | Windows |
 | **Go** | `go install github.com/greycoderk/lore@latest` | Toutes (Go 1.21+) |
 | **curl** | `curl -sSfL .../install.sh \| sh` | macOS, Linux |

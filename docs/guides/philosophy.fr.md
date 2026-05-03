@@ -78,7 +78,7 @@ La compagne IA de lore s'appelle **Angela**.
 
 Angela est la revieweuse embarquée qui lit votre documentation, connaît le style de votre projet, et vérifie la cohérence avant que vous publiiez — comme une collègue qui aurait lu chaque document que votre équipe a jamais écrit.
 
-Et elle ne travaille pas seule. Elle s'appuie sur un système de personas experts — **Affoue** (la conteuse, qui veille à ce que le pourquoi soit toujours plus clair que le quoi), **Ouattara** (le designer d'API, pour les contrats Postman et les spécifications techniques), et d'autres en chemin. **Pas une IA générique — une équipe qui connaît votre projet.**
+Et elle ne travaille pas seule. Elle s'appuie sur un système de personas experts — **Affoué** (la conteuse, qui veille à ce que le pourquoi soit toujours plus clair que le quoi), **Ouattara** (le designer d'API, pour les contrats Postman et les spécifications techniques), et d'autres en chemin. **Pas une IA générique — une équipe qui connaît votre projet.**
 
 Elle peut aussi prendre du recul et analyser tout votre corpus d'un coup — comme une bibliothécaire qui regarde l'ensemble de la collection et vous dit : "Ce document contredit celui-là. Il manque un chapitre sur ce sujet."
 

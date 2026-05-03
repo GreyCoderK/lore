@@ -3,8 +3,8 @@
 
 # Exclude URLs that are known to be problematic or require auth
 exclude = [
-  "https://github.com/greycoderk/lore/discussions",
-  "https://github.com/greycoderk/lore/issues/new",
+  "https://github.com/GreyCoderK/lore/discussions",
+  "https://github.com/GreyCoderK/lore/issues/new",
 ]
 
 # Accept these status codes
