@@ -28,21 +28,25 @@ flowchart TD
     F -->|Oui| E
     F -->|Non| G{"Commit de merge ?"}
     G -->|Oui| H["Ignorer — message 1 ligne"]
-    G -->|Non| I{"Cherry-pick + doc existe ?"}
-    I -->|Oui| C
-    I -->|Non| J{"Amend + doc existe ?"}
-    J -->|Oui| K0["Question 0 : Documenter ? O/n"]
+    G -->|Non| I1{"Cherry-pick ?"}
+    I1 -->|Oui| I2{"Doc existe pour<br/>le commit source ?"}
+    I2 -->|Oui| C
+    I2 -->|Non| J1{"Amend ?"}
+    I1 -->|Non| J1
+    J1 -->|Oui| J2{"Doc existe pour<br/>le commit pré-amend ?"}
+    J2 -->|Non| R["Continuer — créer un nouveau doc"]
+    J2 -->|Oui| K0{"Question 0 :<br/>Documenter ? O/n"}
     K0 -->|Non| C
     K0 -->|Oui| K["Mettre à jour / Créer / Ignorer"]
-    J -->|Non| L["Scoring Decision Engine"]
+    J1 -->|Non| L["Scoring Decision Engine"]
     L --> M{"Score ?"}
     M -->|">=60"| N["Questions complètes"]
     M -->|"35-59"| O["Questions réduites"]
     M -->|"15-34"| P["Suggérer d'ignorer — confirmer"]
     M -->|"<15"| Q["Auto-ignorer silencieusement"]
-    E --> E1{"IDE détecté ?<br/>(GIT_ASKPASS)"}
-    E1 -->|Oui| E2["Notifier via IDE/dialog OS"]
-    E1 -->|Non| E3["Pending silencieux"]
+    E --> E2["VS Code IPC<br/>(si GIT_ASKPASS)"]
+    E2 -.->|fallback| E3["Dialog OS<br/>(osascript / zenity / PowerShell)"]
+    E3 -.->|fallback| E4["Fichier verrou<br/>(~/.lore/notify.lock)"]
 ```
 
 ## Règles de Détection (Ordre de Priorité)
@@ -53,9 +57,11 @@ flowchart TD
 | 2 | Non-TTY ou `TERM=dumb` | Différer vers pending | CI/pipes ne doivent jamais bloquer |
 | 3 | Rebase en cours | Différer vers pending | Éviter les prompts pendant le replay |
 | 4 | Commit de merge (2+ parents) | Ignorer (1 ligne msg) | Commits d'infrastructure |
-| 5 | Cherry-pick + doc source existe | Ignorer silencieusement | Déjà documenté |
-| 6 | Amend + doc existant | Question 0 + [M]/[C]/[I] | L'utilisateur édite du travail précédent |
-| 7 | Score Decision Engine | Action basée sur le score | Analyse multi-signaux |
+| 5a | Cherry-pick + doc source existe | Ignorer silencieusement | Déjà documenté |
+| 5b | Cherry-pick + pas de doc source | Continuer l'évaluation | Source pas dans le corpus — laisser la règle suivante décider |
+| 6a | Amend + doc existant | Question 0 → `[M]ettre à jour` / `[C]réer` / `[I]gnorer` | L'utilisateur édite du travail précédent (configurable : `hooks.amend_prompt`) |
+| 6b | Amend + pas de doc existant | Continuer — créer un nouveau doc | Première documentation d'un commit amendé |
+| 7 | Score Decision Engine | Action basée sur le score (complète / réduite / suggérer ignorer / auto-ignorer) | Analyse multi-signaux sur tous les autres commits |
 
 ## Workflow Amend
 

@@ -101,7 +101,7 @@ Pas besoin de répertoire `.lore/`. Pas de fichiers de configuration. Il suffit 
 ```mermaid
     flowchart LR
     A[Push / PR] --> B[Étape 1 : draft]
-    B --> C[Étape 2 : synthesize]
+    B --> C[Étape 2 : polish --synthesize]
     C --> D[Étape 3 : review]
     B -.->|GRATUIT, hors ligne| B
     C -.->|GRATUIT, hors ligne| C

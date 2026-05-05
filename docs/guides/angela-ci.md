@@ -100,7 +100,7 @@ No `.lore/` directory required. No configuration files. Just point it at a folde
 ```mermaid
     flowchart LR
     A[Push / PR] --> B[Step 1: draft]
-    B --> C[Step 2: synthesize]
+    B --> C[Step 2: polish --synthesize]
     C --> D[Step 3: review]
     B -.->|FREE, offline| B
     C -.->|FREE, offline| C

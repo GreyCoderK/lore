@@ -230,21 +230,25 @@ flowchart TD
     F -->|Yes| E
     F -->|No| G{"Merge commit?"}
     G -->|Yes| H["Skip — 1-line message"]
-    G -->|No| I{"Cherry-pick + doc exists?"}
-    I -->|Yes| C
-    I -->|No| J{"Amend + doc exists?"}
-    J -->|Yes| K0["Question 0: Document this? Y/n"]
+    G -->|No| I1{"Cherry-pick?"}
+    I1 -->|Yes| I2{"Doc exists for<br/>source commit?"}
+    I2 -->|Yes| C
+    I2 -->|No| J1{"Amend?"}
+    I1 -->|No| J1
+    J1 -->|Yes| J2{"Doc exists for<br/>pre-amend commit?"}
+    J2 -->|No| R["Proceed — create new doc"]
+    J2 -->|Yes| K0{"Question 0:<br/>Document this? Y/n"}
     K0 -->|No| C
-    K0 -->|Yes| K["Update / Create / Skip"]
-    J -->|No| L["Decision Engine scoring"]
+    K0 -->|Yes| K["[U]pdate / [C]reate / [S]kip"]
+    J1 -->|No| L["Decision Engine scoring"]
     L --> M{"Score?"}
     M -->|">=60"| N["Ask full questions"]
     M -->|"35-59"| O["Ask reduced questions"]
     M -->|"15-34"| P["Suggest skip — confirm"]
     M -->|"<15"| Q["Auto-skip silently"]
-    E --> E1{"IDE detected?<br/>(GIT_ASKPASS)"}
-    E1 -->|Yes| E2["Notify via IDE/OS dialog"]
-    E1 -->|No| E3["Silent pending"]
+    E --> E2["VS Code IPC<br/>(if GIT_ASKPASS)"]
+    E2 -.->|fallback| E3["OS dialog<br/>(osascript / zenity / PowerShell)"]
+    E3 -.->|fallback| E4["Lock file<br/>(~/.lore/notify.lock)"]
 ```
 
 **Detection rules (priority order):**
@@ -255,9 +259,11 @@ flowchart TD
 | 2 | Non-TTY or `TERM=dumb` | Defer to pending | CI/pipes must never block |
 | 3 | Rebase in progress | Defer to pending | Avoid prompts during replay |
 | 4 | Merge commit (2+ parents) | Skip silently | Infrastructure commits |
-| 5 | Cherry-pick + source doc exists | Skip silently | Already documented |
-| 6 | Amend + existing doc | `[U]pdate` / `[C]reate` / `[S]kip` | Editing prior work |
-| 7 | Decision Engine score | Score-based action | Multi-signal analysis |
+| 5a | Cherry-pick + source doc exists | Skip silently | Already documented |
+| 5b | Cherry-pick + no source doc | Continue evaluation | Source not in corpus — let the next rule decide |
+| 6a | Amend + existing doc | Question 0 → `[U]pdate` / `[C]reate` / `[S]kip` | Editing prior work (configurable: `hooks.amend_prompt`) |
+| 6b | Amend + no existing doc | Proceed — create a new doc | First-time documentation of an amended commit |
+| 7 | Decision Engine score | Score-based action (full / reduced / suggest skip / auto-skip) | Multi-signal analysis on every other commit |
 
 **Decision Engine tiers** (configurable via `decision.threshold_*` in `.lorerc`):
 

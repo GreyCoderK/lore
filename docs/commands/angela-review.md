@@ -27,8 +27,8 @@ This command analyzes your **entire corpus** for coherence issues that only surf
 
 ```mermaid
     graph TD
-    A[15 documents] --> B[angela review]
-    B --> C{Coherence Check}
+    A[15 documents] --> B["angela review<br/>--for CTO --persona architect"]
+    B --> C{"Coherence Check<br/>± persona lens"}
     C -->|Found| D[1 contradiction: auth-jwt vs auth-session]
     C -->|Found| E[2 isolated docs with no references]
     C -->|Found| F[Coverage gap: no database decisions]
@@ -56,14 +56,17 @@ Single API call with compressed document summaries. The AI validates local signa
     sequenceDiagram
     participant CLI as angela review
     participant Local as Local Analysis
+    participant Personas as Persona Resolver
     participant AI as AI Provider
     participant Cache as Review Cache
-    
+
     CLI->>Local: Extract signals from corpus
     Local->>CLI: Contradictions, isolated docs, stale content
-    CLI->>AI: Single call with document summaries
-    AI->>CLI: Validated findings + semantic analysis
-    CLI->>Cache: Save state for lore status
+    CLI->>Personas: Resolve --persona flags + .lorerc team
+    Personas->>CLI: Bundled persona prompts (single call)
+    CLI->>AI: 1 call — summaries + audience + personas
+    AI->>CLI: Validated findings (persona-flavored)
+    CLI->>Cache: Save state — diff vs prior run
     CLI->>CLI: Display report
 ```
 

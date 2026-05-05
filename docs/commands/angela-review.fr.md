@@ -28,8 +28,8 @@ Cette commande analyse votre **corpus entier** pour détecter les problèmes de 
 
 ```mermaid
     graph TD
-    A[15 documents] --> B[angela review]
-    B --> C{Vérification cohérence}
+    A[15 documents] --> B["angela review<br/>--for CTO --persona architect"]
+    B --> C{"Vérification cohérence<br/>± lens persona"}
     C -->|Trouvé| D[1 contradiction : auth-jwt vs auth-session]
     C -->|Trouvé| E[2 docs isolés sans références]
     C -->|Trouvé| F[Lacune : aucune décision base de données]
@@ -57,14 +57,17 @@ Un seul appel API avec des résumés de documents compressés. L'IA valide les s
     sequenceDiagram
     participant CLI as angela review
     participant Local as Analyse locale
+    participant Personas as Résolveur Personas
     participant AI as Fournisseur IA
     participant Cache as Cache de revue
 
     CLI->>Local: Extraire les signaux du corpus
     Local->>CLI: Contradictions, docs isolés, obsolescence
-    CLI->>AI: Un seul appel avec résumés de documents
-    AI->>CLI: Findings validés + analyse sémantique
-    CLI->>Cache: Sauvegarder l'état pour lore status
+    CLI->>Personas: Résoudre --persona + équipe .lorerc
+    Personas->>CLI: Prompts personas regroupés (1 appel)
+    CLI->>AI: 1 appel — résumés + audience + personas
+    AI->>CLI: Findings validés (teintés par les personas)
+    CLI->>Cache: Sauvegarder l'état — diff vs run précédent
     CLI->>CLI: Afficher le rapport
 ```
 
