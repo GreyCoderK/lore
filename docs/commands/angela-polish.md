@@ -13,6 +13,9 @@ angela_mode: polish
 
 AI-assisted document rewrite with interactive diff review — plus an **offline synthesizer family** that auto-generates API examples, SQL queries, and other structured content from information already present in your doc. Works on Lore-native projects **and** external Markdown directories (MkDocs, Docusaurus, Hugo, hand-rolled docs).
 
+![lore angela polish](../assets/vhs/angela-draft-polish.gif)
+<!-- Generate: vhs assets/vhs/angela-draft-polish.tape -->
+
 ## Synopsis
 
 ```text

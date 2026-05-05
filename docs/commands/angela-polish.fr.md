@@ -13,6 +13,9 @@ angela_mode: polish
 
 Réécriture de document assistée par IA avec revue de diff interactive.
 
+![lore angela polish](../assets/vhs/angela-draft-polish.gif)
+<!-- Generate: vhs assets/vhs/angela-draft-polish.tape -->
+
 ## Synopsis
 
 ```text

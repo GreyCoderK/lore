@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <linearGradient id="esBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#0a0e14"/>
+    </linearGradient>
+    <linearGradient id="esGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="40%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="esStep" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="720" fill="url(#esBg)"/>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1280" height="5" fill="url(#esGold)"/>
+
+  <!-- Header -->
+  <text x="48" y="58" font-size="32" font-weight="700" fill="#F9FAFB" letter-spacing="-0.5">Lore CLI — <tspan fill="#FBBF24">the 5 commands you'll actually use</tspan></text>
+  <text x="48" y="86" font-size="14" fill="#9CA3AF" font-style="italic">From bootstrap to recall — the full value loop in 5 lines.</text>
+  <text x="1232" y="58" font-size="14" fill="#9CA3AF" text-anchor="end">v1.2.x</text>
+  <text x="1232" y="80" font-size="12" fill="#6B7280" text-anchor="end">github.com/GreyCoderK/lore</text>
+
+  <line x1="48" y1="105" x2="1232" y2="105" stroke="#374151" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- Step 1: lore init -->
+  <g transform="translate(48, 130)">
+    <circle cx="28" cy="28" r="26" fill="url(#esStep)"/>
+    <text x="28" y="38" font-size="28" font-weight="800" fill="#0a0e14" text-anchor="middle">1</text>
+    <text x="76" y="22" font-size="13" fill="#9CA3AF" font-family="ui-sans-serif, system-ui">BOOTSTRAP — one-time, per repo</text>
+    <text x="76" y="46" font-size="22" font-weight="600" fill="#67E8F9" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">lore init</text>
+    <text x="76" y="68" font-size="14" fill="#D1D5DB">Creates <tspan fill="#FBBF24" font-family="ui-monospace, monospace">.lore/</tspan> and installs the post-commit hook. Idempotent. No internet, no account, no API key.</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- Step 2: git commit (hook fires) -->
+  <g transform="translate(48, 240)">
+    <circle cx="28" cy="28" r="26" fill="url(#esStep)"/>
+    <text x="28" y="38" font-size="28" font-weight="800" fill="#0a0e14" text-anchor="middle">2</text>
+    <text x="76" y="22" font-size="13" fill="#9CA3AF" font-family="ui-sans-serif, system-ui">CAPTURE — every commit, automatically</text>
+    <text x="76" y="46" font-size="22" font-weight="600" fill="#67E8F9" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">git commit -m "feat: rate limiter"</text>
+    <text x="76" y="68" font-size="14" fill="#D1D5DB">Hook fires → 3 essential questions (Type / What / Why) + 2 optional. ~90s median. Markdown in your repo.</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- Step 3: lore show -->
+  <g transform="translate(48, 350)">
+    <circle cx="28" cy="28" r="26" fill="url(#esStep)"/>
+    <text x="28" y="38" font-size="28" font-weight="800" fill="#0a0e14" text-anchor="middle">3</text>
+    <text x="76" y="22" font-size="13" fill="#9CA3AF" font-family="ui-sans-serif, system-ui">RECALL — six months later, find the why</text>
+    <text x="76" y="46" font-size="22" font-weight="600" fill="#67E8F9" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">lore show "rate limit"</text>
+    <text x="76" y="68" font-size="14" fill="#D1D5DB">Fuzzy search the corpus. Sub-second results from a regenerable SQLite index over plain Markdown.</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- Step 4: lore status -->
+  <g transform="translate(48, 460)">
+    <circle cx="28" cy="28" r="26" fill="url(#esStep)"/>
+    <text x="28" y="38" font-size="28" font-weight="800" fill="#0a0e14" text-anchor="middle">4</text>
+    <text x="76" y="22" font-size="13" fill="#9CA3AF" font-family="ui-sans-serif, system-ui">MEASURE — health dashboard</text>
+    <text x="76" y="46" font-size="22" font-weight="600" fill="#67E8F9" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">lore status</text>
+    <text x="76" y="68" font-size="14" fill="#D1D5DB">Coverage, pending commits, doc count by type. Add <tspan fill="#FBBF24" font-family="ui-monospace, monospace">--badge</tspan> for a shields.io snippet.</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- Step 5: lore angela polish -->
+  <g transform="translate(48, 570)">
+    <circle cx="28" cy="28" r="26" fill="url(#esStep)"/>
+    <text x="28" y="38" font-size="28" font-weight="800" fill="#0a0e14" text-anchor="middle">5</text>
+    <text x="76" y="22" font-size="13" fill="#9CA3AF" font-family="ui-sans-serif, system-ui">REFINE — opt-in AI assist (you stay in control)</text>
+    <text x="76" y="46" font-size="22" font-weight="600" fill="#67E8F9" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">lore angela polish &lt;file&gt;</text>
+    <text x="76" y="68" font-size="14" fill="#D1D5DB">Interactive diff review with <tspan fill="#FBBF24" font-family="ui-monospace, monospace">[y/n/b/q]</tspan>. Picks your provider (Anthropic / OpenAI / Ollama-local).</text>
+  </g>
+
+  <!-- Footer -->
+  <line x1="48" y1="680" x2="1232" y2="680" stroke="#374151" stroke-width="1"/>
+  <text x="48" y="703" font-size="12" fill="#9CA3AF" font-family="ui-sans-serif, system-ui">📦 <tspan fill="#FBBF24" font-family="ui-monospace, monospace">brew install GreyCoderK/tap/lore</tspan>     ·     📚 <tspan fill="#FBBF24">greycoderk.github.io/lore</tspan>     ·     AGPL-3.0     ·     Built solo from Côte d'Ivoire</text>
+
+  <!-- Bottom accent bar -->
+  <rect x="0" y="715" width="1280" height="5" fill="url(#esGold)"/>
+</svg>
