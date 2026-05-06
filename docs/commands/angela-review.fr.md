@@ -14,6 +14,9 @@ angela_mode: polish
 
 Analyse de cohérence du corpus complet via IA.
 
+![lore angela review](../assets/vhs/angela-review.gif)
+<!-- Générer : vhs assets/vhs/angela-review.tape -->
+
 ## Synopsis
 
 ```bash

@@ -13,6 +13,9 @@ related:
 
 Corpus-wide coherence analysis via AI.
 
+![lore angela review](../assets/vhs/angela-review.gif)
+<!-- Generate: vhs assets/vhs/angela-review.tape -->
+
 ## Synopsis
 
 ```bash
