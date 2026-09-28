@@ -13,6 +13,7 @@ import (
 
 	"github.com/greycoderk/lore/internal/domain"
 	"github.com/greycoderk/lore/internal/i18n"
+	"github.com/greycoderk/lore/internal/ui"
 )
 
 // ArbitrationRule encodes the non-interactive policy for resolving
@@ -157,9 +158,10 @@ func promptPerGroup(
 	out := make([]Resolution, 0, len(groups))
 
 	for gi, g := range groups {
-		// Header.
-		_, _ = fmt.Fprintf(streams.Err, i18n.T().Angela.ArbitrateGroupHeader,
+		// Header. Bold so the user spots the section boundary at a glance.
+		header := fmt.Sprintf(i18n.T().Angela.ArbitrateGroupHeader,
 			gi+1, len(groups), g.Heading, len(g.Occurrences))
+		_, _ = fmt.Fprint(streams.Err, ui.Bold(header))
 
 		// Preview each occurrence.
 		previewLines := 3
@@ -173,7 +175,7 @@ func promptPerGroup(
 
 		// Prompt loop: re-prompt on invalid input, loop through [d].
 		for {
-			_, _ = fmt.Fprint(streams.Err, i18n.T().Angela.ArbitratePrompt)
+			_, _ = fmt.Fprint(streams.Err, ui.Bold(i18n.T().Angela.ArbitratePrompt))
 			input, err := reader.ReadString('\n')
 			if err != nil {
 				// EOF on non-TTY-like input — treat as abort for safety.
@@ -181,7 +183,7 @@ func promptPerGroup(
 			}
 			choice, ok := parsePromptInput(strings.TrimSpace(input), len(g.Occurrences))
 			if !ok {
-				_, _ = fmt.Fprintln(streams.Err, i18n.T().Angela.ArbitrateInvalidChoice)
+				_, _ = fmt.Fprintln(streams.Err, ui.Warning(i18n.T().Angela.ArbitrateInvalidChoice))
 				continue
 			}
 			switch choice {
@@ -233,12 +235,16 @@ func renderOccurrencePreviews(w interface {
 }, body []byte, occs []SectionLocation, previewLines int) {
 	for i, occ := range occs {
 		totalLines, preview := extractOccurrencePreview(body, occ, previewLines)
-		_, _ = fmt.Fprintf(w, i18n.T().Angela.ArbitratePreviewLine, i+1, occ.Line, occ.Words)
+		// Occurrence header in cyan (Info): this is AI-emitted content
+		// for the user to inspect — distinct from the action keys below
+		// that the user themselves must type.
+		header := fmt.Sprintf(i18n.T().Angela.ArbitratePreviewLine, i+1, occ.Line, occ.Words)
+		_, _ = fmt.Fprint(w, ui.Info(header))
 		for _, line := range preview {
-			_, _ = fmt.Fprintf(w, "      %s\n", line)
+			_, _ = fmt.Fprintf(w, "      %s\n", ui.Dim(line))
 		}
 		if totalLines > previewLines {
-			_, _ = fmt.Fprintf(w, i18n.T().Angela.ArbitratePreviewTruncated, previewLines, totalLines)
+			_, _ = fmt.Fprintf(w, "%s", ui.Dim(fmt.Sprintf(i18n.T().Angela.ArbitratePreviewTruncated, previewLines, totalLines)))
 		}
 		_, _ = fmt.Fprintln(w)
 	}
@@ -276,6 +282,10 @@ func extractOccurrencePreview(body []byte, occ SectionLocation, previewLines int
 // renderOptions prints the option line appropriate for the group size.
 // For 2 occurrences: "keep first / keep second / keep both".
 // For 3+ occurrences: "keep first / keep second / keep all".
+//
+// The whole option block is rendered Bold so the action keys ([1], [2],
+// [b], [d], [a]) read as "your turn to type something" — visually
+// distinct from the dim/cyan preview content above that came from the AI.
 func renderOptions(w interface {
 	Write(p []byte) (int, error)
 }, numOccurrences int) {
@@ -283,19 +293,23 @@ func renderOptions(w interface {
 	if numOccurrences > 2 {
 		bothLabel = fmt.Sprintf(i18n.T().Angela.ArbitrateOptKeepAll, numOccurrences)
 	}
-	_, _ = fmt.Fprintf(w, i18n.T().Angela.ArbitrateOptsLine, bothLabel)
+	line := fmt.Sprintf(i18n.T().Angela.ArbitrateOptsLine, bothLabel)
+	_, _ = fmt.Fprint(w, ui.Bold(line))
 }
 
 // renderFullContent dumps every occurrence of the group verbatim,
 // separated by a short banner. Used when the user selects [d].
+// Banners go in cyan (Info) to keep the visual grouping consistent
+// with the inline preview headers above.
 func renderFullContent(w interface {
 	Write(p []byte) (int, error)
 }, body []byte, occs []SectionLocation) {
 	for i, occ := range occs {
-		_, _ = fmt.Fprintf(w, i18n.T().Angela.ArbitrateOccurrenceBanner, i+1, len(occs), occ.Line)
+		banner := fmt.Sprintf(i18n.T().Angela.ArbitrateOccurrenceBanner, i+1, len(occs), occ.Line)
+		_, _ = fmt.Fprint(w, ui.Info(banner))
 		_, _ = fmt.Fprint(w, string(body[occ.ByteStart:occ.ByteEnd]))
 	}
-	_, _ = fmt.Fprintln(w, "---")
+	_, _ = fmt.Fprintln(w, ui.Dim("---"))
 }
 
 // applyDuplicateResolutions produces a new body with the resolutions

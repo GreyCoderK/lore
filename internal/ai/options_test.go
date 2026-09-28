@@ -119,6 +119,45 @@ func TestValidateEndpoint_NoHost_Rejected(t *testing.T) {
 	}
 }
 
+// TestSafeHTTPClient_HonorsConfiguredTimeout enforces the invariant that
+// the HTTP client's deadline must match the timeout the caller asked for —
+// not a hidden 120s ceiling. A divergence here is exactly the bug that
+// caused "configured 5m, elapsed 2m" timeout messages where the 2m came
+// from a stale literal in SafeHTTPClient (root cause of Bug B,
+// Story 8-22 / I-timeout-coherence).
+func TestSafeHTTPClient_HonorsConfiguredTimeout(t *testing.T) {
+	// Server that holds the connection until cleanup. The close(hang)
+	// must run before srv.Close(), otherwise httptest.Server.Close
+	// blocks forever waiting on the still-blocked handler.
+	hang := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-hang
+	}))
+	defer func() {
+		close(hang)
+		srv.Close()
+	}()
+
+	const want = 300 * time.Millisecond
+	client := SafeHTTPClient(want)
+
+	start := time.Now()
+	_, err := client.Get(srv.URL)
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
+	}
+	// Allow generous slack on slow CI but reject anything that hits a
+	// hidden 120s ceiling.
+	if elapsed > want+2*time.Second {
+		t.Errorf("elapsed=%s exceeded configured timeout=%s by >2s — HTTP client likely ignored the parameter", elapsed, want)
+	}
+	if elapsed < want/2 {
+		t.Errorf("elapsed=%s fired well before configured timeout=%s — premature cancel", elapsed, want)
+	}
+}
+
 func TestSafeHTTPClient_NoRedirect(t *testing.T) {
 	redirectCalled := false
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +170,7 @@ func TestSafeHTTPClient_NoRedirect(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := SafeHTTPClient()
+	client := SafeHTTPClient(30 * time.Second)
 	resp, err := client.Get(srv.URL + "/redirect")
 	if err != nil {
 		t.Fatalf("SafeHTTPClient: %v", err)

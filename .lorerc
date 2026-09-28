@@ -5,7 +5,7 @@ language: "fr"
 ai:
   provider: "anthropic"       # anthropic, openai, ollama
   model: "claude-sonnet-4-6"  # model name (e.g., claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5-20251001, llama3.2)
-  timeout: 120s
+  timeout: 300s
 angela:
   max_tokens: 16000  # bumped for review on larger corpus
 

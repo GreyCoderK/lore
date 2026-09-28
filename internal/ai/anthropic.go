@@ -45,7 +45,7 @@ func newAnthropicProvider(cfg *config.Config) *anthropicProvider {
 		endpoint = anthropicDefaultEndpoint
 	}
 	return &anthropicProvider{
-		client:   SafeHTTPClient(),
+		client:   SafeHTTPClient(cfg.AI.Timeout),
 		apiKey:   cfg.AI.APIKey,
 		model:    model,
 		endpoint: endpoint,

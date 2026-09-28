@@ -90,7 +90,7 @@ type AngelaMessages struct {
 	UITruncated         string // args: used, limit
 	UITruncatedHint     string
 	UITimeoutErr        string // args: timeout, elapsed
-	UITimeoutHint1      string
+	UITimeoutHint1      string // args: suggested, current
 	UITimeoutHint2      string
 	UIRewrittenFor      string // args: audience, filename
 	UIOriginalUnchanged string

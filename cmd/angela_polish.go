@@ -443,8 +443,9 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 				logResult = angela.LogResultAIError
 				logExit = 1
 				if isTimeoutError(err) {
+					suggested := timeout * 2
 					_, _ = fmt.Fprintf(streams.Err, "\n      %s\n", ui.Error(fmt.Sprintf(ta.UITimeoutErr, formatElapsed(timeout), formatElapsed(elapsed))))
-					_, _ = fmt.Fprintf(streams.Err, "      %s\n", ui.Dim(ta.UITimeoutHint1))
+					_, _ = fmt.Fprintf(streams.Err, "      %s\n", ui.Dim(fmt.Sprintf(ta.UITimeoutHint1, formatElapsed(suggested), formatElapsed(timeout))))
 					_, _ = fmt.Fprintf(streams.Err, "      %s\n", ui.Dim(ta.UITimeoutHint2))
 					return fmt.Errorf("angela: polish: timeout after %s", formatElapsed(elapsed))
 				}
@@ -792,6 +793,22 @@ func newAngelaPolishCmd(cfg *config.Config, streams domain.IOStreams) *cobra.Com
 			// The polish.log JSONL audit trail (Task 6.d) provides a
 			// richer "what was polished when" record anyway.
 			appliedFM, _, fmErr := storage.ExtractFrontmatter([]byte(applied))
+			if errors.Is(fmErr, storage.ErrFrontmatterMissing) {
+				// Deterministic FM recovery: srcFMBytes were extracted and
+				// validated pre-AI (line 362) and verified byte-for-byte
+				// at the I24 check below. When a diff-apply path drops
+				// the FM (e.g. AI body-only output diffed against FM+body,
+				// then accept-all in interactive review), restoring the
+				// source FM bytes here is byte-equivalent to never having
+				// removed them. No retry, no extra AI call, no credits
+				// re-spent — pure local recovery.
+				applied = string(srcFMBytes) + applied
+				appliedFM, _, fmErr = storage.ExtractFrontmatter([]byte(applied))
+				if fmErr == nil {
+					_, _ = fmt.Fprintf(streams.Err, "      %s %s\n",
+						ui.Dim("•"), ui.Dim(i18n.T().Cmd.AngelaPolishFMRecovered))
+				}
+			}
 			if fmErr != nil {
 				return fmt.Errorf("angela: polish: post-apply frontmatter invalid: %w", fmErr)
 			}

@@ -1,0 +1,772 @@
+---
+type: note
+date: "2026-05-13"
+status: draft
+generated_by: doctor-fix
+---
+# DOCUMENTATION COMPLETE DE L’APPLICATION
+
+# APPROCHE PREDICTIVE DU CHURN CLIENT A L’AIDE DE MACHINE LEARNING : ETUDE DE CAS DE PUSH CI
+
+---
+
+# TABLE DES MATIERES
+
+1. Introduction
+2. Contexte du projet
+3. Objectifs de l’application
+4. Architecture générale du système
+5. Technologies utilisées
+6. Structure des données
+7. Base de données
+8. Processus d’importation des données
+9. Pipeline global de l’application
+10. Fonctionnement général de l’interface Streamlit
+11. Description détaillée des modules
+12. Module Import & Analyse Exploratoire (EDA)
+13. Module Prédiction du Churn
+14. Module Dashboard
+15. Module Analyse Time Series
+16. Module Business Insights
+17. Module SHAP Analysis
+18. Module Détail Client
+19. Module Score Qualité
+20. Module Monitoring
+21. Module Administration
+22. Variables utilisées par le modèle
+23. Segmentation des risques
+24. Modèle Machine Learning
+25. Performance du modèle
+26. Optimisation des performances
+27. Gestion des erreurs et monitoring
+28. Déploiement de l’application
+29. Limites du système
+30. Perspectives d’amélioration
+31. Conclusion
+
+---
+
+# 1. INTRODUCTION
+
+Dans un contexte économique marqué par une forte concurrence et une nécessité croissante de fidélisation client, la capacité à détecter les clients susceptibles de quitter une plateforme devient un enjeu stratégique majeur.
+
+Le présent projet porte sur la conception et le développement d’une plateforme analytique intelligente dédiée à la prédiction du churn client au sein de PUSH CI.
+
+L’application développée permet :
+
+- l’importation de données transactionnelles ;
+- l’analyse exploratoire des données ;
+- la génération automatique de features comportementales ;
+- la prédiction du risque de churn ;
+- la segmentation des clients ;
+- l’analyse métier ;
+- l’explicabilité des prédictions ;
+- le monitoring des pipelines ;
+- l’analyse qualité des services ;
+- l’analyse temporelle des comportements clients.
+
+L’ensemble du système a été développé sous Python avec une interface interactive construite à l’aide du framework Streamlit.
+
+---
+
+# 2. CONTEXTE DU PROJET
+
+Le churn représente la perte progressive de clients actifs au sein d’un service ou d’une plateforme.
+
+Dans le cadre de PUSH CI, les comportements transactionnels des utilisateurs constituent une source importante d’informations permettant d’anticiper les risques de départ.
+
+L’objectif du projet est donc de mettre en place un système intelligent capable d’identifier de manière proactive les clients à risque afin de permettre aux équipes métier de mettre en œuvre des actions de rétention adaptées.
+
+Dans cette étude, un client est considéré comme churn lorsqu’il ne réalise aucune transaction pendant une période glissante de six mois.
+
+---
+
+# 3. OBJECTIFS DE L’APPLICATION
+
+Les principaux objectifs de l’application sont les suivants :
+
+## Objectifs métier
+
+- Identifier les clients à risque de churn ;
+- Réduire les pertes de revenus ;
+- Améliorer la fidélisation ;
+- Prioriser les campagnes marketing ;
+- Détecter les comportements transactionnels anormaux ;
+- Fournir des analyses exploitables aux équipes métier.
+
+## Objectifs techniques
+
+- Centraliser les données transactionnelles ;
+- Construire automatiquement des features comportementales ;
+- Générer des scores de churn ;
+- Expliquer les prédictions du modèle ;
+- Mettre en place un monitoring analytique ;
+- Optimiser les performances de traitement.
+
+---
+
+# 4. ARCHITECTURE GENERALE DU SYSTEME
+
+L’architecture globale du système repose sur plusieurs couches principales.
+
+## Couche d’importation
+
+Cette couche permet :
+
+- l’importation de fichiers Excel ;
+- la validation des données ;
+- la détection des erreurs ;
+- l’intégration des données dans la base.
+
+## Couche de stockage
+
+Les données sont stockées dans une base DuckDB nommée :
+
+churn_database
+
+Cette base contient notamment :
+
+- les transactions ;
+- les features clients ;
+- les scores de churn ;
+- les scores qualité ;
+- les logs ;
+- les historiques d’import.
+
+## Couche analytique
+
+Cette couche réalise :
+
+- le feature engineering ;
+- les analyses exploratoires ;
+- les analyses temporelles ;
+- les analyses métier ;
+- les analyses qualité.
+
+## Couche Machine Learning
+
+Cette couche comprend :
+
+- l’entraînement du modèle ;
+- la prédiction ;
+- le scoring ;
+- l’explicabilité SHAP ;
+- le clustering comportemental.
+
+## Couche présentation
+
+Cette couche correspond à l’interface utilisateur Streamlit.
+
+Elle permet une interaction simple et dynamique avec les données et les analyses.
+
+---
+
+# 5. TECHNOLOGIES UTILISEES
+
+| Technologie | Rôle |
+|---|---|
+| Python | Développement principal |
+| Streamlit | Interface utilisateur |
+| DuckDB | Base analytique |
+| Pandas | Manipulation des données |
+| NumPy | Calcul scientifique |
+| Matplotlib | Visualisation |
+| XGBoost | Modèle Machine Learning |
+| SHAP | Explicabilité |
+| Joblib | Sauvegarde du modèle |
+
+---
+
+# 6. STRUCTURE DES DONNEES
+
+Les données utilisées proviennent principalement de fichiers Excel contenant des informations transactionnelles et clients.
+
+## Principales tables métier
+
+### Table t_customer
+
+Cette table contient les informations clients.
+
+Exemples de colonnes :
+
+- ID
+- PHONE_NUMBER
+- CUSTOMER_REFERENCE
+- FIRSTNAME
+- LASTNAME
+- CREATION_DATE
+- UPDATE_DATE
+- ACTIVE
+- COMMENT
+- SPONSORED_BY
+
+### Table t_request
+
+Cette table contient les informations transactionnelles.
+
+Exemples de colonnes :
+
+- TRANSACTION_ID
+- CUSTOMER_REFERENCE
+- AMOUNT
+- FEES
+- DIRECTION
+- MAIN_SERVICE
+- CHANNEL
+- TRANSACTION_START_DATE
+- REJECT_REASON
+- REQUEST_STATUS_ID
+- PROCESSING_DATE
+- THIRD_PARTY_GATEWAY
+- TRANSACTION_REASON
+- MOMO_PAYMENT_GATEWAY
+- MOMO_TRANSFER_GATEWAY
+- RECIPIENT_NUMBER
+- SOURCE_NUMBER
+
+---
+
+# 7. BASE DE DONNEES
+
+L’application utilise DuckDB comme moteur analytique.
+
+## Avantages de DuckDB
+
+- Très rapide pour les analyses ;
+- Optimisé pour les traitements analytiques ;
+- Fonctionne localement ;
+- Très adapté aux gros volumes de données ;
+- Compatible avec Pandas.
+
+## Base utilisée
+
+Nom de la base :
+
+churn_database
+
+---
+
+# 8. PROCESSUS D’IMPORTATION DES DONNEES
+
+L’application permet l’importation de fichiers Excel directement depuis l’interface Streamlit.
+
+## Fonctionnement général
+
+1. L’utilisateur sélectionne un ou plusieurs fichiers Excel ;
+2. Les données sont validées ;
+3. Les doublons sont détectés ;
+4. Les erreurs sont enregistrées ;
+5. Les données sont insérées dans DuckDB ;
+6. Les analyses EDA sont automatiquement générées.
+
+## Analyses générées automatiquement
+
+Après chaque importation, l’application calcule :
+
+- le nombre de lignes ;
+- le nombre de clients ;
+- les montants totaux ;
+- les percentiles ;
+- les valeurs aberrantes ;
+- la skewness ;
+- les top clients.
+
+---
+
+# 9. PIPELINE GLOBAL DE L’APPLICATION
+
+Le pipeline général suit les étapes suivantes :
+
+1. Importation des fichiers Excel ;
+2. Nettoyage des données ;
+3. Création des features ;
+4. Entraînement du modèle ;
+5. Génération des scores ;
+6. Segmentation des risques ;
+7. Analyses métier ;
+8. Visualisation ;
+9. Monitoring.
+
+---
+
+# 10. FONCTIONNEMENT GENERAL DE L’INTERFACE STREAMLIT
+
+Le fichier principal de l’application est :
+
+Churn Prediction Push_CI
+
+L’interface est organisée sous forme de plusieurs onglets permettant d’accéder aux différents modules analytiques.
+
+Chaque onglet représente une fonctionnalité spécifique.
+
+L’application est exécutée localement.
+
+---
+
+# 11. DESCRIPTION DETAILLEE DES MODULES
+
+L’application est organisée en plusieurs modules fonctionnels :
+
+1. Import & EDA ;
+2. Prédiction ;
+3. Dashboard ;
+4. Time Series ;
+5. Business Insights ;
+6. SHAP Analysis ;
+7. Détail Client ;
+8. Score Qualité ;
+9. Monitoring ;
+10. Administration.
+
+---
+
+# 12. MODULE IMPORT & ANALYSE EXPLORATOIRE (EDA)
+
+Ce module permet :
+
+- l’importation des fichiers ;
+- la validation des données ;
+- l’analyse exploratoire automatique.
+
+## Fonctionnalités principales
+
+### Affichage des statistiques
+
+Le module affiche :
+
+- nombre de lignes ;
+- nombre de clients ;
+- montant total ;
+- nombre d’outliers.
+
+### Distribution statistique
+
+Les percentiles calculés sont :
+
+- P10 ;
+- P25 ;
+- Médiane ;
+- P75 ;
+- P90 ;
+- P99.
+
+### Analyse de skewness
+
+L’application identifie automatiquement :
+
+- les distributions normales ;
+- asymétriques ;
+- très asymétriques.
+
+### Top clients
+
+Les clients ayant les plus gros volumes transactionnels sont affichés automatiquement.
+
+---
+
+# 13. MODULE PREDICTION DU CHURN
+
+Ce module constitue le cœur du système.
+
+## Fonctionnalités
+
+L’utilisateur peut :
+
+- lancer une prédiction complète ;
+- lancer une prédiction incrémentale ;
+- suivre l’avancement du pipeline ;
+- visualiser les performances.
+
+## Types de prédiction
+
+### Prédiction complète
+
+Recalcule tous les scores clients.
+
+### Prédiction incrémentale
+
+Traite uniquement les nouveaux batchs importés.
+
+## Informations affichées
+
+- nombre de clients ;
+- nombre de scores calculés ;
+- vitesse de traitement ;
+- durée d’exécution.
+
+---
+
+# 14. MODULE DASHBOARD
+
+Le dashboard permet une vue synthétique des résultats.
+
+## Indicateurs affichés
+
+- nombre total de clients scorés ;
+- nombre de clients critiques ;
+- nombre de clients élevés ;
+- nombre de clients modérés ;
+- nombre de clients faibles.
+
+## Visualisations
+
+### Répartition des segments
+
+Un diagramme circulaire présente la distribution des risques.
+
+### Top clients critiques
+
+Les clients les plus à risque sont affichés avec :
+
+- la probabilité de churn ;
+- le montant transactionnel ;
+- le nombre de jours d’inactivité.
+
+### Export CSV
+
+Les résultats peuvent être exportés en CSV.
+
+---
+
+# 15. MODULE ANALYSE TIME SERIES
+
+Ce module permet l’analyse temporelle des comportements transactionnels.
+
+## Fonctionnalités
+
+- évolution quotidienne ;
+- évolution mensuelle ;
+- détection des clients inactifs ;
+- analyse de cohortes.
+
+## Détection des churners
+
+L’utilisateur peut définir un seuil d’inactivité.
+
+Le système calcule automatiquement :
+
+- le nombre de clients churned ;
+- les revenus potentiellement perdus.
+
+## Analyse de cohortes
+
+Une heatmap permet d’analyser la rétention client dans le temps.
+
+---
+
+# 16. MODULE BUSINESS INSIGHTS
+
+Ce module fournit des analyses métier avancées.
+
+## Analyse Pareto
+
+Le système calcule :
+
+- le revenu total ;
+- la contribution des top 20 % ;
+- le pourcentage de clients représentant 80 % du revenu.
+
+## Coût vs risque de churn
+
+Le système estime :
+
+- le revenu à risque ;
+- la perte attendue ;
+- les clients prioritaires.
+
+## Analyse par service
+
+Les performances sont analysées selon les différents services transactionnels.
+
+---
+
+# 17. MODULE SHAP ANALYSIS
+
+Ce module fournit une explicabilité avancée du modèle.
+
+## Types d’analyse disponibles
+
+### SHAP Global
+
+Permet d’identifier les features les plus importantes.
+
+### Clustering comportemental
+
+Les clients sont regroupés selon leurs comportements.
+
+### Analyse individuelle
+
+Chaque client peut être expliqué individuellement.
+
+## Explications générées
+
+Le système affiche :
+
+- les facteurs influençant le churn ;
+- les contributions positives ;
+- les contributions négatives ;
+- un récit narratif automatique.
+
+---
+
+# 18. MODULE DETAIL CLIENT
+
+Ce module fournit une vue 360° du client.
+
+## Informations disponibles
+
+- score de churn ;
+- segment de risque ;
+- historique transactionnel ;
+- métriques RFM ;
+- score qualité ;
+- tendances comportementales.
+
+## Visualisations
+
+- jauge de churn ;
+- radar RFM ;
+- timeline client ;
+- radar qualité.
+
+---
+
+# 19. MODULE SCORE QUALITE
+
+Ce module mesure la qualité des transactions et des services.
+
+## Dimensions évaluées
+
+- qualité globale ;
+- erreurs ;
+- frais ;
+- services ;
+- direction ;
+- type de carte.
+
+## Analyses disponibles
+
+- distribution par service ;
+- taux d’erreur ;
+- frais moyens ;
+- raisons de rejet ;
+- qualité vs churn.
+
+---
+
+# 20. MODULE MONITORING
+
+Le monitoring permet de suivre l’état de santé des pipelines.
+
+## Fonctionnalités
+
+- alertes ;
+- intégrité des données ;
+- complétude ;
+- logs ;
+- taille des tables ;
+- distribution des statuts ;
+- historique des imports.
+
+## Contrôles d’intégrité
+
+Le système vérifie :
+
+- les scores orphelins ;
+- les features manquantes ;
+- les références invalides ;
+- les montants nuls.
+
+---
+
+# 21. MODULE ADMINISTRATION
+
+Le module administration permet :
+
+- la suppression des transactions ;
+- la suppression des scores ;
+- la reconstruction de la base ;
+- la libération de la mémoire RAM.
+
+Toutes les opérations critiques nécessitent une confirmation.
+
+---
+
+# 22. VARIABLES UTILISEES PAR LE MODELE
+
+Le modèle exploite plusieurs familles de variables :
+
+## Variables RFM
+
+- Recency ;
+- Frequency ;
+- Monetary.
+
+## Variables comportementales
+
+- velocity ;
+- momentum ;
+- tendance ;
+- déclin ;
+- diversité des services ;
+- activité transactionnelle.
+
+## Variables qualité
+
+- taux d’erreur ;
+- frais ;
+- qualité des services ;
+- stabilité transactionnelle.
+
+## Variables temporelles
+
+- ancienneté client ;
+- jours depuis dernière transaction ;
+- évolution mensuelle.
+
+---
+
+# 23. SEGMENTATION DES RISQUES
+
+## Seuils utilisés
+
+| Segment | Intervalle |
+|---|---|
+| FAIBLE | 0.00 – 0.50 |
+| MODÉRÉ | 0.50 – 0.70 |
+| ÉLEVÉ | 0.70 – 0.80 |
+| CRITIQUE | 0.80 – 1.00 |
+
+---
+
+# 24. MODELE MACHINE LEARNING
+
+Le modèle retenu est :
+
+XGBoost
+
+## Raisons du choix
+
+- bonnes performances ;
+- robustesse ;
+- capacité à gérer des données complexes ;
+- bonne généralisation ;
+- compatibilité SHAP.
+
+Le modèle est entraîné directement dans l’application.
+
+---
+
+# 25. PERFORMANCE DU MODELE
+
+| Métrique | Valeur |
+|---|---|
+| Precision | 0.74 |
+| Recall | 0.81 |
+| F1-Score | 0.77 |
+
+Le recall élevé permet de détecter efficacement les clients à risque.
+
+---
+
+# 26. OPTIMISATION DES PERFORMANCES
+
+Plusieurs optimisations ont été mises en place afin de réduire la latence de l’application.
+
+## Optimisations principales
+
+- utilisation de DuckDB ;
+- cache Streamlit ;
+- pipelines incrémentaux ;
+- limitation des recalculs ;
+- gestion mémoire ;
+- suppression des traitements inutiles ;
+- optimisation des requêtes analytiques.
+
+## Gestion mémoire
+
+Le système utilise :
+
+- gc.collect() ;
+- nettoyage des caches ;
+- suppression des objets temporaires.
+
+---
+
+# 27. GESTION DES ERREURS ET MONITORING
+
+Le système intègre une gestion complète des erreurs.
+
+## Fonctionnalités
+
+- logs ;
+- alertes ;
+- erreurs d’import ;
+- warnings ;
+- historique des traitements.
+
+Les erreurs sont stockées et consultables directement dans l’interface.
+
+---
+
+# 28. DEPLOIEMENT DE L’APPLICATION
+
+Le système est actuellement déployé localement.
+
+## Mode d’exécution
+
+L’application est exécutée via Streamlit.
+
+## Architecture locale
+
+- application locale ;
+- stockage local ;
+- traitement local.
+
+---
+
+# 29. LIMITES DU SYSTEME
+
+Malgré ses performances, certaines limites existent :
+
+- dépendance aux données historiques ;
+- sensibilité à la qualité des données ;
+- consommation mémoire importante ;
+- temps de calcul SHAP parfois élevé ;
+- déploiement uniquement local.
+
+---
+
+# 30. PERSPECTIVES D’AMELIORATION
+
+Plusieurs améliorations futures peuvent être envisagées :
+
+- déploiement cloud ;
+- API REST ;
+- automatisation temps réel ;
+- intégration Power BI ;
+- alertes automatiques ;
+- réentraînement automatique ;
+- Deep Learning ;
+- système de recommandations marketing.
+
+---
+
+# 31. CONCLUSION
+
+Cette application constitue une plateforme analytique complète dédiée à la prédiction du churn client.
+
+Elle combine :
+
+- intelligence artificielle ;
+- analyse comportementale ;
+- visualisation ;
+- monitoring ;
+- explicabilité ;
+- scoring qualité ;
+- analyses métier avancées.
+
+Grâce à l’utilisation de Streamlit, DuckDB et XGBoost, le système offre une solution interactive, performante et exploitable par les équipes métier.
+
+Le projet permet ainsi à PUSH CI de disposer d’un outil décisionnel capable d’anticiper les risques de churn et d’améliorer les stratégies de fidélisation client.
+

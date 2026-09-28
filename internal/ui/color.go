@@ -76,3 +76,14 @@ func Bold(text string) string {
 	}
 	return fmt.Sprintf("\033[1m%s\033[0m", text)
 }
+
+// Info renders text in cyan. Used to mark content that came back FROM the
+// AI (e.g. duplicate-section occurrences in the arbitrate prompt), so the
+// user can distinguish AI-emitted material from the action keys they
+// themselves need to type next.
+func Info(text string) string {
+	if !isColorEnabled() {
+		return text
+	}
+	return fmt.Sprintf("\033[36m%s\033[0m", text)
+}

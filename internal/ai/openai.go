@@ -43,7 +43,7 @@ func newOpenAIProvider(cfg *config.Config) *openaiProvider {
 		endpoint = openaiDefaultEndpoint
 	}
 	return &openaiProvider{
-		client:   SafeHTTPClient(),
+		client:   SafeHTTPClient(cfg.AI.Timeout),
 		apiKey:   cfg.AI.APIKey,
 		model:    model,
 		endpoint: endpoint,

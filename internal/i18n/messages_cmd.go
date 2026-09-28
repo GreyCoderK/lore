@@ -276,6 +276,7 @@ type CmdMessages struct {
 	AngelaPolishCorruptSource        string // no args — title of refusal
 	AngelaPolishCorruptSourceHint    string // arg: filename — pointer to doctor/restore
 	AngelaPolishLeakedFMStripped     string // args: bytes (int), line (int)
+	AngelaPolishFMRecovered          string // no args — deterministic post-apply FM recovery happened
 	AngelaPolishDryRunDuplicates     string // arg: group count
 	AngelaPolishDuplicateHeadingRow  string // args: heading (%q), count (int)
 	AngelaPolishArbitrateAbortMsg    string // arg: group count

@@ -307,8 +307,9 @@ func newAngelaReviewCmd(cfg *config.Config, streams domain.IOStreams, flagPath *
 					elapsed := spin.Elapsed()
 					spin.Stop()
 					if isTimeoutError(err) {
+						suggested := timeout * 2
 						_, _ = fmt.Fprintf(streams.Err, "\n      %s\n", ui.Error(fmt.Sprintf(ta.UITimeoutErr, formatElapsed(timeout), formatElapsed(elapsed))))
-						_, _ = fmt.Fprintf(streams.Err, "      %s\n", ui.Dim(ta.UITimeoutHint1))
+						_, _ = fmt.Fprintf(streams.Err, "      %s\n", ui.Dim(fmt.Sprintf(ta.UITimeoutHint1, formatElapsed(suggested), formatElapsed(timeout))))
 						_, _ = fmt.Fprintf(streams.Err, "      %s\n", ui.Dim(ta.UITimeoutHint2))
 						return fmt.Errorf("angela: review: timeout after %s", formatElapsed(elapsed))
 					}

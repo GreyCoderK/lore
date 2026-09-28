@@ -40,7 +40,7 @@ func newOllamaProvider(cfg *config.Config) *ollamaProvider {
 		endpoint = "http://localhost:11434"
 	}
 	return &ollamaProvider{
-		client:   SafeHTTPClient(),
+		client:   SafeHTTPClient(cfg.AI.Timeout),
 		model:    model,
 		endpoint: strings.TrimRight(endpoint, "/") + "/api/generate",
 		timeout:  EnsureTimeout(cfg.AI.Timeout),

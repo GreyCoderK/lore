@@ -4,7 +4,8 @@
 
 | Document | Type | Date | Status | Tags |
 |----------|------|------|--------|------|
+| [documentation_complete_streamlit_churn_push_ci.md](documentation_complete_streamlit_churn_push_ci.md) | note | 2026-05-13 | draft |  |
 | [feature-enable-chocolatey-and-embedded-logo-2026-04-10.md](feature-enable-chocolatey-and-embedded-logo-2026-04-10.md) | feature | 2026-04-10 | draft |  |
 | [feature-angela-enhancement-sprint-quality-scoring-audience-2026-04-09.md](feature-angela-enhancement-sprint-quality-scoring-audience-2026-04-09.md) | feature | 2026-04-09 | draft |  |
 
-*2 documents total*
+*3 documents total*

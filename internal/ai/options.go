@@ -78,11 +78,15 @@ func TruncateForError(s string, maxLen int) string {
 	return s[:maxLen] + "...(truncated)"
 }
 
-// SafeHTTPClient returns an http.Client with connection limits, a global timeout,
-// and redirect-following disabled (prevents SSRF via open redirects).
-func SafeHTTPClient() *http.Client {
+// SafeHTTPClient returns an http.Client with connection limits, the supplied
+// per-request timeout, and redirect-following disabled (prevents SSRF via
+// open redirects). The timeout argument must match cfg.AI.Timeout so the
+// HTTP layer cannot tire before the request context does — a mismatch
+// produces misleading "timed out at 2m when configured for 5m" errors
+// (Story 8-22 / I-timeout-coherence).
+func SafeHTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{
-		Timeout: 120 * time.Second,
+		Timeout: EnsureTimeout(timeout),
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
 			MaxIdleConnsPerHost: 2,
